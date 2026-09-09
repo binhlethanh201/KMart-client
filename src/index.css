@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-on-background h-screen overflow-hidden flex font-sans antialiased;
+    font-feature-settings: "tnum" on, "lnum" on; /* Tabular lining for enterprise tables */
+  }
+}
+
+@layer utilities {
+  .material-symbols-outlined {
+    font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24; /* Standard opsz for crisp rendering */
+  }
+  .material-symbols-outlined[data-weight="fill"],
+  .material-symbols-outlined.fill {
+    font-variation-settings: 'FILL' 1;
+  }
+}
+
+/* Hide scrollbar for clean UI, but keep it accessible */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-outline-variant rounded hover:bg-outline transition-colors;
+}
+
+/* Global focus and tactile active states for all interactive elements */
+button, a, input[type="radio"], input[type="checkbox"] {
+  @apply transition-colors duration-150;
+}
+button:active, a:active {
+  transform: scale(0.99); /* Subtler scale for enterprise */
+}
