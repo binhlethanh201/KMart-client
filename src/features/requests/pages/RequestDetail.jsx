@@ -77,7 +77,7 @@ export default function RequestDetail() {
         
         {/* Left Column: Request Data & Discussion (Scrollable) */}
         <div className="flex-1 overflow-y-auto p-6 border-r border-outline-variant">
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="w-full space-y-6">
             
             {/* Enterprise Information Block */}
             <section className="bg-surface border border-outline-variant rounded-lg shadow-sm overflow-hidden">

@@ -75,7 +75,7 @@ export default function DepartmentDashboard() {
 
   return (
     <div className="p-4 md:p-6 flex-1 overflow-y-auto min-h-0 bg-surface">
-      <div className="mx-auto space-y-4 max-w-[1600px]">
+      <div className="w-full space-y-4">
         {/* Compact Action Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-low p-4 rounded-lg border border-outline-variant shadow-sm">
           <div>

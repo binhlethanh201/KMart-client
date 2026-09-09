@@ -7,6 +7,15 @@
     @apply bg-background text-on-background h-screen overflow-hidden flex font-sans antialiased;
     font-feature-settings: "tnum" on, "lnum" on; /* Tabular lining for enterprise tables */
   }
+
+  /* #root is the single flex child of <body> (which is display:flex).
+     Without flex-1 it sizes to content width and the whole app stops
+     short of the viewport on wide screens, leaving a large gap on the
+     right. Grow it to fill the viewport; min-w-0 lets inner flex
+     columns shrink instead of overflowing. */
+  #root {
+    @apply flex-1 min-w-0;
+  }
 }
 
 @layer utilities {

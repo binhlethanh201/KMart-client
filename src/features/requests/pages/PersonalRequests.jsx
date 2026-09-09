@@ -93,7 +93,7 @@ export default function PersonalRequests() {
     <section className="flex-1 flex flex-col h-full overflow-hidden relative bg-surface-container-lowest">
       {/* Enterprise Functional Header */}
       <div className="bg-surface border-b border-outline-variant p-6 flex-shrink-0 z-10 shadow-sm">
-        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="w-full flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="font-display-lg text-on-surface mb-1 tracking-tight">Danh sách Đơn từ &amp; Đề xuất</h1>
             <p className="font-body-md text-secondary">
@@ -109,7 +109,7 @@ export default function PersonalRequests() {
 
       {/* List Area */}
       <div className="flex-1 p-6 overflow-y-auto bg-background">
-        <div className="max-w-[1400px] mx-auto flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-4">
           {/* Action Bar / Filters */}
           <div className="bg-surface p-4 rounded-lg flex flex-col md:flex-row gap-4 items-center justify-between border border-outline-variant shadow-sm sticky top-0 z-20">
             <div className="relative w-full md:w-96">
