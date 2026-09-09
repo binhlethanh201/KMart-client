@@ -7,7 +7,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { name: 'Phòng ban & Nhóm', icon: 'account_tree', path: '/' },
     { name: 'Nhân sự', icon: 'group', path: '/personnel' },
     { name: 'Đơn từ cá nhân', icon: 'description', path: '/my-requests' },
-    { name: 'Đơn chờ duyệt', icon: 'pending_actions', path: '/pending-requests', badge: 3 },
+    { name: 'Đơn chờ duyệt', icon: 'pending_actions', path: '/my-requests/approvals', badge: 3 },
     { name: 'Cấu hình hệ thống', icon: 'settings', path: '/settings' },
   ];
 

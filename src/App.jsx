@@ -1,29 +1,43 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ApprovalSystemProvider } from './context/ApprovalSystemProvider';
 import MainLayout from './layouts/MainLayout';
-import DepartmentDashboard from './features/departments/pages/DepartmentDashboard';
-import UserProfile from './features/profile/pages/UserProfile';
 import RequestsLayout from './features/requests/layouts/RequestsLayout';
+import DepartmentDashboard from './features/departments/pages/DepartmentDashboard';
+import DepartmentDetail from './features/departments/pages/DepartmentDetail';
+import UserProfile from './features/profile/pages/UserProfile';
+import HumanResources from './features/hr/pages/HumanResources';
+import SystemConfig from './features/system-config/pages/SystemConfig';
 import PersonalRequests from './features/requests/pages/PersonalRequests';
 import RequestDetail from './features/requests/pages/RequestDetail';
+import UserSwitchBar from './features/requests/components/UserSwitchBar';
+import ToastHost from './features/requests/components/ToastHost';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Main Layout routes */}
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<DepartmentDashboard />} />
-          <Route path="profile" element={<UserProfile />} />
-          <Route path="pending-requests" element={<RequestDetail />} />
-        </Route>
+    <ApprovalSystemProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Main app shell (light sidebar) */}
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<DepartmentDashboard />} />
+            <Route path="departments" element={<DepartmentDashboard />} />
+            <Route path="departments/:id" element={<DepartmentDetail />} />
+            <Route path="profile" element={<UserProfile />} />
+            <Route path="personnel" element={<HumanResources />} />
+            <Route path="settings" element={<SystemConfig />} />
+            <Route path="requests/:id" element={<RequestDetail />} />
+          </Route>
 
-        {/* Requests Layout routes */}
-        <Route path="/my-requests" element={<RequestsLayout />}>
-          <Route index element={<PersonalRequests />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          {/* Approval system shell (dark filter rail) */}
+          <Route path="/my-requests" element={<RequestsLayout />}>
+            <Route index element={<PersonalRequests defaultFilter="sent" />} />
+            <Route path="approvals" element={<PersonalRequests defaultFilter="received" />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+      <UserSwitchBar />
+      <ToastHost />
+    </ApprovalSystemProvider>
   );
 }
 

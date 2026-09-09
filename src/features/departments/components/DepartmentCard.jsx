@@ -1,14 +1,16 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-export default function DepartmentCard({ 
-  icon, 
-  status, 
-  name, 
-  code, 
-  leaders, 
-  members, 
+export default function DepartmentCard({
+  id,
+  icon,
+  status,
+  name,
+  code,
+  leaders,
+  members,
   memberCount,
-  extraCount 
+  extraCount
 }) {
   return (
     <div className="bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/50 hover:shadow-md hover:border-outline-variant transition-all flex flex-col p-6 group">
@@ -56,9 +58,13 @@ export default function DepartmentCard({
         <span className="text-sm font-medium text-on-surface-variant">{memberCount} member</span>
       </div>
       
-      <button className="w-full bg-transparent border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low hover:border-primary hover:text-primary py-2 rounded-lg font-medium transition-colors">
+      <Link
+        to={`/departments/${id}`}
+        className="w-full bg-transparent border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low hover:border-primary hover:text-primary py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+      >
+        <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         Vào chi tiết phòng
-      </button>
+      </Link>
     </div>
   );
 }
