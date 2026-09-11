@@ -85,14 +85,13 @@ export default function HumanResources() {
       {/* Header & Action Bar */}
       <div className="bg-surface border-b border-outline-variant p-6 flex-shrink-0 z-10 shadow-sm">
         <div className="w-full flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display-lg text-on-surface tracking-tight">Quản lý Nhân sự</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-[24px]">group</span>
+            </div>
+            <h1 className="text-2xl font-bold text-on-surface tracking-tight">Quản lý Nhân sự</h1>
           </div>
           <div className="flex gap-2 flex-shrink-0">
-            <button className="bg-surface text-on-surface border border-outline-variant hover:bg-surface-container transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 cursor-pointer">
-              <span className="material-symbols-outlined text-[18px]">download</span>
-              Xuất Báo Cáo
-            </button>
             <button
               onClick={openAdd}
               className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"

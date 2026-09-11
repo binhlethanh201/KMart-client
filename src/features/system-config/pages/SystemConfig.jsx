@@ -24,10 +24,12 @@ export default function SystemConfig({ defaultActive = 'workflow' }) {
     <section className="flex-1 flex flex-col h-full overflow-hidden bg-background">
       {/* Header */}
       <div className="bg-surface border-b border-outline-variant px-6 pt-6 pb-6 flex-shrink-0 z-10 shadow-sm">
-        <h1 className="font-display-lg text-on-surface tracking-tight flex items-center gap-2">
-          <span className="material-symbols-outlined text-[28px] text-primary">{activeTab.icon}</span>
-          {activeTab.label}
-        </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <span className="material-symbols-outlined text-primary text-[24px]">{activeTab.icon}</span>
+          </div>
+          <h1 className="text-2xl font-bold text-on-surface tracking-tight">{activeTab.label}</h1>
+        </div>
 
       </div>
 

@@ -81,11 +81,13 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
         {/* ── Header ── */}
         <div className="bg-surface border-b border-outline-variant px-6 pt-6 pb-0 flex-shrink-0 shadow-sm z-10">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
-            <div>
-              <h1 className="font-display-lg text-on-surface tracking-tight">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-[24px]">description</span>
+              </div>
+              <h1 className="text-2xl font-bold text-on-surface tracking-tight">
                 {TITLES[filter] || 'Danh sách Đơn từ'}
               </h1>
-
             </div>
             <button
               onClick={() => setIsCreateOpen(true)}

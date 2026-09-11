@@ -16,9 +16,11 @@ export default function DepartmentDashboard() {
       <div className="w-full space-y-4">
         {/* Compact Action Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-low p-4 rounded-lg border border-outline-variant shadow-sm">
-          <div>
-            <h1 className="font-headline-md text-on-surface">Cơ cấu tổ chức &amp; Siêu thị</h1>
-
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-[24px]">account_tree</span>
+            </div>
+            <h1 className="text-2xl font-bold text-on-surface tracking-tight">Cơ cấu tổ chức &amp; Siêu thị</h1>
           </div>
           <div className="flex gap-2">
             <button
