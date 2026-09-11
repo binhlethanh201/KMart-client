@@ -17,7 +17,6 @@ function App() {
     <ApprovalSystemProvider>
       <BrowserRouter>
         <Routes>
-          {/* Main app shell (light sidebar) */}
           <Route path="/" element={<MainLayout />}>
             <Route index element={<DepartmentDashboard />} />
             <Route path="departments" element={<DepartmentDashboard />} />
@@ -26,12 +25,10 @@ function App() {
             <Route path="personnel" element={<HumanResources />} />
             <Route path="settings" element={<SystemConfig />} />
             <Route path="requests/:id" element={<RequestDetail />} />
-          </Route>
-
-          {/* Approval system shell (dark filter rail) */}
-          <Route path="/my-requests" element={<RequestsLayout />}>
-            <Route index element={<PersonalRequests defaultFilter="sent" />} />
-            <Route path="approvals" element={<PersonalRequests defaultFilter="received" />} />
+ 
+            {/* Requests pages now share the same layout shell */}
+            <Route path="my-requests" element={<PersonalRequests defaultFilter="sent" />} />
+            <Route path="my-requests/approvals" element={<PersonalRequests defaultFilter="received" />} />
           </Route>
         </Routes>
       </BrowserRouter>
