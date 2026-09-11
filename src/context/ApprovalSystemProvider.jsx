@@ -3,6 +3,7 @@ import { ApprovalSystemContext } from './approvalStore';
 import { USERS, SEED_REQUESTS, WORKFLOW_BY_TYPE, STEP_ROLE } from '../features/requests/data/seed';
 import { DEPARTMENTS } from '../features/departments/data/departments';
 import { EMPLOYEES } from '../features/departments/data/employees';
+import { FORM_FIELDS } from '../features/system-config/data/mockData';
 
 const STORAGE_KEY = 'kmart.approval.v3';
 
@@ -20,13 +21,14 @@ function load() {
           requests: p.requests,
           departments: Array.isArray(p.departments) ? p.departments : DEPARTMENTS,
           employees: Array.isArray(p.employees) ? p.employees : EMPLOYEES,
+          formFields: p.formFields || FORM_FIELDS,
         };
       }
     }
   } catch {
     /* ignore corrupted storage */
   }
-  return { currentUserId: USERS[0].id, requests: SEED_REQUESTS, departments: DEPARTMENTS, employees: EMPLOYEES };
+  return { currentUserId: USERS[0].id, requests: SEED_REQUESTS, departments: DEPARTMENTS, employees: EMPLOYEES, formFields: FORM_FIELDS };
 }
 
 function stamp() {
@@ -41,16 +43,17 @@ export function ApprovalSystemProvider({ children }) {
   const [requests, setRequests] = useState(init.requests);
   const [departments, setDepartments] = useState(init.departments);
   const [employees, setEmployees] = useState(init.employees);
+  const [formFields, setFormFields] = useState(init.formFields);
   const [toasts, setToasts] = useState([]);
 
   // Persist to localStorage on any change.
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ currentUserId, requests, departments, employees }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ currentUserId, requests, departments, employees, formFields }));
     } catch {
       /* quota / private mode - ignore */
     }
-  }, [currentUserId, requests, departments, employees]);
+  }, [currentUserId, requests, departments, employees, formFields]);
 
   const currentUser = useMemo(() => userById(currentUserId), [currentUserId]);
 
@@ -83,6 +86,7 @@ export function ApprovalSystemProvider({ children }) {
           reason: data.reason || '',
           impact: data.impact || 'Không ảnh hưởng',
           attachment: data.attachment || null,
+          ...data // Capture dynamic fields from Form Builder
         },
         steps,
         comments: [],
@@ -271,11 +275,13 @@ export function ApprovalSystemProvider({ children }) {
       departments,
       employees,
       addDepartment,
+      formFields,
+      setFormFields,
       toasts,
       pushToast,
       dismissToast,
     }),
-    [currentUser, currentUserId, requests, createRequest, approveRequest, rejectRequest, addComment, simulateTimeout, canApprove, departments, employees, addDepartment, toasts, pushToast, dismissToast]
+    [currentUser, currentUserId, requests, createRequest, approveRequest, rejectRequest, addComment, simulateTimeout, canApprove, departments, employees, addDepartment, formFields, toasts, pushToast, dismissToast]
   );
 
   return <ApprovalSystemContext.Provider value={value}>{children}</ApprovalSystemContext.Provider>;

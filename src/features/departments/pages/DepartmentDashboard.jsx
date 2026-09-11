@@ -18,9 +18,7 @@ export default function DepartmentDashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-low p-4 rounded-lg border border-outline-variant shadow-sm">
           <div>
             <h1 className="font-headline-md text-on-surface">Cơ cấu tổ chức &amp; Siêu thị</h1>
-            <p className="font-body-md text-secondary text-sm">
-              Quản lý danh sách các chi nhánh siêu thị và phòng ban trực thuộc hệ thống.
-            </p>
+
           </div>
           <div className="flex gap-2">
             <button

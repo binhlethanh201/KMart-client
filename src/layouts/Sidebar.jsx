@@ -64,6 +64,67 @@ function RequestsSubPanel({ pendingCount }) {
   );
 }
 
+/* ─── Sub-panel: Cấu hình ────────────────────────────────────── */
+
+function SettingsSubPanel() {
+  const location = useLocation();
+
+  const links = [
+    {
+      to: '/settings/forms',
+      icon: 'description',
+      label: 'Mẫu đơn & Form',
+    },
+    {
+      to: '/settings/workflow',
+      icon: 'account_tree',
+      label: 'Luồng duyệt',
+    },
+    {
+      to: '/settings/general',
+      icon: 'settings',
+      label: 'Chung & Zalo',
+    },
+  ];
+
+  return (
+    <div className="flex flex-col h-full bg-[#162032] border-l border-white/10 w-[200px] flex-shrink-0">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-white/10">
+        <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">
+          Cấu hình
+        </span>
+      </div>
+
+      {/* nav links */}
+      <ul className="flex flex-col py-2 px-2">
+        {links.map((item) => {
+          const active = location.pathname === item.to;
+          return (
+            <li key={item.to}>
+              <Link
+                to={item.to}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors border-l-2 ${
+                  active
+                    ? 'border-primary bg-primary/10 text-white'
+                    : 'border-transparent text-slate-400 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-2.5 min-w-0">
+                  <span className="material-symbols-outlined text-[18px] flex-shrink-0">
+                    {item.icon}
+                  </span>
+                  <span className="text-sm font-medium truncate">{item.label}</span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 /* ─── Main sidebar rail ──────────────────────────────────────── */
 
 /**
@@ -81,7 +142,12 @@ const NAV_ITEMS = [
     matchPaths: ['/my-requests', '/my-requests/approvals'],
     badge: null, /* optionally set dynamically */
   },
-  { name: 'Cấu hình',  icon: 'settings', path: '/settings' },
+  {
+    name: 'Cấu hình',
+    icon: 'settings',
+    subPanel: 'settings',
+    matchPaths: ['/settings'],
+  },
 ];
 
 export default function UnifiedSidebar({
@@ -150,11 +216,12 @@ export default function UnifiedSidebar({
                   <h2 className="text-white text-sm font-semibold truncate leading-tight">
                     {currentUser?.name || 'Nguyễn Văn A'}
                   </h2>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="px-1.5 py-0.5 bg-primary/20 text-inverse-primary rounded text-[10px] font-bold tracking-wider leading-none">
-                      Admin
-                    </span>
-                    <span className="text-slate-400 text-xs leading-none">Online</span>
+                  <div className="flex flex-col gap-1 mt-1">
+                    <span className="text-xs text-slate-400 font-medium tracking-wide">Quản trị viên</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+                      <span className="text-[11px] text-slate-500 font-medium">Trực tuyến</span>
+                    </div>
                   </div>
                 </div>
                 <div className="relative cursor-pointer group shrink-0" onClick={(e) => e.preventDefault()}>
@@ -247,15 +314,13 @@ export default function UnifiedSidebar({
           </div>
         </nav>
 
-        {/* ── Flyout sub-panel (slides in inline, no position:fixed) ── */}
         <div
-          className={`h-full overflow-hidden transition-all duration-300 ease-in-out ${
-            openSubPanel === 'requests' ? 'w-[220px] opacity-100' : 'w-0 opacity-0'
+          className={`h-full overflow-hidden transition-all duration-300 ease-in-out flex flex-shrink-0 ${
+            openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
           }`}
         >
-          {openSubPanel === 'requests' && (
-            <RequestsSubPanel pendingCount={pendingCount} />
-          )}
+          {openSubPanel === 'requests' && <RequestsSubPanel pendingCount={pendingCount} />}
+          {openSubPanel === 'settings' && <SettingsSubPanel />}
         </div>
       </div>
     </>

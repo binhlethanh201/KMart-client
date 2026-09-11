@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import EmployeeModal from '../components/EmployeeModal';
+import EmployeeDetailModal from '../components/EmployeeDetailModal';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import {
   EMPLOYEES,
@@ -31,6 +32,7 @@ export default function HumanResources() {
   const [status, setStatus] = useState('Tất cả');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [viewing, setViewing] = useState(null);
   const [popoverId, setPopoverId] = useState(null);
 
   const filtered = useMemo(() => {
@@ -53,9 +55,14 @@ export default function HumanResources() {
     setEditing(null);
     setModalOpen(true);
   };
-  const openEdit = (emp) => {
+  const openEdit = (emp, e) => {
+    if (e) e.stopPropagation();
     setEditing(emp);
     setModalOpen(true);
+    setPopoverId(null);
+  };
+  const openView = (emp) => {
+    setViewing(emp);
     setPopoverId(null);
   };
   const handleSave = (form) => {
@@ -66,9 +73,10 @@ export default function HumanResources() {
     }
     setModalOpen(false);
   };
-  const toggleLock = (emp) => {
+  const toggleLock = (emp, e) => {
+    if (e) e.stopPropagation();
     setEmployees((list) =>
-      list.map((e) => (e.id === emp.id ? { ...e, status: e.status === 'active' ? 'inactive' : 'active' } : e))
+      list.map((el) => (el.id === emp.id ? { ...el, status: el.status === 'active' ? 'inactive' : 'active' } : el))
     );
   };
 
@@ -79,9 +87,6 @@ export default function HumanResources() {
         <div className="w-full flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="font-display-lg text-on-surface tracking-tight">Quản lý Nhân sự</h1>
-            <p className="font-body-md text-secondary mt-1">
-              Quản lý danh sách nhân viên, tài khoản, phân quyền vai trò và chức vụ kiêm nhiệm
-            </p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <button className="bg-surface text-on-surface border border-outline-variant hover:bg-surface-container transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 cursor-pointer">
@@ -155,7 +160,11 @@ export default function HumanResources() {
                   {filtered.map((e) => {
                     const st = STATUS_STYLES[e.status];
                     return (
-                      <tr key={e.id} className="border-b border-outline-variant/50 last:border-0 hover:bg-surface-container-low/60 transition-colors">
+                      <tr 
+                        key={e.id} 
+                        className="border-b border-outline-variant/50 last:border-0 hover:bg-surface-container-low/60 transition-colors cursor-pointer"
+                        onClick={() => openView(e)}
+                      >
                         {/* Mã & Họ tên */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -191,7 +200,7 @@ export default function HumanResources() {
                               <span className="text-xs text-on-surface-variant italic">Không</span>
                             ) : (
                               <button
-                                onClick={() => setPopoverId(popoverId === e.id ? null : e.id)}
+                                onClick={(ev) => { ev.stopPropagation(); setPopoverId(popoverId === e.id ? null : e.id); }}
                                 className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-container/40 text-primary text-xs font-medium hover:bg-primary-container/70 transition-colors cursor-pointer"
                               >
                                 <span className="material-symbols-outlined text-[14px]">workspaces</span>
@@ -200,8 +209,8 @@ export default function HumanResources() {
                             )}
                             {popoverId === e.id && (
                               <>
-                                <div className="fixed inset-0 z-40" onClick={() => setPopoverId(null)} />
-                                <div className="absolute z-50 left-0 top-full mt-1 w-72 bg-surface border border-outline-variant rounded-lg shadow-lg p-3">
+                                <div className="fixed inset-0 z-40" onClick={(ev) => { ev.stopPropagation(); setPopoverId(null); }} />
+                                <div onClick={(ev) => ev.stopPropagation()} className="absolute z-50 left-0 top-full mt-1 w-72 bg-surface border border-outline-variant rounded-lg shadow-lg p-3">
                                   <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-2">
                                     Vị trí kiêm nhiệm
                                   </div>
@@ -223,7 +232,10 @@ export default function HumanResources() {
                         </td>
                         {/* Vai trò hệ thống */}
                         <td className="px-4 py-3">
-                          <Badge cls={ROLE_STYLES[e.role]}>{e.role}</Badge>
+                          <Badge cls={ROLE_STYLES[e.role]?.cls || 'text-secondary'}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${ROLE_STYLES[e.role]?.dot || 'bg-outline'}`} />
+                            {e.role}
+                          </Badge>
                         </td>
                         {/* Trạng thái */}
                         <td className="px-4 py-3">
@@ -236,20 +248,21 @@ export default function HumanResources() {
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-1">
                             <button
-                              onClick={() => openEdit(e)}
+                              onClick={(ev) => openEdit(e, ev)}
                               className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
                               title="Chỉnh sửa"
                             >
                               <span className="material-symbols-outlined text-[18px]">edit</span>
                             </button>
                             <button
+                              onClick={(ev) => ev.stopPropagation()}
                               className="text-secondary hover:text-warning hover:bg-warning-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
                               title="Reset mật khẩu"
                             >
                               <span className="material-symbols-outlined text-[18px]">lock_reset</span>
                             </button>
                             <button
-                              onClick={() => toggleLock(e)}
+                              onClick={(ev) => toggleLock(e, ev)}
                               className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                                 e.status === 'active'
                                   ? 'text-secondary hover:text-error hover:bg-error-container/40'
@@ -258,7 +271,7 @@ export default function HumanResources() {
                               title={e.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
                             >
                               <span className="material-symbols-outlined text-[18px]">
-                                {e.status === 'active' ? 'lock' : 'lock_open'}
+                                {e.status === 'active' ? 'lock_open' : 'lock'}
                               </span>
                             </button>
                           </div>
@@ -297,6 +310,7 @@ export default function HumanResources() {
       </div>
 
       {modalOpen && <EmployeeModal employee={editing} onClose={() => setModalOpen(false)} onSave={handleSave} />}
+      {viewing && <EmployeeDetailModal employee={viewing} onClose={() => setViewing(null)} />}
     </section>
   );
 }

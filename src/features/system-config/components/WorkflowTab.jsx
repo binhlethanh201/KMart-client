@@ -5,8 +5,10 @@ const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
 
 const HIERARCHY_OPTIONS = [
-  { id: 'direct', label: 'Quản lý trực tiếp (Trưởng phòng)' },
-  { id: 'higher', label: 'Cấp quản lý cao hơn (Giám đốc khối / TGĐ)' },
+  { id: 'leader', label: 'Quản lý trực tiếp (Tổ trưởng/Trưởng nhóm)' },
+  { id: 'deputy_manager', label: 'Phó phòng' },
+  { id: 'manager', label: 'Trưởng phòng' },
+  { id: 'higher', label: 'Giám đốc khối / Ban giám đốc' },
 ];
 
 function RadioCard({ checked, onClick, title, desc, name }) {
@@ -27,27 +29,53 @@ function RadioCard({ checked, onClick, title, desc, name }) {
 
 export default function WorkflowTab() {
   const [formType, setFormType] = useState(FORM_TYPES[0]);
-  const [steps, setSteps] = useState(INITIAL_WORKFLOW);
+
+  const [workflows, setWorkflows] = useState(() => {
+    const init = {};
+    FORM_TYPES.forEach((t, i) => {
+      if (i === 0) {
+        init[t] = [...INITIAL_WORKFLOW];
+      } else {
+        // Create slightly varied initial steps so changing tabs has a visual effect
+        init[t] = INITIAL_WORKFLOW.slice(0, (i % 3) + 1).map(s => ({...s, id: `${s.id}_${i}`}));
+      }
+    });
+    return init;
+  });
   const [saved, setSaved] = useState(false);
 
+  const steps = workflows[formType] || [];
+
   const updateStep = (id, patch) =>
-    setSteps((list) => list.map((s) => (s.id === id ? { ...s, ...patch } : s)));
-  const removeStep = (id) => setSteps((list) => list.filter((s) => s.id !== id));
+    setWorkflows((prev) => ({
+      ...prev,
+      [formType]: prev[formType].map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    }));
+  const removeStep = (id) => 
+    setWorkflows((prev) => ({
+      ...prev,
+      [formType]: prev[formType].filter((s) => s.id !== id),
+    }));
   const addStep = () =>
-    setSteps((list) => [
-      ...list,
-      {
-        id: `s${list.length + 1}-${Math.floor(Math.random() * 1000)}`,
-        name: 'Bước duyệt mới',
-        approvalType: 'hierarchy',
-        hierarchyOption: 'direct',
-        role: APPROVAL_ROLES[0],
-        specificUser: SPECIFIC_USERS[0],
-        multiRule: 'sequential',
-        timeoutEnabled: true,
-        timeoutAction: 'return',
-      },
-    ]);
+    setWorkflows((prev) => ({
+      ...prev,
+      [formType]: [
+        ...prev[formType],
+        {
+          id: `s${prev[formType].length + 1}-${Math.floor(Math.random() * 1000)}`,
+          name: 'Bước duyệt mới',
+          approvalType: 'hierarchy',
+          hierarchyOption: 'manager',
+          chainStart: 'leader',
+          chainEnd: 'manager',
+          role: APPROVAL_ROLES[0],
+          specificUser: SPECIFIC_USERS[0],
+          multiRule: 'sequential',
+          timeoutEnabled: true,
+          timeoutAction: 'return',
+        },
+      ],
+    }));
 
   const save = () => {
     setSaved(true);
@@ -62,6 +90,7 @@ export default function WorkflowTab() {
           <span className="material-symbols-outlined text-primary">tune</span>
           <span className="font-label-md text-on-surface font-semibold">Cấu hình luồng duyệt cho:</span>
         </div>
+        
         <select className={`${selectCls} max-w-xs`} value={formType} onChange={(e) => setFormType(e.target.value)}>
           {FORM_TYPES.map((f) => (
             <option key={f}>{f}</option>
@@ -72,7 +101,8 @@ export default function WorkflowTab() {
       {/* Vertical step list */}
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => {
-          const showMulti = step.approvalType === 'hierarchy' || step.approvalType === 'role';
+          // Chỉ hiển thị quy tắc đa người duyệt nếu kiểu duyệt có khả năng ra nhiều người (VD: Vai trò)
+          const showMulti = step.approvalType === 'role';
           return (
             <div key={step.id} className="relative pl-8 pb-4">
               {/* connector + number */}
@@ -140,6 +170,27 @@ export default function WorkflowTab() {
                           ))}
                         </select>
                       )}
+                      {step.approvalType === 'chain' && (
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-primary-container/10 p-3 rounded-md border border-primary/20">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-secondary">Bắt đầu từ:</span>
+                            <select className={`${selectCls} min-w-[180px]`} value={step.chainStart || 'leader'} onChange={(e) => updateStep(step.id, { chainStart: e.target.value })}>
+                              <option value="leader">Tổ trưởng / Trưởng nhóm</option>
+                              <option value="deputy_manager">Phó phòng</option>
+                              <option value="manager">Trưởng phòng</option>
+                            </select>
+                          </div>
+                          <span className="material-symbols-outlined text-outline hidden sm:block">arrow_forward</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-secondary">Tối đa đến:</span>
+                            <select className={`${selectCls} min-w-[180px]`} value={step.chainEnd || 'manager'} onChange={(e) => updateStep(step.id, { chainEnd: e.target.value })}>
+                              <option value="deputy_manager">Phó phòng</option>
+                              <option value="manager">Trưởng phòng</option>
+                              <option value="higher">Giám đốc / TGĐ</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -147,6 +198,9 @@ export default function WorkflowTab() {
                   {showMulti && (
                     <div className="border-t border-outline-variant/50 pt-3">
                       <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-2">B. Quy tắc đa người duyệt</div>
+                      <div className="text-[11px] text-secondary mb-2 bg-surface-container-low p-2 rounded border border-outline-variant/30 italic">
+                        * Áp dụng khi bước này có nhiều người cùng tham gia duyệt (VD: Có nhiều người cùng giữ vai trò {step.role || 'này'}).
+                      </div>
                       <div className="flex flex-col gap-2">
                         {MULTI_RULES.map((r) => (
                           <label key={r.id} className={`flex items-start gap-2.5 p-2.5 rounded-md border cursor-pointer transition-colors ${step.multiRule === r.id ? 'border-primary bg-primary-container/30' : 'border-outline-variant hover:bg-surface-container-low'}`}>
@@ -161,9 +215,9 @@ export default function WorkflowTab() {
                     </div>
                   )}
 
-                  {/* Section C - Timeout BR11 */}
+                  {/* Section C - Timeout */}
                   <div className="border-t border-outline-variant/50 pt-3">
-                    <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-2">C. Quy tắc Timeout 12 Giờ (BR11)</div>
+                    <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-2">C. Quy tắc xử lý quá hạn 12 giờ</div>
                     <label className="flex items-center gap-2 cursor-pointer mb-2">
                       <input type="checkbox" checked={step.timeoutEnabled} onChange={(e) => updateStep(step.id, { timeoutEnabled: e.target.checked })} className="text-primary focus:ring-primary rounded cursor-pointer" />
                       <span className="text-sm text-on-surface">Tự động chuyển trả đơn sau 12 giờ không xử lý</span>

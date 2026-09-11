@@ -26,8 +26,8 @@ export default function RequestCard({ request: r }) {
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary truncate">{r.title}</h3>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] uppercase tracking-wide font-bold border ${meta.badge}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`}></span>
+            <span className={`inline-flex items-center gap-1 text-[11px] uppercase tracking-wide font-bold ${meta.badge}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
               {meta.label}
             </span>
           </div>

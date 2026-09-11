@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import RejectReasonModal from '../components/RejectReasonModal';
+import UserInfoModal from '../components/UserInfoModal';
 import { STATUS_META, USERS, STEP_ROLE } from '../data/seed';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 
@@ -24,6 +25,7 @@ export default function RequestDetail() {
   const request = requests.find((r) => r.id === id);
 
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [showUserInfo, setShowUserInfo] = useState(false);
   const [comment, setComment] = useState('');
   const commentRef = useRef(null);
 
@@ -86,8 +88,8 @@ export default function RequestDetail() {
           <div>
             <div className="flex items-center gap-3 mb-1 flex-wrap">
               <h1 className="font-display-lg text-on-surface">{request.title}</h1>
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold border uppercase tracking-wide ${meta.badge}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`}></span>
+              <span className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${meta.badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
                 {meta.label}
               </span>
             </div>
@@ -151,12 +153,21 @@ export default function RequestDetail() {
                   <tr>
                     <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest w-1/3 align-top border-r border-outline-variant">Người đề xuất</th>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={creator?.avatar} alt={creator?.name} />
-                        <div>
-                          <p className="font-medium text-on-surface">{creator?.name} ({request.id === 'REQ-1042' ? 'EMP-8241' : request.id})</p>
-                          <p className="text-xs text-secondary">{creator?.role} - Kmart Siêu thị Cầu Giấy</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={creator?.avatar} alt={creator?.name} />
+                          <div>
+                            <p className="font-medium text-on-surface">{creator?.name} ({request.id === 'REQ-1042' ? 'EMP-8241' : request.id})</p>
+                            <p className="text-xs text-secondary">{creator?.role} - Kmart Siêu thị Cầu Giấy</p>
+                          </div>
                         </div>
+                        <button
+                          onClick={() => setShowUserInfo(true)}
+                          className="p-1.5 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer"
+                          title="Xem thông tin chi tiết"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">info</span>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -164,21 +175,25 @@ export default function RequestDetail() {
                     <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">Loại đơn từ</th>
                     <td className="py-3 px-4 text-on-surface">{request.type}</td>
                   </tr>
-                  <tr>
-                    <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">Thời gian áp dụng</th>
-                    <td className="py-3 px-4 text-on-surface">
-                      {request.fields.startTime ? `Từ ${request.fields.startTime}` : '---'}
-                      {request.fields.endTime ? ` đến ${request.fields.endTime}` : ''}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">Ảnh hưởng công việc</th>
-                    <td className="py-3 px-4 text-on-surface">{request.fields.impact}</td>
-                  </tr>
-                  <tr>
-                    <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">Lý do cụ thể</th>
-                    <td className="py-3 px-4 text-on-surface">{request.fields.reason || 'Không có'}</td>
-                  </tr>
+                  {Object.entries(request.fields).map(([key, val]) => {
+                    // Skip internal or special fields
+                    if (['title', 'type', 'attachment'].includes(key)) return null;
+                    if (val === undefined || val === null || val === '') return null; // hide empty
+
+                    // Map legacy keys to nice labels for seed data compatibility
+                    let label = key;
+                    if (key === 'startTime') label = 'Thời gian bắt đầu';
+                    else if (key === 'endTime') label = 'Thời gian kết thúc';
+                    else if (key === 'reason') label = 'Lý do cụ thể';
+                    else if (key === 'impact') label = 'Ảnh hưởng công việc';
+
+                    return (
+                      <tr key={key}>
+                        <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{label}</th>
+                        <td className="py-3 px-4 text-on-surface">{Array.isArray(val) ? val.join(', ') : val}</td>
+                      </tr>
+                    );
+                  })}
                   {request.rejectReason && (
                     <tr>
                       <th className="py-3 px-4 font-medium text-error bg-error-container/10 align-top border-r border-error/20">Lý do từ chối</th>
@@ -371,6 +386,16 @@ export default function RequestDetail() {
             rejectRequest(request.id, reason);
             setRejectOpen(false);
           }}
+        />
+      )}
+
+      {showUserInfo && creator && (
+        <UserInfoModal
+          user={{
+            ...creator,
+            employeeId: request.id === 'REQ-1042' ? 'EMP-8241' : request.id
+          }}
+          onClose={() => setShowUserInfo(false)}
         />
       )}
     </div>

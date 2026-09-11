@@ -25,11 +25,11 @@ export const POSITIONS = [
 export const SYSTEM_ROLES = ['Admin', 'HR Admin', 'Trưởng phòng', 'Tổng Giám đốc', 'Nhân viên'];
 
 export const ROLE_STYLES = {
-  Admin: 'bg-purple-100 text-purple-700',
-  'HR Admin': 'bg-primary-container text-on-primary-container',
-  'Trưởng phòng': 'bg-success-container text-on-success-container',
-  'Tổng Giám đốc': 'bg-warning-container text-on-warning-container',
-  'Nhân viên': 'bg-surface-container-high text-secondary',
+  Admin: { dot: 'bg-purple-500', cls: 'text-purple-700' },
+  'HR Admin': { dot: 'bg-primary', cls: 'text-primary' },
+  'Trưởng phòng': { dot: 'bg-success', cls: 'text-success' },
+  'Tổng Giám đốc': { dot: 'bg-warning', cls: 'text-warning' },
+  'Nhân viên': { dot: 'bg-outline', cls: 'text-secondary' },
 };
 
 export const STATUS_STYLES = {

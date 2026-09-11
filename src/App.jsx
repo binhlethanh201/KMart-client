@@ -23,7 +23,12 @@ function App() {
             <Route path="departments/:id" element={<DepartmentDetail />} />
             <Route path="profile" element={<UserProfile />} />
             <Route path="personnel" element={<HumanResources />} />
-            <Route path="settings" element={<SystemConfig />} />
+            {/* Settings sub-routes */}
+            <Route path="settings" element={<SystemConfig defaultActive="forms" />} />
+            <Route path="settings/forms" element={<SystemConfig defaultActive="forms" />} />
+            <Route path="settings/workflow" element={<SystemConfig defaultActive="workflow" />} />
+            <Route path="settings/general" element={<SystemConfig defaultActive="general" />} />
+
             <Route path="requests/:id" element={<RequestDetail />} />
  
             {/* Requests pages now share the same layout shell */}

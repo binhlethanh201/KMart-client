@@ -85,9 +85,7 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
               <h1 className="font-display-lg text-on-surface tracking-tight">
                 {TITLES[filter] || 'Danh sách Đơn từ'}
               </h1>
-              <p className="font-body-md text-secondary mt-1">
-                Quản lý, theo dõi và phê duyệt các yêu cầu nhân sự trong toàn hệ thống siêu thị.
-              </p>
+
             </div>
             <button
               onClick={() => setIsCreateOpen(true)}

@@ -344,8 +344,8 @@ export const SEED_REQUESTS = [
 ];
 
 export const STATUS_META = {
-  pending: { label: 'Đang chờ duyệt', badge: 'bg-warning-container text-on-warning-container border-warning/20', dot: 'bg-warning' },
-  approved: { label: 'Đã phê duyệt', badge: 'bg-success-container text-on-success-container border-success/20', dot: 'bg-success' },
-  rejected: { label: 'Từ chối / Trả về', badge: 'bg-error-container text-on-error-container border-error/20', dot: 'bg-error' },
-  returned_timeout: { label: 'Trả về (quá hạn 12h)', badge: 'bg-error-container text-on-error-container border-error/20', dot: 'bg-error' },
+  pending: { label: 'Đang chờ duyệt', badge: 'text-warning', dot: 'bg-warning' },
+  approved: { label: 'Đã phê duyệt', badge: 'text-success', dot: 'bg-success' },
+  rejected: { label: 'Từ chối / Trả về', badge: 'text-error', dot: 'bg-error' },
+  returned_timeout: { label: 'Trả về (quá hạn 12h)', badge: 'text-error', dot: 'bg-error' },
 };

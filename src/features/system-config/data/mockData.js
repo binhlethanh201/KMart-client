@@ -54,16 +54,17 @@ export const FORM_FIELDS = {
 
 // Approval types (Section A)
 export const APPROVAL_TYPES = [
-  { id: 'hierarchy', label: 'Duyệt Phân cấp (Hierarchy)' },
-  { id: 'role', label: 'Duyệt theo Vai trò (Role-based)' },
-  { id: 'specific', label: 'Chỉ định Đích danh (Specific User)' },
+  { id: 'hierarchy', label: 'Duyệt Phân cấp' },
+  { id: 'chain', label: 'Duyệt theo Chuỗi quản lý (Động)' },
+  { id: 'role', label: 'Duyệt theo Vai trò' },
+  { id: 'specific', label: 'Chỉ định Đích danh' },
 ];
 
 // Multi-approver rules (Section B)
 export const MULTI_RULES = [
   { id: 'sequential', label: 'Duyệt tuần tự', desc: 'Duyệt lần lượt từng người' },
-  { id: 'and', label: 'Duyệt song song - Đồng ý tất cả (AND)', desc: 'Yêu cầu tất cả phê duyệt' },
-  { id: 'or', label: 'Duyệt song song - Chỉ cần 1 người (OR)', desc: 'Chỉ cần 1 người phê duyệt' },
+  { id: 'and', label: 'Duyệt song song - Đồng ý tất cả', desc: 'Yêu cầu tất cả phê duyệt' },
+  { id: 'or', label: 'Duyệt song song - Chỉ cần 1 người', desc: 'Chỉ cần 1 người phê duyệt' },
 ];
 
 // Initial workflow steps for "Đơn xin nghỉ phép"
@@ -72,7 +73,7 @@ export const INITIAL_WORKFLOW = [
     id: 's1',
     name: 'Trưởng phòng duyệt',
     approvalType: 'hierarchy',
-    hierarchyOption: 'direct',
+    hierarchyOption: 'manager',
     role: 'HR Admin',
     specificUser: 'Nguyễn Văn An',
     multiRule: 'sequential',
@@ -123,4 +124,4 @@ export const TIME_RULES = [
 ];
 
 export const SPECIFIC_USERS = ['Nguyễn Văn An', 'Trần Thị Bình', 'Lê Hải Dương', 'Phạm Văn E', 'Hoàng Thị Phương'];
-export const APPROVAL_ROLES = ['HR Admin', 'Kế toán trưởng', 'Trưởng phòng CSKH', 'Giám đốc khối'];
+export const APPROVAL_ROLES = ['HR Admin', 'Kế toán trưởng', 'Kế toán thanh toán', 'Hành chính văn phòng', 'Pháp chế (Legal)', 'Trưởng phòng CSKH', 'Giám đốc khối', 'Ban Giám đốc'];

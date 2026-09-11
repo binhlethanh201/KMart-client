@@ -10,16 +10,24 @@ const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1
 // Create Request modal. Submits to the global context (createRequest).
 // The approval preview is derived from the selected request type.
 export default function CreateRequestModal({ onClose }) {
-  const { createRequest } = useApproval();
+  const { createRequest, formFields } = useApproval();
+  
+  const availableTypes = Object.keys(formFields);
+  const initialType = availableTypes[0] || 'Khác';
+  
   const [form, setForm] = useState({
-    type: REQUEST_TYPES[0],
+    type: initialType,
     title: '',
-    startTime: '',
-    endTime: '',
-    reason: '',
-    impact: 'Không ảnh hưởng',
-    attachment: null,
+    dynamic: {}
   });
+
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const setDynamic = (label, val) => setForm((f) => ({
+    ...f,
+    dynamic: { ...f.dynamic, [label]: val }
+  }));
+
+  const currentFields = formFields[form.type] || [];
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -27,13 +35,21 @@ export default function CreateRequestModal({ onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  // Reset dynamic fields when type changes
+  useEffect(() => {
+    setForm(f => ({ ...f, dynamic: {} }));
+  }, [form.type]);
+
   const chain = useMemo(() => WORKFLOW_BY_TYPE[form.type] || ['u_tvql', 'u_lhtl'], [form.type]);
 
   const submit = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return;
-    createRequest({ ...form, title: form.title.trim() });
+    createRequest({ 
+      title: form.title.trim(), 
+      type: form.type, 
+      ...form.dynamic 
+    });
     onClose();
   };
 
@@ -66,7 +82,7 @@ export default function CreateRequestModal({ onClose }) {
           <div className="flex flex-col gap-2">
             <label className={labelCls}>Loại Đề Xuất</label>
             <select className={fieldCls} value={form.type} onChange={set('type')}>
-              {REQUEST_TYPES.map((t) => (
+              {availableTypes.map((t) => (
                 <option key={t}>{t}</option>
               ))}
             </select>
@@ -75,46 +91,103 @@ export default function CreateRequestModal({ onClose }) {
             <label className={labelCls}>Tiêu đề đề xuất</label>
             <input className={fieldCls} value={form.title} onChange={set('title')} placeholder="Nhập tiêu đề..." type="text" required />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className={labelCls}>Thời gian bắt đầu</label>
-              <input className={fieldCls} value={form.startTime} onChange={set('startTime')} placeholder="26/08/2026 14:00" type="text" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className={labelCls}>Thời gian kết thúc</label>
-              <input className={fieldCls} value={form.endTime} onChange={set('endTime')} placeholder="26/08/2026 17:30" type="text" />
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className={labelCls}>Lý do xin đề xuất</label>
-            <textarea
-              className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
-              value={form.reason}
-              onChange={set('reason')}
-              placeholder="Nhập lý do chi tiết..."
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className={labelCls}>Có ảnh hưởng đến công việc không?</label>
-            <div className="flex gap-6 flex-wrap">
-              {['Không ảnh hưởng', 'Có - Đã bàn giao', 'Chưa bàn giao'].map((opt) => (
-                <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                  <input className="text-primary focus:ring-primary border-outline-variant h-4 w-4" name="impact" type="radio" checked={form.impact === opt} onChange={() => setForm((f) => ({ ...f, impact: opt }))} />
-                  <span className="text-sm text-on-surface">{opt}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className={labelCls}>Tài liệu đính kèm</label>
-            <div className="border-2 border-dashed border-outline-variant rounded-lg p-5 flex flex-col items-center justify-center bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer group">
-              <span className="material-symbols-outlined text-outline text-3xl group-hover:text-primary transition-colors mb-1">cloud_upload</span>
-              <p className="text-sm text-on-surface mb-1">
-                Kéo thả file vào đây hoặc <span className="text-primary font-medium">Chọn file</span>
-              </p>
-              <p className="text-xs text-secondary">Hỗ trợ: PDF, DOCX, JPG, PNG (Max 10MB)</p>
-            </div>
-          </div>
+
+          {/* Dynamic Fields */}
+          {currentFields.map((f) => {
+            if (f.type === 'Ngày') {
+              const inputType = f.displayStyle === 'date' ? 'date' : f.displayStyle === 'time' ? 'time' : 'datetime-local';
+              return (
+                <div key={f.id} className="flex flex-col gap-2">
+                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
+                  <input className={fieldCls} type={inputType} required={f.required} value={form.dynamic[f.label] || ''} onChange={(e) => setDynamic(f.label, e.target.value)} />
+                </div>
+              );
+            }
+            if (f.type === 'Văn bản') {
+              return (
+                <div key={f.id} className="flex flex-col gap-2">
+                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
+                  <textarea
+                    className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
+                    required={f.required}
+                    value={form.dynamic[f.label] || ''}
+                    onChange={(e) => setDynamic(f.label, e.target.value)}
+                    placeholder="Nhập thông tin..."
+                  />
+                </div>
+              );
+            }
+            if (f.type === 'Lựa chọn') {
+              if (f.displayStyle === 'radio') {
+                return (
+                  <div key={f.id} className="flex flex-col gap-2">
+                    <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
+                    <div className="flex gap-6 flex-wrap mt-1">
+                      {f.options?.map((opt) => (
+                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                          <input className="text-primary focus:ring-primary border-outline-variant h-4 w-4" name={f.id} type="radio" required={f.required} checked={form.dynamic[f.label] === opt} onChange={() => setDynamic(f.label, opt)} />
+                          <span className="text-sm text-on-surface">{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              } else if (f.displayStyle === 'checkbox') {
+                return (
+                  <div key={f.id} className="flex flex-col gap-2">
+                    <label className={labelCls}>{f.label}</label>
+                    <div className="flex gap-6 flex-wrap mt-1">
+                      {f.options?.map((opt) => {
+                        const arr = form.dynamic[f.label] || [];
+                        const isChecked = arr.includes(opt);
+                        return (
+                          <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              className="text-primary focus:ring-primary rounded border-outline-variant h-4 w-4"
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const newArr = e.target.checked ? [...arr, opt] : arr.filter(x => x !== opt);
+                                setDynamic(f.label, newArr);
+                              }}
+                            />
+                            <span className="text-sm text-on-surface">{opt}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              } else {
+                return (
+                  <div key={f.id} className="flex flex-col gap-2">
+                    <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
+                    <select className={fieldCls} required={f.required} value={form.dynamic[f.label] || ''} onChange={(e) => setDynamic(f.label, e.target.value)}>
+                      <option value="">-- Chọn --</option>
+                      {f.options?.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              }
+            }
+            if (f.type === 'Tải file') {
+              return (
+                <div key={f.id} className="flex flex-col gap-2">
+                  <label className={labelCls}>{f.label}</label>
+                  <div className="border-2 border-dashed border-outline-variant rounded-lg p-5 flex flex-col items-center justify-center bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer group">
+                    <span className="material-symbols-outlined text-outline text-3xl group-hover:text-primary transition-colors mb-1">cloud_upload</span>
+                    <p className="text-sm text-on-surface mb-1">
+                      Kéo thả file vào đây hoặc <span className="text-primary font-medium">Chọn file</span>
+                    </p>
+                    <p className="text-xs text-secondary">Hỗ trợ: PDF, DOCX, JPG, PNG (Max 10MB)</p>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })}
 
           {/* Dynamic approval preview */}
           <div className="bg-surface-container-low rounded-lg p-4 border border-outline-variant/30">

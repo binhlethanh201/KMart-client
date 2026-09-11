@@ -8,7 +8,6 @@ import useDocumentTitle from '../../../hooks/useDocumentTitle';
 const TABS = [
   { id: 'requests', label: 'Danh sách Đơn từ', icon: 'description' },
   { id: 'staff', label: 'Danh sách Nhân sự', icon: 'group' },
-  { id: 'stats', label: 'Thống kê nhanh', icon: 'insights' },
 ];
 
 const selectCls =
@@ -75,22 +74,7 @@ export default function DepartmentDetail() {
     pushToast(`Đã duyệt nhanh ${r.id}`, 'success');
   };
 
-  // Quick stats (Tab 3)
-  const stats = deptRequests.reduce(
-    (acc, r) => {
-      acc.total += 1;
-      if (r.status === 'approved') acc.approved += 1;
-      else if (r.status === 'pending') acc.pending += 1;
-      else acc.rejected += 1;
-      return acc;
-    },
-    { total: 0, approved: 0, pending: 0, rejected: 0 }
-  );
-  const byType = REQUEST_TYPES.map((t) => ({
-    type: t,
-    count: deptRequests.filter((r) => r.type === t).length,
-  })).filter((x) => x.count > 0);
-  const maxType = Math.max(1, ...byType.map((x) => x.count));
+
 
   return (
     <div className="flex-1 overflow-y-auto min-h-0 bg-surface">
@@ -346,65 +330,7 @@ export default function DepartmentDetail() {
             </section>
           )}
 
-          {/* TAB 3: Quick Stats */}
-          {tab === 'stats' && (
-            <section className="space-y-6">
-              {/* Summary cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { label: 'Tổng đơn từ', value: stats.total, icon: 'inbox', cls: 'bg-primary/10 text-primary' },
-                  { label: 'Đã phê duyệt', value: stats.approved, icon: 'task_alt', cls: 'bg-success-container text-on-success-container' },
-                  { label: 'Đang chờ', value: stats.pending, icon: 'schedule', cls: 'bg-warning-container text-on-warning-container' },
-                  { label: 'Từ chối / Trả về', value: stats.rejected, icon: 'block', cls: 'bg-error-container text-on-error-container' },
-                ].map((c) => (
-                  <div
-                    key={c.label}
-                    className="bg-surface border border-outline-variant rounded-lg shadow-sm p-4 flex items-center gap-4"
-                  >
-                    <div className={`w-11 h-11 rounded-lg flex items-center justify-center ${c.cls}`}>
-                      <span className="material-symbols-outlined text-[22px]">{c.icon}</span>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-on-surface leading-none">{c.value}</p>
-                      <p className="text-xs text-secondary mt-1">{c.label}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
 
-              {/* Breakdown by type */}
-              <div className="bg-surface border border-outline-variant rounded-lg shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-outline-variant bg-surface-container-low flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px] text-secondary">bar_chart</span>
-                  <h2 className="text-sm text-on-surface uppercase tracking-wide font-semibold">
-                    Phân bổ theo loại đơn
-                  </h2>
-                </div>
-                <div className="p-4 space-y-3">
-                  {byType.length === 0 ? (
-                    <p className="text-sm text-secondary italic py-6 text-center">
-                      Phòng ban chưa có đơn từ nào.
-                    </p>
-                  ) : (
-                    byType.map((x) => (
-                      <div key={x.type}>
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm text-on-surface-variant">{x.type}</span>
-                          <span className="text-sm font-medium text-on-surface">{x.count}</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-surface-container-high overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full transition-all"
-                            style={{ width: `${(x.count / maxType) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </section>
-          )}
         </div>
       </div>
     </div>

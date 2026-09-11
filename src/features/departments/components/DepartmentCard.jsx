@@ -18,9 +18,12 @@ export default function DepartmentCard({
         <div className="w-12 h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
           <span className="material-symbols-outlined text-2xl">{icon}</span>
         </div>
-        <span className="bg-success-container text-on-success-container text-[11px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
-          {status}
-        </span>
+        <div 
+          className="flex items-center justify-center w-7 h-7 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-help"
+          title={status.toLowerCase() === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+        >
+          <span className={`w-2.5 h-2.5 rounded-full ${status.toLowerCase() === 'active' ? 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-error shadow-[0_0_8px_rgba(239,68,68,0.8)]'}`}></span>
+        </div>
       </div>
       
       <div className="mb-4">
@@ -55,7 +58,7 @@ export default function DepartmentCard({
             </div>
           )}
         </div>
-        <span className="text-sm font-medium text-on-surface-variant">{memberCount} member</span>
+        <span className="text-sm font-medium text-on-surface-variant">{memberCount} nhân sự</span>
       </div>
       
       <Link

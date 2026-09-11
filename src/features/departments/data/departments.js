@@ -56,7 +56,7 @@ export const DEPARTMENTS = [
   {
     id: 4,
     icon: 'storefront',
-    status: 'Active',
+    status: 'Inactive',
     name: 'Kmart Siêu thị Trung tâm',
     code: 'ST-001',
     leaders: [
