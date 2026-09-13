@@ -153,6 +153,83 @@ function SequentialOrderList({ role, order, onChange }) {
   );
 }
 
+function UserSelect({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  
+  const selectedEmp = EMPLOYEES.find(e => e.name === value || e.id === value);
+  const filtered = EMPLOYEES.filter(e => 
+    e.name.toLowerCase().includes(search.toLowerCase()) || 
+    e.id.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className={`relative w-full max-w-md ${isOpen ? 'z-50' : 'z-10'}`}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 flex items-center justify-between cursor-pointer hover:border-primary transition-colors"
+      >
+        {selectedEmp ? (
+          <div className="flex items-center gap-2">
+            <img src={selectedEmp.avatar} alt={selectedEmp.name} className="w-6 h-6 rounded-full object-cover" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-on-surface leading-tight">{selectedEmp.name}</span>
+              <span className="text-[10px] text-secondary leading-tight">{selectedEmp.id} - {selectedEmp.role}</span>
+            </div>
+          </div>
+        ) : (
+          <span className="text-sm text-secondary">Chọn nhân sự...</span>
+        )}
+        <span className="material-symbols-outlined text-outline">expand_more</span>
+      </div>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-outline-variant rounded-md shadow-lg z-50 overflow-hidden flex flex-col">
+            <div className="p-2 border-b border-outline-variant/50 flex items-center gap-2 bg-surface-container-lowest">
+              <span className="material-symbols-outlined text-secondary text-[16px]">search</span>
+              <input 
+                type="text" 
+                autoFocus
+                placeholder="Tìm tên hoặc mã nhân sự..." 
+                className="flex-1 bg-transparent text-xs text-on-surface outline-none"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="max-h-[200px] overflow-y-auto p-1.5 flex flex-col gap-1 relative z-50">
+              {filtered.length === 0 ? (
+                <div className="text-xs text-secondary text-center py-4 italic">Không tìm thấy nhân sự</div>
+              ) : (
+                filtered.map(e => (
+                  <button
+                    key={e.id}
+                    onClick={() => {
+                      onChange(e.name);
+                      setIsOpen(false);
+                      setSearch('');
+                    }}
+                    className={`flex items-center gap-2.5 p-2 rounded text-left transition-colors cursor-pointer relative z-50 ${
+                      value === e.name ? 'bg-primary-container/40' : 'hover:bg-surface-container-low'
+                    }`}
+                  >
+                    <img src={e.avatar} alt={e.name} className="w-7 h-7 rounded-full object-cover border border-outline-variant/50" />
+                    <div className="min-w-0">
+                      <div className={`text-xs font-semibold truncate ${value === e.name ? 'text-primary' : 'text-on-surface'}`}>{e.name}</div>
+                      <div className="text-[10px] text-secondary truncate">{e.id} • {e.role}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function RadioCard({ checked, onClick, title, desc, name }) {
   return (
     <label
@@ -306,11 +383,10 @@ export default function WorkflowTab() {
                         </select>
                       )}
                       {step.approvalType === 'specific' && (
-                        <select className={`${selectCls} max-w-md`} value={step.specificUser} onChange={(e) => updateStep(step.id, { specificUser: e.target.value })}>
-                          {SPECIFIC_USERS.map((u) => (
-                            <option key={u}>{u}</option>
-                          ))}
-                        </select>
+                        <UserSelect 
+                          value={step.specificUser} 
+                          onChange={(val) => updateStep(step.id, { specificUser: val })} 
+                        />
                       )}
                       {step.approvalType === 'chain' && (
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-primary-container/10 p-3 rounded-md border border-primary/20">

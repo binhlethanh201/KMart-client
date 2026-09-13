@@ -249,6 +249,38 @@ export function ApprovalSystemProvider({ children }) {
     [departments, pushToast]
   );
 
+  const updateDepartment = useCallback(
+    (id, updates) => {
+      setDepartments((list) =>
+        list.map((d) => (d.id === id ? { ...d, ...updates } : d))
+      );
+      pushToast('Cập nhật phòng ban thành công!', 'success');
+    },
+    [pushToast]
+  );
+
+  const deleteDepartment = useCallback(
+    (id) => {
+      setDepartments((list) => list.filter((d) => d.id !== id));
+      pushToast('Đã xóa phòng ban', 'success');
+    },
+    [pushToast]
+  );
+
+  const toggleDepartmentStatus = useCallback(
+    (id) => {
+      const dept = departments.find(d => d.id === id);
+      if (dept) {
+        const newStatus = dept.status.toLowerCase() === 'active' ? 'Inactive' : 'Active';
+        setDepartments((list) =>
+          list.map((d) => (d.id === id ? { ...d, status: newStatus } : d))
+        );
+        pushToast(`Đã ${newStatus === 'Active' ? 'mở' : 'ngừng'} hoạt động phòng ban`, 'success');
+      }
+    },
+    [departments, pushToast]
+  );
+
   // Does the current user hold the pending step for this request?
   const canApprove = useCallback(
     (r) => {
@@ -275,13 +307,16 @@ export function ApprovalSystemProvider({ children }) {
       departments,
       employees,
       addDepartment,
+      updateDepartment,
+      deleteDepartment,
+      toggleDepartmentStatus,
       formFields,
       setFormFields,
       toasts,
       pushToast,
       dismissToast,
     }),
-    [currentUser, currentUserId, requests, createRequest, approveRequest, rejectRequest, addComment, simulateTimeout, canApprove, departments, employees, addDepartment, formFields, toasts, pushToast, dismissToast]
+    [currentUser, currentUserId, requests, createRequest, approveRequest, rejectRequest, addComment, simulateTimeout, canApprove, departments, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, toasts, pushToast, dismissToast]
   );
 
   return <ApprovalSystemContext.Provider value={value}>{children}</ApprovalSystemContext.Provider>;

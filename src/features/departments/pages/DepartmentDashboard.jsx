@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import DepartmentCard from '../components/DepartmentCard';
 import AddDepartmentModal from '../components/AddDepartmentModal';
+import EditDepartmentModal from '../components/EditDepartmentModal';
 import Pagination from '../../../components/Pagination';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useApproval } from '../../../context/useApproval';
 
 export default function DepartmentDashboard() {
   useDocumentTitle('Cơ cấu tổ chức & Siêu thị');
-  const { departments } = useApproval();
+  const { departments, toggleDepartmentStatus, deleteDepartment } = useApproval();
   const [modalOpen, setModalOpen] = useState(false);
+  const [editDept, setEditDept] = useState(null);
 
   return (
     <>
@@ -70,6 +72,13 @@ export default function DepartmentDashboard() {
               members={dept.members}
               extraCount={dept.extraCount}
               memberCount={dept.memberCount}
+              onEdit={() => setEditDept(dept)}
+              onToggleStatus={() => toggleDepartmentStatus(dept.id)}
+              onDelete={() => {
+                if (window.confirm(`Bạn có chắc muốn xóa đơn vị "${dept.name}" không? Thao tác này không thể hoàn tác.`)) {
+                  deleteDepartment(dept.id);
+                }
+              }}
             />
           ))}
         </div>
@@ -82,6 +91,7 @@ export default function DepartmentDashboard() {
     </div>
 
       {modalOpen && <AddDepartmentModal onClose={() => setModalOpen(false)} />}
+      {editDept && <EditDepartmentModal department={editDept} onClose={() => setEditDept(null)} />}
     </>
   );
 }
