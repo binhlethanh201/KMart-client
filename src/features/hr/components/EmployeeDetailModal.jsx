@@ -59,9 +59,11 @@ export default function EmployeeDetailModal({ employee, onClose }) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Trạng thái</label>
-              <div className="bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50 flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${employee.status === 'active' ? 'bg-success' : 'bg-outline'}`}></span>
-                <span className="text-sm text-on-surface">{employee.status === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}</span>
+              <div className="flex items-center mt-2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${employee.status === 'active' ? 'bg-[#E8F8EE] text-[#037847]' : 'bg-[#F1F5F9] text-[#475569]'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${employee.status === 'active' ? 'bg-[#037847]' : 'bg-[#64748B]'}`}></span>
+                  {employee.status === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                </span>
               </div>
             </div>
           </div>

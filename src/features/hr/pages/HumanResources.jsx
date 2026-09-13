@@ -16,7 +16,7 @@ const selectCls =
 
 function Badge({ cls, children }) {
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold whitespace-nowrap ${cls}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium whitespace-nowrap ${cls}`}>
       {children}
     </span>
   );

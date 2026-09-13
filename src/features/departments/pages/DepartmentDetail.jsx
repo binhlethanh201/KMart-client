@@ -14,10 +14,10 @@ const selectCls =
   'bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
 
 // Staff status pill
-const staffStatus = (s) =>
+const staffStatusCls = (s) =>
   s === 'active'
-    ? 'bg-success-container text-on-success-container'
-    : 'bg-surface-container-high text-secondary';
+    ? 'bg-emerald-50 text-emerald-700'
+    : 'bg-slate-100 text-slate-600';
 
 export default function DepartmentDetail() {
   const { id } = useParams();
@@ -97,8 +97,19 @@ export default function DepartmentDetail() {
                 <div>
                   <div className="flex items-center gap-3 flex-wrap mb-1">
                     <h1 className="font-display-lg text-on-surface">{dept.name}</h1>
-                    <span className="bg-success-container text-on-success-container text-[11px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
-                      {dept.status}
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${
+                        dept.status === 'Active'
+                          ? 'bg-[#E8F8EE] text-[#037847]'
+                          : 'bg-[#F1F5F9] text-[#475569]'
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          dept.status === 'Active' ? 'bg-[#037847]' : 'bg-[#64748B]'
+                        }`}
+                      ></span>
+                      {dept.status === 'Active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
                     </span>
                   </div>
                   <p className="text-sm text-secondary">
@@ -241,9 +252,21 @@ export default function DepartmentDetail() {
                             <td className="py-3 px-4 text-secondary whitespace-nowrap">{stepLabel}</td>
                             <td className="py-3 px-4 whitespace-nowrap">
                               <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] uppercase tracking-wide font-bold border ${meta?.badge}`}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${
+                                  r.status === 'pending'
+                                    ? 'bg-[#FEF3C7] text-[#B45309]'
+                                    : r.status === 'approved'
+                                    ? 'bg-[#E8F8EE] text-[#037847]'
+                                    : 'bg-[#FEE2E2] text-[#B91C1C]'
+                                }`}
                               >
-                                <span className={`w-1.5 h-1.5 rounded-full ${meta?.dot}`}></span>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  r.status === 'pending'
+                                    ? 'bg-[#D97706]'
+                                    : r.status === 'approved'
+                                    ? 'bg-[#037847]'
+                                    : 'bg-[#DC2626]'
+                                }`}></span>
                                 {meta?.label}
                               </span>
                             </td>
@@ -309,12 +332,14 @@ export default function DepartmentDetail() {
                         <td className="py-3 px-4 text-secondary whitespace-nowrap">{s.email}</td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] uppercase tracking-wide font-bold ${staffStatus(
-                              s.status
-                            )}`}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${
+                              s.status === 'active'
+                                ? 'bg-[#E8F8EE] text-[#037847]'
+                                : 'bg-[#F1F5F9] text-[#475569]'
+                            }`}
                           >
                             <span
-                              className={`w-1.5 h-1.5 rounded-full ${s.status === 'active' ? 'bg-success' : 'bg-outline'}`}
+                              className={`w-1.5 h-1.5 rounded-full ${s.status === 'active' ? 'bg-[#037847]' : 'bg-[#64748B]'}`}
                             ></span>
                             {s.status === 'active' ? 'Đang làm' : 'Nghỉ'}
                           </span>

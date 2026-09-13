@@ -25,16 +25,16 @@ export const POSITIONS = [
 export const SYSTEM_ROLES = ['Admin', 'HR Admin', 'Trưởng phòng', 'Tổng Giám đốc', 'Nhân viên'];
 
 export const ROLE_STYLES = {
-  Admin: { dot: 'bg-purple-500', cls: 'text-purple-700' },
-  'HR Admin': { dot: 'bg-primary', cls: 'text-primary' },
-  'Trưởng phòng': { dot: 'bg-success', cls: 'text-success' },
-  'Tổng Giám đốc': { dot: 'bg-warning', cls: 'text-warning' },
-  'Nhân viên': { dot: 'bg-outline', cls: 'text-secondary' },
+  Admin: { dot: 'bg-purple-600', cls: 'bg-purple-50 text-purple-700' },
+  'HR Admin': { dot: 'bg-blue-600', cls: 'bg-blue-50 text-blue-700' },
+  'Trưởng phòng': { dot: 'bg-[#037847]', cls: 'bg-[#E8F8EE] text-[#037847]' },
+  'Tổng Giám đốc': { dot: 'bg-[#D97706]', cls: 'bg-[#FEF3C7] text-[#B45309]' },
+  'Nhân viên': { dot: 'bg-[#64748B]', cls: 'bg-[#F1F5F9] text-[#475569]' },
 };
 
 export const STATUS_STYLES = {
-  active: { label: 'Đang hoạt động', dot: 'bg-success', cls: 'bg-success-container text-on-success-container' },
-  inactive: { label: 'Ngừng hoạt động', dot: 'bg-outline', cls: 'bg-surface-container-high text-secondary' },
+  active: { label: 'Đang hoạt động', dot: 'bg-[#037847]', cls: 'bg-[#E8F8EE] text-[#037847]' },
+  inactive: { label: 'Ngừng hoạt động', dot: 'bg-[#64748B]', cls: 'bg-[#F1F5F9] text-[#475569]' },
 };
 
 const A = (name) => `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
