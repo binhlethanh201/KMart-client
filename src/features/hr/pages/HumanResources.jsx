@@ -118,19 +118,19 @@ export default function HumanResources() {
           </div>
           <div className="flex flex-wrap gap-3">
             <select className={selectCls} value={dept} onChange={(e) => setDept(e.target.value)}>
-              <option>Tất cả</option>
+              <option value="Tất cả">Tất cả phòng ban</option>
               {DEPARTMENTS.map((d) => (
-                <option key={d}>{d}</option>
+                <option key={d} value={d}>{d}</option>
               ))}
             </select>
             <select className={selectCls} value={role} onChange={(e) => setRole(e.target.value)}>
-              <option>Tất cả</option>
+              <option value="Tất cả">Tất cả vai trò</option>
               {SYSTEM_ROLES.map((r) => (
-                <option key={r}>{r}</option>
+                <option key={r} value={r}>{r}</option>
               ))}
             </select>
             <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option>Tất cả</option>
+              <option value="Tất cả">Tất cả trạng thái</option>
               <option value="active">Đang hoạt động</option>
               <option value="inactive">Ngừng hoạt động</option>
             </select>
