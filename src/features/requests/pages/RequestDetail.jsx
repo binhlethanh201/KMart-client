@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import RejectReasonModal from '../components/RejectReasonModal';
+import SupplementReasonModal from '../components/SupplementReasonModal';
 import UserInfoModal from '../components/UserInfoModal';
 import { STATUS_META, USERS, STEP_ROLE } from '../data/seed';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
@@ -25,6 +26,7 @@ export default function RequestDetail() {
   const request = requests.find((r) => r.id === id);
 
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [supplementOpen, setSupplementOpen] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const [comment, setComment] = useState('');
   const commentRef = useRef(null);
@@ -52,10 +54,6 @@ export default function RequestDetail() {
     if (!comment.trim()) return;
     addComment(request.id, comment);
     setComment('');
-  };
-  const requestMoreInfo = () => {
-    addComment(request.id, '[Yêu cầu bổ sung] Vui lòng bổ sung thông tin / tài liệu để tiếp tục xét duyệt.');
-    commentRef.current?.focus();
   };
 
   return (
@@ -110,7 +108,7 @@ export default function RequestDetail() {
             </button>
             <div className="w-px h-6 bg-outline-variant mx-1"></div>
             <button
-              onClick={requestMoreInfo}
+              onClick={() => setSupplementOpen(true)}
               className="px-3 py-1.5 rounded text-sm font-medium border border-outline-variant text-on-surface hover:bg-surface-container transition-colors flex items-center gap-2 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">edit_note</span>
@@ -385,6 +383,17 @@ export default function RequestDetail() {
           onConfirm={(reason) => {
             rejectRequest(request.id, reason);
             setRejectOpen(false);
+          }}
+        />
+      )}
+
+      {supplementOpen && (
+        <SupplementReasonModal
+          requestId={request.id}
+          onClose={() => setSupplementOpen(false)}
+          onConfirm={(reason) => {
+            addComment(request.id, `[Yêu cầu bổ sung] ${reason}`);
+            setSupplementOpen(false);
           }}
         />
       )}
