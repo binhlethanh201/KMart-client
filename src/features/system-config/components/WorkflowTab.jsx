@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { FORM_TYPES, INITIAL_WORKFLOW, APPROVAL_TYPES, MULTI_RULES, APPROVAL_ROLES, SPECIFIC_USERS } from '../data/mockData';
+import { EMPLOYEES } from '../../hr/data/mockData';
 
 const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
@@ -10,6 +11,147 @@ const HIERARCHY_OPTIONS = [
   { id: 'manager', label: 'Trưởng phòng' },
   { id: 'higher', label: 'Giám đốc khối / Ban giám đốc' },
 ];
+
+function SequentialOrderList({ role, order, onChange }) {
+  const currentIds = useMemo(() => {
+    if (Array.isArray(order)) return order;
+    return EMPLOYEES.filter(e => e.role === role).map(e => e.id);
+  }, [role, order]);
+
+  const displayList = useMemo(() => {
+    return currentIds.map(id => EMPLOYEES.find(e => e.id === id)).filter(Boolean);
+  }, [currentIds]);
+
+  const [draggedIdx, setDraggedIdx] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleDragStart = (e, idx) => {
+    setDraggedIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDrop = (e, dropIdx) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === dropIdx) return;
+    const newOrder = [...currentIds];
+    const [movedItem] = newOrder.splice(draggedIdx, 1);
+    newOrder.splice(dropIdx, 0, movedItem);
+    onChange(newOrder);
+    setDraggedIdx(null);
+  };
+
+  const removeUser = (idx) => {
+    const newOrder = [...currentIds];
+    newOrder.splice(idx, 1);
+    onChange(newOrder);
+  };
+
+  const addSpecificUser = (id) => {
+    onChange([...currentIds, id]);
+    setShowAdd(false);
+    setSearchQuery('');
+  };
+
+  const availableToAdd = EMPLOYEES.filter(e => !currentIds.includes(e.id));
+  const filteredToAdd = availableToAdd.filter(e => 
+    e.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    e.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="mt-4 bg-surface-container-lowest border border-outline-variant rounded-md p-3 ml-8">
+      <div className="text-xs font-semibold text-on-surface mb-3 flex items-center justify-between">
+        <span>Danh sách người duyệt tuần tự</span>
+        <span className="text-[10px] text-secondary font-normal px-2 py-0.5 bg-surface-container rounded-full">{displayList.length} nhân sự</span>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {displayList.length === 0 && (
+          <div className="text-xs text-secondary italic py-2">Chưa có người duyệt nào.</div>
+        )}
+        {displayList.map((emp, idx) => (
+          <div 
+            key={emp.id} 
+            draggable
+            onDragStart={(e) => handleDragStart(e, idx)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleDrop(e, idx)}
+            className={`flex items-center justify-between bg-surface border rounded p-2 shadow-sm transition-all ${
+              draggedIdx === idx ? 'opacity-50 border-primary border-dashed' : 'border-outline-variant hover:border-outline cursor-grab active:cursor-grabbing'
+            }`}
+          >
+            <div className="flex items-center gap-2 pointer-events-none">
+              <span className="material-symbols-outlined text-outline text-[18px]">drag_indicator</span>
+              <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[11px] font-bold">
+                {idx + 1}
+              </div>
+              <img src={emp.avatar} alt={emp.name} className="w-6 h-6 rounded-full object-cover ml-1" />
+              <div className="text-sm text-on-surface font-medium">{emp.name}</div>
+              <div className="text-[11px] text-secondary">({emp.id})</div>
+            </div>
+            <button
+              onClick={() => removeUser(idx)}
+              className="text-outline hover:text-error hover:bg-error-container/30 p-1 rounded transition-colors cursor-pointer"
+              title="Loại bỏ"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+        ))}
+        
+        {/* Searchable Add User Dropdown */}
+        {!showAdd ? (
+          <button
+            onClick={() => setShowAdd(true)}
+            className="mt-1 flex items-center gap-1.5 text-xs font-medium text-primary hover:bg-primary-container/30 w-fit px-2 py-1.5 rounded transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            Thêm người duyệt
+          </button>
+        ) : (
+          <div className="mt-1 bg-surface border border-outline-variant rounded-md shadow-lg overflow-hidden flex flex-col relative z-10 w-full sm:w-80">
+            <div className="p-2 border-b border-outline-variant/50 flex items-center gap-2 bg-surface-container-lowest">
+              <span className="material-symbols-outlined text-secondary text-[16px]">search</span>
+              <input 
+                type="text" 
+                autoFocus
+                placeholder="Tìm tên hoặc mã nhân sự..." 
+                className="flex-1 bg-transparent text-xs text-on-surface outline-none"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button
+                onClick={() => { setShowAdd(false); setSearchQuery(''); }}
+                className="text-secondary hover:text-error p-0.5 rounded transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            </div>
+            <div className="max-h-[180px] overflow-y-auto p-1.5 flex flex-col gap-1">
+              {filteredToAdd.length === 0 ? (
+                <div className="text-xs text-secondary text-center py-4 italic">Không tìm thấy nhân sự nào</div>
+              ) : (
+                filteredToAdd.map(e => (
+                  <button
+                    key={e.id}
+                    onClick={() => addSpecificUser(e.id)}
+                    className="flex items-center gap-2.5 p-2 hover:bg-surface-container-low rounded text-left transition-colors cursor-pointer"
+                  >
+                    <img src={e.avatar} alt={e.name} className="w-7 h-7 rounded-full object-cover border border-outline-variant/50" />
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-on-surface truncate">{e.name}</div>
+                      <div className="text-[10px] text-secondary truncate">{e.id} • {e.role}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function RadioCard({ checked, onClick, title, desc, name }) {
   return (
@@ -212,6 +354,14 @@ export default function WorkflowTab() {
                           </label>
                         ))}
                       </div>
+                      
+                      {step.multiRule === 'sequential' && (
+                        <SequentialOrderList 
+                          role={step.role} 
+                          order={step.sequentialOrder} 
+                          onChange={(newOrder) => updateStep(step.id, { sequentialOrder: newOrder })} 
+                        />
+                      )}
                     </div>
                   )}
 
