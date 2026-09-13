@@ -122,35 +122,23 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
               )}
             </div>
 
-            {/* Department pills */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <button
-                onClick={() => setDepartmentFilter(null)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer border ${
-                  departmentFilter === null
-                    ? 'bg-primary text-on-primary border-primary'
-                    : 'bg-surface border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-                }`}
+            {/* Department dropdown */}
+            <div className="relative min-w-[200px]">
+              <select
+                value={departmentFilter || ''}
+                onChange={(e) => setDepartmentFilter(e.target.value ? Number(e.target.value) : null)}
+                className="w-full pl-3 pr-8 py-2 bg-surface-container border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none transition-colors cursor-pointer"
               >
-                Tất cả phòng ban
-              </button>
-              {DEPARTMENTS.map((d) => {
-                const active = departmentFilter === d.id;
-                return (
-                  <button
-                    key={d.id}
-                    onClick={() => setDepartmentFilter(active ? null : d.id)}
-                    title={d.name}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer border ${
-                      active
-                        ? 'bg-primary text-on-primary border-primary'
-                        : 'bg-surface border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-                    }`}
-                  >
-                    {d.code}
-                  </button>
-                );
-              })}
+                <option value="">Tất cả phòng ban</option>
+                {DEPARTMENTS.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.code} - {d.name}
+                  </option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant pointer-events-none">
+                expand_more
+              </span>
             </div>
           </div>
 

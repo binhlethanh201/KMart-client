@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { REQUEST_TYPES, WORKFLOW_BY_TYPE, USERS } from '../data/seed';
+import { DEPARTMENTS } from '../../departments/data/departments';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
@@ -18,6 +19,7 @@ export default function CreateRequestModal({ onClose }) {
   const [form, setForm] = useState({
     type: initialType,
     title: '',
+    departments: [],
     dynamic: {}
   });
 
@@ -47,7 +49,8 @@ export default function CreateRequestModal({ onClose }) {
     if (!form.title.trim()) return;
     createRequest({ 
       title: form.title.trim(), 
-      type: form.type, 
+      type: form.type,
+      departments: form.departments,
       ...form.dynamic 
     });
     onClose();
@@ -86,6 +89,38 @@ export default function CreateRequestModal({ onClose }) {
                 <option key={t}>{t}</option>
               ))}
             </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className={labelCls}>Phòng ban liên quan</label>
+            <div className="flex gap-2.5 flex-wrap mt-0.5">
+              {DEPARTMENTS.map((d) => {
+                const isChecked = form.departments.includes(d.id);
+                return (
+                  <label 
+                    key={d.id} 
+                    className={`flex items-center gap-1.5 cursor-pointer border rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 select-none ${
+                      isChecked 
+                        ? 'bg-primary text-on-primary border-primary shadow-sm shadow-primary/20' 
+                        : 'bg-surface border-outline-variant text-on-surface-variant hover:border-outline hover:bg-surface-container-low hover:text-on-surface'
+                    }`}
+                  >
+                    <input
+                      className="sr-only"
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        const newArr = e.target.checked 
+                          ? [...form.departments, d.id] 
+                          : form.departments.filter(x => x !== d.id);
+                        setForm(f => ({ ...f, departments: newArr }));
+                      }}
+                    />
+                    {isChecked && <span className="material-symbols-outlined text-[16px] leading-none">check</span>}
+                    <span>{d.name}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             <label className={labelCls}>Tiêu đề đề xuất</label>
