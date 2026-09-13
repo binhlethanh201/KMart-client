@@ -17,7 +17,9 @@ export default function RequestCard({ request: r }) {
       className={`bg-surface p-4 rounded-lg shadow-sm border border-outline-variant hover:shadow hover:border-outline transition-all flex flex-col md:flex-row gap-4 md:items-center cursor-pointer relative overflow-hidden ${isRejected ? 'opacity-90' : ''}`}
     >
       {isActionable && <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning"></div>}
-      {r.status === 'pending' && !isActionable && <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning/40"></div>}
+      {!isActionable && r.status === 'pending' && <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning/40"></div>}
+      {r.status === 'approved' && <div className="absolute left-0 top-0 bottom-0 w-1 bg-success/40"></div>}
+      {(r.status === 'rejected' || r.status === 'returned_timeout') && <div className="absolute left-0 top-0 bottom-0 w-1 bg-error/40"></div>}
 
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <div className="w-10 h-10 rounded-md bg-surface-container flex items-center justify-center flex-shrink-0 border border-outline-variant/50">
