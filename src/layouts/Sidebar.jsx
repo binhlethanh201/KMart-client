@@ -158,6 +158,7 @@ export default function UnifiedSidebar({
 }) {
   const location = useLocation();
   const [openSubPanel, setOpenSubPanel] = useState(null); // 'requests' | null
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Tính số đơn chờ tôi duyệt trực tiếp từ context — luôn đồng bộ với trang
   const { requests, currentUserId } = useApproval();
@@ -189,47 +190,63 @@ export default function UnifiedSidebar({
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 transition-transform duration-300`}
       >
-        {/* ── Rail (240 px) ── */}
+        {/* ── Rail ── */}
         <nav
-          className="bg-[#0F172A] w-[240px] h-full flex-shrink-0 flex flex-col justify-between shadow-sm"
+          className={`relative bg-[#0F172A] ${isCollapsed ? 'w-[72px]' : 'w-[240px]'} h-full flex-shrink-0 flex flex-col justify-between shadow-sm transition-all duration-300`}
           id="sidebar"
         >
+          {/* Collapse Toggle Button - Premium Design */}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden md:flex absolute top-1/2 -right-3.5 -translate-y-1/2 w-7 h-7 bg-white text-slate-600 border border-slate-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-50 cursor-pointer hover:text-primary hover:bg-slate-50 hover:border-primary/20 transition-all group"
+            title={isCollapsed ? "Mở rộng" : "Thu gọn"}
+          >
+            <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
+              {isCollapsed ? 'chevron_right' : 'chevron_left'}
+            </span>
+          </button>
+
           <div>
             {/* User profile */}
             <Link
               to="/profile"
-              className="block px-4 py-3 border-b border-white/10 hover:bg-white/5 transition-colors"
+              className={`block ${isCollapsed ? 'px-2' : 'px-4'} py-3 border-b border-white/10 hover:bg-white/5 transition-colors`}
+              title={isCollapsed ? (currentUser?.name || 'Nguyễn Văn A') : undefined}
             >
-              <div className="flex items-center gap-3">
+              <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
                 <div className="relative shrink-0">
                   <img
                     alt="User avatar"
                     className="w-9 h-9 rounded-full object-cover"
                     src={
                       currentUser?.avatar ||
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuCJ6rf1wZ7pfErOiSFy34dN8pdPp_NfG1jg3EERXkZuWBj9jrdw_3FRbyyJ73mEm4Nvyazc3xQc3JDAt41BL-9Mus5LHkhAdeO_OtLnfV1OQC9FFOwjfI0BI7i18QHdLZSYCSlyGBA4TA0lk-HyBc2PEoLNPzXBW1qeDj7-R3zUvYsiwOSpU5-ccS53k4vPH9cS35WjkK1XgRDJ6dXYwmT-B92NiH5k4lr9iGXjmWIb9kiB9ejOdGB4DQ'
+                      'https://ui-avatars.com/api/?name=User&background=random&color=fff&size=128'
                     }
                   />
                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#0F172A]" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-white text-sm font-semibold truncate leading-tight">
-                    {currentUser?.name || 'Nguyễn Văn A'}
-                  </h2>
-                  <div className="flex flex-col gap-1 mt-1">
-                    <span className="text-xs text-slate-400 font-medium tracking-wide">Quản trị viên</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                      <span className="text-[11px] text-slate-500 font-medium">Trực tuyến</span>
+                {!isCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-white text-sm font-semibold truncate leading-tight">
+                      {currentUser?.name || 'Nguyễn Văn A'}
+                    </h2>
+                    <div className="flex flex-col gap-1 mt-1">
+                      <span className="text-xs text-slate-400 font-medium tracking-wide">Quản trị viên</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+                        <span className="text-[11px] text-slate-500 font-medium">Trực tuyến</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="relative cursor-pointer group shrink-0" onClick={(e) => e.preventDefault()}>
-                  <span className="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-white transition-colors">
-                    notifications
-                  </span>
-                  <div className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-[#0F172A]" />
-                </div>
+                )}
+                {!isCollapsed && (
+                  <div className="relative cursor-pointer group shrink-0" onClick={(e) => e.preventDefault()}>
+                    <span className="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-white transition-colors">
+                      notifications
+                    </span>
+                    <div className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-[#0F172A]" />
+                  </div>
+                )}
               </div>
             </Link>
 
@@ -252,28 +269,36 @@ export default function UnifiedSidebar({
                     <li key={item.name}>
                       <button
                         onClick={() => toggleSubPanel(item.subPanel)}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
+                        title={isCollapsed ? item.name : undefined}
+                        className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
                           isActive || isSubPanelOpen
                             ? 'border-primary bg-primary-container/10 text-white font-semibold'
                             : 'border-l-transparent text-slate-400 hover:text-white hover:bg-white/5'
                         }`}
                       >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                          <span className="text-sm truncate">{item.name}</span>
+                        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'}`}>
+                          <span className="material-symbols-outlined text-[20px] relative">
+                            {item.icon}
+                            {isCollapsed && badge > 0 && (
+                              <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
+                            )}
+                          </span>
+                          {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
                         </div>
-                        {badge > 0 && (
+                        {!isCollapsed && badge > 0 && (
                           <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none mr-1">
                             {badge}
                           </span>
                         )}
-                        <span
-                          className={`material-symbols-outlined text-[16px] flex-shrink-0 transition-transform duration-200 ${
-                            isSubPanelOpen ? 'rotate-180' : ''
-                          }`}
-                        >
-                          chevron_right
-                        </span>
+                        {!isCollapsed && (
+                          <span
+                            className={`material-symbols-outlined text-[16px] flex-shrink-0 transition-transform duration-200 ${
+                              isSubPanelOpen ? 'rotate-180' : ''
+                            }`}
+                          >
+                            chevron_right
+                          </span>
+                        )}
                       </button>
                     </li>
                   );
@@ -283,17 +308,23 @@ export default function UnifiedSidebar({
                   <li key={item.name}>
                     <Link
                       to={item.path}
-                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
+                      title={isCollapsed ? item.name : undefined}
+                      className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
                         isActive
                           ? 'border-primary bg-primary-container/10 text-white font-semibold'
                           : 'border-l-transparent text-slate-400 hover:text-white hover:bg-white/5'
                       }`}
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                        <span className="text-sm truncate">{item.name}</span>
+                      <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'}`}>
+                        <span className="material-symbols-outlined text-[20px] relative">
+                          {item.icon}
+                          {isCollapsed && badge > 0 && (
+                            <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
+                          )}
+                        </span>
+                        {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
                       </div>
-                      {badge > 0 && (
+                      {!isCollapsed && badge > 0 && (
                         <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                           {badge}
                         </span>
@@ -307,9 +338,12 @@ export default function UnifiedSidebar({
 
           {/* Footer */}
           <div className="p-3 border-t border-white/10">
-            <button className="w-full text-slate-400 hover:text-white flex items-center justify-center gap-2 px-4 py-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer">
+            <button 
+              title={isCollapsed ? "Đăng xuất" : undefined}
+              className={`w-full text-slate-400 hover:text-white flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-center px-4 gap-2'} py-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer`}
+            >
               <span className="material-symbols-outlined text-[20px]">logout</span>
-              <span className="text-sm font-medium">Đăng xuất</span>
+              {!isCollapsed && <span className="text-sm font-medium">Đăng xuất</span>}
             </button>
           </div>
         </nav>
