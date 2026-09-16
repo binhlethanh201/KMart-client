@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FORM_TYPES } from '../data/mockData';
+import { templateFileStore } from '../data/templateFileStore';
 import { useApproval } from '../../../context/useApproval';
 
 function Toggle({ checked, onChange, label }) {
@@ -47,6 +48,7 @@ export default function FormTemplatesTab() {
   const [tempType, setTempType] = useState('Văn bản');
   const [tempOptions, setTempOptions] = useState([]);
   const [tempDisplayStyle, setTempDisplayStyle] = useState('dropdown');
+  const [tempTemplateFile, setTempTemplateFile] = useState(null); // { name, dataUrl } | null
 
   const current = fields[selectedForm] || [];
 
@@ -127,16 +129,39 @@ export default function FormTemplatesTab() {
     setTempLabel(f.label || 'Trường mới');
     setTempType(f.type || 'Văn bản');
     setTempOptions(f.options ? [...f.options] : []);
-    
+
     let defaultStyle = 'dropdown';
     if (f.type === 'Ngày') defaultStyle = 'datetime';
-    
+
     setTempDisplayStyle(f.displayStyle || defaultStyle);
+
+    // File mẫu (chỉ áp dụng cho kiểu "Tải file"). dataUrl lấy từ in-memory store.
+    if (f.type === 'Tải file' && f.templateFile?.name) {
+      const cached = templateFileStore.get(f.id);
+      setTempTemplateFile({ name: f.templateFile.name, dataUrl: cached?.dataUrl || null });
+    } else {
+      setTempTemplateFile(null);
+    }
   };
 
   const handleSaveTypeModal = () => {
     if (editingTypeIdx !== null) {
-      updateField(editingTypeIdx, { label: tempLabel, type: tempType, options: tempOptions, displayStyle: tempDisplayStyle });
+      const f = current[editingTypeIdx];
+      // Chỉ giữ file mẫu khi kiểu dữ liệu còn là "Tải file".
+      const keepTemplate = tempType === 'Tải file' ? tempTemplateFile : null;
+      // Đồng bộ in-memory store (data URL) theo field id.
+      if (keepTemplate) {
+        templateFileStore.set(f.id, { name: keepTemplate.name, dataUrl: keepTemplate.dataUrl });
+      } else {
+        templateFileStore.remove(f.id);
+      }
+      updateField(editingTypeIdx, {
+        label: tempLabel,
+        type: tempType,
+        options: tempOptions,
+        displayStyle: tempDisplayStyle,
+        templateFile: keepTemplate ? { name: keepTemplate.name } : null,
+      });
       setEditingTypeIdx(null);
       pushToast('Đã cập nhật cấu hình trường', 'success');
     }
@@ -151,6 +176,17 @@ export default function FormTemplatesTab() {
   const removeTempOption = (idx) => {
     setTempOptions(tempOptions.filter((_, i) => i !== idx));
   };
+
+  // Đọc file mẫu thành data URL (in-memory, không persist) để nhân viên download khi tạo đơn.
+  const handleTemplateFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setTempTemplateFile({ name: file.name, dataUrl: reader.result });
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+  const removeTemplateFile = () => setTempTemplateFile(null);
 
   const [expandedCats, setExpandedCats] = useState(
     categories.reduce((acc, cat) => ({...acc, [cat.id]: true}), {})
@@ -330,7 +366,7 @@ export default function FormTemplatesTab() {
                     >
                       <div className="flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]">
-                          {f.type === 'Tải file' ? 'attach_file' : f.type === 'Ngày' ? 'calendar_month' : f.type === 'Số' ? 'numbers' : f.type === 'Lựa chọn' ? 'list_alt' : 'text_fields'}
+                          {f.type === 'Tải file' ? 'attach_file' : f.type === 'Ngày' ? 'calendar_month' : f.type === 'Số' ? 'numbers' : f.type === 'Lựa chọn' ? 'list_alt' : f.type === 'Người duyệt thay' ? 'manage_accounts' : 'text_fields'}
                         </span>
                         {f.type}
                       </div>
@@ -344,6 +380,11 @@ export default function FormTemplatesTab() {
                     {f.type === 'Ngày' && f.displayStyle && (
                       <div className="text-[10px] text-secondary mt-1 ml-1">
                         {f.displayStyle === 'date' ? 'Chỉ ngày' : f.displayStyle === 'time' ? 'Chỉ giờ' : 'Ngày & giờ'}
+                      </div>
+                    )}
+                    {f.type === 'Tải file' && f.templateFile?.name && (
+                      <div className="text-[10px] text-secondary mt-1 ml-1 truncate max-w-[180px]">
+                        File mẫu: {f.templateFile.name}
                       </div>
                     )}
                   </td>
@@ -552,7 +593,8 @@ export default function FormTemplatesTab() {
                     { id: 'Số', icon: 'numbers' },
                     { id: 'Lựa chọn', icon: 'list_alt' },
                     { id: 'Ngày', icon: 'calendar_month' },
-                    { id: 'Tải file', icon: 'attach_file' }
+                    { id: 'Tải file', icon: 'attach_file' },
+                    { id: 'Người duyệt thay', icon: 'manage_accounts' }
                   ].map(t => (
                     <button
                       key={t.id}
@@ -562,8 +604,8 @@ export default function FormTemplatesTab() {
                         else if (t.id === 'Lựa chọn') setTempDisplayStyle('dropdown');
                       }}
                       className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border transition-all cursor-pointer ${
-                        tempType === t.id 
-                          ? 'border-primary bg-primary-container/20 text-primary' 
+                        tempType === t.id
+                          ? 'border-primary bg-primary-container/20 text-primary'
                           : 'border-outline-variant bg-surface-container-lowest text-secondary hover:border-primary/50'
                       }`}
                     >
@@ -683,8 +725,39 @@ export default function FormTemplatesTab() {
                   </div>
                 </div>
               )}
+
+              {tempType === 'Tải file' && (
+                <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 animate-fade-in flex flex-col gap-1">
+                  <label className="text-sm font-medium text-on-surface mb-1 block">
+                    File mẫu đính kèm
+                  </label>
+                  <p className="text-xs text-secondary mb-3">
+                    Tải lên file mẫu để người tạo đơn tải về trước khi điền. Để trống nếu không cần.
+                  </p>
+                  {tempTemplateFile ? (
+                    <div className="flex items-center gap-2 bg-surface border border-outline-variant rounded-md px-3 py-2">
+                      <span className="material-symbols-outlined text-[18px] text-primary">description</span>
+                      <span className="text-sm text-on-surface flex-1 truncate">{tempTemplateFile.name}</span>
+                      <button
+                        type="button"
+                        onClick={removeTemplateFile}
+                        className="text-secondary hover:text-error p-1 rounded hover:bg-error-container/30 transition-colors cursor-pointer"
+                        title="Xóa file mẫu"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-md border border-dashed border-primary/50 text-primary hover:bg-primary-container/20 transition-colors cursor-pointer text-sm font-medium">
+                      <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                      Tải lên file mẫu
+                      <input type="file" className="sr-only" onChange={handleTemplateFileChange} />
+                    </label>
+                  )}
+                </div>
+              )}
             </div>
-            
+
             <div className="p-4 bg-surface-container-lowest border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-lg flex-shrink-0">
               <button 
                 onClick={() => setEditingTypeIdx(null)}

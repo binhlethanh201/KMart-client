@@ -8,7 +8,7 @@ export const FORM_TYPES = [
   'Đơn xin ra ngoài',
 ];
 
-export const FIELD_TYPES = ['Văn bản', 'Ngày', 'Số', 'Lựa chọn', 'Tải file'];
+export const FIELD_TYPES = ['Văn bản', 'Ngày', 'Số', 'Lựa chọn', 'Tải file', 'Người duyệt thay'];
 
 // Field templates per form type. `dynamic` holds a human-readable condition.
 export const FORM_FIELDS = {
@@ -54,17 +54,32 @@ export const FORM_FIELDS = {
 
 // Approval types (Section A)
 export const APPROVAL_TYPES = [
-  { id: 'hierarchy', label: 'Duyệt Phân cấp' },
-  { id: 'chain', label: 'Duyệt theo Chuỗi quản lý (Động)' },
-  { id: 'role', label: 'Duyệt theo Vai trò' },
-  { id: 'specific', label: 'Chỉ định Đích danh' },
+  { id: 'hierarchy', label: 'Cấp quản lý trực tiếp', desc: 'Quản lý trực tiếp của người tạo đơn (TP/Phó phòng/CHT)' },
+  { id: 'chain', label: 'Chuỗi quản lý liên tiếp', desc: 'Duyệt lần lượt từ cấp thấp ➔ cấp cao' },
+  { id: 'role', label: 'Theo chức danh / Bộ phận', desc: 'Chọn bộ phận xử lý (VD: HR Admin, Kế toán)' },
+  { id: 'specific', label: 'Chọn 1 người cụ thể', desc: 'Chọn chính xác tên nhân sự' },
 ];
 
 // Multi-approver rules (Section B)
 export const MULTI_RULES = [
-  { id: 'sequential', label: 'Duyệt tuần tự', desc: 'Duyệt lần lượt từng người' },
-  { id: 'and', label: 'Duyệt song song - Đồng ý tất cả', desc: 'Yêu cầu tất cả phê duyệt' },
-  { id: 'or', label: 'Duyệt song song - Chỉ cần 1 người', desc: 'Chỉ cần 1 người phê duyệt' },
+  { id: 'sequential', label: 'Duyệt lần lượt', desc: 'Người A duyệt xong mới chuyển sang Người B', badge: 'A ➔ B ➔ C' },
+  { id: 'and', label: 'Đồng thời — cần tất cả đồng ý', desc: 'Gửi tất cả, bắt buộc 100% bấm Duyệt', badge: 'A + B + C' },
+  { id: 'or', label: 'Đồng thời — chỉ cần 1 người', desc: 'Ai bấm Duyệt trước thì đơn hoàn tất', badge: 'A ⚡ B' },
+];
+
+// Conditional routing — fields可用于 filter trên bước duyệt
+export const CONDITION_FIELDS = [
+  { id: 'num_days', label: 'Số ngày nghỉ' },
+  { id: 'leave_type', label: 'Hình thức nghỉ' },
+  { id: 'ot_hours', label: 'Số giờ OT' },
+];
+
+export const CONDITION_OPS = [
+  { id: '>', label: '>' },
+  { id: '>=', label: '≥' },
+  { id: '==', label: '=' },
+  { id: '<=', label: '≤' },
+  { id: '<', label: '<' },
 ];
 
 // Initial workflow steps for "Đơn xin nghỉ phép"
@@ -77,8 +92,12 @@ export const INITIAL_WORKFLOW = [
     role: 'HR Admin',
     specificUser: 'Nguyễn Văn An',
     multiRule: 'sequential',
+    scope: 'auto',
+    condition: null,
     timeoutEnabled: true,
+    timeoutMode: 'continuous',
     timeoutAction: 'return',
+    rejectReasonRequired: true,
   },
   {
     id: 's2',
@@ -88,8 +107,12 @@ export const INITIAL_WORKFLOW = [
     role: 'HR Admin',
     specificUser: 'Trần Thị Bình',
     multiRule: 'and',
+    scope: 'auto',
+    condition: null,
     timeoutEnabled: true,
+    timeoutMode: 'continuous',
     timeoutAction: 'escalate',
+    rejectReasonRequired: true,
   },
   {
     id: 's3',
@@ -99,8 +122,12 @@ export const INITIAL_WORKFLOW = [
     role: 'Tổng Giám đốc',
     specificUser: 'Phạm Văn E',
     multiRule: 'or',
+    scope: 'auto',
+    condition: null,
     timeoutEnabled: false,
+    timeoutMode: 'continuous',
     timeoutAction: 'return',
+    rejectReasonRequired: true,
   },
 ];
 
@@ -119,8 +146,8 @@ export const ZALO_CONFIG = {
 
 // Timeout working-hours options
 export const TIME_RULES = [
-  { id: 'business', label: 'Chỉ tính trong giờ hành chính (8:00 - 17:30)' },
-  { id: 'continuous', label: 'Tính 12 giờ liên tục (24/7)' },
+  { id: 'business', label: 'Chỉ tính trong giờ hành chính' },
+  { id: 'continuous', label: 'Tính 12 giờ liên tục' },
 ];
 
 export const SPECIFIC_USERS = ['Nguyễn Văn An', 'Trần Thị Bình', 'Lê Hải Dương', 'Phạm Văn E', 'Hoàng Thị Phương'];

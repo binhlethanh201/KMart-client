@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { REQUEST_TYPES, WORKFLOW_BY_TYPE, USERS } from '../data/seed';
 import { DEPARTMENTS } from '../../departments/data/departments';
+import { templateFileStore } from '../../system-config/data/templateFileStore';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
@@ -208,15 +209,63 @@ export default function CreateRequestModal({ onClose }) {
               }
             }
             if (f.type === 'Tải file') {
+              const cached = f.templateFile ? templateFileStore.get(f.id) : null;
+              const templateUrl = cached?.dataUrl;
               return (
                 <div key={f.id} className="flex flex-col gap-2">
-                  <label className={labelCls}>{f.label}</label>
+                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
+                  {f.templateFile?.name && (
+                    <a
+                      href={templateUrl || undefined}
+                      download={f.templateFile.name}
+                      className={`inline-flex items-center gap-1.5 self-start text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                        templateUrl
+                          ? 'text-primary border-primary/40 bg-primary-container/20 hover:bg-primary-container/40 cursor-pointer'
+                          : 'text-secondary border-outline-variant bg-surface-container-low cursor-not-allowed'
+                      }`}
+                      title={templateUrl ? `Tải về ${f.templateFile.name}` : 'File mẫu không còn khả dụng (cần tải lên lại ở cấu hình)'}
+                      onClick={(e) => { if (!templateUrl) e.preventDefault(); }}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">download</span>
+                      Tải file mẫu: {f.templateFile.name}
+                    </a>
+                  )}
                   <div className="border-2 border-dashed border-outline-variant rounded-lg p-5 flex flex-col items-center justify-center bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer group">
                     <span className="material-symbols-outlined text-outline text-3xl group-hover:text-primary transition-colors mb-1">cloud_upload</span>
                     <p className="text-sm text-on-surface mb-1">
                       Kéo thả file vào đây hoặc <span className="text-primary font-medium">Chọn file</span>
                     </p>
                     <p className="text-xs text-secondary">Hỗ trợ: PDF, DOCX, JPG, PNG (Max 10MB)</p>
+                  </div>
+                </div>
+              );
+            }
+            if (f.type === 'Người duyệt thay') {
+              const picked = USERS.find((u) => u.name === form.dynamic[f.label]);
+              return (
+                <div key={f.id} className="flex flex-col gap-2">
+                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
+                  <div className="flex items-center gap-2">
+                    {picked && (
+                      <div className="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-1.5">
+                        <img className="w-6 h-6 rounded-full object-cover" src={picked.avatar} alt={picked.name} />
+                        <div className="leading-tight">
+                          <div className="text-sm font-medium text-on-surface">{picked.name}</div>
+                          <div className="text-[10px] text-secondary">{picked.role}</div>
+                        </div>
+                      </div>
+                    )}
+                    <select
+                      className={fieldCls}
+                      required={f.required}
+                      value={form.dynamic[f.label] || ''}
+                      onChange={(e) => setDynamic(f.label, e.target.value)}
+                    >
+                      <option value="">-- Chọn người duyệt thay --</option>
+                      {USERS.map((u) => (
+                        <option key={u.id} value={u.name}>{u.name} — {u.role}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               );
