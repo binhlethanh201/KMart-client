@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import EmployeeModal from '../components/EmployeeModal';
-import EmployeeDetailModal from '../components/EmployeeDetailModal';
+import { useHr } from '../context/HrProvider';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import {
-  EMPLOYEES,
   DEPARTMENTS,
   SYSTEM_ROLES,
   ROLE_STYLES,
   STATUS_STYLES,
-  EMPTY_EMPLOYEE,
 } from '../data/mockData';
 
 const selectCls =
@@ -24,15 +23,15 @@ function Badge({ cls, children }) {
 
 export default function HumanResources() {
   useDocumentTitle('Quản lý Nhân sự');
+  const navigate = useNavigate();
+  const { employees, saveEmployee, toggleLock: toggleLockHr } = useHr();
 
-  const [employees, setEmployees] = useState(EMPLOYEES);
   const [search, setSearch] = useState('');
   const [dept, setDept] = useState('Tất cả');
   const [role, setRole] = useState('Tất cả');
   const [status, setStatus] = useState('Tất cả');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [viewing, setViewing] = useState(null);
   const [popoverId, setPopoverId] = useState(null);
 
   const filtered = useMemo(() => {
@@ -62,22 +61,16 @@ export default function HumanResources() {
     setPopoverId(null);
   };
   const openView = (emp) => {
-    setViewing(emp);
+    navigate(`/personnel/${emp.id}`);
     setPopoverId(null);
   };
   const handleSave = (form) => {
-    if (editing) {
-      setEmployees((list) => list.map((e) => (e.id === form.id ? { ...e, ...form } : e)));
-    } else {
-      setEmployees((list) => [{ ...EMPTY_EMPLOYEE, ...form, avatar: form.avatar || EMPLOYEES[0].avatar }, ...list]);
-    }
+    saveEmployee(form);
     setModalOpen(false);
   };
   const toggleLock = (emp, e) => {
     if (e) e.stopPropagation();
-    setEmployees((list) =>
-      list.map((el) => (el.id === emp.id ? { ...el, status: el.status === 'active' ? 'inactive' : 'active' } : el))
-    );
+    toggleLockHr(emp.id);
   };
 
   return (
@@ -309,7 +302,6 @@ export default function HumanResources() {
       </div>
 
       {modalOpen && <EmployeeModal employee={editing} onClose={() => setModalOpen(false)} onSave={handleSave} />}
-      {viewing && <EmployeeDetailModal employee={viewing} onClose={() => setViewing(null)} />}
     </section>
   );
 }

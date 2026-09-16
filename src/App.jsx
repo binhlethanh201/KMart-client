@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ApprovalSystemProvider } from './context/ApprovalSystemProvider';
+import { HrProvider } from './features/hr/context/HrProvider';
 import MainLayout from './layouts/MainLayout';
 import RequestsLayout from './features/requests/layouts/RequestsLayout';
 import DepartmentDashboard from './features/departments/pages/DepartmentDashboard';
 import DepartmentDetail from './features/departments/pages/DepartmentDetail';
 import UserProfile from './features/profile/pages/UserProfile';
 import HumanResources from './features/hr/pages/HumanResources';
+import EmployeeDetail from './features/hr/pages/EmployeeDetail';
 import SystemConfig from './features/system-config/pages/SystemConfig';
 import PersonalRequests from './features/requests/pages/PersonalRequests';
 import RequestDetail from './features/requests/pages/RequestDetail';
@@ -15,6 +17,7 @@ import ToastHost from './features/requests/components/ToastHost';
 function App() {
   return (
     <ApprovalSystemProvider>
+      <HrProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MainLayout />}>
@@ -23,6 +26,7 @@ function App() {
             <Route path="departments/:id" element={<DepartmentDetail />} />
             <Route path="profile" element={<UserProfile />} />
             <Route path="personnel" element={<HumanResources />} />
+            <Route path="personnel/:id" element={<EmployeeDetail />} />
             {/* Settings sub-routes */}
             <Route path="settings" element={<SystemConfig defaultActive="forms" />} />
             <Route path="settings/forms" element={<SystemConfig defaultActive="forms" />} />
@@ -37,6 +41,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </HrProvider>
       <UserSwitchBar />
       <ToastHost />
     </ApprovalSystemProvider>

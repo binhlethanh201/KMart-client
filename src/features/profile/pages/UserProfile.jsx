@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function UserProfile() {
+export default function UserProfile({ onClose }) {
   const sections = [
     { title: 'Nhóm (Đơn vị nghiệp vụ) (0)', icon: 'group_off' },
     { title: 'Học vấn', icon: 'school' },
@@ -19,10 +19,17 @@ export default function UserProfile() {
           <span className="mx-1 sm:mx-2 text-outline-variant">•</span>
           <span className="text-secondary">HR manager</span>
         </div>
-        <button className="text-white px-3 sm:px-4 py-1.5 rounded text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-1 bg-[#2563eb]">
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          <span className="hidden sm:inline">Chỉnh sửa tài khoản</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button className="text-white px-3 sm:px-4 py-1.5 rounded text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-1 bg-[#2563eb]">
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span className="hidden sm:inline">Chỉnh sửa tài khoản</span>
+          </button>
+          {onClose && (
+            <button onClick={onClose} className="text-gray-500 hover:text-black hover:bg-gray-100 rounded-full p-1 flex items-center justify-center transition-colors cursor-pointer">
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Content Canvas */}
