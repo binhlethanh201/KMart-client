@@ -136,7 +136,7 @@ export default function RequestDetail() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-surface-container-low">
+      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-surface">
         {/* Left: detail + discussion */}
         <div className="flex-1 overflow-y-auto p-6 border-r border-outline-variant">
           <div className="w-full space-y-6">

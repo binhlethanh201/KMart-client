@@ -91,8 +91,12 @@ export default function DepartmentDetail() {
             </Link>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4">
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-primary/10 text-primary rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-3xl">{dept.icon}</span>
+                <div className="w-14 h-14 bg-primary/10 text-primary rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {dept.iconImage ? (
+                    <img src={dept.iconImage} alt={dept.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-3xl">{dept.icon}</span>
+                  )}
                 </div>
                 <div>
                   <div className="flex items-center gap-3 flex-wrap mb-1">

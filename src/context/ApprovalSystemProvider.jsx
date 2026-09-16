@@ -199,6 +199,7 @@ export function ApprovalSystemProvider({ children }) {
       const dept = {
         id: newId,
         icon: data.icon,
+        iconImage: data.iconImage || null,
         status: data.status === 'inactive' ? 'Inactive' : 'Active',
         name: data.name,
         code: data.code,

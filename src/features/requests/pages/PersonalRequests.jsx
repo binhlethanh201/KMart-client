@@ -75,7 +75,7 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
   }, [requests, filter, search, currentUserId, departmentFilter]);
 
   return (
-    <div className="flex flex-1 h-full overflow-hidden bg-surface-container-low">
+    <div className="flex flex-1 h-full overflow-hidden bg-surface">
       <section className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
 
         {/* ── Header ── */}
@@ -110,7 +110,7 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
                 onChange={(e) => setSearch(e.target.value)}
                 type="text"
                 placeholder="Tìm theo mã, tiêu đề..."
-                className="w-full pl-9 pr-3 py-2 bg-surface-container border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant transition-colors"
+                className="w-full pl-9 pr-3 py-2 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant transition-colors"
               />
               {search && (
                 <button
@@ -127,7 +127,7 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
               <select
                 value={departmentFilter || ''}
                 onChange={(e) => setDepartmentFilter(e.target.value ? Number(e.target.value) : null)}
-                className="w-full pl-3 pr-8 py-2 bg-surface-container border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none transition-colors cursor-pointer"
+                className="w-full pl-3 pr-8 py-2 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none transition-colors cursor-pointer"
               >
                 <option value="">Tất cả phòng ban</option>
                 {DEPARTMENTS.map((d) => (

@@ -110,6 +110,7 @@ export default function DepartmentDashboard() {
                 key={dept.id}
                 id={dept.id}
                 icon={dept.icon}
+                iconImage={dept.iconImage}
                 status={dept.status}
                 name={dept.name}
                 code={dept.code}

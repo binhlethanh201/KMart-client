@@ -1,19 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
-
-// Icon presets for the department. Single primary accent for the box to keep
-// color consistency; selection is shown via ring + check.
-const ICON_PRESETS = [
-  { icon: 'campaign', label: 'Marketing' },
-  { icon: 'code', label: 'Công nghệ' },
-  { icon: 'support_agent', label: 'CSKH' },
-  { icon: 'storefront', label: 'Siêu thị' },
-  { icon: 'group', label: 'Nhân sự' },
-  { icon: 'local_shipping', label: 'Vận hành' },
-  { icon: 'science', label: 'R&D' },
-  { icon: 'account_balance', label: 'Tài chính' },
-];
+import DepartmentIconPicker from './DepartmentIconPicker';
 
 const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
 
@@ -119,6 +107,7 @@ export default function AddDepartmentModal({ onClose }) {
   const [type, setType] = useState(TYPES[0]);
   const [status, setStatus] = useState('active');
   const [icon, setIcon] = useState('campaign');
+  const [iconImage, setIconImage] = useState(null);
   const [head, setHead] = useState(null);
   const [deputy, setDeputy] = useState(null);
   const [memberQuery, setMemberQuery] = useState('');
@@ -163,6 +152,7 @@ export default function AddDepartmentModal({ onClose }) {
       type,
       status,
       icon,
+      iconImage,
       head,
       deputy,
       members,
@@ -274,33 +264,14 @@ export default function AddDepartmentModal({ onClose }) {
             </div>
 
             <div>
-              <label className={labelCls}>Icon đại diện</label>
-              <div className="grid grid-cols-4 gap-2">
-                {ICON_PRESETS.map((p) => {
-                  const active = icon === p.icon;
-                  return (
-                    <button
-                      key={p.icon}
-                      type="button"
-                      onClick={() => setIcon(p.icon)}
-                      title={p.label}
-                      className={`relative flex flex-col items-center gap-1 py-2.5 rounded-md border transition-colors cursor-pointer ${
-                        active
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-outline-variant text-secondary hover:bg-surface-container-low'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-[22px]">{p.icon}</span>
-                      <span className="text-[10px] truncate w-full text-center px-1">{p.label}</span>
-                      {active && (
-                        <span className="absolute top-1 right-1 material-symbols-outlined text-[14px] text-primary">
-                          check_circle
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <DepartmentIconPicker
+                icon={icon}
+                iconImage={iconImage}
+                onChange={({ icon: newIcon, iconImage: newImg }) => {
+                  if (newIcon !== undefined) setIcon(newIcon);
+                  if (newImg !== undefined) setIconImage(newImg);
+                }}
+              />
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 export default function DepartmentCard({
   id,
   icon,
+  iconImage,
   status,
   name,
   code,
@@ -20,8 +21,12 @@ export default function DepartmentCard({
   return (
     <div className="bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/50 hover:shadow-md hover:border-outline-variant transition-all flex flex-col p-6 group relative">
       <div className="flex justify-between items-start mb-4">
-        <div className="w-12 h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-          <span className="material-symbols-outlined text-2xl">{icon}</span>
+        <div className="w-12 h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center overflow-hidden">
+          {iconImage ? (
+            <img src={iconImage} alt={name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="material-symbols-outlined text-2xl">{icon}</span>
+          )}
         </div>
         <div className="flex items-center gap-1 relative">
           <div 
