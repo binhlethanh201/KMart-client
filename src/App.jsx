@@ -12,7 +12,7 @@ import SystemConfig from './features/system-config/pages/SystemConfig';
 import PersonalRequests from './features/requests/pages/PersonalRequests';
 import RequestDetail from './features/requests/pages/RequestDetail';
 import UserSwitchBar from './features/requests/components/UserSwitchBar';
-import ToastHost from './features/requests/components/ToastHost';
+import ToastHost from './components/ToastHost';
 
 function App() {
   return (

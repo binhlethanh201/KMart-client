@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useApproval } from '../../../context/useApproval';
+import { useApproval } from '../context/useApproval';
 
 // Fixed toast stack. Reads from context so any handler can fire one.
 export default function ToastHost() {
