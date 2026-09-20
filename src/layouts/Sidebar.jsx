@@ -160,6 +160,12 @@ export default function UnifiedSidebar({
   const [openSubPanel, setOpenSubPanel] = useState(null); // 'requests' | null
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const handleLogout = () => {
+    localStorage.removeItem('kmart_token');
+    localStorage.removeItem('kmart_user');
+    window.location.href = '/login';
+  };
+
   // Tính số đơn chờ tôi duyệt trực tiếp từ context — luôn đồng bộ với trang
   const { requests, currentUserId } = useApproval();
   const pendingCount = useMemo(
@@ -339,6 +345,7 @@ export default function UnifiedSidebar({
           {/* Footer */}
           <div className="p-3 border-t border-white/10">
             <button 
+              onClick={handleLogout}
               title={isCollapsed ? "Đăng xuất" : undefined}
               className={`w-full text-slate-400 hover:text-white flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-center px-4 gap-2'} py-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer`}
             >

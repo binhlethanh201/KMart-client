@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
-import { REQUEST_TYPES, WORKFLOW_BY_TYPE, USERS } from '../data/seed';
-import { DEPARTMENTS } from '../../departments/data/departments';
+import { useHr } from '../../hr/context/HrProvider';
+import { REQUEST_TYPES, WORKFLOW_BY_TYPE } from '../data/constants';
 import { templateFileStore } from '../../system-config/data/templateFileStore';
 
 const fieldCls =
@@ -12,7 +12,8 @@ const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1
 // Create Request modal. Submits to the global context (createRequest).
 // The approval preview is derived from the selected request type.
 export default function CreateRequestModal({ onClose }) {
-  const { createRequest, formFields } = useApproval();
+  const { createRequest, formFields, departments } = useApproval();
+  const { employees } = useHr();
   
   const availableTypes = Object.keys(formFields);
   const initialType = availableTypes[0] || 'Khác';
@@ -94,7 +95,7 @@ export default function CreateRequestModal({ onClose }) {
           <div className="flex flex-col gap-2">
             <label className={labelCls}>Phòng ban liên quan</label>
             <div className="flex gap-2.5 flex-wrap mt-0.5">
-              {DEPARTMENTS.map((d) => {
+              {departments.map((d) => {
                 const isChecked = form.departments.includes(d.id);
                 return (
                   <label 
@@ -241,7 +242,7 @@ export default function CreateRequestModal({ onClose }) {
               );
             }
             if (f.type === 'Người duyệt thay') {
-              const picked = USERS.find((u) => u.name === form.dynamic[f.label]);
+              const picked = employees.find((u) => u.name === form.dynamic[f.label]);
               return (
                 <div key={f.id} className="flex flex-col gap-2">
                   <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
@@ -262,8 +263,8 @@ export default function CreateRequestModal({ onClose }) {
                       onChange={(e) => setDynamic(f.label, e.target.value)}
                     >
                       <option value="">-- Chọn người duyệt thay --</option>
-                      {USERS.map((u) => (
-                        <option key={u.id} value={u.name}>{u.name} — {u.role}</option>
+                      {employees.map((u) => (
+                        <option key={u.id} value={u.name}>{u.name} — {u.position}</option>
                       ))}
                     </select>
                   </div>
@@ -281,15 +282,15 @@ export default function CreateRequestModal({ onClose }) {
             </div>
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {chain.map((uid, i) => {
-                const u = USERS.find((x) => x.id === uid);
+                const u = employees.find((x) => x.id === uid) || { name: uid, avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(uid)}&background=random&color=fff&size=128`, position: 'Approver' };
                 return (
                   <div key={i} className="flex items-center">
                     {i > 0 && <span className="material-symbols-outlined text-outline text-sm mx-1">arrow_forward</span>}
                     <div className="flex items-center gap-2 bg-surface-container-lowest rounded-md p-2 border border-outline-variant/50 min-w-fit">
-                      <img className="w-7 h-7 rounded-full object-cover" src={u?.avatar} alt={u?.name} />
+                      <img className="w-7 h-7 rounded-full object-cover" src={u.avatar} alt={u.name} />
                       <div className="flex flex-col">
-                        <span className="text-xs font-medium text-on-surface">{u?.name}</span>
-                        <span className="text-[10px] text-secondary">{u?.role}</span>
+                        <span className="text-xs font-medium text-on-surface">{u.name}</span>
+                        <span className="text-[10px] text-secondary">{u.position}</span>
                       </div>
                     </div>
                   </div>

@@ -3,7 +3,6 @@ import RequestCard from '../components/RequestCard';
 import CreateRequestModal from '../components/CreateRequestModal';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
-import { DEPARTMENTS } from '../../departments/data/departments';
 
 /* ─── Constants ──────────────────────────────────────────────── */
 
@@ -28,7 +27,7 @@ const TITLES = {
 export default function PersonalRequests({ defaultFilter = 'all' }) {
   useDocumentTitle('Danh sách Đơn từ');
 
-  const { requests, currentUserId } = useApproval();
+  const { requests, currentUserId, departments } = useApproval();
 
   const [isCreateOpen, setIsCreateOpen]        = useState(false);
   const [filter, setFilter]                    = useState(defaultFilter);
@@ -130,7 +129,7 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
                 className="w-full pl-3 pr-8 py-2 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none transition-colors cursor-pointer"
               >
                 <option value="">Tất cả phòng ban</option>
-                {DEPARTMENTS.map((d) => (
+                {departments.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.code} - {d.name}
                   </option>

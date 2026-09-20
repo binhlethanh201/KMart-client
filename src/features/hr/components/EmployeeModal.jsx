@@ -1,13 +1,31 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { DEPARTMENTS, POSITIONS, SYSTEM_ROLES, EMPTY_EMPLOYEE } from '../data/mockData';
+import { ROLE_STYLES } from '../data/constants';
+
+const EMPTY_EMPLOYEE = {
+  name: '',
+  email: '',
+  phone: '',
+  password: '',
+  personalEmail: '',
+  departmentId: '',
+  positionId: '',
+  roleId: '', // For now we allow selecting 1 role
+  status: 'active',
+  secondary: []
+};
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
-export default function EmployeeModal({ employee, onClose, onSave }) {
-  const [form, setForm] = useState(() => (employee ? { ...EMPTY_EMPLOYEE, ...employee } : EMPTY_EMPLOYEE));
+export default function EmployeeModal({ employee, departments = [], positions = [], roles = [], onClose, onSave }) {
+  const [form, setForm] = useState(() => {
+    if (!employee) return EMPTY_EMPLOYEE;
+    // Resolve the existing role to its id so the select is pre-selected on edit.
+    const roleId = roles.find((r) => r.roleName === employee.role)?.id || '';
+    return { ...EMPTY_EMPLOYEE, ...employee, roleId };
+  });
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -21,19 +39,24 @@ export default function EmployeeModal({ employee, onClose, onSave }) {
   const addSecondary = () =>
     setForm((f) => ({
       ...f,
-      secondary: [...f.secondary, { department: DEPARTMENTS[0], position: POSITIONS[6] }],
+      secondary: [...f.secondary, { departmentId: departments[0]?.id, positionId: positions[0]?.id }],
     }));
+    
   const updateSecondary = (idx, key, value) =>
     setForm((f) => ({
       ...f,
       secondary: f.secondary.map((s, i) => (i === idx ? { ...s, [key]: value } : s)),
     }));
+    
   const removeSecondary = (idx) =>
     setForm((f) => ({ ...f, secondary: f.secondary.filter((_, i) => i !== idx) }));
 
   const submit = (e) => {
     e.preventDefault();
-    onSave(form);
+    onSave({
+      ...form,
+      roleIds: form.roleId ? [form.roleId] : []
+    });
   };
 
   return createPortal(
@@ -42,105 +65,105 @@ export default function EmployeeModal({ employee, onClose, onSave }) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={isEdit ? 'Chỉnh sửa thông tin nhân sự' : 'Thêm mới nhân sự'}
     >
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
         className="bg-surface rounded-lg shadow-xl w-full max-w-3xl flex flex-col max-h-[92vh] overflow-hidden"
       >
-        {/* Header */}
         <div className="flex justify-between items-start p-6 border-b border-outline-variant/30">
           <div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface">
               {isEdit ? 'Chỉnh sửa thông tin nhân sự' : 'Thêm mới nhân sự'}
             </h2>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">
-              {isEdit ? `Cập nhật hồ sơ ${form.id}` : 'Tạo tài khoản và phân quyền cho nhân viên mới'}
-            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer"
-            aria-label="Đóng"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            {/* Column 1 - Tài khoản & Cá nhân */}
             <div className="flex flex-col gap-4">
               <div className="font-label-md text-label-md text-primary font-semibold uppercase tracking-wide">
                 Tài khoản &amp; Cá nhân
               </div>
               <div>
                 <label className={labelCls}>Họ và tên</label>
-                <input className={fieldCls} value={form.name} onChange={set('name')} placeholder="Nguyễn Văn A" />
+                <input required className={fieldCls} value={form.name} onChange={set('name')} placeholder="Nguyễn Văn A" />
               </div>
               <div>
                 <label className={labelCls}>Mã nhân viên</label>
-                <input className={fieldCls} value={form.id} onChange={set('id')} placeholder="NV-0102" disabled={isEdit} />
+                <div className="bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-secondary font-mono h-[38px] flex items-center">
+                  {isEdit && form.id ? form.id.substring(0, 8).toUpperCase() : '(Tự động tạo)'}
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Email công ty</label>
-                <input className={fieldCls} type="email" value={form.email} onChange={set('email')} placeholder="a.nguyenvan@kmart.vn" />
+                <input required className={fieldCls} type="email" value={form.email} onChange={set('email')} placeholder="a.nguyenvan@ktm.vn" disabled={isEdit} />
+              </div>
+              <div>
+                <label className={labelCls}>Email cá nhân</label>
+                <input className={fieldCls} type="email" value={form.personalEmail} onChange={set('personalEmail')} placeholder="nguyenvana@gmail.com" />
               </div>
               <div>
                 <label className={labelCls}>Số điện thoại</label>
-                <input className={fieldCls} value={form.phone} onChange={set('phone')} placeholder="0901 234 567" />
+                <input className={fieldCls} value={form.phone || ''} onChange={set('phone')} placeholder="0901 234 567" />
               </div>
-              <div>
-                <label className={labelCls}>Tên đăng nhập</label>
-                <input className={fieldCls} value={form.username} onChange={set('username')} placeholder="nguyenvana" disabled={isEdit} />
-              </div>
-              <div>
-                <label className={labelCls}>{isEdit ? 'Mật khẩu mới' : 'Mật khẩu'}</label>
-                <input className={fieldCls} type="password" value={form.password} onChange={set('password')} placeholder="••••••••" />
-              </div>
+              {!isEdit && (
+                <div>
+                  <label className={labelCls}>Mật khẩu</label>
+                  <input required className={fieldCls} type="password" value={form.password} onChange={set('password')} placeholder="••••••••" />
+                  <p className="text-xs text-secondary mt-1 leading-relaxed">
+                    Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Column 2 - Tổ chức & Phân quyền */}
             <div className="flex flex-col gap-4">
               <div className="font-label-md text-label-md text-primary font-semibold uppercase tracking-wide">
                 Tổ chức &amp; Phân quyền
               </div>
               <div>
                 <label className={labelCls}>Phòng ban chính</label>
-                <select className={fieldCls} value={form.department} onChange={set('department')}>
-                  {DEPARTMENTS.map((d) => (
-                    <option key={d}>{d}</option>
+                <select className={fieldCls} value={form.departmentId} onChange={set('departmentId')}>
+                  <option value="">-- Chọn phòng ban --</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className={labelCls}>Chức vụ chính</label>
-                <select className={fieldCls} value={form.position} onChange={set('position')}>
-                  {POSITIONS.map((p) => (
-                    <option key={p}>{p}</option>
+                <select className={fieldCls} value={form.positionId} onChange={set('positionId')}>
+                  <option value="">-- Chọn chức vụ --</option>
+                  {positions.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className={labelCls}>Vai trò hệ thống</label>
-                <select className={fieldCls} value={form.role} onChange={set('role')}>
-                  {SYSTEM_ROLES.map((r) => (
-                    <option key={r}>{r}</option>
+                <select className={fieldCls} value={form.roleId} onChange={set('roleId')}>
+                  <option value="">-- Chọn vai trò --</option>
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.id}>{ROLE_STYLES[r.roleName]?.label || r.roleName}</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className={labelCls}>Trạng thái</label>
-                <select className={fieldCls} value={form.status} onChange={set('status')}>
+                <select className={fieldCls} value={form.status} onChange={set('status')} disabled={isEdit}>
                   <option value="active">Đang hoạt động</option>
                   <option value="inactive">Ngừng hoạt động</option>
                 </select>
               </div>
 
-              {/* Vị trí kiêm nhiệm */}
               <div className="border-t border-outline-variant pt-4 mt-1">
                 <div className="flex items-center justify-between mb-2">
                   <span className={labelCls + ' mb-0'}>Vị trí kiêm nhiệm</span>
@@ -161,27 +184,28 @@ export default function EmployeeModal({ employee, onClose, onSave }) {
                     <div key={idx} className="flex items-center gap-2">
                       <select
                         className={fieldCls + ' flex-1'}
-                        value={s.department}
-                        onChange={(e) => updateSecondary(idx, 'department', e.target.value)}
+                        value={s.departmentId}
+                        onChange={(e) => updateSecondary(idx, 'departmentId', e.target.value)}
                       >
-                        {DEPARTMENTS.map((d) => (
-                          <option key={d}>{d}</option>
+                        <option value="">- Chọn -</option>
+                        {departments.map((d) => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
                         ))}
                       </select>
                       <select
                         className={fieldCls + ' flex-1'}
-                        value={s.position}
-                        onChange={(e) => updateSecondary(idx, 'position', e.target.value)}
+                        value={s.positionId}
+                        onChange={(e) => updateSecondary(idx, 'positionId', e.target.value)}
                       >
-                        {POSITIONS.map((p) => (
-                          <option key={p}>{p}</option>
+                        <option value="">- Chọn -</option>
+                        {positions.map((p) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
                       </select>
                       <button
                         type="button"
                         onClick={() => removeSecondary(idx)}
                         className="text-error hover:bg-error-container/40 p-2 rounded-md transition-colors cursor-pointer flex-shrink-0"
-                        aria-label="Xoá vị trí"
                       >
                         <span className="material-symbols-outlined text-[18px]">delete</span>
                       </button>
@@ -193,7 +217,6 @@ export default function EmployeeModal({ employee, onClose, onSave }) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="p-6 border-t border-outline-variant/30 bg-surface flex justify-end items-center gap-3 rounded-b-lg">
           <button
             type="button"

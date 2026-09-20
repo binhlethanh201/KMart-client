@@ -11,10 +11,44 @@ import EmployeeDetail from './features/hr/pages/EmployeeDetail';
 import SystemConfig from './features/system-config/pages/SystemConfig';
 import PersonalRequests from './features/requests/pages/PersonalRequests';
 import RequestDetail from './features/requests/pages/RequestDetail';
-import UserSwitchBar from './features/requests/components/UserSwitchBar';
+
 import ToastHost from './components/ToastHost';
+import LoginPage from './features/auth/pages/LoginPage';
+import { useState, useEffect } from 'react';
+import { authService } from './features/auth/services/authService';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('kmart_token');
+    if (token) {
+      // Optimistically set authenticated if token exists
+      setIsAuthenticated(true);
+    }
+    setIsInitializing(false);
+
+    // Listen for unauthorized events from apiClient
+    const handleUnauthorized = () => setIsAuthenticated(false);
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
+  if (isInitializing) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="*" element={<LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+
   return (
     <ApprovalSystemProvider>
       <HrProvider>
@@ -42,7 +76,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       </HrProvider>
-      <UserSwitchBar />
+
       <ToastHost />
     </ApprovalSystemProvider>
   );

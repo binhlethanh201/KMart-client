@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import DepartmentMembersModal from './DepartmentMembersModal';
 
 export default function DepartmentCard({
   id,
@@ -10,6 +11,7 @@ export default function DepartmentCard({
   code,
   leaders,
   members,
+  memberNames,
   memberCount,
   extraCount,
   onEdit,
@@ -17,6 +19,11 @@ export default function DepartmentCard({
   onDelete
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showMembersModal, setShowMembersModal] = useState(false);
+
+  const tooltipText = memberNames && memberNames.length > 0 
+    ? `Nhân sự trong phòng:\n${memberNames.join('\n')}${memberCount > memberNames.length ? '\n...' : ''}`
+    : 'Chưa có nhân sự';
 
   return (
     <div className="bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/50 hover:shadow-md hover:border-outline-variant transition-all flex flex-col p-6 group relative">
@@ -95,7 +102,15 @@ export default function DepartmentCard({
         ))}
       </div>
       
-      <div className="border-t border-outline-variant/30 pt-4 flex justify-between items-center mb-4">
+      <div 
+        className="border-t border-outline-variant/30 pt-4 flex justify-between items-center mb-4 cursor-pointer hover:bg-surface-container-low transition-colors -mx-6 px-6 pb-2 -mb-2"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setShowMembersModal(true);
+        }}
+        title="Nhấn để xem danh sách nhân sự"
+      >
         <div className="flex -space-x-2">
           {members.map((memberAvatar, idx) => (
             <img 
@@ -105,22 +120,30 @@ export default function DepartmentCard({
               alt="Member avatar" 
             />
           ))}
-          {extraCount && (
+          {extraCount > 0 && (
             <div className="w-8 h-8 rounded-full border-2 border-white bg-primary-container/20 flex items-center justify-center text-xs font-semibold text-primary">
               +{extraCount}
             </div>
           )}
         </div>
-        <span className="text-sm font-medium text-on-surface-variant">{memberCount} nhân sự</span>
+        <span className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">{memberCount} nhân sự</span>
       </div>
       
       <Link
         to={`/departments/${id}`}
-        className="w-full bg-transparent border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low hover:border-primary hover:text-primary py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+        className="mt-4 w-full bg-transparent border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low hover:border-primary hover:text-primary py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
       >
         <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         Vào chi tiết phòng
       </Link>
+
+      {showMembersModal && (
+        <DepartmentMembersModal 
+          departmentId={id} 
+          departmentName={name} 
+          onClose={() => setShowMembersModal(false)} 
+        />
+      )}
     </div>
   );
 }

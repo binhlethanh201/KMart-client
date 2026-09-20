@@ -141,7 +141,7 @@ export default function AddDepartmentModal({ onClose }) {
   const setAssignment = (id, assignment) =>
     setMembers((m) => m.map((x) => (x.employee.id === id ? { ...x, assignment } : x)));
 
-  const valid = code.trim() && name.trim() && head;
+  const valid = code.trim() && name.trim();
 
   const submit = (e) => {
     e.preventDefault();
@@ -285,8 +285,7 @@ export default function AddDepartmentModal({ onClose }) {
             <div className={`${cardCls} space-y-3`}>
               <div>
                 <label className={labelCls}>
-                  {type === 'Siêu thị / Chi nhánh' ? 'Cửa hàng trưởng' : 'Trưởng phòng'}{' '}
-                  <span className="text-error">*</span>
+                  {type === 'Siêu thị / Chi nhánh' ? 'Cửa hàng trưởng' : 'Trưởng phòng'}
                 </label>
                 <EmployeeSelect
                   employees={employees}

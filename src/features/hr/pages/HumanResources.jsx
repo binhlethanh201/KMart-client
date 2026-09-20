@@ -1,14 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmployeeModal from '../components/EmployeeModal';
 import { useHr } from '../context/HrProvider';
+import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
-import {
-  DEPARTMENTS,
-  SYSTEM_ROLES,
-  ROLE_STYLES,
-  STATUS_STYLES,
-} from '../data/mockData';
+import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
 
 const selectCls =
   'bg-surface border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
@@ -24,7 +20,8 @@ function Badge({ cls, children }) {
 export default function HumanResources() {
   useDocumentTitle('Quản lý Nhân sự');
   const navigate = useNavigate();
-  const { employees, saveEmployee, toggleLock: toggleLockHr } = useHr();
+  const { employees, departments, positions, roles, loading, error, saveEmployee, toggleLock: toggleLockHr, resetPassword: resetPasswordHr } = useHr();
+  const { pushToast } = useApproval();
 
   const [search, setSearch] = useState('');
   const [dept, setDept] = useState('Tất cả');
@@ -33,6 +30,8 @@ export default function HumanResources() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [popoverId, setPopoverId] = useState(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -50,6 +49,13 @@ export default function HumanResources() {
     });
   }, [employees, search, dept, role, status]);
 
+  // Reset to first page whenever any filter changes.
+  useEffect(() => { setPage(1); }, [search, dept, role, status, employees]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   const openAdd = () => {
     setEditing(null);
     setModalOpen(true);
@@ -64,13 +70,22 @@ export default function HumanResources() {
     navigate(`/personnel/${emp.id}`);
     setPopoverId(null);
   };
-  const handleSave = (form) => {
-    saveEmployee(form);
-    setModalOpen(false);
+  const handleSave = async (form) => {
+    const success = await saveEmployee(form);
+    if (success) {
+      setModalOpen(false);
+    }
   };
   const toggleLock = (emp, e) => {
     if (e) e.stopPropagation();
     toggleLockHr(emp.id);
+  };
+  const handleResetPassword = async (emp, e) => {
+    if (e) e.stopPropagation();
+    if (!window.confirm(`Đặt lại mật khẩu cho "${emp.name}"? Một mật khẩu tạm sẽ được tạo.`)) return;
+    const pwd = await resetPasswordHr(emp.id);
+    if (pwd) pushToast(`Mật khẩu tạm cho ${emp.name}: ${pwd}`, 'success');
+    else pushToast(`Không thể đặt lại mật khẩu cho ${emp.name}.`, 'error');
   };
 
   return (
@@ -112,14 +127,14 @@ export default function HumanResources() {
           <div className="flex flex-wrap gap-3">
             <select className={selectCls} value={dept} onChange={(e) => setDept(e.target.value)}>
               <option value="Tất cả">Tất cả phòng ban</option>
-              {DEPARTMENTS.map((d) => (
-                <option key={d} value={d}>{d}</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.name}>{d.name}</option>
               ))}
             </select>
             <select className={selectCls} value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="Tất cả">Tất cả vai trò</option>
-              {SYSTEM_ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.roleName}>{ROLE_STYLES[r.roleName]?.label || r.roleName}</option>
               ))}
             </select>
             <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -149,11 +164,25 @@ export default function HumanResources() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((e) => {
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-12 text-center text-secondary">
+                        <span className="material-symbols-outlined text-[32px] block mb-2 animate-spin">progress_activity</span>
+                        Đang tải danh sách nhân sự...
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-12 text-center text-error">
+                        <span className="material-symbols-outlined text-[32px] block mb-2">error</span>
+                        {error}
+                      </td>
+                    </tr>
+                  ) : paged.map((e) => {
                     const st = STATUS_STYLES[e.status];
                     return (
-                      <tr 
-                        key={e.id} 
+                      <tr
+                        key={e.id}
                         className="border-b border-outline-variant/50 last:border-0 hover:bg-surface-container-low/60 transition-colors cursor-pointer"
                         onClick={() => openView(e)}
                       >
@@ -163,7 +192,7 @@ export default function HumanResources() {
                             <img className="w-9 h-9 rounded-full object-cover flex-shrink-0" src={e.avatar} alt={e.name} />
                             <div className="min-w-0">
                               <div className="font-semibold text-on-surface truncate">{e.name}</div>
-                              <div className="text-xs text-secondary">{e.id}</div>
+                              <div className="text-xs text-secondary" title={e.id}>{e.id.substring(0, 8).toUpperCase()}</div>
                             </div>
                           </div>
                         </td>
@@ -226,7 +255,7 @@ export default function HumanResources() {
                         <td className="px-4 py-3">
                           <Badge cls={ROLE_STYLES[e.role]?.cls || 'text-secondary'}>
                             <span className={`w-1.5 h-1.5 rounded-full ${ROLE_STYLES[e.role]?.dot || 'bg-outline'}`} />
-                            {e.role}
+                            {ROLE_STYLES[e.role]?.label || e.role}
                           </Badge>
                         </td>
                         {/* Trạng thái */}
@@ -247,7 +276,7 @@ export default function HumanResources() {
                               <span className="material-symbols-outlined text-[18px]">edit</span>
                             </button>
                             <button
-                              onClick={(ev) => ev.stopPropagation()}
+                              onClick={(ev) => handleResetPassword(e, ev)}
                               className="text-secondary hover:text-warning hover:bg-warning-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
                               title="Reset mật khẩu"
                             >
@@ -271,7 +300,7 @@ export default function HumanResources() {
                       </tr>
                     );
                   })}
-                  {filtered.length === 0 && (
+                  {filtered.length === 0 && !loading && !error && (
                     <tr>
                       <td colSpan={7} className="px-4 py-12 text-center text-secondary">
                         <span className="material-symbols-outlined text-[32px] block mb-2 text-outline">search_off</span>
@@ -285,14 +314,22 @@ export default function HumanResources() {
             {/* Table footer */}
             <div className="flex items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant">
               <span className="text-xs text-secondary">
-                Hiển thị <b className="text-on-surface">{filtered.length}</b> / {employees.length} nhân sự
+                Hiển thị <b className="text-on-surface">{filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)}</b> / {filtered.length} nhân sự
               </span>
               <div className="flex items-center gap-1">
-                <button className="p-1.5 rounded-md text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer" disabled>
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage <= 1}
+                  className="p-1.5 rounded-md text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
                   <span className="material-symbols-outlined text-[18px]">chevron_left</span>
                 </button>
-                <span className="px-3 py-1 rounded-md bg-primary text-on-primary text-xs font-medium cursor-pointer">1</span>
-                <button className="p-1.5 rounded-md text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer">
+                <span className="px-3 py-1 rounded-md bg-primary text-on-primary text-xs font-medium">{safePage} / {totalPages}</span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage >= totalPages}
+                  className="p-1.5 rounded-md text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
                   <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                 </button>
               </div>
@@ -301,7 +338,14 @@ export default function HumanResources() {
         </div>
       </div>
 
-      {modalOpen && <EmployeeModal employee={editing} onClose={() => setModalOpen(false)} onSave={handleSave} />}
+      {modalOpen && <EmployeeModal 
+        employee={editing} 
+        departments={departments}
+        positions={positions}
+        roles={roles}
+        onClose={() => setModalOpen(false)} 
+        onSave={handleSave} 
+      />}
     </section>
   );
 }

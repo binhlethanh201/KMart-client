@@ -1,14 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ApprovalSystemContext } from './approvalStore';
-import { USERS, SEED_REQUESTS, WORKFLOW_BY_TYPE, STEP_ROLE } from '../features/requests/data/seed';
-import { DEPARTMENTS } from '../features/departments/data/departments';
-import { EMPLOYEES } from '../features/departments/data/employees';
+import { departmentService } from '../features/departments/services/departmentService';
+import { applicationService } from '../features/requests/services/applicationService';
+import { authService } from '../features/auth/services/authService';
+import { userService } from '../features/hr/services/userService';
 import { FORM_FIELDS } from '../features/system-config/data/mockData';
 
 const STORAGE_KEY = 'kmart.approval.v3';
-
-const userName = (id) => USERS.find((u) => u.id === id)?.name ?? 'Hệ thống';
-const userById = (id) => USERS.find((u) => u.id === id);
 
 function load() {
   try {
@@ -17,18 +15,14 @@ function load() {
       const p = JSON.parse(raw);
       if (p && Array.isArray(p.requests)) {
         return {
-          currentUserId: p.currentUserId ?? USERS[0].id,
-          requests: p.requests,
-          departments: Array.isArray(p.departments) ? p.departments : DEPARTMENTS,
-          employees: Array.isArray(p.employees) ? p.employees : EMPLOYEES,
-          formFields: p.formFields || FORM_FIELDS,
+          formFields: p.formFields || FORM_FIELDS
         };
       }
     }
-  } catch {
-    /* ignore corrupted storage */
-  }
-  return { currentUserId: USERS[0].id, requests: SEED_REQUESTS, departments: DEPARTMENTS, employees: EMPLOYEES, formFields: FORM_FIELDS };
+  } catch (e) { }
+  return {
+    formFields: FORM_FIELDS
+  };
 }
 
 function stamp() {
@@ -39,123 +33,146 @@ function stamp() {
 
 export function ApprovalSystemProvider({ children }) {
   const init = load();
-  const [currentUserId, setCurrentUserId] = useState(init.currentUserId);
-  const [requests, setRequests] = useState(init.requests);
-  const [departments, setDepartments] = useState(init.departments);
-  const [employees, setEmployees] = useState(init.employees);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [requests, setRequests] = useState([]); // Fetch from API
+  const [departments, setDepartments] = useState([]); // Fetch from API
+  const [employees, setEmployees] = useState([]);
   const [formFields, setFormFields] = useState(init.formFields);
   const [toasts, setToasts] = useState([]);
 
   // Persist to localStorage on any change.
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ currentUserId, requests, departments, employees, formFields }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ requests, formFields }));
     } catch {
       /* quota / private mode - ignore */
     }
-  }, [currentUserId, requests, departments, employees, formFields]);
+  }, [requests, formFields]);
 
-  const currentUser = useMemo(() => userById(currentUserId), [currentUserId]);
+  // Load departments from API
+  useEffect(() => {
+    departmentService.getAll()
+      .then(data => setDepartments(data))
+      .catch(err => console.error('Failed to load departments', err));
+  }, []);
+
+  // Load employees from API (dùng cho EmployeeSelect trong Add/Edit Department)
+  useEffect(() => {
+    userService.getAll()
+      .then(data => setEmployees(data))
+      .catch(err => console.error('Failed to load employees', err));
+  }, []);
+
+  // Load requests from API
+  const loadRequests = useCallback(async () => {
+    try {
+      const [myReqs, pendingReqs] = await Promise.all([
+        applicationService.getMyRequests(),
+        applicationService.getPendingApprovals()
+      ]);
+      // Merge unique
+      const all = [...myReqs, ...pendingReqs];
+      const unique = Array.from(new Map(all.map(item => [item.id, item])).values());
+      setRequests(unique);
+    } catch (err) {
+      console.error('Failed to load requests', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRequests();
+    authService.getCurrentUser().then(async u => {
+      const positionsList = u.positions || u.departments || [];
+      const primaryPos = positionsList.find(p => p.isPrimary) || positionsList[0];
+      const { getFullAvatarUrl } = await import('../features/hr/services/userService');
+      const actualAvatar = getFullAvatarUrl(u.avatarUrl);
+      setCurrentUser({
+        id: u.id,
+        name: u.fullName,
+        email: u.email,
+        personalEmail: u.personalEmail,
+        phone: u.phone,
+        departmentId: primaryPos?.departmentId,
+        department: primaryPos?.departmentName || 'Chưa phân bổ',
+        positionId: primaryPos?.positionId,
+        position: primaryPos?.positionName || 'Nhân viên',
+        allPositions: positionsList,
+        profileData: u.profileData ? JSON.parse(u.profileData) : null,
+        avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`
+      });
+    }).catch(console.error);
+  }, [loadRequests]);
+
+  const currentUserId = currentUser?.id;
 
   const pushToast = useCallback((message, variant = 'info') => {
-    const id = Math.random().toString(36).slice(2);
+    const id = Date.now();
     setToasts((t) => [...t, { id, message, variant }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
+    setTimeout(() => {
+      setToasts((t) => t.filter((x) => x.id !== id));
+    }, 3000);
   }, []);
 
   const dismissToast = useCallback((id) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
   // Build a fresh request from modal form data.
   const createRequest = useCallback(
-    (data) => {
-      const id = `REQ-${Math.floor(1000 + Math.random() * 8999)}`;
-      const chain = WORKFLOW_BY_TYPE[data.type] || ['u_tvql', 'u_lhtl'];
-      const steps = chain.map((uid) => ({ approverId: uid, status: 'pending', actedAt: null }));
-      const req = {
-        id,
-        title: data.title || data.type,
-        type: data.type,
-        creatorId: currentUserId,
-        departmentId: userById(currentUserId)?.departmentId ?? 4,
-        createdAt: stamp(),
-        status: 'pending',
-        currentStep: 0,
-        fields: {
-          startTime: data.startTime || '',
-          endTime: data.endTime || '',
-          reason: data.reason || '',
-          impact: data.impact || 'Không ảnh hưởng',
-          attachment: data.attachment || null,
-          ...data // Capture dynamic fields from Form Builder
-        },
-        steps,
-        comments: [],
-        history: [{ at: stamp(), text: `${userName(currentUserId)} đã tạo yêu cầu ${id}.`, type: 'create' }],
-      };
-      setRequests((r) => [req, ...r]);
-      pushToast(`Đã tạo đề xuất ${id}`, 'success');
-      return id;
+    async (data) => {
+      try {
+        // Create draft
+        const req = await applicationService.create(data);
+        // Automatically submit
+        const submitted = await applicationService.submit(req.id);
+        setRequests((r) => [submitted, ...r]);
+        pushToast(`Đã tạo đề xuất ${submitted.id}`, 'success');
+        return submitted.id;
+      } catch (err) {
+        pushToast('Lỗi tạo đề xuất', 'error');
+        console.error(err);
+      }
     },
-    [currentUserId, pushToast]
+    [pushToast]
   );
 
   const approveRequest = useCallback(
-    (reqId) => {
-      setRequests((list) =>
-        list.map((r) => {
-          if (r.id !== reqId) return r;
-          const steps = r.steps.map((s, i) => (i === r.currentStep ? { ...s, status: 'approved', actedAt: stamp() } : s));
-          const isLast = r.currentStep >= r.steps.length - 1;
-          const next = isLast ? r.currentStep : r.currentStep + 1;
-          const status = isLast ? 'approved' : 'pending';
-          const actor = r.steps[r.currentStep].approverId;
-          const entry = {
-            at: stamp(),
-            text: `${userName(actor)} đã thay đổi trạng thái thành Đã duyệt (${STEP_ROLE[actor] || 'Cấp ' + (r.currentStep + 1)}).`,
-            type: 'approve',
-          };
-          return { ...r, steps, currentStep: next, status, history: [entry, ...r.history] };
-        })
-      );
-      pushToast('Đã phê duyệt bước này', 'success');
+    async (reqId) => {
+      try {
+        const updated = await applicationService.approve(reqId);
+        setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
+        pushToast('Đã phê duyệt bước này', 'success');
+      } catch (err) {
+        pushToast('Lỗi phê duyệt', 'error');
+      }
     },
     [pushToast]
   );
 
   const rejectRequest = useCallback(
-    (reqId, reason) => {
-      setRequests((list) =>
-        list.map((r) => {
-          if (r.id !== reqId) return r;
-          const steps = r.steps.map((s, i) => (i === r.currentStep ? { ...s, status: 'rejected', actedAt: stamp() } : s));
-          const actor = r.steps[r.currentStep]?.approverId ?? currentUserId;
-          const entry = {
-            at: stamp(),
-            text: `${userName(actor)} đã từ chối. Lý do: ${reason}`,
-            type: 'reject',
-          };
-          return { ...r, steps, status: 'rejected', rejectReason: reason, history: [entry, ...r.history] };
-        })
-      );
-      pushToast('Đã từ chối yêu cầu', 'error');
+    async (reqId, reason) => {
+      try {
+        const updated = await applicationService.reject(reqId, reason);
+        setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
+        pushToast('Đã từ chối yêu cầu', 'error');
+      } catch (err) {
+        pushToast('Lỗi từ chối', 'error');
+      }
     },
-    [currentUserId, pushToast]
+    [pushToast]
   );
 
   const addComment = useCallback(
-    (reqId, text) => {
+    async (reqId, text) => {
       if (!text.trim()) return;
-      const at = stamp();
-      setRequests((list) =>
-        list.map((r) => {
-          if (r.id !== reqId) return r;
-          const comment = { userId: currentUserId, text: text.trim(), at };
-          const entry = { at, text: `${userName(currentUserId)} đã thêm bình luận.`, type: 'comment' };
-          return { ...r, comments: [...(r.comments || []), comment], history: [entry, ...r.history] };
-        })
-      );
+      try {
+        await applicationService.addComment(reqId, text);
+        // Refresh request to get the comment
+        const updated = await applicationService.getById(reqId);
+        setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
+      } catch (err) {
+        pushToast('Lỗi thêm bình luận', 'error');
+      }
     },
-    [currentUserId]
+    [pushToast]
   );
 
   const simulateTimeout = useCallback(
@@ -179,104 +196,54 @@ export function ApprovalSystemProvider({ children }) {
   // Create a new department + assign personnel. Updates both the departments
   // array (card renders on the grid) and the employees' department assignment.
   const addDepartment = useCallback(
-    (data) => {
-      const newId = (departments.reduce((m, d) => Math.max(m, Number(d.id) || 0), 0) || 0) + 1;
-      const head = data.head || null; // employee object
-      const deputy = data.deputy || null; // employee object
-      const addedMembers = data.members || []; // [{ employee, assignment: 'primary' | 'secondary' }]
-      const headTitle = data.type === 'Siêu thị / Chi nhánh' ? 'Cửa hàng trưởng' : 'Trưởng phòng';
-
-      const leaders = [];
-      if (head) leaders.push({ title: headTitle, name: head.name });
-      if (deputy) leaders.push({ title: 'Phó phòng', name: deputy.name });
-
-      const allMembers = [
-        ...(head ? [head] : []),
-        ...(deputy ? [deputy] : []),
-        ...addedMembers.map((m) => m.employee),
-      ];
-      const total = allMembers.length;
-      const dept = {
-        id: newId,
-        icon: data.icon,
-        iconImage: data.iconImage || null,
-        status: data.status === 'inactive' ? 'Inactive' : 'Active',
-        name: data.name,
-        code: data.code,
-        type: data.type,
-        leaders,
-        members: allMembers.map((m) => m.avatar).slice(0, 2),
-        extraCount: Math.max(0, total - 2),
-        memberCount: total,
-        createdAt: stamp(),
-        staff: allMembers.map((m, i) => ({
-          id: m.id,
-          name: m.name,
-          role: i === 0 && head ? head.position || headTitle : i === 1 && deputy ? 'Phó phòng' : m.position || 'Nhân viên',
-          avatar: m.avatar,
-          email: m.email || '',
-          status: m.status || 'active',
-        })),
-      };
-      setDepartments((d) => [...d, dept]);
-
-      // Update employee assignments: head/deputy + primary members -> departmentId;
-      // secondary (kiêm nhiệm) members -> add to secondary list.
-      const primaryIds = new Set([
-        ...(head ? [head.id] : []),
-        ...(deputy ? [deputy.id] : []),
-        ...addedMembers.filter((m) => m.assignment === 'primary').map((m) => m.employee.id),
-      ]);
-      const secondaryIds = new Set(addedMembers.filter((m) => m.assignment === 'secondary').map((m) => m.employee.id));
-
-      setEmployees((list) =>
-        list.map((e) => {
-          if (primaryIds.has(e.id)) {
-            return { ...e, departmentId: newId, department: data.name };
-          }
-          if (secondaryIds.has(e.id)) {
-            return {
-              ...e,
-              secondary: [...(e.secondary || []), { department: data.name, position: 'Kiêm nhiệm' }],
-            };
-          }
-          return e;
-        })
-      );
-
-      pushToast('Thêm mới phòng ban thành công!', 'success');
-      return newId;
+    async (data) => {
+      try {
+        const newDept = await departmentService.create(data);
+        setDepartments((d) => [...d, newDept]);
+        pushToast('Thêm mới phòng ban thành công!', 'success');
+        return newDept.id;
+      } catch (err) {
+        pushToast('Lỗi khi thêm phòng ban', 'error');
+        console.error(err);
+      }
     },
-    [departments, pushToast]
+    [pushToast]
   );
 
   const updateDepartment = useCallback(
-    (id, updates) => {
-      setDepartments((list) =>
-        list.map((d) => (d.id === id ? { ...d, ...updates } : d))
-      );
-      pushToast('Cập nhật phòng ban thành công!', 'success');
+    async (id, updates) => {
+      try {
+        const updated = await departmentService.update(id, updates);
+        setDepartments((list) => list.map((d) => (d.id === id ? updated : d)));
+        pushToast('Cập nhật phòng ban thành công!', 'success');
+      } catch (err) {
+        pushToast('Lỗi cập nhật', 'error');
+      }
     },
     [pushToast]
   );
 
   const deleteDepartment = useCallback(
-    (id) => {
-      setDepartments((list) => list.filter((d) => d.id !== id));
-      pushToast('Đã xóa phòng ban', 'success');
+    async (id) => {
+      try {
+        await departmentService.delete(id);
+        setDepartments((list) => list.filter((d) => d.id !== id));
+        pushToast('Đã xóa phòng ban', 'success');
+      } catch (err) {
+        pushToast('Lỗi xóa phòng ban', 'error');
+      }
     },
     [pushToast]
   );
 
   const toggleDepartmentStatus = useCallback(
-    (id) => {
-      const dept = departments.find(d => d.id === id);
-      if (dept) {
-        const newStatus = dept.status.toLowerCase() === 'active' ? 'Inactive' : 'Active';
-        setDepartments((list) =>
-          list.map((d) => (d.id === id ? { ...d, status: newStatus } : d))
-        );
-        pushToast(`Đã ${newStatus === 'Active' ? 'mở' : 'ngừng'} hoạt động phòng ban`, 'success');
+    async (id) => {
+      try {
+        const res = await departmentService.toggleStatus(id);
+        setDepartments((list) => list.map((d) => (d.id === id ? { ...d, status: res.department?.isActive ? 'Active' : 'Inactive' } : d)));
+        pushToast(res.message || 'Thay đổi trạng thái thành công', 'success');
+      } catch (err) {
+        pushToast('Lỗi khi đổi trạng thái', 'error');
       }
     },
     [departments, pushToast]
@@ -294,10 +261,10 @@ export function ApprovalSystemProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      users: USERS,
+
       currentUser,
       currentUserId,
-      setCurrentUserId,
+
       requests,
       createRequest,
       approveRequest,

@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
-import { DEPT_STAFF } from '../data/departments';
-import { USERS, STATUS_META, STEP_ROLE, REQUEST_TYPES } from '../../requests/data/seed';
+import { useHr } from '../../hr/context/HrProvider';
+import { departmentService } from '../services/departmentService';
+import { STATUS_META, STEP_ROLE, REQUEST_TYPES } from '../../requests/data/constants';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 
 const TABS = [
@@ -13,15 +14,10 @@ const TABS = [
 const selectCls =
   'bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
 
-// Staff status pill
-const staffStatusCls = (s) =>
-  s === 'active'
-    ? 'bg-emerald-50 text-emerald-700'
-    : 'bg-slate-100 text-slate-600';
-
 export default function DepartmentDetail() {
   const { id } = useParams();
   const { requests, currentUser, canApprove, approveRequest, pushToast, departments } = useApproval();
+  const { employees } = useHr();
   const dept = departments.find((d) => String(d.id) === String(id));
   useDocumentTitle(dept ? dept.name : 'Phòng ban');
 
@@ -29,6 +25,18 @@ export default function DepartmentDetail() {
   const [q, setQ] = useState('');
   const [typeF, setTypeF] = useState('all');
   const [statusF, setStatusF] = useState('all');
+  const [members, setMembers] = useState([]);
+
+  // Nạp danh sách nhân sự thực của phòng ban khi vào trang.
+  useEffect(() => {
+    if (!dept) return;
+    departmentService.getMembers(dept.id)
+      .then(setMembers)
+      .catch((err) => {
+        console.error('Failed to load department members', err);
+        setMembers([]);
+      });
+  }, [dept?.id]);
 
   // All requests belonging to this department.
   const deptRequests = useMemo(
@@ -39,12 +47,12 @@ export default function DepartmentDetail() {
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return deptRequests.filter((r) => {
-      const creator = USERS.find((u) => u.id === r.creatorId);
+      const creatorName = r.creatorName || employees.find((u) => u.id === r.creatorId)?.name;
       const matchQ =
         !query ||
         r.id.toLowerCase().includes(query) ||
         r.title.toLowerCase().includes(query) ||
-        (creator && creator.name.toLowerCase().includes(query));
+        (creatorName && creatorName.toLowerCase().includes(query));
       const matchT = typeF === 'all' || r.type === typeF;
       const matchS =
         statusF === 'all' ||
@@ -129,7 +137,7 @@ export default function DepartmentDetail() {
                     <span className="mx-2 text-outline">•</span>
                     <span className="inline-flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px] text-secondary">group</span>
-                      <strong className="text-on-surface">{dept.memberCount}</strong> thành viên
+                      <strong className="text-on-surface">{members.length}</strong> thành viên
                     </span>
                   </p>
                 </div>
@@ -222,7 +230,8 @@ export default function DepartmentDetail() {
                       </tr>
                     ) : (
                       filtered.map((r) => {
-                        const creator = USERS.find((u) => u.id === r.creatorId);
+                        const creatorName = r.creatorName || employees.find((u) => u.id === r.creatorId)?.name;
+                        const creatorAvatar = employees.find((u) => u.id === r.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
                         const meta = STATUS_META[r.status];
                         const stepLabel =
                           r.status === 'pending'
@@ -246,10 +255,10 @@ export default function DepartmentDetail() {
                               <div className="flex items-center gap-2">
                                 <img
                                   className="w-6 h-6 rounded-full border border-outline-variant object-cover"
-                                  src={creator?.avatar}
-                                  alt={creator?.name}
+                                  src={creatorAvatar}
+                                  alt={creatorName}
                                 />
-                                <span className="text-on-surface-variant">{creator?.name}</span>
+                                <span className="text-on-surface-variant">{creatorName}</span>
                               </div>
                             </td>
                             <td className="py-3 px-4 text-secondary whitespace-nowrap">{r.createdAt}</td>
@@ -319,9 +328,19 @@ export default function DepartmentDetail() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant">
-                    {(dept.staff && dept.staff.length ? dept.staff : DEPT_STAFF[dept.id] || []).map((s) => (
+                    {members.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-10 px-4 text-center text-secondary">
+                          <span className="material-symbols-outlined text-[36px] block mb-2 text-outline">
+                            group_off
+                          </span>
+                          Phòng ban chưa có nhân sự trực thuộc.
+                        </td>
+                      </tr>
+                    ) : (
+                      members.map((s) => (
                       <tr key={s.id} className="hover:bg-surface-container-low transition-colors">
-                        <td className="py-3 px-4 text-secondary whitespace-nowrap">{s.id}</td>
+                        <td className="py-3 px-4 text-secondary whitespace-nowrap" title={s.id}>{s.shortId}</td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <img
@@ -349,12 +368,13 @@ export default function DepartmentDetail() {
                           </span>
                         </td>
                       </tr>
-                    ))}
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
               <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary text-right">
-                Tổng cộng {(dept.staff && dept.staff.length ? dept.staff : DEPT_STAFF[dept.id] || []).length} nhân sự được hiển thị
+                Tổng cộng {members.length} nhân sự được hiển thị
               </div>
             </section>
           )}

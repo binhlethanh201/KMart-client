@@ -17,6 +17,10 @@ export default function DepartmentDashboard() {
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('active');
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
+
   // Computed filtered list
   const filteredDepartments = departments.filter((dept) => {
     // 1. Search filter
@@ -38,6 +42,19 @@ export default function DepartmentDashboard() {
     }
     return true;
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredDepartments.length / ITEMS_PER_PAGE) || 1;
+  
+  // Ensure current page is valid after filtering
+  React.useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const paginatedDepartments = filteredDepartments.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <>
@@ -105,7 +122,7 @@ export default function DepartmentDashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredDepartments.map((dept) => (
+            {paginatedDepartments.map((dept) => (
               <DepartmentCard
                 key={dept.id}
                 id={dept.id}
@@ -116,6 +133,7 @@ export default function DepartmentDashboard() {
                 code={dept.code}
                 leaders={dept.leaders}
                 members={dept.members}
+                memberNames={dept.memberNames}
                 extraCount={dept.extraCount}
                 memberCount={dept.memberCount}
                 onEdit={() => setEditDept(dept)}
@@ -131,9 +149,15 @@ export default function DepartmentDashboard() {
         )}
 
         {/* Footer Pagination */}
-        <div className="pt-4 mt-4 border-t border-outline-variant">
-          <Pagination />
-        </div>
+        {totalPages > 1 && (
+          <div className="pt-4 mt-4 border-t border-outline-variant">
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
     </div>
 

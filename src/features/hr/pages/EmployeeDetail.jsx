@@ -1,14 +1,21 @@
 import { useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import EmployeeModal from '../components/EmployeeModal';
 import UserProfile from '../../profile/pages/UserProfile';
 import { useHr } from '../context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
-import { ROLE_STYLES, STATUS_STYLES } from '../data/mockData';
+import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
 
 const pad = (n) => String(n).padStart(2, '0');
 const DAY = 24 * 60 * 60 * 1000;
+
+const formatDate = (value) => {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+};
 
 // Deterministic per-employee activity log derived from the real record.
 // Historical events (onboarding) anchor at the hire date; recent events
@@ -59,7 +66,7 @@ function buildActivityLog(e) {
       type: 'role',
       date: hist(6, 9, 45),
       title: 'Cấp vai trò hệ thống',
-      detail: e.role,
+      detail: ROLE_STYLES[e.role]?.label || e.role,
     },
   ];
 
@@ -162,7 +169,7 @@ export default function EmployeeDetail() {
   useDocumentTitle('Chi tiết Nhân sự');
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getEmployee, saveEmployee, toggleLock, resetPassword } = useHr();
+  const { getEmployee, saveEmployee, toggleLock, resetPassword, departments, positions, roles } = useHr();
   const { pushToast } = useApproval();
 
   const employee = useMemo(() => getEmployee(id), [getEmployee, id]);
@@ -203,10 +210,14 @@ export default function EmployeeDetail() {
   const status = STATUS_STYLES[employee.status];
   const isActive = employee.status === 'active';
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (!window.confirm(`Đặt lại mật khẩu cho "${employee.name}"? Một mật khẩu tạm sẽ được tạo.`)) return;
-    const pwd = resetPassword();
-    pushToast(`Đã đặt lại mật khẩu tạm cho ${employee.name}: ${pwd}`, 'success');
+    const pwd = await resetPassword(employee.id);
+    if (pwd) {
+      pushToast(`Đã đặt lại mật khẩu tạm cho ${employee.name}: ${pwd}`, 'success');
+    } else {
+      pushToast(`Không thể đặt lại mật khẩu cho ${employee.name}.`, 'error');
+    }
   };
 
   const handleToggleLock = () => {
@@ -247,9 +258,6 @@ export default function EmployeeDetail() {
                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${status.cls}`}>
                    <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
                    {status.label}
-                 </span>
-                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#003B73] text-white`}>
-                   Owner
                  </span>
                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700`}>
                    <span className="material-symbols-outlined text-[14px]">apartment</span>
@@ -301,15 +309,23 @@ export default function EmployeeDetail() {
                  <span className="material-symbols-outlined text-[16px]">badge</span>
                  <span className="text-[10px] font-bold uppercase tracking-wider">User ID</span>
               </div>
-              <div className="font-bold text-on-surface text-sm truncate" title={employee.id}>{employee.id}</div>
+              <div className="font-bold text-on-surface text-sm truncate" title={employee.id}>{employee.id.substring(0, 8).toUpperCase()}</div>
            </div>
            
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
                  <span className="material-symbols-outlined text-[16px]">mail</span>
-                 <span className="text-[10px] font-bold uppercase tracking-wider">Email</span>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">Email công ty</span>
               </div>
               <div className="font-bold text-on-surface text-sm truncate" title={employee.email}>{employee.email}</div>
+           </div>
+
+           <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
+              <div className="flex items-center gap-1.5 text-secondary">
+                 <span className="material-symbols-outlined text-[16px]">mail</span>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">Email cá nhân</span>
+              </div>
+              <div className="font-bold text-on-surface text-sm truncate" title={employee.personalEmail || 'Không có'}>{employee.personalEmail || 'Không có'}</div>
            </div>
 
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
@@ -325,7 +341,7 @@ export default function EmployeeDetail() {
                  <span className="material-symbols-outlined text-[16px]">event</span>
                  <span className="text-[10px] font-bold uppercase tracking-wider">Ngày tạo</span>
               </div>
-              <div className="font-bold text-on-surface text-sm">6/9/2026</div>
+              <div className="font-bold text-on-surface text-sm">{formatDate(employee.createdAt)}</div>
            </div>
         </div>
 
@@ -367,10 +383,13 @@ export default function EmployeeDetail() {
       {editOpen && (
         <EmployeeModal
           employee={employee}
+          departments={departments}
+          positions={positions}
+          roles={roles}
           onClose={() => setEditOpen(false)}
-          onSave={(form) => {
-            saveEmployee(form);
-            setEditOpen(false);
+          onSave={async (form) => {
+            const ok = await saveEmployee(form);
+            if (ok) setEditOpen(false);
           }}
         />
       )}
@@ -380,7 +399,7 @@ export default function EmployeeDetail() {
         <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4 sm:p-6" onClick={() => setProfileModalOpen(false)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden relative" onClick={(e) => e.stopPropagation()}>
             <div className="flex-1 overflow-hidden relative bg-surface">
-              <UserProfile onClose={() => setProfileModalOpen(false)} />
+              <UserProfile userId={employee.id} onClose={() => setProfileModalOpen(false)} />
             </div>
           </div>
         </div>

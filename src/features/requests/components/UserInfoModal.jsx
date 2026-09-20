@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { DEPARTMENTS } from '../../departments/data/departments';
+import { useApproval } from '../../../context/useApproval';
 
 export default function UserInfoModal({ user, onClose }) {
+  const { departments } = useApproval();
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -11,7 +12,7 @@ export default function UserInfoModal({ user, onClose }) {
 
   if (!user) return null;
 
-  const department = DEPARTMENTS.find(d => d.id === user.departmentId);
+  const department = departments.find(d => d.id === user.departmentId);
 
   return createPortal(
     <div

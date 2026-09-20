@@ -1,13 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
-import { STATUS_META, USERS } from '../data/seed';
+import { useHr } from '../../hr/context/HrProvider';
+import { STATUS_META } from '../data/constants';
 
 // Status-driven request card. Clicking navigates to the detail page.
 export default function RequestCard({ request: r }) {
   const navigate = useNavigate();
   const { canApprove } = useApproval();
-  const meta = STATUS_META[r.status];
-  const creator = USERS.find((u) => u.id === r.creatorId);
+  const { employees } = useHr();
+  const meta = STATUS_META[r.status] || { badge: 'bg-gray-100 text-gray-800', dot: 'bg-gray-500', label: 'Không rõ' };
+  
+  // Use creator name directly from API if available, fallback to search in employees
+  const creatorName = r.creatorName || employees.find((u) => u.id === r.creatorId)?.name;
+  const creatorRole = employees.find((u) => u.id === r.creatorId)?.position || 'Nhân viên';
+  const creatorAvatar = employees.find((u) => u.id === r.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
   const isActionable = canApprove(r);
   const isRejected = r.status === 'rejected' || r.status === 'returned_timeout';
 
@@ -36,7 +42,7 @@ export default function RequestCard({ request: r }) {
           <p className="text-xs text-secondary mb-2">Mã: {r.id} - {r.type} - {r.createdAt}</p>
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 bg-surface-container text-secondary rounded text-[10px] uppercase font-medium">
-              {creator?.role}
+              {creatorRole}
             </span>
             {isActionable && (
               <span className="px-2 py-0.5 bg-warning-container text-on-warning-container rounded text-[10px] uppercase font-bold flex items-center gap-1">
@@ -52,15 +58,15 @@ export default function RequestCard({ request: r }) {
         <span className="text-xs text-slate-400">Luồng duyệt</span>
         <div className="flex items-center">
           {/* creator */}
-          <img className="w-7 h-7 rounded-full border-2 border-white object-cover" src={creator?.avatar} alt={creator?.name} title={`Người tạo: ${creator?.name}`} />
+          <img className="w-7 h-7 rounded-full border-2 border-white object-cover" src={creatorAvatar} alt={creatorName} title={`Người tạo: ${creatorName}`} />
           <span className="material-symbols-outlined text-slate-300 mx-1 text-[16px]">arrow_forward</span>
           {r.steps.map((s, i) => {
-            const u = USERS.find((x) => x.id === s.approverId);
+            const u = employees.find((x) => x.id === s.approverId);
             return (
               <div key={i} className="flex items-center">
                 {i > 0 && <span className="material-symbols-outlined text-slate-300 mx-1 text-[16px]">arrow_forward</span>}
                 <div className="relative mr-1">
-                  <img className={`w-7 h-7 rounded-full border-2 object-cover ${s.status === 'pending' ? 'border-warning' : s.status === 'approved' ? 'border-success' : 'border-error'}`} src={u?.avatar} alt={u?.name} />
+                  <img className={`w-7 h-7 rounded-full border-2 object-cover ${s.status === 'pending' ? 'border-warning' : s.status === 'approved' ? 'border-success' : 'border-error'}`} src={u?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'User')}&background=random&color=fff&size=128`} alt={u?.name || 'User'} title={u?.name || 'User'} />
                   <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${s.status === 'approved' ? 'bg-success' : s.status === 'pending' ? 'bg-warning' : 'bg-error'}`}>
                     <span className="material-symbols-outlined text-white text-[10px] font-bold">{s.status === 'approved' ? 'check' : s.status === 'pending' ? 'schedule' : 'close'}</span>
                   </div>

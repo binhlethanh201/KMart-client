@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FORM_TYPES, INITIAL_WORKFLOW, APPROVAL_TYPES, MULTI_RULES, APPROVAL_ROLES, SPECIFIC_USERS, CONDITION_FIELDS, CONDITION_OPS, TIME_RULES } from '../data/mockData';
-import { EMPLOYEES } from '../../hr/data/mockData';
+import { useHr } from '../../hr/context/HrProvider';
 
 const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
@@ -53,6 +53,7 @@ function approvalSummary(step) {
 }
 
 function SequentialOrderList({ role, order, onChange }) {
+  const { employees: EMPLOYEES } = useHr();
   const currentIds = useMemo(() => {
     if (Array.isArray(order)) return order;
     return EMPLOYEES.filter((e) => e.role === role || e.position === role).map((e) => e.id);
@@ -226,6 +227,7 @@ function SequentialOrderList({ role, order, onChange }) {
 }
 
 function UserSelect({ value, onChange }) {
+  const { employees: EMPLOYEES } = useHr();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -315,6 +317,7 @@ function UserSelect({ value, onChange }) {
 
 // Popup cấu hình nâng cao — tích chọn người tham gia bước duyệt
 function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
+  const { employees: EMPLOYEES } = useHr();
   const [selected, setSelected] = useState(() => new Set(Array.isArray(approvers) ? approvers : []));
   const [search, setSearch] = useState('');
   const [dept, setDept] = useState('all');
@@ -588,6 +591,7 @@ function makeStep(overrides = {}) {
 }
 
 export default function WorkflowTab() {
+  const { employees: EMPLOYEES } = useHr();
   const [formType, setFormType] = useState(FORM_TYPES[0]);
   const [block, setBlock] = useState('hq');
   const [openStepIds, setOpenStepIds] = useState(() => new Set());
@@ -736,8 +740,10 @@ export default function WorkflowTab() {
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => {
           const isActive = openStepIds.has(step.id);
-          const approverCount = Array.isArray(step.approvers) ? step.approvers.length : 0;
-          const showMulti = step.approvalType === 'role' && approverCount >= 2;
+          const activeApproverCount = Array.isArray(step.approvers) && step.approvers.length > 0
+            ? step.approvers.length
+            : EMPLOYEES.filter((e) => e.role === step.role || e.position === step.role).length;
+          const showMulti = step.approvalType === 'role';
           return (
             <div
               key={step.id}
@@ -897,10 +903,21 @@ export default function WorkflowTab() {
                             )}
                             {step.approvalType === 'role' && (
                               <div className="flex flex-col gap-2 max-w-md">
+                                <select
+                                  className={selectCls}
+                                  value={step.role}
+                                  onChange={(e) => updateStep(step.id, { role: e.target.value })}
+                                >
+                                  {APPROVAL_ROLES.map((r) => (
+                                    <option key={r} value={r}>
+                                      Duyệt theo chức danh: {r}
+                                    </option>
+                                  ))}
+                                </select>
                                 <button
                                   type="button"
                                   onClick={() => setAdvancedStepId(step.id)}
-                                  className="group flex items-center gap-3 w-full text-left bg-surface-container-lowest border border-outline-variant hover:border-primary hover:bg-primary-container/20 px-3 py-2.5 rounded-md transition-colors cursor-pointer"
+                                  className="group flex items-center gap-3 w-full text-left bg-surface-container-lowest border border-outline-variant hover:border-primary hover:bg-primary-container/20 px-3 py-2.5 rounded-md transition-colors cursor-pointer mt-1"
                                 >
                                   <span className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
                                     <span className="material-symbols-outlined text-[20px]">group_add</span>
@@ -1051,7 +1068,7 @@ export default function WorkflowTab() {
                       {/* Hàng dưới full-width - Quy tắc nhiều người duyệt */}
                       {showMulti && (
                         <div className="border-t border-outline-variant/50 pt-4">
-                          <GroupHeader icon="group" label="Quy tắc nhiều người duyệt" hint={`${approverCount} người duyệt`} />
+                          <GroupHeader icon="group" label="Quy tắc nhiều người duyệt" hint={`${activeApproverCount} người duyệt`} />
                           <div className="flex flex-col sm:flex-row gap-2">
                             {MULTI_RULES.map((r) => (
                               <RadioCard

@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
+import { useHr } from '../../hr/context/HrProvider';
 import RejectReasonModal from '../components/RejectReasonModal';
 import SupplementReasonModal from '../components/SupplementReasonModal';
 import UserInfoModal from '../components/UserInfoModal';
-import { STATUS_META, USERS, STEP_ROLE } from '../data/seed';
+import { STATUS_META, STEP_ROLE } from '../data/constants';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 
 const historyBorder = {
@@ -23,6 +24,7 @@ const historyBg = {
 export default function RequestDetail() {
   const { id } = useParams();
   const { requests, currentUser, canApprove, approveRequest, rejectRequest, addComment, simulateTimeout } = useApproval();
+  const { employees } = useHr();
   const request = requests.find((r) => r.id === id);
 
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -45,8 +47,10 @@ export default function RequestDetail() {
     );
   }
 
-  const meta = STATUS_META[request.status];
-  const creator = USERS.find((u) => u.id === request.creatorId);
+  const meta = STATUS_META[request.status] || { badge: 'bg-gray-100 text-gray-800', dot: 'bg-gray-500', label: 'Không rõ' };
+  const creatorName = request.creatorName || employees.find((u) => u.id === request.creatorId)?.name;
+  const creatorRole = employees.find((u) => u.id === request.creatorId)?.position || 'Nhân viên';
+  const creatorAvatar = employees.find((u) => u.id === request.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
   const actionable = canApprove(request);
   const pendingStep = request.steps[request.currentStep];
 
@@ -92,7 +96,7 @@ export default function RequestDetail() {
               </span>
             </div>
             <p className="font-body-md text-secondary text-sm">
-              Mã hệ thống: <strong>{request.id}</strong> - Đã nộp: {request.createdAt} - Người tạo: <strong>{creator?.name}</strong>
+              Mã hệ thống: <strong>{request.id}</strong> - Đã nộp: {request.createdAt} - Người tạo: <strong>{creatorName}</strong>
             </p>
           </div>
 
@@ -153,10 +157,10 @@ export default function RequestDetail() {
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={creator?.avatar} alt={creator?.name} />
+                          <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={creatorAvatar} alt={creatorName} />
                           <div>
-                            <p className="font-medium text-on-surface">{creator?.name} ({request.id === 'REQ-1042' ? 'EMP-8241' : request.id})</p>
-                            <p className="text-xs text-secondary">{creator?.role} - Kmart Siêu thị Cầu Giấy</p>
+                            <p className="font-medium text-on-surface">{creatorName} ({String(request.creatorId).substring(0, 8).toUpperCase()})</p>
+                            <p className="text-xs text-secondary">{creatorRole} - Kmart Siêu thị Cầu Giấy</p>
                           </div>
                         </div>
                         <button
@@ -227,13 +231,13 @@ export default function RequestDetail() {
                   <p className="text-sm text-secondary italic">Chưa có bình luận nào.</p>
                 )}
                 {request.comments?.map((c, i) => {
-                  const u = USERS.find((x) => x.id === c.userId);
+                  const u = employees.find((x) => x.id === c.userId);
                   return (
                     <div key={i} className="flex gap-3">
-                      <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={u?.avatar} alt={u?.name} />
+                      <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={u?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'User')}&background=random&color=fff&size=128`} alt={u?.name || 'User'} />
                       <div className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-md p-3">
                         <div className="flex justify-between items-start mb-1">
-                          <span className="font-medium text-sm text-on-surface">{u?.name}</span>
+                          <span className="font-medium text-sm text-on-surface">{u?.name || 'User'}</span>
                           <span className="text-xs text-secondary">{c.at}</span>
                         </div>
                         <p className="text-sm text-on-surface whitespace-pre-wrap">{c.text}</p>
@@ -245,7 +249,7 @@ export default function RequestDetail() {
               {/* Comment input */}
               <div className="bg-surface-container-low p-4 border-t border-outline-variant">
                 <div className="flex gap-3">
-                  <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={currentUser.avatar} alt={currentUser.name} />
+                  <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'User')}&background=random&color=fff&size=128`} alt={currentUser?.name || 'User'} />
                   <div className="flex-1">
                     <textarea
                       ref={commentRef}
@@ -285,7 +289,7 @@ export default function RequestDetail() {
             </h3>
             <p className="text-sm text-on-surface">
               {actionable ? (
-                <>Đơn cần <strong>{currentUser.name}</strong> phê duyệt ở bước {request.currentStep + 1}. Hạn chót: <strong>12 giờ</strong>.</>
+                <>Đơn cần <strong>{currentUser?.name || 'bạn'}</strong> phê duyệt ở bước {request.currentStep + 1}. Hạn chót: <strong>12 giờ</strong>.</>
               ) : request.status === 'approved' ? 'Đơn đã được phê duyệt hoàn tất.' : request.status === 'rejected' ? 'Đơn đã bị từ chối.' : request.status === 'returned_timeout' ? 'Đơn đã trả về nơi khởi tạo do quá hạn.' : 'Đơn đang chờ người duyệt khác xử lý.'}
             </p>
           </div>
@@ -306,12 +310,13 @@ export default function RequestDetail() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-secondary uppercase tracking-wide">Người nộp đơn</p>
-                    <p className="text-sm text-on-surface font-medium mt-0.5">{creator?.name}</p>
+                    <p className="text-sm text-on-surface font-medium mt-0.5">{creatorName}</p>
                   </div>
                 </li>
                 {/* steps */}
                 {request.steps.map((s, i) => {
-                  const u = USERS.find((x) => x.id === s.approverId);
+                  const u = employees.find((x) => x.id === s.approverId);
+                  const approverName = u?.name || 'User';
                   const isCurrent = i === request.currentStep && request.status === 'pending';
                   if (s.status === 'approved') {
                     return (
@@ -321,7 +326,7 @@ export default function RequestDetail() {
                         </div>
                         <div>
                           <p className="text-xs font-bold text-success uppercase tracking-wide">{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
-                          <p className="text-sm text-on-surface font-medium mt-0.5">{u?.name}</p>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}</p>
                           <p className="text-xs text-success font-medium mt-0.5">Đã duyệt ({s.actedAt})</p>
                         </div>
                       </li>
@@ -335,7 +340,7 @@ export default function RequestDetail() {
                         </div>
                         <div>
                           <p className="text-xs font-bold text-error uppercase tracking-wide">{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
-                          <p className="text-sm text-on-surface font-medium mt-0.5">{u?.name}</p>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}</p>
                           <p className="text-xs text-error font-medium mt-0.5">Đã từ chối ({s.actedAt})</p>
                         </div>
                       </li>
@@ -349,7 +354,7 @@ export default function RequestDetail() {
                       </div>
                       <div className={isCurrent ? 'bg-warning-container/20 p-2 rounded border border-warning/20 w-full -mt-1' : ''}>
                         <p className={`text-xs font-bold uppercase tracking-wide ${isCurrent ? 'text-warning' : 'text-secondary'}`}>{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
-                        <p className="text-sm text-on-surface font-medium mt-0.5">{u?.name}{pendingStep?.approverId === s.approverId && actionable ? ' (Bạn)' : ''}</p>
+                        <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}{pendingStep?.approverId === s.approverId && actionable ? ' (Bạn)' : ''}</p>
                         <p className={`text-xs font-medium mt-0.5 ${isCurrent ? 'text-warning' : 'text-secondary'}`}>{isCurrent ? 'Đang chờ xử lý' : 'Chưa đến lượt'}</p>
                       </div>
                     </li>
@@ -398,11 +403,14 @@ export default function RequestDetail() {
         />
       )}
 
-      {showUserInfo && creator && (
+      {showUserInfo && (
         <UserInfoModal
           user={{
-            ...creator,
-            employeeId: request.id === 'REQ-1042' ? 'EMP-8241' : request.id
+            id: request.creatorId,
+            name: creatorName,
+            role: creatorRole,
+            avatar: creatorAvatar,
+            employeeId: String(request.creatorId).substring(0, 8).toUpperCase()
           }}
           onClose={() => setShowUserInfo(false)}
         />

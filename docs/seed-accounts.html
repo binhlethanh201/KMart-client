@@ -1,0 +1,306 @@
+<title>Kmart — Tài khoản hệ thống</title>
+<style>
+  :root{
+    --bg:#f6f8fb;
+    --surface:#ffffff;
+    --surface-2:#eef3f9;
+    --ink:#0d1f38;
+    --muted:#5a6b83;
+    --line:#dde5ef;
+    --navy:#003B73;
+    --navy-2:#004B8D;
+    --amber:#9a6700;
+    --amber-bg:#fff7e0;
+    --amber-line:#f0d489;
+    --success:#0f766e;
+    --success-bg:#e6f4f1;
+
+    /* role accents */
+    --admin:#9f1239;
+    --hr:#4338ca;
+    --manager:#6d28d9;
+    --leader:#0f766e;
+    --staff:#475569;
+
+    --radius:10px;
+    --shadow:0 1px 2px rgba(13,31,56,.05), 0 8px 24px rgba(13,31,56,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0a1422;
+      --surface:#101d2e;
+      --surface-2:#16243a;
+      --ink:#e7eef7;
+      --muted:#94a6c0;
+      --line:#22324a;
+      --navy:#7ea8d6;
+      --navy-2:#9bc0e6;
+      --amber:#f5c064;
+      --amber-bg:#231c08;
+      --amber-line:#4a3a12;
+      --success:#5fd3c5;
+      --success-bg:#0c2a26;
+      --admin:#f472b6;
+      --hr:#a5b4fc;
+      --manager:#c4b5fd;
+      --leader:#5eead4;
+      --staff:#cbd5e1;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0a1422;
+    --surface:#101d2e;
+    --surface-2:#16243a;
+    --ink:#e7eef7;
+    --muted:#94a6c0;
+    --line:#22324a;
+    --navy:#7ea8d6;
+    --navy-2:#9bc0e6;
+    --amber:#f5c064;
+    --amber-bg:#231c08;
+    --amber-line:#4a3a12;
+    --success:#5fd3c5;
+    --success-bg:#0c2a26;
+    --admin:#f472b6;
+    --hr:#a5b4fc;
+    --manager:#c4b5fd;
+    --leader:#5eead4;
+    --staff:#cbd5e1;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Spline Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    padding:clamp(16px,4vw,48px);
+    padding-block:clamp(24px,5vw,56px);
+  }
+  .mono{font-family:"IBM Plex Mono", "Consolas", ui-monospace, monospace; font-variant-numeric:tabular-nums}
+
+  .wrap{max-width:920px;margin:0 auto}
+
+  /* header */
+  .head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .mark{
+    width:40px;height:40px;border-radius:11px;
+    background:linear-gradient(150deg,var(--navy),var(--navy-2));
+    color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;letter-spacing:-.02em;
+    box-shadow:var(--shadow);flex-shrink:0;
+  }
+  .brand h1{font-size:21px;margin:0;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+  .brand .sub{color:var(--muted);font-size:13px;margin-top:2px}
+  .meta{text-align:right;color:var(--muted);font-size:12.5px}
+  .meta b{color:var(--ink);font-weight:600}
+
+  /* status banner */
+  .status{
+    margin-top:24px;padding:14px 16px;border-radius:var(--radius);
+    background:var(--amber-bg);border:1px solid var(--amber-line);
+    display:flex;gap:12px;align-items:flex-start;
+  }
+  .status .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);margin-top:7px;flex-shrink:0;box-shadow:0 0 0 4px color-mix(in srgb,var(--amber) 18%,transparent)}
+  .status .ok{background:var(--success);box-shadow:0 0 0 4px color-mix(in srgb,var(--success) 18%,transparent)}
+  .status .t{font-weight:600;font-size:14px}
+  .status .d{color:var(--muted);font-size:13px;margin-top:2px}
+  .status code{background:var(--surface);border:1px solid var(--line);padding:2px 7px;border-radius:6px;font-size:12.5px;color:var(--ink)}
+
+  /* section */
+  .sec{margin-top:34px}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .sec h2{font-size:17px;margin:6px 0 0;font-weight:700;letter-spacing:-.01em}
+  .sec .lead{color:var(--muted);font-size:13.5px;margin:6px 0 0;max-width:60ch}
+
+  /* account table */
+  .grid{margin-top:18px;display:grid;gap:12px}
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;box-shadow:var(--shadow);
+    display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;
+  }
+  .role{display:flex;align-items:center;gap:9px;min-width:150px}
+  .role .pip{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .role .name{font-weight:700;font-size:14px;letter-spacing:.02em}
+  .role .desc{font-size:11.5px;color:var(--muted);margin-top:1px}
+  .creds{display:flex;flex-direction:column;gap:7px;min-width:0}
+  .field{display:flex;align-items:center;gap:8px;font-size:13.5px;min-width:0}
+  .field .k{color:var(--muted);width:54px;flex-shrink:0;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .field .v{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:6px;
+    padding:5px 10px;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .copy{
+    flex-shrink:0;background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:6px;padding:4px 8px;font-size:11px;font-weight:600;cursor:pointer;
+    display:inline-flex;align-items:center;gap:5px;transition:all .15s;
+    font-family:inherit;
+  }
+  .copy:hover{color:var(--navy-2);border-color:var(--navy-2)}
+  .copy.done{color:var(--success);border-color:var(--success)}
+  .row-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+
+  /* role color bindings */
+  .r-ADMIN .pip{background:var(--admin)}
+  .r-HR .pip{background:var(--hr)}
+  .r-MANAGER .pip{background:var(--manager)}
+  .r-TEAM_LEADER .pip{background:var(--leader)}
+  .r-STAFF .pip{background:var(--staff)}
+
+  /* login block */
+  .login{
+    margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;box-shadow:var(--shadow);
+  }
+  .login pre{
+    margin:0;padding:16px 18px;background:var(--surface-2);font-size:12.5px;color:var(--ink);
+    overflow-x:auto;font-family:"IBM Plex Mono",monospace;line-height:1.6;
+  }
+  .login .row{display:flex;align-items:center;gap:10px;padding:10px 18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .login .row b{color:var(--ink);font-weight:600}
+
+  .note{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);line-height:1.7;max-width:70ch}
+  .note b{color:var(--ink)}
+  .foot{margin-top:24px;font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+  @media (max-width:640px){
+    .card{grid-template-columns:1fr;gap:14px}
+    .role{min-width:0}
+    .row-actions{flex-direction:row;align-items:flex-start}
+    .field .v{white-space:normal}
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="head">
+    <div class="brand">
+      <div class="mark">K</div>
+      <div>
+        <h1>Kmart — Tài khoản hệ thống</h1>
+        <div class="sub">Bảng tham chiếu tài khoản seed theo vai trò (RBAC)</div>
+      </div>
+    </div>
+    <div class="meta">
+      <div>Dự án <b>Kmart-Du an</b></div>
+      <div>Backend <b>KTM_Market_BE</b> · .NET 10</div>
+      <div>DB <b>PostgreSQL</b> · 103.75.182.211</div>
+    </div>
+  </header>
+
+  <div class="status" id="status">
+    <span class="dot"></span>
+    <div>
+      <div class="t" id="statusT">Chưa kích hoạt — seed chưa chạy</div>
+      <div class="d" id="statusD">
+        Script <code>seed.js</code> đã viết xong (idempotent). Chạy lệnh sau để tạo 5 tài khoản vào DB:
+        <br><code>node seed.js</code> &nbsp;(trong thư mục <code>backend/KTM_Market_BE</code>)
+      </div>
+    </div>
+  </div>
+
+  <section class="sec">
+    <div class="eyebrow">Danh mục tài khoản</div>
+    <h2>Một tài khoản cho mỗi vai trò</h2>
+    <p class="lead">Năm vai trò hệ thống, mỗi vai trò có đúng một tài khoản demo. Mật khẩu chung cho tất cả: <b>Kmart@123</b> (bcrypt cost 12). Trạng thái <b>ACTIVE</b>, không bắt buộc đổi mật khẩu khi đăng nhập lần đầu.</p>
+
+    <div class="grid">
+      <article class="card r-HR">
+        <div class="role"><span class="pip"></span><div><div class="name">HR</div><div class="desc">Phòng Nhân sự</div></div></div>
+        <div class="creds">
+          <div class="field"><span class="k">Email</span><span class="v mono">hr@kmart.vn</span><button class="copy" data-copy="hr@kmart.vn">Sao chép</button></div>
+          <div class="field"><span class="k">Mật khẩu</span><span class="v mono">Kmart@123</span><button class="copy" data-copy="Kmart@123">Sao chép</button></div>
+        </div>
+        <div class="row-actions"><span class="eyebrow">Toàn quyền</span></div>
+      </article>
+
+      <article class="card r-ADMIN">
+        <div class="role"><span class="pip"></span><div><div class="name">ADMIN</div><div class="desc">Quản trị hệ thống</div></div></div>
+        <div class="creds">
+          <div class="field"><span class="k">Email</span><span class="v mono">admin@kmart.vn</span><button class="copy" data-copy="admin@kmart.vn">Sao chép</button></div>
+          <div class="field"><span class="k">Mật khẩu</span><span class="v mono">Kmart@123</span><button class="copy" data-copy="Kmart@123">Sao chép</button></div>
+        </div>
+        <div class="row-actions"><span class="eyebrow">Bảo mật tối cao</span></div>
+      </article>
+
+      <article class="card r-MANAGER">
+        <div class="role"><span class="pip"></span><div><div class="name">MANAGER</div><div class="desc">Quản lý phòng ban</div></div></div>
+        <div class="creds">
+          <div class="field"><span class="k">Email</span><span class="v mono">manager@kmart.vn</span><button class="copy" data-copy="manager@kmart.vn">Sao chép</button></div>
+          <div class="field"><span class="k">Mật khẩu</span><span class="v mono">Kmart@123</span><button class="copy" data-copy="Kmart@123">Sao chép</button></div>
+        </div>
+        <div class="row-actions"><span class="eyebrow">Duyệt & phân quyền</span></div>
+      </article>
+
+      <article class="card r-TEAM_LEADER">
+        <div class="role"><span class="pip"></span><div><div class="name">TEAM_LEADER</div><div class="desc">Trưởng nhóm</div></div></div>
+        <div class="creds">
+          <div class="field"><span class="k">Email</span><span class="v mono">leader@kmart.vn</span><button class="copy" data-copy="leader@kmart.vn">Sao chép</button></div>
+          <div class="field"><span class="k">Mật khẩu</span><span class="v mono">Kmart@123</span><button class="copy" data-copy="Kmart@123">Sao chép</button></div>
+        </div>
+        <div class="row-actions"><span class="eyebrow">Duyệt cấp nhóm</span></div>
+      </article>
+
+      <article class="card r-STAFF">
+        <div class="role"><span class="pip"></span><div><div class="name">STAFF</div><div class="desc">Nhân viên</div></div></div>
+        <div class="creds">
+          <div class="field"><span class="k">Email</span><span class="v mono">staff@kmart.vn</span><button class="copy" data-copy="staff@kmart.vn">Sao chép</button></div>
+          <div class="field"><span class="k">Mật khẩu</span><span class="v mono">Kmart@123</span><button class="copy" data-copy="Kmart@123">Sao chép</button></div>
+        </div>
+        <div class="row-actions"><span class="eyebrow">Nộp đơn từ</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="eyebrow">Cách đăng nhập</div>
+    <h2>API xác thực</h2>
+    <p class="lead">Endpoint đăng nhập công khai, giới hạn rate limit. Trả về access token (15 phút) + refresh token (7 ngày).</p>
+    <div class="login">
+<pre>POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "hr@kmart.vn",
+  "password": "Kmart@123"
+}</pre>
+      <div class="row"><span>Response</span><b>200</b><span>·</span><span><b>accessToken</b> + <b>refreshToken</b> + <b>user</b></span></div>
+    </div>
+  </section>
+
+  <div class="note">
+    <b>Lưu ý bảo mật.</b> Đây là tài khoản demo dùng chung một mật khẩu yếu. Sau khi nghiệm thu, hãy đặt lại mật khẩu riêng cho từng vai trò qua <b>POST /api/users/&#123;id&#125;/reset-password</b> (yêu cầu quyền <code>USER_UPDATE</code>) và không chia sẻ sheet này ngoài nhóm phát triển. Tài khoản <b>ADMIN</b> và <b>HR</b> có quyền bảo mật tối cao — hạn chế dùng trên môi trường production. JWT ký bằng HMAC-SHA256; sau 5 lần sai mật khẩu liên tiếp tài khoản sẽ bị khóa 30 phút.
+  </div>
+
+  <div class="foot">
+    <span>Kmart RBAC · 5 vai trò · 5 tài khoản seed</span>
+    <span id="updated">Cập nhật theo seed.js</span>
+  </div>
+</div>
+
+<script>
+  // Copy-to-clipboard cho nút "Sao chép"
+  document.querySelectorAll('.copy').forEach(btn=>{
+    btn.addEventListener('click',async ()=>{
+      const val=btn.getAttribute('data-copy');
+      try{
+        await navigator.clipboard.writeText(val);
+        const old=btn.textContent; btn.textContent='Đã chép'; btn.classList.add('done');
+        setTimeout(()=>{btn.textContent=old;btn.classList.remove('done')},1400);
+      }catch(e){
+        // fallback: select
+        const ta=document.createElement('textarea');ta.value=val;document.body.appendChild(ta);ta.select();
+        try{document.execCommand('copy');btn.textContent='Đã chép';btn.classList.add('done');setTimeout(()=>{btn.textContent='Sao chép';btn.classList.remove('done')},1400);}catch(_){}
+        ta.remove();
+      }
+    });
+  });
+</script>
+</body>
+</html>
