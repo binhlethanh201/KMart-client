@@ -203,7 +203,8 @@ export function ApprovalSystemProvider({ children }) {
         pushToast('Thêm mới phòng ban thành công!', 'success');
         return newDept.id;
       } catch (err) {
-        pushToast('Lỗi khi thêm phòng ban', 'error');
+        const backendMessage = err.response?.data?.message || 'Lỗi khi thêm phòng ban';
+        pushToast(backendMessage, 'error');
         console.error(err);
       }
     },
@@ -217,7 +218,9 @@ export function ApprovalSystemProvider({ children }) {
         setDepartments((list) => list.map((d) => (d.id === id ? updated : d)));
         pushToast('Cập nhật phòng ban thành công!', 'success');
       } catch (err) {
-        pushToast('Lỗi cập nhật', 'error');
+        const backendMessage = err.response?.data?.message || 'Lỗi cập nhật phòng ban';
+        pushToast(backendMessage, 'error');
+        console.error(err);
       }
     },
     [pushToast]

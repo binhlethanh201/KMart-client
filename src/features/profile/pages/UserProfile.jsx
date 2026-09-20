@@ -23,24 +23,24 @@ export default function UserProfile({ userId, onClose }) {
       title: 'Nhóm (Đơn vị nghiệp vụ)', 
       icon: 'group_off', 
       value: user?.allPositions && user.allPositions.length > 0
-        ? <div className="flex flex-col gap-3 w-full">
-            {user.allPositions.map((pos, idx) => (
+        ? <div className="flex flex-col gap-3 w-full max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
+            {[...user.allPositions].sort((a, b) => b.isPrimary - a.isPrimary).map((pos, idx) => (
               <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${pos.isPrimary ? 'border-primary/20 bg-primary/5' : 'border-outline-variant/50 bg-surface-container-lowest'}`}>
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${pos.isPrimary ? 'bg-primary/10 text-primary' : 'bg-surface-variant text-secondary'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${pos.isPrimary ? 'bg-primary/10 text-primary' : 'bg-surface-variant text-secondary'}`}>
                     <span className="material-symbols-outlined text-lg">
                       {pos.isPrimary ? 'stars' : 'work'}
                     </span>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-medium text-on-surface">{pos.departmentName || 'Chưa phân bổ'}</span>
-                    <span className="text-secondary text-sm">{pos.positionName || 'Nhân viên'}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-on-surface truncate">{pos.departmentName || 'Chưa phân bổ'}</span>
+                    <span className="text-secondary text-sm truncate">{pos.positionName || 'Nhân viên'}</span>
                   </div>
                 </div>
                 {pos.isPrimary ? (
-                  <span className="px-3 py-1 text-[11px] font-medium bg-primary text-white rounded-full shadow-sm">Chính</span>
+                  <span className="px-3 py-1 text-[11px] font-medium bg-primary text-white rounded-full shadow-sm flex-shrink-0">Chính</span>
                 ) : (
-                  <span className="px-3 py-1 text-[11px] font-medium bg-surface-variant text-on-surface-variant rounded-full">Kiêm nhiệm</span>
+                  <span className="px-3 py-1 text-[11px] font-medium bg-surface-variant text-on-surface-variant rounded-full flex-shrink-0">Kiêm nhiệm</span>
                 )}
               </div>
             ))}
