@@ -7,7 +7,7 @@ export default defineConfig({
     entry: { index: './src/main.jsx' },
   },
   html: {
-    template: './index.html',
+    template: './public/index.html',
   },
   server: {
     port: 5173,
