@@ -14,6 +14,15 @@ const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1
 export default function CreateRequestModal({ onClose }) {
   const { createRequest, formFields, departments } = useApproval();
   const { employees } = useHr();
+  const [documentTypes, setDocumentTypes] = useState([]);
+  
+  useEffect(() => {
+    import('../../../services/documentTypeService').then(({ documentTypeService }) => {
+      documentTypeService.getAll().then(data => {
+        setDocumentTypes(data);
+      }).catch(err => console.error("Failed to load document types:", err));
+    });
+  }, []);
   
   const availableTypes = Object.keys(formFields);
   const initialType = availableTypes[0] || 'Khác';
@@ -44,16 +53,39 @@ export default function CreateRequestModal({ onClose }) {
     setForm(f => ({ ...f, dynamic: {} }));
   }, [form.type]);
 
+  // Auto-calculate "Số ngày nghỉ"
+  useEffect(() => {
+    const from = form.dynamic['Từ ngày'];
+    const to = form.dynamic['Đến ngày'];
+    if (from && to) {
+      const d1 = new Date(from);
+      const d2 = new Date(to);
+      if (!isNaN(d1) && !isNaN(d2) && d2 >= d1) {
+        const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+        setForm(f => {
+          if (f.dynamic['Số ngày nghỉ'] == diffDays) return f;
+          return { ...f, dynamic: { ...f.dynamic, 'Số ngày nghỉ': diffDays } };
+        });
+      }
+    }
+  }, [form.dynamic['Từ ngày'], form.dynamic['Đến ngày']]);
+
   const chain = useMemo(() => WORKFLOW_BY_TYPE[form.type] || ['u_tvql', 'u_lhtl'], [form.type]);
 
   const submit = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return;
+    
+    // Find the real document type ID
+    const selectedDocType = documentTypes.find(d => d.name === form.type) || documentTypes[0];
+    const documentTypeId = selectedDocType ? selectedDocType.id : null;
+    
     createRequest({ 
       title: form.title.trim(), 
-      type: form.type,
+      type: form.type, // UI might still need this name
+      documentTypeId: documentTypeId,
       departments: form.departments,
-      ...form.dynamic 
+      dynamicData: form.dynamic 
     });
     onClose();
   };
@@ -131,6 +163,37 @@ export default function CreateRequestModal({ onClose }) {
 
           {/* Dynamic Fields */}
           {currentFields.map((f) => {
+            // Check dynamic condition
+            if (f.dynamic && f.dynamic.startsWith('Hiển thị khi')) {
+              const match = f.dynamic.match(/Hiển thị khi (.*?) = (.*)/);
+              if (match) {
+                const depField = match[1].trim();
+                const depValue = match[2].trim();
+                if (form.dynamic[depField] !== depValue) {
+                  return null;
+                }
+              }
+            }
+
+            if (f.type === 'Số') {
+              const isAuto = f.dynamic && f.dynamic.includes('tự động');
+              return (
+                <div key={f.id} className="flex flex-col gap-2">
+                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
+                  <input
+                    className={fieldCls}
+                    type="number"
+                    required={f.required}
+                    value={form.dynamic[f.label] || ''}
+                    onChange={(e) => setDynamic(f.label, e.target.value)}
+                    placeholder={f.dynamic || ''}
+                    readOnly={isAuto}
+                    disabled={isAuto}
+                  />
+                </div>
+              );
+            }
+
             if (f.type === 'Ngày') {
               const inputType = f.displayStyle === 'date' ? 'date' : f.displayStyle === 'time' ? 'time' : 'datetime-local';
               return (

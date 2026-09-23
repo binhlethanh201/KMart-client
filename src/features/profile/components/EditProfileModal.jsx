@@ -186,6 +186,16 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                   {errors.personalEmail && <span className="text-error text-xs font-medium">{errors.personalEmail}</span>}
                 </div>
               </div>
+
+              <div className="flex flex-col gap-2">
+                <label className={labelCls}>Địa chỉ</label>
+                <input 
+                  className={fieldCls} 
+                  value={form.profileData?.address || ''} 
+                  onChange={(e) => setForm(f => ({ ...f, profileData: { ...(f.profileData || {}), address: e.target.value } }))} 
+                  placeholder="Nhập địa chỉ hiện tại..." 
+                />
+              </div>
             </div>
           )}
 

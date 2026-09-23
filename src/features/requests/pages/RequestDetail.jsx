@@ -410,7 +410,10 @@ export default function RequestDetail() {
             name: creatorName,
             role: creatorRole,
             avatar: creatorAvatar,
-            employeeId: String(request.creatorId).substring(0, 8).toUpperCase()
+            employeeId: String(request.creatorId).substring(0, 8).toUpperCase(),
+            email: employees.find((u) => u.id === request.creatorId)?.email,
+            personalEmail: employees.find((u) => u.id === request.creatorId)?.personalEmail,
+            phone: employees.find((u) => u.id === request.creatorId)?.phone
           }}
           onClose={() => setShowUserInfo(false)}
         />

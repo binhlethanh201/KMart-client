@@ -62,6 +62,22 @@ export default function UserInfoModal({ user, onClose }) {
               {user.employeeId || 'EMP-0000'}
             </p>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Số điện thoại</label>
+              <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50">
+                {user.phone || <span className="text-secondary italic">Chưa cập nhật</span>}
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Email cá nhân</label>
+              <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50 truncate" title={user.personalEmail}>
+                {user.personalEmail || <span className="text-secondary italic">Chưa cập nhật</span>}
+              </p>
+            </div>
+          </div>
           
           <div>
             <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Phòng ban</label>

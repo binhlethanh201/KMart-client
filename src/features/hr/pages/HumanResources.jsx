@@ -31,7 +31,7 @@ export default function HumanResources() {
   const [editing, setEditing] = useState(null);
   const [popoverId, setPopoverId] = useState(null);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -52,9 +52,9 @@ export default function HumanResources() {
   // Reset to first page whenever any filter changes.
   useEffect(() => { setPage(1); }, [search, dept, role, status, employees]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);
-  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const openAdd = () => {
     setEditing(null);
@@ -99,10 +99,10 @@ export default function HumanResources() {
             </div>
             <h1 className="text-2xl font-bold text-on-surface tracking-tight">Quản lý Nhân sự</h1>
           </div>
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex gap-2 flex-shrink-0 w-full md:w-auto">
             <button
               onClick={openAdd}
-              className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
+              className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">person_add</span>
               Thêm nhân sự
@@ -124,20 +124,20 @@ export default function HumanResources() {
               type="text"
             />
           </div>
-          <div className="flex flex-wrap gap-3">
-            <select className={selectCls} value={dept} onChange={(e) => setDept(e.target.value)}>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+            <select className={`${selectCls} w-full sm:w-auto`} value={dept} onChange={(e) => setDept(e.target.value)}>
               <option value="Tất cả">Tất cả phòng ban</option>
               {departments.map((d) => (
                 <option key={d.id} value={d.name}>{d.name}</option>
               ))}
             </select>
-            <select className={selectCls} value={role} onChange={(e) => setRole(e.target.value)}>
+            <select className={`${selectCls} w-full sm:w-auto`} value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="Tất cả">Tất cả vai trò</option>
               {roles.map((r) => (
                 <option key={r.id} value={r.roleName}>{ROLE_STYLES[r.roleName]?.label || r.roleName}</option>
               ))}
             </select>
-            <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <select className={`${selectCls} w-full sm:w-auto`} value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="Tất cả">Tất cả trạng thái</option>
               <option value="active">Đang hoạt động</option>
               <option value="inactive">Ngừng hoạt động</option>
@@ -312,25 +312,46 @@ export default function HumanResources() {
               </table>
             </div>
             {/* Table footer */}
-            <div className="flex items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant">
-              <span className="text-xs text-secondary">
-                Hiển thị <b className="text-on-surface">{filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)}</b> / {filtered.length} nhân sự
-              </span>
-              <div className="flex items-center gap-1">
+            <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant gap-4">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
+                <span className="text-xs text-secondary flex items-center gap-2">
+                  Hiển thị
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(1); // Reset page on page size change
+                    }}
+                    className="bg-surface border border-outline-variant/50 rounded-md px-2 py-1 text-xs text-on-surface outline-none focus:border-primary cursor-pointer hover:bg-surface-container-low transition-colors"
+                  >
+                    <option value={5}>5 dòng</option>
+                    <option value={10}>10 dòng</option>
+                    <option value={20}>20 dòng</option>
+                    <option value={50}>50 dòng</option>
+                  </select>
+                  <span>
+                    {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)} trong tổng số {filtered.length} nhân sự
+                  </span>
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-1 bg-transparent">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={safePage <= 1}
-                  className="p-1.5 rounded-md text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                  <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                 </button>
-                <span className="px-3 py-1 rounded-md bg-primary text-on-primary text-xs font-medium">{safePage} / {totalPages}</span>
+                <div className="px-2 flex items-center justify-center min-w-[4rem]">
+                  <span className="text-xs text-secondary">Trang {safePage} / {totalPages}</span>
+                </div>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage >= totalPages}
-                  className="p-1.5 rounded-md text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                 </button>
               </div>
             </div>

@@ -130,7 +130,7 @@ export default function UserProfile({ userId, onClose }) {
               </div>
               <div className="flex items-center gap-3 sm:col-span-2">
                 <span className="material-symbols-outlined text-outline text-[20px]">location_on</span>
-                <span className="text-secondary italic">Chưa cập nhật địa chỉ</span>
+                <span className="text-on-surface">{user.profileData?.address || <span className="text-secondary italic">Chưa cập nhật địa chỉ</span>}</span>
               </div>
             </div>
           </div>

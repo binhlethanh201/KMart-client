@@ -68,10 +68,10 @@ export default function DepartmentDashboard() {
             </div>
             <h1 className="text-2xl font-bold text-on-surface tracking-tight">Cơ cấu tổ chức &amp; Siêu thị</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
             <button
               onClick={() => setModalOpen(true)}
-              className="bg-primary text-on-primary hover:bg-primary-fixed-variant px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto justify-center bg-primary text-on-primary hover:bg-primary-fixed-variant px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
               Thêm phòng ban

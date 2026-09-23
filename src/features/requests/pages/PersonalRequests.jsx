@@ -90,7 +90,7 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
             </div>
             <button
               onClick={() => setIsCreateOpen(true)}
-              className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
+              className="bg-primary w-full md:w-auto justify-center text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
               Tạo đề xuất mới

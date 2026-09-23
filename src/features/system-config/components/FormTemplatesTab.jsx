@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FORM_TYPES } from '../data/mockData';
 import { templateFileStore } from '../data/templateFileStore';
 import { useApproval } from '../../../context/useApproval';
@@ -24,14 +24,28 @@ function Toggle({ checked, onChange, label }) {
 }
 
 export default function FormTemplatesTab() {
-  const [categories, setCategories] = useState([
-    { id: 'cat1', name: 'Hành chính - Nhân sự', items: ['Đơn xin nghỉ phép', 'Đơn xin nghỉ thai sản', 'Đơn xin nghỉ việc'] },
-    { id: 'cat2', name: 'Chấm công - Đi lại', items: ['Đơn làm thêm (OT)', 'Đơn xin ra ngoài'] },
-    { id: 'cat3', name: 'Khác', items: [] }
-  ]);
-
-  const [selectedForm, setSelectedForm] = useState(FORM_TYPES[0]);
   const { formFields: fields, setFormFields: setFields, pushToast } = useApproval();
+
+  const [categories, setCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kmart.form.categories');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [
+      { id: 'cat1', name: 'Hành chính - Nhân sự', items: ['Đơn xin nghỉ phép', 'Đơn xin nghỉ thai sản', 'Đơn xin nghỉ việc'] },
+      { id: 'cat2', name: 'Chấm công - Đi lại', items: ['Đơn làm thêm (OT)', 'Đơn xin ra ngoài'] },
+      { id: 'cat3', name: 'Khác', items: [] }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('kmart.form.categories', JSON.stringify(categories));
+  }, [categories]);
+
+  const [selectedForm, setSelectedForm] = useState(() => Object.keys(fields)[0] || '');
 
   const [isAddingType, setIsAddingType] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');

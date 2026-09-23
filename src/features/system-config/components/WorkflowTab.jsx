@@ -2,6 +2,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FORM_TYPES, INITIAL_WORKFLOW, APPROVAL_TYPES, MULTI_RULES, APPROVAL_ROLES, SPECIFIC_USERS, CONDITION_FIELDS, CONDITION_OPS, TIME_RULES } from '../data/mockData';
 import { useHr } from '../../hr/context/HrProvider';
+import { useApproval } from '../../../context/useApproval';
+import { documentTypeService } from '../../../services/documentTypeService';
+import { workflowService } from '../services/workflowService';
 
 const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
@@ -142,7 +145,7 @@ function SequentialOrderList({ role, order, onChange }) {
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-secondary truncate">
-                  <span className="truncate">({emp.id}){emp.department ? ` · ${emp.department}` : ''}</span>
+                  <span className="truncate">({emp.id.substring(0, 8).toUpperCase()}){emp.department ? ` · ${emp.department}` : ''}</span>
                 </div>
               </div>
             </div>
@@ -212,7 +215,7 @@ function SequentialOrderList({ role, order, onChange }) {
                         )}
                       </div>
                       <div className="text-[10px] text-secondary truncate">
-                        {e.id}{e.department ? ` • ${e.department}` : ''}
+                        {e.id.substring(0, 8).toUpperCase()}{e.department ? ` • ${e.department}` : ''}
                       </div>
                     </div>
                   </button>
@@ -250,7 +253,7 @@ function UserSelect({ value, onChange }) {
             <div className="flex flex-col">
               <span className="text-sm font-medium text-on-surface leading-tight">{selectedEmp.name}</span>
               <span className="text-[10px] text-secondary leading-tight">
-                {selectedEmp.id} - {selectedEmp.role}
+                {selectedEmp.id.substring(0, 8).toUpperCase()} - {selectedEmp.role}
               </span>
             </div>
           </div>
@@ -301,7 +304,7 @@ function UserSelect({ value, onChange }) {
                         {e.name}
                       </div>
                       <div className="text-[10px] text-secondary truncate">
-                        {e.id} • {e.role}
+                        {e.id.substring(0, 8).toUpperCase()} • {e.role}
                       </div>
                     </div>
                   </button>
@@ -457,7 +460,7 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-sm font-semibold text-on-surface truncate">{e.name}</span>
-                      <span className="text-[10px] text-secondary">({e.id})</span>
+                      <span className="text-[10px] text-secondary">({e.id.substring(0, 8).toUpperCase()})</span>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap text-[11px] text-secondary mt-0.5">
                       <span className="flex items-center gap-0.5">
@@ -592,36 +595,79 @@ function makeStep(overrides = {}) {
 
 export default function WorkflowTab() {
   const { employees: EMPLOYEES } = useHr();
-  const [formType, setFormType] = useState(FORM_TYPES[0]);
+  
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [formType, setFormType] = useState('');
+  
   const [block, setBlock] = useState('hq');
   const [openStepIds, setOpenStepIds] = useState(() => new Set());
   const [draggedStepId, setDraggedStepId] = useState(null);
   const [advancedStepId, setAdvancedStepId] = useState(null);
 
-  const [workflows, setWorkflows] = useState(() => {
-    const init = {};
-    FORM_TYPES.forEach((t, i) => {
-      const suffix = i === 0 ? '' : `_${i}`;
-      // 3 mảng step riêng theo khối; "common" merge chạy cho cả HQ & Retail
-      init[t] = {
-        hq: INITIAL_WORKFLOW.map((s) => ({ ...s, id: `${s.id}_hq${suffix}`, track: 'hq' })),
-        retail: [{ ...makeStep(SAMPLE_RETAIL_STEP), id: `cht_retail${suffix}`, track: 'retail' }],
-        common: [
-          {
-            ...INITIAL_WORKFLOW[1],
-            id: `hr_common${suffix}`,
-            name: 'HR Admin duyệt (chung)',
-            track: 'common',
-            approvalType: 'role',
-            role: 'HR Admin',
-            scope: 'auto',
-          },
-        ],
+  const [workflows, setWorkflows] = useState({});
+  const [saved, setSaved] = useState(false);
+
+  const { formFields } = useApproval();
+
+  useEffect(() => {
+    documentTypeService.getAll().then(data => {
+      let merged = [];
+      const keys = Object.keys(formFields);
+      
+      if (data && data.length > 0) {
+        merged = [...data];
+        // Thêm các form được tạo local chưa có trên DB
+        const apiNames = new Set(data.map(d => d.name));
+        keys.forEach(k => {
+          if (!apiNames.has(k)) {
+            merged.push({ id: k, name: k });
+          }
+        });
+      } else {
+        merged = keys.map(t => ({ id: t, name: t }));
+      }
+      
+      setDocumentTypes(merged);
+      if (merged.length > 0) {
+        setFormType(merged[0].id);
+      }
+    }).catch(err => {
+      console.error("Failed to load document types:", err);
+      const keys = Object.keys(formFields);
+      const merged = keys.map(t => ({ id: t, name: t }));
+      setDocumentTypes(merged);
+      if (merged.length > 0) {
+        setFormType(merged[0].id);
+      }
+    });
+  }, [formFields]);
+
+  useEffect(() => {
+    if (!formType) return;
+    // TODO: fetch workflowService.getByDocumentType(formType)
+    // For now we mock the state transition if data doesn't exist
+    setWorkflows(prev => {
+      if (prev[formType]) return prev;
+      return {
+        ...prev,
+        [formType]: {
+          hq: INITIAL_WORKFLOW.map((s) => ({ ...s, id: `${s.id}_hq`, track: 'hq' })),
+          retail: [{ ...makeStep(SAMPLE_RETAIL_STEP), id: `cht_retail`, track: 'retail' }],
+          common: [
+            {
+              ...INITIAL_WORKFLOW[1],
+              id: `hr_common`,
+              name: 'HR Admin duyệt (chung)',
+              track: 'common',
+              approvalType: 'role',
+              role: 'HR Admin',
+              scope: 'auto',
+            },
+          ],
+        }
       };
     });
-    return init;
-  });
-  const [saved, setSaved] = useState(false);
+  }, [formType]);
 
   const steps = (workflows[formType] && workflows[formType][block]) || [];
 
@@ -683,9 +729,15 @@ export default function WorkflowTab() {
       return next;
     });
 
-  const save = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const save = async () => {
+    try {
+      // In a real scenario, map workflows[formType] to WorkflowRequest and call API
+      // await workflowService.create({ documentTypeId: formType, name: "Default Workflow", ... });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      console.error("Failed to save workflow:", err);
+    }
   };
 
   return (
@@ -706,8 +758,8 @@ export default function WorkflowTab() {
               setOpenStepIds(new Set());
             }}
           >
-            {FORM_TYPES.map((f) => (
-              <option key={f}>{f}</option>
+            {documentTypes.map((f) => (
+              <option key={f.id} value={f.id}>{f.name}</option>
             ))}
           </select>
         </div>

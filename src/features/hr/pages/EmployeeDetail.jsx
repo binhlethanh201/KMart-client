@@ -179,6 +179,12 @@ export default function EmployeeDetail() {
   const [showInfo, setShowInfo] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+
+  const totalPages = Math.max(1, Math.ceil(log.length / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const pagedLog = log.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   // Group log entries by date label (DD/MM/YYYY), newest first.
   const groups = useMemo(() => {
@@ -268,10 +274,10 @@ export default function EmployeeDetail() {
           </div>
           
           {/* Action Button Dropdown wrapper */}
-          <div className="flex-shrink-0 relative">
+          <div className="flex-shrink-0 relative w-full md:w-auto mt-4 md:mt-0">
              <button 
                onClick={() => setDropdownOpen(!dropdownOpen)}
-               className="bg-[#004B8D] text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 hover:bg-[#003B73] transition-colors shadow-sm cursor-pointer relative z-50"
+               className="w-full md:w-auto justify-center bg-[#004B8D] text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 hover:bg-[#003B73] transition-colors shadow-sm cursor-pointer relative z-50"
              >
                <span className="material-symbols-outlined text-[18px]">settings</span>
                Thao tác
@@ -355,7 +361,7 @@ export default function EmployeeDetail() {
            <div className="p-6">
               <div className="flex flex-col">
                  <ol className="relative border-l border-outline-variant ml-2 space-y-8">
-                   {log.map((entry, idx) => (
+                   {pagedLog.map((entry, idx) => (
                      <li key={idx} className="relative pl-6">
                        {/* Simple Blue Dot */}
                        <span className="absolute -left-[5.5px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#004B8D] ring-4 ring-white"></span>
@@ -376,6 +382,51 @@ export default function EmployeeDetail() {
                    ))}
                  </ol>
               </div>
+           </div>
+           
+           {/* Pagination Footer */}
+           <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant gap-4">
+             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
+               <span className="text-xs text-secondary flex items-center gap-2">
+                 Hiển thị
+                 <select
+                   value={pageSize}
+                   onChange={(e) => {
+                     setPageSize(Number(e.target.value));
+                     setPage(1); // Reset page on page size change
+                   }}
+                   className="bg-surface border border-outline-variant/50 rounded-md px-2 py-1 text-xs text-on-surface outline-none focus:border-primary cursor-pointer hover:bg-surface-container-low transition-colors"
+                 >
+                   <option value={5}>5 dòng</option>
+                   <option value={10}>10 dòng</option>
+                   <option value={20}>20 dòng</option>
+                   <option value={50}>50 dòng</option>
+                 </select>
+                 <span>
+                   {log.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, log.length)} trong tổng số {log.length} hoạt động
+                 </span>
+               </span>
+             </div>
+             
+             <div className="flex items-center gap-1 bg-transparent">
+               <button
+                 onClick={() => setPage((p) => Math.max(1, p - 1))}
+                 disabled={safePage <= 1}
+                 className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+               >
+                 <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+               </button>
+               <div className="px-2 flex items-center justify-center min-w-[4rem]">
+                 <span className="text-xs text-secondary">Trang {safePage} / {totalPages}</span>
+               </div>
+               <button
+                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                 disabled={safePage >= totalPages}
+                 className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+               >
+                 <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+               </button>
+             </div>
            </div>
         </div>
       </div>

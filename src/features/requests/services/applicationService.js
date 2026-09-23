@@ -49,14 +49,8 @@ export const applicationService = {
   create: async (data) => {
     const payload = {
       title: data.title || data.type,
-      documentTypeId: '00000000-0000-0000-0000-000000000000', // Need mapping
-      data: {
-        startTime: data.startTime,
-        endTime: data.endTime,
-        reason: data.reason,
-        impact: data.impact,
-        attachment: data.attachment
-      }
+      documentTypeId: data.documentTypeId || '00000000-0000-0000-0000-000000000000',
+      data: data.dynamicData || { ...data } // Fallback to all data if dynamicData not explicitly passed
     };
     const response = await apiClient.post('/applications', payload);
     return mapToFrontendModel(response.data);

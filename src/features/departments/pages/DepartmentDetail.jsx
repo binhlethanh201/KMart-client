@@ -4,6 +4,7 @@ import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { departmentService } from '../services/departmentService';
 import { STATUS_META, STEP_ROLE, REQUEST_TYPES } from '../../requests/data/constants';
+import UserInfoModal from '../../requests/components/UserInfoModal';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 
 const TABS = [
@@ -26,6 +27,7 @@ export default function DepartmentDetail() {
   const [typeF, setTypeF] = useState('all');
   const [statusF, setStatusF] = useState('all');
   const [members, setMembers] = useState([]);
+  const [showUserInfo, setShowUserInfo] = useState(null);
 
   // Nạp danh sách nhân sự thực của phòng ban khi vào trang.
   useEffect(() => {
@@ -185,7 +187,7 @@ export default function DepartmentDetail() {
                     type="text"
                   />
                 </div>
-                <select value={typeF} onChange={(e) => setTypeF(e.target.value)} className={selectCls}>
+                <select value={typeF} onChange={(e) => setTypeF(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
                   <option value="all">Loại: Tất cả</option>
                   {REQUEST_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -193,7 +195,7 @@ export default function DepartmentDetail() {
                     </option>
                   ))}
                 </select>
-                <select value={statusF} onChange={(e) => setStatusF(e.target.value)} className={selectCls}>
+                <select value={statusF} onChange={(e) => setStatusF(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
                   <option value="all">Trạng thái: Tất cả</option>
                   <option value="pending">Đang chờ duyệt</option>
                   <option value="approved">Đã phê duyệt</option>
@@ -349,6 +351,24 @@ export default function DepartmentDetail() {
                               alt={s.name}
                             />
                             <span className="text-on-surface font-medium">{s.name}</span>
+                            <button
+                              onClick={() => setShowUserInfo({
+                                id: s.id,
+                                name: s.name,
+                                role: s.role,
+                                avatar: s.avatar,
+                                employeeId: s.shortId,
+                                departmentId: dept.id,
+                                subtitle: s.subtitle,
+                                email: s.email,
+                                personalEmail: s.personalEmail,
+                                phone: s.phone
+                              })}
+                              className="p-1 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer"
+                              title="Xem thông tin chi tiết"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">info</span>
+                            </button>
                           </div>
                         </td>
                         <td className="py-3 px-4 text-on-surface-variant whitespace-nowrap">{s.role}</td>
@@ -382,6 +402,13 @@ export default function DepartmentDetail() {
 
         </div>
       </div>
+
+      {showUserInfo && (
+        <UserInfoModal
+          user={showUserInfo}
+          onClose={() => setShowUserInfo(null)}
+        />
+      )}
     </div>
   );
 }
