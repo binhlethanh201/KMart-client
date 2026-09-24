@@ -600,6 +600,25 @@ export default function WorkflowTab() {
   const [draggedStepId, setDraggedStepId] = useState(null);
   const [advancedStepId, setAdvancedStepId] = useState(null);
 
+  const [categories, setCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kmart.form.categories');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [
+      { id: 'cat1', name: 'Hành chính - Nhân sự', items: ['Đơn xin nghỉ phép', 'Đơn xin nghỉ thai sản', 'Đơn xin nghỉ việc'] },
+      { id: 'cat2', name: 'Chấm công - Đi lại', items: ['Đơn làm thêm (OT)', 'Đơn xin ra ngoài'] },
+      { id: 'cat3', name: 'Khác', items: [] }
+    ];
+  });
+  const [expandedCats, setExpandedCats] = useState(() => 
+    categories.reduce((acc, cat) => ({...acc, [cat.id]: true}), {})
+  );
+  const toggleCat = (id) => setExpandedCats(prev => ({...prev, [id]: !prev[id]}));
+
   const [workflows, setWorkflows] = useState({});
   const [saved, setSaved] = useState(false);
 
@@ -737,33 +756,73 @@ export default function WorkflowTab() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Form type + Block selector */}
-      <div className="bg-surface rounded-lg border border-outline-variant shadow-sm p-4 flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="material-symbols-outlined text-primary">tune</span>
-            <span className="font-label-md text-on-surface font-semibold">Cấu hình luồng duyệt cho:</span>
+    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+      {/* Cột danh mục (Bên trái) */}
+      <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden flex flex-col max-h-[800px]">
+        <div className="px-4 py-3 border-b border-outline-variant bg-surface-container-lowest flex-shrink-0">
+          <h3 className="font-label-md text-on-surface font-semibold uppercase tracking-wide">Mẫu đơn</h3>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <ul className="flex flex-col p-2 gap-3">
+            {categories.map((cat) => {
+              const isExpanded = expandedCats[cat.id] !== false;
+              return (
+                <li key={cat.id} className="flex flex-col gap-1">
+                  <button 
+                    onClick={() => toggleCat(cat.id)}
+                    className="flex items-center gap-2 px-2 py-1 text-xs font-semibold text-secondary hover:text-primary transition-colors cursor-pointer text-left uppercase tracking-wider w-full"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      {isExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}
+                    </span>
+                    {cat.name}
+                  </button>
+                  {isExpanded && (
+                    <ul className="flex flex-col gap-0.5">
+                      {cat.items.length === 0 && (
+                        <li className="text-xs text-secondary italic pl-8 pr-3 py-1">Chưa có mẫu đơn</li>
+                      )}
+                      {cat.items.map(f => {
+                        const active = f === formType;
+                        return (
+                          <li key={f} className="flex items-center relative pr-2">
+                            <button
+                              onClick={() => {
+                                setFormType(f);
+                                setOpenStepIds(new Set());
+                              }}
+                              className={`flex-1 text-left pl-8 pr-6 py-2 rounded-md text-sm flex items-center gap-2 transition-colors cursor-pointer ${
+                                active ? 'bg-primary-container/40 text-primary font-semibold' : 'text-on-surface hover:bg-surface-container-low'
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-[16px]">{active ? 'description' : 'draft'}</span>
+                              <span className="truncate">{f}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+
+      {/* Vùng chính: Cấu hình luồng duyệt */}
+      <div className="flex flex-col gap-4">
+        {/* Form type + Block selector */}
+        <div className="bg-surface rounded-lg border border-outline-variant shadow-sm p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">account_tree</span>
+            <span className="font-headline-sm text-headline-sm text-on-surface">Cấu hình luồng duyệt: <span className="text-primary">{formType || 'Chưa chọn'}</span></span>
           </div>
 
-          <select
-            className={`${selectCls} max-w-xs`}
-            value={formType}
-            onChange={(e) => {
-              setFormType(e.target.value);
-              setOpenStepIds(new Set());
-            }}
-          >
-            {documentTypes.map((f) => (
-              <option key={f.id} value={f.id}>{f.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Chọn khối luồng (HQ / Retail / Dùng chung) */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3 border-t border-outline-variant/50">
-          <span className="text-xs text-secondary flex-shrink-0">Khối luồng:</span>
-          <div className="flex flex-wrap gap-1 p-0.5 bg-surface-container-lowest border border-outline-variant rounded-md">
+          {/* Chọn khối luồng (HQ / Retail / Dùng chung) */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3 border-t border-outline-variant/50">
+            <span className="text-xs text-secondary flex-shrink-0">Khối luồng:</span>
+            <div className="flex flex-wrap gap-1 p-0.5 bg-surface-container-lowest border border-outline-variant rounded-md">
             {BLOCK_OPTIONS.map((b) => (
               <button
                 key={b.id}
@@ -1217,6 +1276,7 @@ export default function WorkflowTab() {
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 }
