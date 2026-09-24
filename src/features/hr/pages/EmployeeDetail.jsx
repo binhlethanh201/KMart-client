@@ -170,7 +170,11 @@ export default function EmployeeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getEmployee, saveEmployee, toggleLock, resetPassword, departments, positions, roles } = useHr();
-  const { pushToast, currentUser } = useApproval();
+  const { pushToast, currentUser, hasPermission } = useApproval();
+  const canEditEmployee = hasPermission ? hasPermission('PERSONNEL_UPDATE') : true;
+  const canDeleteEmployee = hasPermission ? hasPermission('PERSONNEL_DELETE') : true;
+  const canResetPassword = hasPermission ? hasPermission('PERSONNEL_RESET_PASSWORD') : true;
+  const canLockEmployee = hasPermission ? hasPermission('PERSONNEL_LOCK') : true;
 
   const employee = useMemo(() => getEmployee(id), [getEmployee, id]);
   const log = useMemo(() => (employee ? buildActivityLog(employee) : []), [employee]);

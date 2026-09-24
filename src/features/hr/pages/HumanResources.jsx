@@ -21,9 +21,8 @@ export default function HumanResources() {
   useDocumentTitle('Quản lý Nhân sự');
   const navigate = useNavigate();
   const { employees, departments, positions, roles, loading, error, saveEmployee, toggleLock: toggleLockHr, resetPassword: resetPasswordHr } = useHr();
-  const { pushToast, currentUser } = useApproval();
+  const { pushToast, currentUser, hasPermission } = useApproval();
 
-  const canEdit = currentUser?.role === 'ADMIN' || currentUser?.role === 'HR';
   const isStaff = currentUser?.role === 'STAFF';
 
   useEffect(() => {
@@ -31,6 +30,14 @@ export default function HumanResources() {
       navigate('/', { replace: true });
     }
   }, [isStaff, navigate]);
+
+  const canAddEmployee = hasPermission ? hasPermission('PERSONNEL_CREATE') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  const canEditEmployee = hasPermission ? hasPermission('PERSONNEL_UPDATE') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  const canDeleteEmployee = hasPermission ? hasPermission('PERSONNEL_DELETE') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  const canResetPassword = hasPermission ? hasPermission('PERSONNEL_RESET_PASSWORD') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  const canLockEmployee = hasPermission ? hasPermission('PERSONNEL_LOCK') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  
+  const canEdit = canEditEmployee || canAddEmployee;
 
   if (isStaff) return null;
 
@@ -121,7 +128,7 @@ export default function HumanResources() {
             <h1 className="text-2xl font-bold text-on-surface tracking-tight">Quản lý Nhân sự</h1>
           </div>
           <div className="flex gap-2 flex-shrink-0 w-full md:w-auto">
-            {canEdit && (
+            {canAddEmployee && (
               <button
                 onClick={openAdd}
                 className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"

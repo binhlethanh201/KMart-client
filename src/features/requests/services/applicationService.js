@@ -11,7 +11,7 @@ const mapToFrontendModel = (a) => {
     createdAt: new Date(a.createdAt).toLocaleString('vi-VN'),
     status: a.status.toLowerCase(), // 'draft', 'pending', 'approved', 'rejected'
     currentStep: a.currentStepOrder || 0,
-    fields: a.data || {},
+    fields: (typeof a.data === 'string') ? (() => { try { return JSON.parse(a.data); } catch { return {}; } })() : (a.data || {}),
     steps: (a.steps || []).map(s => ({
       approverId: s.approverId,
       status: s.status.toLowerCase(),
@@ -38,7 +38,7 @@ export const applicationService = {
 
   getPendingApprovals: async () => {
     const response = await apiClient.get('/applications/pending?limit=100');
-    return response.data.items.map(mapToFrontendModel);
+    return response.data.items.map(a => ({ ...mapToFrontendModel(a), _isPendingReq: true }));
   },
 
   getById: async (id) => {
@@ -48,9 +48,12 @@ export const applicationService = {
 
   create: async (data) => {
     const payload = {
-      title: data.title || data.type,
-      documentTypeId: data.documentTypeId || '00000000-0000-0000-0000-000000000000',
-      data: data.dynamicData || { ...data } // Fallback to all data if dynamicData not explicitly passed
+      documentTypeId: data.documentTypeId,
+      reason: data.reason || '',
+      data: data.data || {},
+      startDate: data.startDate || null,
+      endDate: data.endDate || null,
+      totalDays: data.totalDays || null,
     };
     const response = await apiClient.post('/applications', payload);
     return mapToFrontendModel(response.data);

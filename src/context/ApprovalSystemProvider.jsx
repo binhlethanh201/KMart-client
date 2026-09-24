@@ -5,6 +5,7 @@ import { applicationService } from '../features/requests/services/applicationSer
 import { authService } from '../features/auth/services/authService';
 import { userService } from '../features/hr/services/userService';
 import { FORM_FIELDS } from '../features/system-config/data/mockData';
+import { PERMISSIONS } from '../constants/permissions';
 
 const STORAGE_KEY = 'kmart.approval.v3';
 
@@ -86,6 +87,12 @@ export function ApprovalSystemProvider({ children }) {
       const primaryPos = positionsList.find(p => p.isPrimary) || positionsList[0];
       const { getFullAvatarUrl } = await import('../features/hr/services/userService');
       const actualAvatar = getFullAvatarUrl(u.avatarUrl);
+      const parsedRoles = (u.roles || []).map(r => typeof r === 'string' ? r : r.roleName || r.name || r.role || '').filter(Boolean);
+      let perms = (u.permissions || []).filter(p => typeof p === 'string');
+      if (perms.length === 0 && parsedRoles.some(r => r.toUpperCase() === 'HR' || r.toUpperCase() === 'ADMIN' || r.toUpperCase() === 'ADMINISTRATOR')) {
+        perms = ['*'];
+      }
+
       setCurrentUser({
         id: u.id,
         name: u.fullName,
@@ -99,7 +106,9 @@ export function ApprovalSystemProvider({ children }) {
         allPositions: positionsList,
         role: u.roles?.[0]?.roleName || 'STAFF',
         profileData: u.profileData ? JSON.parse(u.profileData) : null,
-        avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`
+        avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`,
+        roles: parsedRoles,
+        permissions: perms,
       });
     }).catch(console.error);
   }, [loadRequests]);
@@ -128,7 +137,16 @@ export function ApprovalSystemProvider({ children }) {
         pushToast(`Đã tạo đề xuất ${submitted.id}`, 'success');
         return submitted.id;
       } catch (err) {
-        pushToast('Lỗi tạo đề xuất', 'error');
+        let msg = 'Lỗi tạo đề xuất';
+        if (err.response?.data?.errors) {
+          const errs = err.response.data.errors;
+          msg = Array.isArray(errs) ? errs[0] : (Object.values(errs)[0]?.[0] || msg);
+        } else if (err.response?.data?.message) {
+          msg = err.response.data.message;
+        } else if (err.response?.data?.error) {
+          msg = err.response.data.error;
+        }
+        pushToast(msg, 'error');
         console.error(err);
       }
     },
@@ -256,11 +274,22 @@ export function ApprovalSystemProvider({ children }) {
   // Does the current user hold the pending step for this request?
   const canApprove = useCallback(
     (r) => {
-      if (!r || r.status !== 'pending') return false;
-      const step = r.steps[r.currentStep];
-      return step && step.approverId === currentUserId;
+      if (!r || !['pending', 'submitted', 'pendingapproval'].includes(r.status)) return false;
+       
+      return r._isPendingReq === true;
     },
     [currentUserId]
+  );
+
+  // Kiểm tra user có quyền cụ thể hay không. Wildcard "*" = có mọi quyền.
+  const hasPermission = useCallback(
+    (required) => {
+      const perms = currentUser?.permissions || [];
+      if (!perms || perms.length === 0) return false;
+      if (perms.includes(PERMISSIONS.WILDCARD)) return true;
+      return perms.includes(required);
+    },
+    [currentUser?.permissions]
   );
 
   const value = useMemo(
@@ -276,6 +305,7 @@ export function ApprovalSystemProvider({ children }) {
       addComment,
       simulateTimeout,
       canApprove,
+      hasPermission,
       departments,
       employees,
       addDepartment,
@@ -288,7 +318,7 @@ export function ApprovalSystemProvider({ children }) {
       pushToast,
       dismissToast,
     }),
-    [currentUser, currentUserId, requests, createRequest, approveRequest, rejectRequest, addComment, simulateTimeout, canApprove, departments, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, toasts, pushToast, dismissToast]
+    [currentUser, currentUserId, requests, createRequest, approveRequest, rejectRequest, addComment, simulateTimeout, canApprove, hasPermission, departments, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, toasts, pushToast, dismissToast]
   );
 
   return <ApprovalSystemContext.Provider value={value}>{children}</ApprovalSystemContext.Provider>;

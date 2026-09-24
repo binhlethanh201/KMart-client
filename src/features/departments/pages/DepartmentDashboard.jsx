@@ -8,11 +8,16 @@ import { useApproval } from '../../../context/useApproval';
 
 export default function DepartmentDashboard() {
   useDocumentTitle('Cơ cấu tổ chức & Siêu thị');
-  const { departments, toggleDepartmentStatus, deleteDepartment, currentUser } = useApproval();
+  const { departments, toggleDepartmentStatus, deleteDepartment, currentUser, hasPermission } = useApproval();
+  
+  // Use hasPermission if available, fallback to role check
+  const canManageDepts = hasPermission ? hasPermission('DEPARTMENT_MANAGE') : currentUser?.role === 'ADMIN';
+  
   const [modalOpen, setModalOpen] = useState(false);
   const [editDept, setEditDept] = useState(null);
 
-  const canEdit = currentUser?.role === 'ADMIN';
+  const canEdit = canManageDepts;
+
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');

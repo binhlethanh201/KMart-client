@@ -2,45 +2,66 @@ import { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
-import { REQUEST_TYPES, WORKFLOW_BY_TYPE } from '../data/constants';
-import { templateFileStore } from '../../system-config/data/templateFileStore';
+import { documentTypeService } from '../../../services/documentTypeService';
+import { FORM_FIELDS } from '../../system-config/data/mockData';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
-// Create Request modal. Submits to the global context (createRequest).
-// The approval preview is derived from the selected request type.
 export default function CreateRequestModal({ onClose }) {
-  const { createRequest, formFields, departments } = useApproval();
+  const { createRequest, departments } = useApproval();
   const { employees } = useHr();
+  
+  // Load document types từ BE
   const [documentTypes, setDocumentTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    import('../../../services/documentTypeService').then(({ documentTypeService }) => {
-      documentTypeService.getAll().then(data => {
-        setDocumentTypes(data);
-      }).catch(err => console.error("Failed to load document types:", err));
-    });
+    documentTypeService.getAll()
+      .then(data => {
+        setDocumentTypes(data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to load document types:", err);
+        setLoading(false);
+      });
   }, []);
   
-  const availableTypes = Object.keys(formFields);
-  const initialType = availableTypes[0] || 'Khác';
+  const initialType = documentTypes[0] || null;
   
   const [form, setForm] = useState({
-    type: initialType,
-    title: '',
+    documentTypeId: initialType?.id || '',
+    reason: '',  // BE dùng 'reason' thay vì 'title'
     departments: [],
     dynamic: {}
   });
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
-  const setDynamic = (label, val) => setForm((f) => ({
+  const setDynamic = (name, val) => setForm((f) => ({
     ...f,
-    dynamic: { ...f.dynamic, [label]: val }
+    dynamic: { ...f.dynamic, [name]: val }
   }));
 
-  const currentFields = formFields[form.type] || [];
+  // Current selected document type
+  const selectedDocType = documentTypes.find(d => d.id === form.documentTypeId);
+  let currentFields = selectedDocType?.fields || [];
+  if (typeof currentFields === 'string') {
+    try { currentFields = JSON.parse(currentFields); } catch (e) { currentFields = []; }
+  }
+  if (currentFields.length === 0 && selectedDocType) {
+    currentFields = FORM_FIELDS[selectedDocType.name] || [];
+  }
+  currentFields = currentFields.map(field => {
+    if ((field.type === 'SELECT' || field.type === 'Lựa chọn') && (!field.options || field.options.length === 0)) {
+       const fallback = FORM_FIELDS[selectedDocType.name]?.find(x => x.name === field.name || x.id === field.id || x.label === field.label);
+       if (fallback && fallback.options) {
+         return { ...field, options: fallback.options };
+       }
+    }
+    return field;
+  });
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -48,12 +69,12 @@ export default function CreateRequestModal({ onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Reset dynamic fields when type changes
+  // Reset dynamic fields when document type changes
   useEffect(() => {
     setForm(f => ({ ...f, dynamic: {} }));
-  }, [form.type]);
+  }, [form.documentTypeId]);
 
-  // Auto-calculate "Số ngày nghỉ"
+  // Auto-calculate days when dates change
   useEffect(() => {
     const from = form.dynamic['Từ ngày'];
     const to = form.dynamic['Đến ngày'];
@@ -63,30 +84,36 @@ export default function CreateRequestModal({ onClose }) {
       if (!isNaN(d1) && !isNaN(d2) && d2 >= d1) {
         const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
         setForm(f => {
-          if (f.dynamic['Số ngày nghỉ'] == diffDays) return f;
-          return { ...f, dynamic: { ...f.dynamic, 'Số ngày nghỉ': diffDays } };
+          if (f.dynamic['Tổng số ngày'] == diffDays) return f;
+          return { ...f, dynamic: { ...f.dynamic, 'Tổng số ngày': diffDays } };
         });
       }
     }
   }, [form.dynamic['Từ ngày'], form.dynamic['Đến ngày']]);
 
-  const chain = useMemo(() => WORKFLOW_BY_TYPE[form.type] || ['u_tvql', 'u_lhtl'], [form.type]);
-
   const submit = (e) => {
     e.preventDefault();
-    if (!form.title.trim()) return;
+    if (!form.reason.trim() || !form.documentTypeId) return;
     
-    // Find the real document type ID
-    const selectedDocType = documentTypes.find(d => d.name === form.type) || documentTypes[0];
-    const documentTypeId = selectedDocType ? selectedDocType.id : null;
+    // Build payload theo BE DTO
+    const payload = {
+      documentTypeId: form.documentTypeId,
+      reason: form.reason.trim(),
+      data: form.dynamic,
+    };
     
-    createRequest({ 
-      title: form.title.trim(), 
-      type: form.type, // UI might still need this name
-      documentTypeId: documentTypeId,
-      departments: form.departments,
-      dynamicData: form.dynamic 
-    });
+    // Auto extract dates if present
+    if (form.dynamic['Từ ngày']) {
+      payload.startDate = form.dynamic['Từ ngày'];
+    }
+    if (form.dynamic['Đến ngày']) {
+      payload.endDate = form.dynamic['Đến ngày'];
+    }
+    if (form.dynamic['Tổng số ngày']) {
+      payload.totalDays = parseInt(form.dynamic['Tổng số ngày']);
+    }
+    
+    createRequest(payload);
     onClose();
   };
 
@@ -96,7 +123,6 @@ export default function CreateRequestModal({ onClose }) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Tạo đề xuất mới"
     >
       <form
         onClick={(e) => e.stopPropagation()}
@@ -107,86 +133,96 @@ export default function CreateRequestModal({ onClose }) {
         <div className="flex justify-between items-start p-6 border-b border-outline-variant/30">
           <div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface">Tạo Đề Xuất Mới</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">Điền đầy đủ thông tin để gửi yêu cầu phê duyệt đến quản lý</p>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">Điền đầy đủ thông tin để gửi yêu cầu phê duyệt</p>
           </div>
-          <button type="button" onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer" aria-label="Đóng">
+          <button type="button" onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
+          {/* Document Type Select */}
           <div className="flex flex-col gap-2">
             <label className={labelCls}>Loại Đề Xuất</label>
-            <select className={fieldCls} value={form.type} onChange={set('type')}>
-              {availableTypes.map((t) => (
-                <option key={t}>{t}</option>
+            <select 
+              className={fieldCls} 
+              value={form.documentTypeId} 
+              onChange={(e) => setForm(f => ({ ...f, documentTypeId: e.target.value }))}
+            >
+              <option value="">-- Chọn loại đề xuất --</option>
+              {!loading && documentTypes.map((dt) => (
+                <option key={dt.id} value={dt.id}>{dt.name}</option>
               ))}
             </select>
           </div>
-          <div className="flex flex-col gap-2">
-            <label className={labelCls}>Phòng ban liên quan</label>
-            <div className="flex gap-2.5 flex-wrap mt-0.5">
-              {departments.map((d) => {
-                const isChecked = form.departments.includes(d.id);
-                return (
-                  <label 
-                    key={d.id} 
-                    className={`flex items-center gap-1.5 cursor-pointer border rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 select-none ${
-                      isChecked 
-                        ? 'bg-primary text-on-primary border-primary shadow-sm shadow-primary/20' 
-                        : 'bg-surface border-outline-variant text-on-surface-variant hover:border-outline hover:bg-surface-container-low hover:text-on-surface'
-                    }`}
-                  >
-                    <input
-                      className="sr-only"
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={(e) => {
-                        const newArr = e.target.checked 
-                          ? [...form.departments, d.id] 
-                          : form.departments.filter(x => x !== d.id);
-                        setForm(f => ({ ...f, departments: newArr }));
-                      }}
-                    />
-                    {isChecked && <span className="material-symbols-outlined text-[16px] leading-none">check</span>}
-                    <span>{d.name}</span>
-                  </label>
-                );
-              })}
+
+          {/* Department Checkboxes */}
+          {departments.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <label className={labelCls}>Phòng ban liên quan</label>
+              <div className="flex gap-2.5 flex-wrap mt-0.5">
+                {departments.map((d) => {
+                  const isChecked = form.departments.includes(d.id);
+                  return (
+                    <label 
+                      key={d.id} 
+                      className={`flex items-center gap-1.5 cursor-pointer border rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 select-none ${
+                        isChecked 
+                          ? 'bg-primary text-on-primary border-primary shadow-sm shadow-primary/20' 
+                          : 'bg-surface border-outline-variant text-on-surface-variant hover:border-outline hover:bg-surface-container-low hover:text-on-surface'
+                      }`}
+                    >
+                      <input
+                        className="sr-only"
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const newArr = e.target.checked 
+                            ? [...form.departments, d.id] 
+                            : form.departments.filter(x => x !== d.id);
+                          setForm(f => ({ ...f, departments: newArr }));
+                        }}
+                      />
+                      {isChecked && <span className="material-symbols-outlined text-[16px] leading-none">check</span>}
+                      <span>{d.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Lý do/Yêu cầu */}
           <div className="flex flex-col gap-2">
-            <label className={labelCls}>Tiêu đề đề xuất</label>
-            <input className={fieldCls} value={form.title} onChange={set('title')} placeholder="Nhập tiêu đề..." type="text" required />
+            <label className={labelCls}>Lý do / Mô tả <span className="text-error">*</span></label>
+            <textarea
+              className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
+              value={form.reason}
+              onChange={set('reason')}
+              placeholder="Nhập lý do hoặc mô tả yêu cầu..."
+              required
+            />
           </div>
 
-          {/* Dynamic Fields */}
-          {currentFields.map((f) => {
-            // Check dynamic condition
-            if (f.dynamic && f.dynamic.startsWith('Hiển thị khi')) {
-              const match = f.dynamic.match(/Hiển thị khi (.*?) = (.*)/);
-              if (match) {
-                const depField = match[1].trim();
-                const depValue = match[2].trim();
-                if (form.dynamic[depField] !== depValue) {
-                  return null;
-                }
-              }
-            }
+          {/* Dynamic Fields từ BE */}
+          {currentFields.length > 0 && currentFields.map((f) => {
+            // Skip fields that are just labels/descriptions
+            if (f.type === 'LABEL' || f.type === 'INFO') return null;
 
-            if (f.type === 'Số') {
-              const isAuto = f.dynamic && f.dynamic.includes('tự động');
+            if (f.type === 'NUMBER' || f.type === 'Số') {
+              const labelKey = f.label || f.id;
+              const isAuto = f.options?.includes('auto') || f.options?.includes('tự động');
               return (
-                <div key={f.id} className="flex flex-col gap-2">
-                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
+                <div key={labelKey} className="flex flex-col gap-2">
+                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
                   <input
                     className={fieldCls}
                     type="number"
                     required={f.required}
-                    value={form.dynamic[f.label] || ''}
-                    onChange={(e) => setDynamic(f.label, e.target.value)}
-                    placeholder={f.dynamic || ''}
+                    value={form.dynamic[labelKey] || ''}
+                    onChange={(e) => setDynamic(labelKey, e.target.value)}
+                    placeholder={f.placeholder || ''}
                     readOnly={isAuto}
                     disabled={isAuto}
                   />
@@ -194,183 +230,109 @@ export default function CreateRequestModal({ onClose }) {
               );
             }
 
-            if (f.type === 'Ngày') {
-              const inputType = f.displayStyle === 'date' ? 'date' : f.displayStyle === 'time' ? 'time' : 'datetime-local';
+            if (f.type === 'DATE' || f.type === 'Ngày') {
+              const labelKey = f.label || f.id;
+              let inputType = 'date';
+              const l = (labelKey || '').toLowerCase();
+              if (l.includes('giờ') || l.includes('time')) inputType = 'time';
+              if (l.includes('ngày và giờ') || l.includes('datetime')) inputType = 'datetime-local';
+
               return (
-                <div key={f.id} className="flex flex-col gap-2">
-                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
-                  <input className={fieldCls} type={inputType} required={f.required} value={form.dynamic[f.label] || ''} onChange={(e) => setDynamic(f.label, e.target.value)} />
-                </div>
-              );
-            }
-            if (f.type === 'Văn bản') {
-              return (
-                <div key={f.id} className="flex flex-col gap-2">
-                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
-                  <textarea
-                    className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
-                    required={f.required}
-                    value={form.dynamic[f.label] || ''}
-                    onChange={(e) => setDynamic(f.label, e.target.value)}
-                    placeholder="Nhập thông tin..."
+                <div key={labelKey} className="flex flex-col gap-2">
+                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                  <input 
+                    className={fieldCls} 
+                    type={inputType} 
+                    required={f.required} 
+                    value={form.dynamic[labelKey] || ''} 
+                    onChange={(e) => setDynamic(labelKey, e.target.value)} 
                   />
                 </div>
               );
             }
-            if (f.type === 'Lựa chọn') {
-              if (f.displayStyle === 'radio') {
-                return (
-                  <div key={f.id} className="flex flex-col gap-2">
-                    <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
-                    <div className="flex gap-6 flex-wrap mt-1">
-                      {f.options?.map((opt) => (
-                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                          <input className="text-primary focus:ring-primary border-outline-variant h-4 w-4" name={f.id} type="radio" required={f.required} checked={form.dynamic[f.label] === opt} onChange={() => setDynamic(f.label, opt)} />
-                          <span className="text-sm text-on-surface">{opt}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                );
-              } else if (f.displayStyle === 'checkbox') {
-                return (
-                  <div key={f.id} className="flex flex-col gap-2">
-                    <label className={labelCls}>{f.label}</label>
-                    <div className="flex gap-6 flex-wrap mt-1">
-                      {f.options?.map((opt) => {
-                        const arr = form.dynamic[f.label] || [];
-                        const isChecked = arr.includes(opt);
-                        return (
-                          <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              className="text-primary focus:ring-primary rounded border-outline-variant h-4 w-4"
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={(e) => {
-                                const newArr = e.target.checked ? [...arr, opt] : arr.filter(x => x !== opt);
-                                setDynamic(f.label, newArr);
-                              }}
-                            />
-                            <span className="text-sm text-on-surface">{opt}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              } else {
-                return (
-                  <div key={f.id} className="flex flex-col gap-2">
-                    <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
-                    <select className={fieldCls} required={f.required} value={form.dynamic[f.label] || ''} onChange={(e) => setDynamic(f.label, e.target.value)}>
-                      <option value="">-- Chọn --</option>
-                      {f.options?.map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </div>
-                );
-              }
-            }
-            if (f.type === 'Tải file') {
-              const cached = f.templateFile ? templateFileStore.get(f.id) : null;
-              const templateUrl = cached?.dataUrl;
+
+            if (f.type === 'TEXTAREA' || f.type === 'Văn bản') {
+              const labelKey = f.label || f.id;
               return (
-                <div key={f.id} className="flex flex-col gap-2">
-                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
-                  {f.templateFile?.name && (
-                    <a
-                      href={templateUrl || undefined}
-                      download={f.templateFile.name}
-                      className={`inline-flex items-center gap-1.5 self-start text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                        templateUrl
-                          ? 'text-primary border-primary/40 bg-primary-container/20 hover:bg-primary-container/40 cursor-pointer'
-                          : 'text-secondary border-outline-variant bg-surface-container-low cursor-not-allowed'
-                      }`}
-                      title={templateUrl ? `Tải về ${f.templateFile.name}` : 'File mẫu không còn khả dụng (cần tải lên lại ở cấu hình)'}
-                      onClick={(e) => { if (!templateUrl) e.preventDefault(); }}
-                    >
-                      <span className="material-symbols-outlined text-[16px]">download</span>
-                      Tải file mẫu: {f.templateFile.name}
-                    </a>
-                  )}
-                  <div className="border-2 border-dashed border-outline-variant rounded-lg p-5 flex flex-col items-center justify-center bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer group">
-                    <span className="material-symbols-outlined text-outline text-3xl group-hover:text-primary transition-colors mb-1">cloud_upload</span>
-                    <p className="text-sm text-on-surface mb-1">
-                      Kéo thả file vào đây hoặc <span className="text-primary font-medium">Chọn file</span>
-                    </p>
-                    <p className="text-xs text-secondary">Hỗ trợ: PDF, DOCX, JPG, PNG (Max 10MB)</p>
-                  </div>
+                <div key={labelKey} className="flex flex-col gap-2">
+                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                  <textarea
+                    className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
+                    required={f.required}
+                    value={form.dynamic[labelKey] || ''}
+                    onChange={(e) => setDynamic(labelKey, e.target.value)}
+                    placeholder={f.placeholder || 'Nhập thông tin...'}
+                  />
                 </div>
               );
             }
-            if (f.type === 'Người duyệt thay') {
-              const picked = employees.find((u) => u.name === form.dynamic[f.label]);
+
+            if (f.type === 'SELECT' || f.type === 'Lựa chọn') {
+              const labelKey = f.label || f.id;
+              const options = f.options || [];
               return (
-                <div key={f.id} className="flex flex-col gap-2">
-                  <label className={labelCls}>{f.label} {f.required && <span className="text-error">*</span>}</label>
-                  <div className="flex items-center gap-2">
-                    {picked && (
-                      <div className="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-1.5">
-                        <img className="w-6 h-6 rounded-full object-cover" src={picked.avatar} alt={picked.name} />
-                        <div className="leading-tight">
-                          <div className="text-sm font-medium text-on-surface">{picked.name}</div>
-                          <div className="text-[10px] text-secondary">{picked.role}</div>
-                        </div>
-                      </div>
-                    )}
-                    <select
-                      className={fieldCls}
-                      required={f.required}
-                      value={form.dynamic[f.label] || ''}
-                      onChange={(e) => setDynamic(f.label, e.target.value)}
-                    >
-                      <option value="">-- Chọn người duyệt thay --</option>
-                      {employees.map((u) => (
-                        <option key={u.id} value={u.name}>{u.name} — {u.position}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div key={labelKey} className="flex flex-col gap-2">
+                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                  <select
+                    className={fieldCls}
+                    required={f.required}
+                    value={form.dynamic[labelKey] || ''}
+                    onChange={(e) => setDynamic(labelKey, e.target.value)}
+                  >
+                    <option value="">-- Chọn --</option>
+                    {options.map((opt) => {
+                      const optValue = typeof opt === 'string' ? opt : opt.value;
+                      const optLabel = typeof opt === 'string' ? opt : opt.label;
+                      return <option key={optValue} value={optValue}>{optLabel}</option>;
+                    })}
+                  </select>
                 </div>
               );
             }
-            return null;
+
+            // Default: render as text input
+            const labelKey = f.label || f.id;
+            return (
+              <div key={labelKey} className="flex flex-col gap-2">
+                <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                <input
+                  className={fieldCls}
+                  type="text"
+                  required={f.required}
+                  value={form.dynamic[labelKey] || ''}
+                  onChange={(e) => setDynamic(labelKey, e.target.value)}
+                  placeholder={f.placeholder || ''}
+                />
+              </div>
+            );
           })}
 
-          {/* Dynamic approval preview */}
-          <div className="bg-surface-container-low rounded-lg p-4 border border-outline-variant/30">
-            <div className="flex items-center justify-between mb-3">
-              <label className={labelCls + ' mb-0'}>Luồng Xét Duyệt Tự Động</label>
-              <span className="bg-surface-variant text-on-surface-variant text-[10px] px-2 py-1 rounded-full uppercase tracking-wider font-semibold">Duyệt lần lượt</span>
-            </div>
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {chain.map((uid, i) => {
-                const u = employees.find((x) => x.id === uid) || { name: uid, avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(uid)}&background=random&color=fff&size=128`, position: 'Approver' };
-                return (
-                  <div key={i} className="flex items-center">
-                    {i > 0 && <span className="material-symbols-outlined text-outline text-sm mx-1">arrow_forward</span>}
-                    <div className="flex items-center gap-2 bg-surface-container-lowest rounded-md p-2 border border-outline-variant/50 min-w-fit">
-                      <img className="w-7 h-7 rounded-full object-cover" src={u.avatar} alt={u.name} />
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-on-surface">{u.name}</span>
-                        <span className="text-[10px] text-secondary">{u.position}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          {/* No fields available message */}
+          {selectedDocType && currentFields.length === 0 && (
+            <p className="text-sm text-on-surface-variant italic">Loại đề xuất này không có trường bổ sung.</p>
+          )}
+
+          {/* Loading state */}
+          {loading && (
+            <p className="text-sm text-on-surface-variant">Đang tải loại đề xuất...</p>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-outline-variant/30 bg-surface flex justify-between items-center rounded-b-lg">
-          <button type="button" onClick={onClose} className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer">
-            Hủy bỏ
+        <div className="flex justify-end gap-3 p-6 border-t border-outline-variant/30 bg-surface-container-low">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-md border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+          >
+            Hủy
           </button>
-          <button type="submit" className="flex items-center gap-2 font-label-md text-on-primary bg-primary px-6 py-2 rounded-md hover:bg-on-primary-fixed-variant transition-colors shadow-sm cursor-pointer">
-            <span>Gửi đề xuất mới</span>
-            <span className="material-symbols-outlined text-[18px]">send</span>
+          <button
+            type="submit"
+            disabled={!form.documentTypeId || !form.reason.trim()}
+            className="px-5 py-2.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Gửi yêu cầu
           </button>
         </div>
       </form>

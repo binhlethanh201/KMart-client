@@ -133,7 +133,7 @@ function SettingsSubPanel() {
  */
 const NAV_ITEMS = [
   { name: 'Phòng ban & Nhóm', icon: 'account_tree', path: '/' },
-  { name: 'Nhân sự',           icon: 'group',        path: '/personnel' },
+  { name: 'Nhân sự',           icon: 'group',        path: '/personnel', permission: 'USER_VIEW' },
   {
     name: 'Đơn từ',
     icon: 'description',
@@ -147,6 +147,7 @@ const NAV_ITEMS = [
     icon: 'settings',
     subPanel: 'settings',
     matchPaths: ['/settings'],
+    permission: 'ROLE_VIEW',
   },
 ];
 
@@ -167,7 +168,7 @@ export default function UnifiedSidebar({
   };
 
   // Tính số đơn chờ tôi duyệt trực tiếp từ context — luôn đồng bộ với trang
-  const { requests, currentUserId } = useApproval();
+  const { requests, currentUserId, hasPermission } = useApproval();
   const pendingCount = useMemo(
     () =>
       requests.filter(
@@ -176,6 +177,11 @@ export default function UnifiedSidebar({
           r.steps[r.currentStep]?.approverId === currentUserId
       ).length,
     [requests, currentUserId]
+  );
+
+  // Filter nav items by permission
+  const visibleNavs = NAV_ITEMS.filter(
+    (item) => !item.permission || hasPermission(item.permission)
   );
 
   const toggleSubPanel = (key) => {
@@ -238,10 +244,10 @@ export default function UnifiedSidebar({
                     </h2>
                     <div className="flex flex-col gap-1 mt-1">
                       <span className="text-xs text-slate-400 font-medium tracking-wide">
-                        {currentUser?.role === 'ADMIN' ? 'Quản trị viên' : 
+                        {currentUser?.position || (currentUser?.role === 'ADMIN' ? 'Quản trị viên' : 
                          currentUser?.role === 'HR' ? 'Nhân sự' :
                          currentUser?.role === 'MANAGER' ? 'Quản lý' :
-                         currentUser?.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên'}
+                         currentUser?.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên')}
                       </span>
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
@@ -263,12 +269,11 @@ export default function UnifiedSidebar({
 
             {/* Nav items */}
             <ul className="flex flex-col py-2">
-              {NAV_ITEMS.filter(item => {
-                if (item.name === 'Nhân sự' && currentUser?.role === 'STAFF') {
-                  return false;
-                }
-                if (item.name === 'Cấu hình' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') {
-                  return false;
+              {visibleNavs.filter(item => {
+                // Fallback role checks just in case permission isn't fully set
+                if (!hasPermission) {
+                  if (item.name === 'Nhân sự' && currentUser?.role === 'STAFF') return false;
+                  if (item.name === 'Cấu hình' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
                 }
                 return true;
               }).map((item) => {
@@ -368,8 +373,9 @@ export default function UnifiedSidebar({
           </div>
         </nav>
 
+        {/* Sub-panel overlays to the right of nav without pushing content */}
         <div
-          className={`h-full overflow-hidden transition-all duration-300 ease-in-out flex flex-shrink-0 ${
+          className={`absolute top-0 left-full h-full overflow-hidden transition-all duration-300 ease-in-out flex ${
             openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
           }`}
         >

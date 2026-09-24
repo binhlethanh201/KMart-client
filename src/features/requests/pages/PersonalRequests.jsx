@@ -62,9 +62,9 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
       const matchQ = !q || r.id.toLowerCase().includes(q) || r.title.toLowerCase().includes(q);
       let matchF = true;
       if (filter === 'received')
-        matchF = r.status === 'pending' && r.steps[r.currentStep]?.approverId === currentUserId;
+        matchF = r._isPendingReq === true;
       else if (filter === 'sent')     matchF = r.creatorId === currentUserId;
-      else if (filter === 'pending')  matchF = r.status === 'pending';
+      else if (filter === 'pending')  matchF = r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval';
       else if (filter === 'approved') matchF = r.status === 'approved';
       else if (filter === 'rejected')
         matchF = r.status === 'rejected' || r.status === 'returned_timeout';
@@ -88,13 +88,15 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
                 {TITLES[filter] || 'Danh sách Đơn từ'}
               </h1>
             </div>
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="bg-primary w-full md:w-auto justify-center text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              Tạo đề xuất mới
-            </button>
+            {filter !== 'received' && (
+              <button
+                onClick={() => setIsCreateOpen(true)}
+                className="bg-primary w-full md:w-auto justify-center text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">add</span>
+                Tạo đề xuất mới
+              </button>
+            )}
           </div>
 
           {/* ── Toolbar: search + department filter ── */}
