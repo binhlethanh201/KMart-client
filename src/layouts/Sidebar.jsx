@@ -373,9 +373,9 @@ export default function UnifiedSidebar({
           </div>
         </nav>
 
-        {/* Sub-panel overlays to the right of nav without pushing content */}
+        {/* Sub-panel side-by-side pushing content */}
         <div
-          className={`absolute top-0 left-full h-full overflow-hidden transition-all duration-300 ease-in-out flex ${
+          className={`h-full overflow-hidden transition-all duration-300 ease-in-out flex ${
             openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
           }`}
         >

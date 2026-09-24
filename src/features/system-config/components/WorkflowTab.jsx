@@ -916,11 +916,11 @@ export default function WorkflowTab() {
                       </div>
 
                       {/* Hàng trên: 2 cột cân bằng (đều ngắn) */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-4">
                         {/* Cột trái - Hình thức duyệt */}
                         <div>
                           <GroupHeader icon="how_to_reg" label="Hình thức duyệt" />
-                          <div className="flex flex-col md:flex-row gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {APPROVAL_TYPES.map((t) => (
                               <RadioCard
                                 key={t.id}
@@ -1114,7 +1114,7 @@ export default function WorkflowTab() {
                       {showMulti && (
                         <div className="border-t border-outline-variant/50 pt-4">
                           <GroupHeader icon="group" label="Quy tắc nhiều người duyệt" hint={`${activeApproverCount} người duyệt`} />
-                          <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {MULTI_RULES.map((r) => (
                               <RadioCard
                                 key={r.id}
