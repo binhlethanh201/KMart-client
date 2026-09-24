@@ -8,7 +8,8 @@ import { useApproval } from '../../../context/useApproval';
 
 export default function DepartmentDashboard() {
   useDocumentTitle('Cơ cấu tổ chức & Siêu thị');
-  const { departments, toggleDepartmentStatus, deleteDepartment } = useApproval();
+  const { departments, toggleDepartmentStatus, deleteDepartment, hasPermission } = useApproval();
+  const canManageDepts = hasPermission('DEPARTMENT_MANAGE');
   const [modalOpen, setModalOpen] = useState(false);
   const [editDept, setEditDept] = useState(null);
 

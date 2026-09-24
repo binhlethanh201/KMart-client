@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ROLE_STYLES } from '../data/constants';
+import { roleService } from '../services/roleService';
 
 const EMPTY_EMPLOYEE = {
   name: '',
@@ -26,6 +27,25 @@ export default function EmployeeModal({ employee, departments = [], positions = 
     const roleId = roles.find((r) => r.roleName === employee.role)?.id || '';
     return { ...EMPTY_EMPLOYEE, ...employee, roleId };
   });
+
+  // Permission preview state
+  const [rolePermissions, setRolePermissions] = useState([]);
+
+  // Load permissions when role changes
+  const handleRoleChange = async (e) => {
+    const val = e.target.value;
+    setForm((f) => ({ ...f, roleId: val }));
+    if (val) {
+      try {
+        const role = await roleService.getById(val);
+        setRolePermissions(role.permissions || []);
+      } catch {
+        setRolePermissions([]);
+      }
+    } else {
+      setRolePermissions([]);
+    }
+  };
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -149,12 +169,30 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </div>
               <div>
                 <label className={labelCls}>Vai trò hệ thống</label>
-                <select className={fieldCls} value={form.roleId} onChange={set('roleId')}>
+                <select className={fieldCls} value={form.roleId} onChange={handleRoleChange}>
                   <option value="">-- Chọn vai trò --</option>
                   {roles.map((r) => (
                     <option key={r.id} value={r.id}>{ROLE_STYLES[r.roleName]?.label || r.roleName}</option>
                   ))}
                 </select>
+                {/* Permission preview */}
+                {form.roleId && rolePermissions.length > 0 && (
+                  <div className="mt-2 bg-primary/5 border border-primary/20 rounded-md p-3">
+                    <div className="text-xs font-semibold text-primary mb-2 uppercase tracking-wide">
+                      Quyền được gán tự động từ vai trò
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {rolePermissions.map((p, i) => {
+                        const code = typeof p === 'string' ? p : p.permissionName || p.name || '';
+                        return (
+                          <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                            {code}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className={labelCls}>Trạng thái</label>

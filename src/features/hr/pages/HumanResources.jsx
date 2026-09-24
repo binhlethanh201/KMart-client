@@ -21,7 +21,12 @@ export default function HumanResources() {
   useDocumentTitle('Quản lý Nhân sự');
   const navigate = useNavigate();
   const { employees, departments, positions, roles, loading, error, saveEmployee, toggleLock: toggleLockHr, resetPassword: resetPasswordHr } = useHr();
-  const { pushToast } = useApproval();
+  const { hasPermission, pushToast } = useApproval();
+  const canAddEmployee = hasPermission('PERSONNEL_CREATE');
+  const canEditEmployee = hasPermission('PERSONNEL_UPDATE');
+  const canDeleteEmployee = hasPermission('PERSONNEL_DELETE');
+  const canResetPassword = hasPermission('PERSONNEL_RESET_PASSWORD');
+  const canLockEmployee = hasPermission('PERSONNEL_LOCK');
 
   const [search, setSearch] = useState('');
   const [dept, setDept] = useState('Tất cả');
@@ -102,7 +107,9 @@ export default function HumanResources() {
           <div className="flex gap-2 flex-shrink-0 w-full md:w-auto">
             <button
               onClick={openAdd}
-              className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
+              disabled={!canAddEmployee}
+              title={!canAddEmployee ? 'Bạn không có quyền thêm nhân sự' : ''}
+              className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined text-[18px]">person_add</span>
               Thêm nhân sự
