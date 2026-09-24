@@ -43,76 +43,38 @@ function App() {
 
   return (
     <BrowserRouter>
-      <ApprovalSystemProvider>
-        <HrProvider>
-          <Routes>
-            {!isAuthenticated ? (
-              <>
-                <Route path="/" element={<LandingPage />} />
-                <Route
-                  path="/login"
-                  element={
-                    <LoginPage
-                      onLoginSuccess={() => setIsAuthenticated(true)}
-                    />
-                  }
-                />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </>
-            ) : (
-              <>
-                <Route path="/login" element={<Navigate to="/" replace />} />
-
-                <Route path="/" element={<MainLayout />}>
-                  <Route index element={<DepartmentDashboard />} />
-                  <Route path="departments" element={<DepartmentDashboard />} />
-                  <Route
-                    path="departments/:id"
-                    element={<DepartmentDetail />}
-                  />
-                  <Route path="profile" element={<UserProfile />} />
-                  <Route path="personnel" element={<HumanResources />} />
-                  <Route path="personnel/:id" element={<EmployeeDetail />} />
-
-                  {/* Settings sub-routes */}
-                  <Route
-                    path="settings"
-                    element={<SystemConfig defaultActive="forms" />}
-                  />
-                  <Route
-                    path="settings/forms"
-                    element={<SystemConfig defaultActive="forms" />}
-                  />
-                  <Route
-                    path="settings/workflow"
-                    element={<SystemConfig defaultActive="workflow" />}
-                  />
-                  <Route
-                    path="settings/general"
-                    element={<SystemConfig defaultActive="general" />}
-                  />
-
-                  <Route path="requests/:id" element={<RequestDetail />} />
-
-                  {/* Requests pages */}
-                  <Route
-                    path="my-requests"
-                    element={<PersonalRequests defaultFilter="sent" />}
-                  />
-                  <Route
-                    path="my-requests/approvals"
-                    element={<PersonalRequests defaultFilter="received" />}
-                  />
-                </Route>
-
-                {/* Bắt tất cả các route không hợp lệ còn lại và đưa về trang chủ */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </>
-            )}
-          </Routes>
-          <ToastHost />
-        </HrProvider>
-      </ApprovalSystemProvider>
+      {isAuthenticated ? (
+        <ApprovalSystemProvider>
+          <HrProvider>
+            <Routes>
+              <Route path="/login" element={<Navigate to="/" replace />} />
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<DepartmentDashboard />} />
+                <Route path="departments" element={<DepartmentDashboard />} />
+                <Route path="departments/:id" element={<DepartmentDetail />} />
+                <Route path="profile" element={<UserProfile />} />
+                <Route path="personnel" element={<HumanResources />} />
+                <Route path="personnel/:id" element={<EmployeeDetail />} />
+                <Route path="settings" element={<SystemConfig defaultActive="forms" />} />
+                <Route path="settings/forms" element={<SystemConfig defaultActive="forms" />} />
+                <Route path="settings/workflow" element={<SystemConfig defaultActive="workflow" />} />
+                <Route path="settings/general" element={<SystemConfig defaultActive="general" />} />
+                <Route path="requests/:id" element={<RequestDetail />} />
+                <Route path="my-requests" element={<PersonalRequests defaultFilter="sent" />} />
+                <Route path="my-requests/approvals" element={<PersonalRequests defaultFilter="received" />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+            <ToastHost />
+          </HrProvider>
+        </ApprovalSystemProvider>
+      ) : (
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      )}
     </BrowserRouter>
   );
 }
