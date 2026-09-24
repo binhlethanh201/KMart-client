@@ -237,7 +237,12 @@ export default function UnifiedSidebar({
                       {currentUser?.name || 'Nguyễn Văn A'}
                     </h2>
                     <div className="flex flex-col gap-1 mt-1">
-                      <span className="text-xs text-slate-400 font-medium tracking-wide">Quản trị viên</span>
+                      <span className="text-xs text-slate-400 font-medium tracking-wide">
+                        {currentUser?.role === 'ADMIN' ? 'Quản trị viên' : 
+                         currentUser?.role === 'HR' ? 'Nhân sự' :
+                         currentUser?.role === 'MANAGER' ? 'Quản lý' :
+                         currentUser?.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên'}
+                      </span>
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
                         <span className="text-[11px] text-slate-500 font-medium">Trực tuyến</span>
@@ -258,7 +263,15 @@ export default function UnifiedSidebar({
 
             {/* Nav items */}
             <ul className="flex flex-col py-2">
-              {NAV_ITEMS.map((item) => {
+              {NAV_ITEMS.filter(item => {
+                if (item.name === 'Nhân sự' && currentUser?.role === 'STAFF') {
+                  return false;
+                }
+                if (item.name === 'Cấu hình' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') {
+                  return false;
+                }
+                return true;
+              }).map((item) => {
                 /* Determine active state */
                 const isActive = item.subPanel
                   ? item.matchPaths?.some((p) => location.pathname.startsWith(p))

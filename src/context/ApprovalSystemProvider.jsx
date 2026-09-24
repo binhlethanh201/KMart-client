@@ -97,6 +97,7 @@ export function ApprovalSystemProvider({ children }) {
         positionId: primaryPos?.positionId,
         position: primaryPos?.positionName || 'Nhân viên',
         allPositions: positionsList,
+        role: u.roles?.[0]?.roleName || 'STAFF',
         profileData: u.profileData ? JSON.parse(u.profileData) : null,
         avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`
       });

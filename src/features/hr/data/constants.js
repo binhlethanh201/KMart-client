@@ -1,7 +1,8 @@
 export const ROLE_STYLES = {
   ADMIN: { label: 'Quản trị viên', cls: 'text-rose-700', dot: 'bg-rose-500' },
-  HR: { label: 'HR', cls: 'text-indigo-700', dot: 'bg-indigo-500' },
+  HR: { label: 'Nhân sự', cls: 'text-indigo-700', dot: 'bg-indigo-500' },
   MANAGER: { label: 'Quản lý', cls: 'text-violet-700', dot: 'bg-violet-500' },
+  TEAM_LEADER: { label: 'Trưởng nhóm', cls: 'text-amber-700', dot: 'bg-amber-500' },
   STAFF: { label: 'Nhân viên', cls: 'text-teal-700', dot: 'bg-teal-500' },
 };
 

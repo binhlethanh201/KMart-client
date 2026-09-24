@@ -19,7 +19,7 @@ const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
-export default function EmployeeModal({ employee, departments = [], positions = [], roles = [], onClose, onSave }) {
+export default function EmployeeModal({ employee, departments = [], positions = [], roles = [], currentUser, onClose, onSave }) {
   const [form, setForm] = useState(() => {
     if (!employee) return EMPTY_EMPLOYEE;
     // Resolve the existing role to its id so the select is pre-selected on edit.
@@ -149,7 +149,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </div>
               <div>
                 <label className={labelCls}>Vai trò hệ thống</label>
-                <select className={fieldCls} value={form.roleId} onChange={set('roleId')}>
+                <select className={fieldCls} value={form.roleId} onChange={set('roleId')} disabled={currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR'}>
                   <option value="">-- Chọn vai trò --</option>
                   {roles.map((r) => (
                     <option key={r.id} value={r.id}>{ROLE_STYLES[r.roleName]?.label || r.roleName}</option>

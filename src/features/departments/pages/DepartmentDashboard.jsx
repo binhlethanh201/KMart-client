@@ -8,9 +8,11 @@ import { useApproval } from '../../../context/useApproval';
 
 export default function DepartmentDashboard() {
   useDocumentTitle('Cơ cấu tổ chức & Siêu thị');
-  const { departments, toggleDepartmentStatus, deleteDepartment } = useApproval();
+  const { departments, toggleDepartmentStatus, deleteDepartment, currentUser } = useApproval();
   const [modalOpen, setModalOpen] = useState(false);
   const [editDept, setEditDept] = useState(null);
+
+  const canEdit = currentUser?.role === 'ADMIN';
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,6 +25,14 @@ export default function DepartmentDashboard() {
 
   // Computed filtered list
   const filteredDepartments = departments.filter((dept) => {
+    // 0. Role-based visibility
+    if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') {
+      const userDeptIds = currentUser?.allPositions?.map(p => p.departmentId) || [];
+      if (!userDeptIds.includes(dept.id)) {
+        return false;
+      }
+    }
+
     // 1. Search filter
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -69,13 +79,15 @@ export default function DepartmentDashboard() {
             <h1 className="text-2xl font-bold text-on-surface tracking-tight">Cơ cấu tổ chức &amp; Siêu thị</h1>
           </div>
           <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-            <button
-              onClick={() => setModalOpen(true)}
-              className="w-full sm:w-auto justify-center bg-primary text-on-primary hover:bg-primary-fixed-variant px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[16px]">add</span>
-              Thêm phòng ban
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => setModalOpen(true)}
+                className="w-full sm:w-auto justify-center bg-primary text-on-primary hover:bg-primary-fixed-variant px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">add</span>
+                Thêm phòng ban
+              </button>
+            )}
           </div>
         </div>
 
@@ -136,6 +148,7 @@ export default function DepartmentDashboard() {
                 memberNames={dept.memberNames}
                 extraCount={dept.extraCount}
                 memberCount={dept.memberCount}
+                canEdit={canEdit}
                 onEdit={() => setEditDept(dept)}
                 onToggleStatus={() => toggleDepartmentStatus(dept.id)}
                 onDelete={() => {

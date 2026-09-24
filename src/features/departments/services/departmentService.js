@@ -64,7 +64,7 @@ export const departmentService = {
         isPrimary: m.assignment === 'primary'
       })) || []
     };
-    
+
     // Also include head or deputy if they are not in the members list
     if (data.head && !payload.members.some(m => m.userId === data.head.id)) {
       payload.members.push({ userId: data.head.id, isPrimary: true });

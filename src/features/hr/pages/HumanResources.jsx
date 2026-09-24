@@ -21,7 +21,18 @@ export default function HumanResources() {
   useDocumentTitle('Quản lý Nhân sự');
   const navigate = useNavigate();
   const { employees, departments, positions, roles, loading, error, saveEmployee, toggleLock: toggleLockHr, resetPassword: resetPasswordHr } = useHr();
-  const { pushToast } = useApproval();
+  const { pushToast, currentUser } = useApproval();
+
+  const canEdit = currentUser?.role === 'ADMIN' || currentUser?.role === 'HR';
+  const isStaff = currentUser?.role === 'STAFF';
+
+  useEffect(() => {
+    if (isStaff) {
+      navigate('/', { replace: true });
+    }
+  }, [isStaff, navigate]);
+
+  if (isStaff) return null;
 
   const [search, setSearch] = useState('');
   const [dept, setDept] = useState('Tất cả');
@@ -36,13 +47,23 @@ export default function HumanResources() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return employees.filter((e) => {
+      // 0. Role-based visibility
+      if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') {
+        const userDeptIds = currentUser?.allPositions?.map(p => p.departmentId) || [];
+        // Match by department ID (if available) or department name
+        const empDeptNames = [e.department, ...(e.secondary?.map(s => s.department) || [])];
+        const userDeptNames = currentUser?.allPositions?.map(p => p.departmentName) || [];
+        const hasOverlap = empDeptNames.some(name => userDeptNames.includes(name));
+        if (!hasOverlap) return false;
+      }
+
       const matchQ =
         !q ||
         e.name.toLowerCase().includes(q) ||
         e.id.toLowerCase().includes(q) ||
         e.email.toLowerCase().includes(q) ||
         e.phone.includes(q);
-      const matchDept = dept === 'Tất cả' || e.department === dept;
+      const matchDept = dept === 'Tất cả' || e.department === dept || (e.secondary && e.secondary.some(s => s.department === dept));
       const matchRole = role === 'Tất cả' || e.role === role;
       const matchStatus = status === 'Tất cả' || e.status === status;
       return matchQ && matchDept && matchRole && matchStatus;
@@ -100,13 +121,15 @@ export default function HumanResources() {
             <h1 className="text-2xl font-bold text-on-surface tracking-tight">Quản lý Nhân sự</h1>
           </div>
           <div className="flex gap-2 flex-shrink-0 w-full md:w-auto">
-            <button
-              onClick={openAdd}
-              className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">person_add</span>
-              Thêm nhân sự
-            </button>
+            {canEdit && (
+              <button
+                onClick={openAdd}
+                className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[18px]">person_add</span>
+                Thêm nhân sự
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -267,35 +290,37 @@ export default function HumanResources() {
                         </td>
                         {/* Thao tác */}
                         <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={(ev) => openEdit(e, ev)}
-                              className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
-                              title="Chỉnh sửa"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">edit</span>
-                            </button>
-                            <button
-                              onClick={(ev) => handleResetPassword(e, ev)}
-                              className="text-secondary hover:text-warning hover:bg-warning-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
-                              title="Reset mật khẩu"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">lock_reset</span>
-                            </button>
-                            <button
-                              onClick={(ev) => toggleLock(e, ev)}
-                              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                                e.status === 'active'
-                                  ? 'text-secondary hover:text-error hover:bg-error-container/40'
-                                  : 'text-secondary hover:text-success hover:bg-success-container/40'
-                              }`}
-                              title={e.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                            >
-                              <span className="material-symbols-outlined text-[18px]">
-                                {e.status === 'active' ? 'lock_open' : 'lock'}
-                              </span>
-                            </button>
-                          </div>
+                          {canEdit && (
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={(ev) => openEdit(e, ev)}
+                                className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
+                                title="Chỉnh sửa"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                              </button>
+                              <button
+                                onClick={(ev) => handleResetPassword(e, ev)}
+                                className="text-secondary hover:text-warning hover:bg-warning-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
+                                title="Reset mật khẩu"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">lock_reset</span>
+                              </button>
+                              <button
+                                onClick={(ev) => toggleLock(e, ev)}
+                                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                                  e.status === 'active'
+                                    ? 'text-secondary hover:text-error hover:bg-error-container/40'
+                                    : 'text-secondary hover:text-success hover:bg-success-container/40'
+                                }`}
+                                title={e.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                              >
+                                <span className="material-symbols-outlined text-[18px]">
+                                  {e.status === 'active' ? 'lock_open' : 'lock'}
+                                </span>
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );
@@ -364,6 +389,7 @@ export default function HumanResources() {
         departments={departments}
         positions={positions}
         roles={roles}
+        currentUser={currentUser}
         onClose={() => setModalOpen(false)} 
         onSave={handleSave} 
       />}

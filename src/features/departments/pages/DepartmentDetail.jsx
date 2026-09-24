@@ -112,16 +112,14 @@ export default function DepartmentDetail() {
                   <div className="flex items-center gap-3 flex-wrap mb-1">
                     <h1 className="font-display-lg text-on-surface">{dept.name}</h1>
                     <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${
-                        dept.status === 'Active'
-                          ? 'bg-[#E8F8EE] text-[#037847]'
-                          : 'bg-[#F1F5F9] text-[#475569]'
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${dept.status === 'Active'
+                        ? 'bg-[#E8F8EE] text-[#037847]'
+                        : 'bg-[#F1F5F9] text-[#475569]'
+                        }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          dept.status === 'Active' ? 'bg-[#037847]' : 'bg-[#64748B]'
-                        }`}
+                        className={`w-1.5 h-1.5 rounded-full ${dept.status === 'Active' ? 'bg-[#037847]' : 'bg-[#64748B]'
+                          }`}
                       ></span>
                       {dept.status === 'Active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
                     </span>
@@ -155,11 +153,10 @@ export default function DepartmentDetail() {
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
-                    active
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-secondary hover:text-on-surface hover:bg-surface-container-low'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer ${active
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-secondary hover:text-on-surface hover:bg-surface-container-low'
+                    }`}
                 >
                   <span className="material-symbols-outlined text-[18px]">{t.icon}</span>
                   {t.label}
@@ -239,8 +236,8 @@ export default function DepartmentDetail() {
                           r.status === 'pending'
                             ? STEP_ROLE[r.steps[r.currentStep]?.approverId] || `Cấp ${r.currentStep + 1}`
                             : r.status === 'approved'
-                            ? 'Hoàn tất'
-                            : 'Đã dừng';
+                              ? 'Hoàn tất'
+                              : 'Đã dừng';
                         const canQuick = canApprove(r);
                         return (
                           <tr key={r.id} className="hover:bg-surface-container-low transition-colors">
@@ -267,21 +264,19 @@ export default function DepartmentDetail() {
                             <td className="py-3 px-4 text-secondary whitespace-nowrap">{stepLabel}</td>
                             <td className="py-3 px-4 whitespace-nowrap">
                               <span
-                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${
-                                  r.status === 'pending'
-                                    ? 'bg-[#FEF3C7] text-[#B45309]'
-                                    : r.status === 'approved'
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${r.status === 'pending'
+                                  ? 'bg-[#FEF3C7] text-[#B45309]'
+                                  : r.status === 'approved'
                                     ? 'bg-[#E8F8EE] text-[#037847]'
                                     : 'bg-[#FEE2E2] text-[#B91C1C]'
-                                }`}
+                                  }`}
                               >
-                                <span className={`w-1.5 h-1.5 rounded-full ${
-                                  r.status === 'pending'
-                                    ? 'bg-[#D97706]'
-                                    : r.status === 'approved'
+                                <span className={`w-1.5 h-1.5 rounded-full ${r.status === 'pending'
+                                  ? 'bg-[#D97706]'
+                                  : r.status === 'approved'
                                     ? 'bg-[#037847]'
                                     : 'bg-[#DC2626]'
-                                }`}></span>
+                                  }`}></span>
                                 {meta?.label}
                               </span>
                             </td>
@@ -341,53 +336,52 @@ export default function DepartmentDetail() {
                       </tr>
                     ) : (
                       members.map((s) => (
-                      <tr key={s.id} className="hover:bg-surface-container-low transition-colors">
-                        <td className="py-3 px-4 text-secondary whitespace-nowrap" title={s.id}>{s.shortId}</td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <img
-                              className="w-7 h-7 rounded-full border border-outline-variant object-cover"
-                              src={s.avatar}
-                              alt={s.name}
-                            />
-                            <span className="text-on-surface font-medium">{s.name}</span>
-                            <button
-                              onClick={() => setShowUserInfo({
-                                id: s.id,
-                                name: s.name,
-                                role: s.role,
-                                avatar: s.avatar,
-                                employeeId: s.shortId,
-                                departmentId: dept.id,
-                                subtitle: s.subtitle,
-                                email: s.email,
-                                personalEmail: s.personalEmail,
-                                phone: s.phone
-                              })}
-                              className="p-1 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer"
-                              title="Xem thông tin chi tiết"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">info</span>
-                            </button>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-on-surface-variant whitespace-nowrap">{s.role}</td>
-                        <td className="py-3 px-4 text-secondary whitespace-nowrap">{s.email}</td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${
-                              s.status === 'active'
+                        <tr key={s.id} className="hover:bg-surface-container-low transition-colors">
+                          <td className="py-3 px-4 text-secondary whitespace-nowrap" title={s.id}>{s.shortId}</td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <img
+                                className="w-7 h-7 rounded-full border border-outline-variant object-cover"
+                                src={s.avatar}
+                                alt={s.name}
+                              />
+                              <span className="text-on-surface font-medium">{s.name}</span>
+                              <button
+                                onClick={() => setShowUserInfo({
+                                  id: s.id,
+                                  name: s.name,
+                                  role: s.role,
+                                  avatar: s.avatar,
+                                  employeeId: s.shortId,
+                                  departmentId: dept.id,
+                                  subtitle: s.subtitle,
+                                  email: s.email,
+                                  personalEmail: s.personalEmail,
+                                  phone: s.phone
+                                })}
+                                className="p-1 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer"
+                                title="Xem thông tin chi tiết"
+                              >
+                                <span className="material-symbols-outlined text-[16px]">info</span>
+                              </button>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-on-surface-variant whitespace-nowrap">{s.role}</td>
+                          <td className="py-3 px-4 text-secondary whitespace-nowrap">{s.email}</td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${s.status === 'active'
                                 ? 'bg-[#E8F8EE] text-[#037847]'
                                 : 'bg-[#F1F5F9] text-[#475569]'
-                            }`}
-                          >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${s.status === 'active' ? 'bg-[#037847]' : 'bg-[#64748B]'}`}
-                            ></span>
-                            {s.status === 'active' ? 'Đang làm' : 'Nghỉ'}
-                          </span>
-                        </td>
-                      </tr>
+                                }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${s.status === 'active' ? 'bg-[#037847]' : 'bg-[#64748B]'}`}
+                              ></span>
+                              {s.status === 'active' ? 'Đang làm' : 'Nghỉ'}
+                            </span>
+                          </td>
+                        </tr>
                       ))
                     )}
                   </tbody>

@@ -170,7 +170,7 @@ export default function EmployeeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getEmployee, saveEmployee, toggleLock, resetPassword, departments, positions, roles } = useHr();
-  const { pushToast } = useApproval();
+  const { pushToast, currentUser } = useApproval();
 
   const employee = useMemo(() => getEmployee(id), [getEmployee, id]);
   const log = useMemo(() => (employee ? buildActivityLog(employee) : []), [employee]);
@@ -437,6 +437,7 @@ export default function EmployeeDetail() {
           departments={departments}
           positions={positions}
           roles={roles}
+          currentUser={currentUser}
           onClose={() => setEditOpen(false)}
           onSave={async (form) => {
             const ok = await saveEmployee(form);

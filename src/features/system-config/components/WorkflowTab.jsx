@@ -52,7 +52,7 @@ function approvalSummary(step) {
       return `Chọn 1 người cụ thể${step.specificUser ? ` · ${step.specificUser}` : ''}`;
     default:
       return 'Chưa cấu hình';
-    }
+  }
 }
 
 function SequentialOrderList({ role, order, onChange }) {
@@ -123,11 +123,10 @@ function SequentialOrderList({ role, order, onChange }) {
             onDragStart={(e) => handleDragStart(e, idx)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, idx)}
-            className={`flex items-center justify-between bg-surface border rounded p-2 shadow-sm transition-all ${
-              draggedIdx === idx
+            className={`flex items-center justify-between bg-surface border rounded p-2 shadow-sm transition-all ${draggedIdx === idx
                 ? 'opacity-50 border-primary border-dashed'
                 : 'border-outline-variant hover:border-outline cursor-grab active:cursor-grabbing'
-            }`}
+              }`}
           >
             <div className="flex items-center gap-2 pointer-events-none min-w-0">
               <span className="material-symbols-outlined text-outline text-[18px] flex-shrink-0">drag_indicator</span>
@@ -290,9 +289,8 @@ function UserSelect({ value, onChange }) {
                       setIsOpen(false);
                       setSearch('');
                     }}
-                    className={`flex items-center gap-2.5 p-2 rounded text-left transition-colors cursor-pointer relative z-50 ${
-                      value === e.name ? 'bg-primary-container/40' : 'hover:bg-surface-container-low'
-                    }`}
+                    className={`flex items-center gap-2.5 p-2 rounded text-left transition-colors cursor-pointer relative z-50 ${value === e.name ? 'bg-primary-container/40' : 'hover:bg-surface-container-low'
+                      }`}
                   >
                     <img
                       src={e.avatar}
@@ -445,9 +443,8 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
                 <div
                   key={e.id}
                   onClick={() => toggle(e.id)}
-                  className={`flex items-start gap-3 p-2.5 rounded-md border cursor-pointer transition-colors ${
-                    isSel ? 'border-primary bg-primary-container/20' : 'border-outline-variant hover:bg-surface-container-low'
-                  }`}
+                  className={`flex items-start gap-3 p-2.5 rounded-md border cursor-pointer transition-colors ${isSel ? 'border-primary bg-primary-container/20' : 'border-outline-variant hover:bg-surface-container-low'
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -533,9 +530,8 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
 function RadioCard({ checked, onClick, title, desc, badge, name }) {
   return (
     <label
-      className={`flex items-start gap-2.5 p-2.5 rounded-md border cursor-pointer transition-colors flex-1 ${
-        checked ? 'border-primary bg-primary-container/30' : 'border-outline-variant hover:bg-surface-container-low'
-      }`}
+      className={`flex items-start gap-2.5 p-2.5 rounded-md border cursor-pointer transition-colors flex-1 ${checked ? 'border-primary bg-primary-container/30' : 'border-outline-variant hover:bg-surface-container-low'
+        }`}
     >
       <input
         type="radio"
@@ -595,10 +591,10 @@ function makeStep(overrides = {}) {
 
 export default function WorkflowTab() {
   const { employees: EMPLOYEES } = useHr();
-  
+
   const [documentTypes, setDocumentTypes] = useState([]);
   const [formType, setFormType] = useState('');
-  
+
   const [block, setBlock] = useState('hq');
   const [openStepIds, setOpenStepIds] = useState(() => new Set());
   const [draggedStepId, setDraggedStepId] = useState(null);
@@ -613,7 +609,7 @@ export default function WorkflowTab() {
     documentTypeService.getAll().then(data => {
       let merged = [];
       const keys = Object.keys(formFields);
-      
+
       if (data && data.length > 0) {
         merged = [...data];
         // Thêm các form được tạo local chưa có trên DB
@@ -626,7 +622,7 @@ export default function WorkflowTab() {
       } else {
         merged = keys.map(t => ({ id: t, name: t }));
       }
-      
+
       setDocumentTypes(merged);
       if (merged.length > 0) {
         setFormType(merged[0].id);
@@ -776,9 +772,8 @@ export default function WorkflowTab() {
                   setBlock(b.id);
                   setOpenStepIds(new Set());
                 }}
-                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors cursor-pointer ${
-                  block === b.id ? 'bg-primary text-on-primary font-medium' : 'text-secondary hover:text-on-surface'
-                }`}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors cursor-pointer ${block === b.id ? 'bg-primary text-on-primary font-medium' : 'text-secondary hover:text-on-surface'
+                  }`}
               >
                 <span className="material-symbols-outlined text-[16px]">{b.icon}</span>
                 {b.label}
@@ -806,11 +801,10 @@ export default function WorkflowTab() {
               {/* Đường nối dọc giữa các bước */}
               <div className="absolute left-0 top-0 bottom-0 flex flex-col items-center">
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 z-10 transition-colors ${
-                    isActive
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 z-10 transition-colors ${isActive
                       ? 'bg-primary text-on-primary shadow-md ring-4 ring-primary/20'
                       : 'bg-primary/10 text-primary border border-primary/30'
-                  }`}
+                    }`}
                 >
                   {idx + 1}
                 </div>
@@ -818,13 +812,12 @@ export default function WorkflowTab() {
               </div>
 
               <div
-                className={`rounded-lg border transition-all ${
-                  draggedStepId === step.id
+                className={`rounded-lg border transition-all ${draggedStepId === step.id
                     ? 'opacity-50 border-dashed border-primary'
                     : isActive
-                    ? 'bg-surface border-primary/40 shadow-md'
-                    : 'bg-surface-container-lowest border-outline-variant shadow-sm hover:border-outline'
-                }`}
+                      ? 'bg-surface border-primary/40 shadow-md'
+                      : 'bg-surface-container-lowest border-outline-variant shadow-sm hover:border-outline'
+                  }`}
               >
                 {isActive ? (
                   <>

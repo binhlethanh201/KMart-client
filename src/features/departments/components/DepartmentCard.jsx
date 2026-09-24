@@ -14,6 +14,7 @@ export default function DepartmentCard({
   memberNames,
   memberCount,
   extraCount,
+  canEdit = false,
   onEdit,
   onToggleStatus,
   onDelete
@@ -43,46 +44,48 @@ export default function DepartmentCard({
             <span className={`w-2.5 h-2.5 rounded-full ${status.toLowerCase() === 'active' ? 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-error shadow-[0_0_8px_rgba(239,68,68,0.8)]'}`}></span>
           </div>
           
-          <div className="relative">
-            <button 
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(!menuOpen); }} 
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${menuOpen ? 'bg-primary/10 text-primary' : 'text-secondary hover:text-primary hover:bg-primary-container/30'}`}
-            >
-              <span className="material-symbols-outlined text-[20px]">more_vert</span>
-            </button>
-            {menuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); }} />
-                <div 
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                  className="absolute right-0 top-full mt-1 w-48 bg-surface border border-outline-variant rounded-md shadow-xl z-50 py-1.5 flex flex-col transform origin-top-right transition-all"
-                >
-                  <button 
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onEdit?.(); }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors cursor-pointer font-medium group/btn"
+          {canEdit && (
+            <div className="relative">
+              <button 
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(!menuOpen); }} 
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${menuOpen ? 'bg-primary/10 text-primary' : 'text-secondary hover:text-primary hover:bg-primary-container/30'}`}
+              >
+                <span className="material-symbols-outlined text-[20px]">more_vert</span>
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); }} />
+                  <div 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    className="absolute right-0 top-full mt-1 w-48 bg-surface border border-outline-variant rounded-md shadow-xl z-50 py-1.5 flex flex-col transform origin-top-right transition-all"
                   >
-                    <span className="material-symbols-outlined text-[18px] text-secondary group-hover/btn:text-primary transition-colors">edit</span>
-                    Chỉnh sửa
-                  </button>
-                  <button 
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onToggleStatus?.(); }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors cursor-pointer font-medium group/btn"
-                  >
-                    <span className="material-symbols-outlined text-[18px] text-warning transition-colors">block</span>
-                    {status.toLowerCase() === 'active' ? 'Ngừng hoạt động' : 'Mở hoạt động'}
-                  </button>
-                  <div className="h-px bg-outline-variant/50 my-1 mx-2" />
-                  <button 
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onDelete?.(); }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error-container/40 w-full text-left transition-colors cursor-pointer font-medium"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">delete</span>
-                    Xóa phòng ban
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onEdit?.(); }}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors cursor-pointer font-medium group/btn"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-secondary group-hover/btn:text-primary transition-colors">edit</span>
+                      Chỉnh sửa
+                    </button>
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onToggleStatus?.(); }}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors cursor-pointer font-medium group/btn"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-warning transition-colors">block</span>
+                      {status.toLowerCase() === 'active' ? 'Ngừng hoạt động' : 'Mở hoạt động'}
+                    </button>
+                    <div className="h-px bg-outline-variant/50 my-1 mx-2" />
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onDelete?.(); }}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error-container/40 w-full text-left transition-colors cursor-pointer font-medium"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      Xóa phòng ban
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
       
