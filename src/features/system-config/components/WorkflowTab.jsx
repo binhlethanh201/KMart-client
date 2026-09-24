@@ -566,7 +566,6 @@ function GroupHeader({ icon, label, hint }) {
   );
 }
 
-// Tạo object step mới với đầy đủ field mặc định
 function makeStep(overrides = {}) {
   return {
     id: `s${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -587,6 +586,76 @@ function makeStep(overrides = {}) {
     rejectReasonRequired: true,
     ...overrides,
   };
+}
+
+function CustomGroupedSelect({ categories, documentTypes, value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState(() => 
+    categories.reduce((acc, cat) => ({...acc, [cat.id]: true}), {})
+  );
+  
+  const toggleGroup = (id) => setExpandedGroups(prev => ({...prev, [id]: !prev[id]}));
+
+  const selectedDoc = documentTypes.find(d => d.id === value);
+
+  return (
+    <div className="relative w-full max-w-[280px] z-[50]">
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-surface-container-lowest border border-outline-variant hover:border-primary rounded-md px-3 py-2 flex items-center justify-between cursor-pointer transition-all shadow-sm group"
+      >
+        <span className="text-sm text-on-surface font-medium truncate pr-4">
+          {selectedDoc ? selectedDoc.name : 'Chọn loại đơn...'}
+        </span>
+        <span className={`material-symbols-outlined text-secondary group-hover:text-primary text-[20px] transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}>
+          expand_more
+        </span>
+      </div>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-[calc(100%+4px)] left-0 w-[320px] bg-surface rounded-lg shadow-xl border border-outline-variant py-1 z-50 max-h-[250px] overflow-y-auto animate-fade-in origin-top custom-scrollbar">
+            {categories.map(cat => {
+              const catDocs = documentTypes.filter(dt => cat.items.includes(dt.name));
+              if (catDocs.length === 0) return null;
+              
+              const isExpanded = expandedGroups[cat.id] !== false;
+              
+              return (
+                <div key={cat.id} className="mb-2 last:mb-0">
+                  <div 
+                    onClick={(e) => { e.stopPropagation(); toggleGroup(cat.id); }}
+                    className="px-3 py-1.5 bg-surface-container-low/90 text-[11px] font-bold text-primary uppercase tracking-wider sticky top-0 backdrop-blur-md flex items-center justify-between z-10 border-b border-outline-variant/30 shadow-[0_2px_4px_rgba(0,0,0,0.02)] cursor-pointer hover:bg-surface-container-low"
+                  >
+                    <span>{cat.name}</span>
+                    <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                      expand_more
+                    </span>
+                  </div>
+                  {isExpanded && (
+                    <div className="py-1">
+                      {catDocs.map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => { onChange(f.id); setIsOpen(false); }}
+                          className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between transition-colors cursor-pointer ${
+                            value === f.id ? 'bg-primary/10 text-primary font-semibold relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-3/4 before:w-1 before:bg-primary before:rounded-r' : 'text-on-surface hover:bg-surface-container hover:text-primary'
+                          }`}
+                        >
+                          <span className="break-words whitespace-normal">{f.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function WorkflowTab() {
@@ -756,68 +825,25 @@ export default function WorkflowTab() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
-      {/* Cột danh mục (Bên trái) */}
-      <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden flex flex-col max-h-[800px]">
-        <div className="px-4 py-3 border-b border-outline-variant bg-surface-container-lowest flex-shrink-0">
-          <h3 className="font-label-md text-on-surface font-semibold uppercase tracking-wide">Mẫu đơn</h3>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <ul className="flex flex-col p-2 gap-3">
-            {categories.map((cat) => {
-              const isExpanded = expandedCats[cat.id] !== false;
-              return (
-                <li key={cat.id} className="flex flex-col gap-1">
-                  <button 
-                    onClick={() => toggleCat(cat.id)}
-                    className="flex items-center gap-2 px-2 py-1 text-xs font-semibold text-secondary hover:text-primary transition-colors cursor-pointer text-left uppercase tracking-wider w-full"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      {isExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}
-                    </span>
-                    {cat.name}
-                  </button>
-                  {isExpanded && (
-                    <ul className="flex flex-col gap-0.5">
-                      {cat.items.length === 0 && (
-                        <li className="text-xs text-secondary italic pl-8 pr-3 py-1">Chưa có mẫu đơn</li>
-                      )}
-                      {cat.items.map(f => {
-                        const active = f === formType;
-                        return (
-                          <li key={f} className="flex items-center relative pr-2">
-                            <button
-                              onClick={() => {
-                                setFormType(f);
-                                setOpenStepIds(new Set());
-                              }}
-                              className={`flex-1 text-left pl-8 pr-6 py-2 rounded-md text-sm flex items-center gap-2 transition-colors cursor-pointer ${
-                                active ? 'bg-primary-container/40 text-primary font-semibold' : 'text-on-surface hover:bg-surface-container-low'
-                              }`}
-                            >
-                              <span className="material-symbols-outlined text-[16px]">{active ? 'description' : 'draft'}</span>
-                              <span className="truncate">{f}</span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
-
-      {/* Vùng chính: Cấu hình luồng duyệt */}
-      <div className="flex flex-col gap-4">
-        {/* Form type + Block selector */}
-        <div className="bg-surface rounded-lg border border-outline-variant shadow-sm p-4 flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">account_tree</span>
-            <span className="font-headline-sm text-headline-sm text-on-surface">Cấu hình luồng duyệt: <span className="text-primary">{formType || 'Chưa chọn'}</span></span>
+    <div className="flex flex-col gap-4">
+      {/* Form type + Block selector */}
+      <div className="bg-surface rounded-lg border border-outline-variant shadow-sm p-4 flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="material-symbols-outlined text-primary">tune</span>
+            <span className="font-label-md text-on-surface font-semibold">Cấu hình luồng duyệt cho:</span>
           </div>
+
+          <CustomGroupedSelect
+            categories={categories}
+            documentTypes={documentTypes}
+            value={formType}
+            onChange={(val) => {
+              setFormType(val);
+              setOpenStepIds(new Set());
+            }}
+          />
+        </div>
 
           {/* Chọn khối luồng (HQ / Retail / Dùng chung) */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3 border-t border-outline-variant/50">
@@ -1276,7 +1302,6 @@ export default function WorkflowTab() {
           </button>
         </div>
       </div>
-    </div>
     </div>
   );
 }
