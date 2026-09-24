@@ -44,7 +44,7 @@ function EmployeeSelect({ employees, value, onChange, placeholder, exclude = [] 
           <span className="flex items-center gap-2 min-w-0">
             <img className="w-6 h-6 rounded-full object-cover flex-shrink-0" src={value.avatar} alt={value.name} />
             <span className="truncate text-on-surface">{value.name}</span>
-            <span className="text-xs text-secondary">- {value.id}</span>
+            <span className="text-xs text-secondary">- {value.id.substring(0, 8).toUpperCase()}</span>
           </span>
         ) : (
           <span className="text-secondary">{placeholder}</span>
@@ -86,7 +86,7 @@ function EmployeeSelect({ employees, value, onChange, placeholder, exclude = [] 
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm text-on-surface truncate">{e.name}</span>
                       <span className="block text-xs text-secondary truncate">
-                        {e.id} - {e.position} - {e.department}
+                        {e.id.substring(0, 8).toUpperCase()} - {e.position} - {e.department}
                       </span>
                     </span>
                   </button>
@@ -338,7 +338,7 @@ export default function AddDepartmentModal({ onClose }) {
                           <img className="w-6 h-6 rounded-full object-cover" src={e.avatar} alt={e.name} />
                           <span className="flex-1 min-w-0">
                             <span className="block text-sm text-on-surface truncate">{e.name}</span>
-                            <span className="block text-xs text-secondary truncate">{e.id} - {e.position}</span>
+                            <span className="block text-xs text-secondary truncate">{e.id.substring(0, 8).toUpperCase()} - {e.position}</span>
                           </span>
                           <span className="material-symbols-outlined text-[18px] text-primary">add_circle</span>
                         </button>
@@ -363,7 +363,7 @@ export default function AddDepartmentModal({ onClose }) {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-on-surface truncate">{m.employee.name}</p>
-                        <p className="text-xs text-secondary truncate">{m.employee.id}</p>
+                        <p className="text-xs text-secondary truncate">{m.employee.id.substring(0, 8).toUpperCase()}</p>
                       </div>
                       {/* Assignment toggle */}
                       <div className="flex bg-surface-container-highest rounded-md p-0.5 flex-shrink-0">

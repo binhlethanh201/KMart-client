@@ -45,7 +45,7 @@ function buildActivityLog(e) {
       type: 'create',
       date: hist(0, 8, 30),
       title: 'Khởi tạo hồ sơ nhân sự',
-      detail: `Mã NV ${e.id} • Do Phòng Nhân sự thực hiện`,
+      detail: `Mã NV ${e.id.substring(0, 8).toUpperCase()} • Do Phòng Nhân sự thực hiện`,
     },
     {
       icon: 'apartment',
