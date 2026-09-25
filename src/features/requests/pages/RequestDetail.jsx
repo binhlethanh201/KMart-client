@@ -33,7 +33,7 @@ export default function RequestDetail() {
   const [comment, setComment] = useState('');
   const commentRef = useRef(null);
 
-  useDocumentTitle(request ? `Chi tiết yêu cầu ${request.id}` : 'Chi tiết yêu cầu');
+  useDocumentTitle(request ? `Chi tiết yêu cầu ${request.id.substring(0, 8).toUpperCase()}` : 'Chi tiết yêu cầu');
 
   if (!request) {
     return (
@@ -79,7 +79,7 @@ export default function RequestDetail() {
               </li>
               <li aria-current="page" className="flex items-center">
                 <span className="material-symbols-outlined text-[16px] text-outline mx-1">chevron_right</span>
-                <span className="text-on-surface font-medium">Chi tiết {request.id}</span>
+                <span className="text-on-surface font-medium">Chi tiết {request.id.substring(0, 8).toUpperCase()}</span>
               </li>
             </ol>
           </nav>
@@ -96,7 +96,7 @@ export default function RequestDetail() {
               </span>
             </div>
             <p className="font-body-md text-secondary text-sm">
-              Mã hệ thống: <strong>{request.id}</strong> - Đã nộp: {request.createdAt} - Người tạo: <strong>{creatorName}</strong>
+              Mã hệ thống: <strong>{request.id.substring(0, 8).toUpperCase()}</strong> - Đã nộp: {request.createdAt} - Người tạo: <strong>{creatorName}</strong>
             </p>
           </div>
 

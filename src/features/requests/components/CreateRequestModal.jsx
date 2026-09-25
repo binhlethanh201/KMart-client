@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { documentTypeService } from '../../../services/documentTypeService';
+import { workflowService } from '../../../services/workflowService';
 import { FORM_FIELDS } from '../../system-config/data/mockData';
 
 const fieldCls =
@@ -10,12 +11,13 @@ const fieldCls =
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
 export default function CreateRequestModal({ onClose }) {
-  const { createRequest, departments } = useApproval();
+  const { createRequest, departments, currentUser } = useApproval();
   const { employees } = useHr();
   
   // Load document types từ BE
   const [documentTypes, setDocumentTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeWorkflow, setActiveWorkflow] = useState(null);
   
   useEffect(() => {
     documentTypeService.getAll()
@@ -72,6 +74,23 @@ export default function CreateRequestModal({ onClose }) {
   // Reset dynamic fields when document type changes
   useEffect(() => {
     setForm(f => ({ ...f, dynamic: {} }));
+    
+    if (form.documentTypeId) {
+      workflowService.getByDocumentType(form.documentTypeId)
+        .then(workflows => {
+          if (workflows && workflows.length > 0) {
+            setActiveWorkflow(workflows[0]);
+          } else {
+            setActiveWorkflow(null);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to load workflow:", err);
+          setActiveWorkflow(null);
+        });
+    } else {
+      setActiveWorkflow(null);
+    }
   }, [form.documentTypeId]);
 
   // Auto-calculate days when dates change
@@ -124,9 +143,8 @@ export default function CreateRequestModal({ onClose }) {
       role="dialog"
       aria-modal="true"
     >
-      <form
+      <div
         onClick={(e) => e.stopPropagation()}
-        onSubmit={submit}
         className="bg-surface rounded-lg shadow-xl w-full max-w-[680px] flex flex-col max-h-[90vh] overflow-hidden"
       >
         {/* Header */}
@@ -290,6 +308,75 @@ export default function CreateRequestModal({ onClose }) {
               );
             }
 
+            if (f.type === 'FILE' || f.type === 'Tải file') {
+              const labelKey = f.label || f.id;
+              
+              // Recover templateFile from localStorage since backend doesn't save it
+              let templateFile = f.templateFile;
+              if (!templateFile && selectedDocType) {
+                try {
+                  const stored = JSON.parse(localStorage.getItem('kmart.form.fields') || '{}');
+                  const localFields = stored[selectedDocType.name] || [];
+                  const localF = localFields.find(x => x.id === f.name || x.label === f.label || x.id === labelKey);
+                  if (localF && localF.templateFile) templateFile = localF.templateFile;
+                } catch {}
+              }
+
+              return (
+                <div key={labelKey} className="flex flex-col gap-2">
+                  <div className="flex justify-between items-end">
+                    <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                    {templateFile && templateFile.name && (
+                      <a href="#" className="flex items-center gap-1 text-xs text-primary font-medium hover:underline bg-primary/5 px-2 py-1 rounded">
+                        <span className="material-symbols-outlined text-[14px]">download</span>
+                        Tải biểu mẫu
+                      </a>
+                    )}
+                  </div>
+                  <label className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-outline-variant rounded-lg bg-surface hover:bg-surface-container-lowest hover:border-primary/50 transition-colors cursor-pointer group">
+                    <span className="material-symbols-outlined text-[24px] text-outline group-hover:text-primary transition-colors">cloud_upload</span>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors">
+                        {form.dynamic[labelKey] ? form.dynamic[labelKey] : 'Nhấn để chọn file tải lên'}
+                      </span>
+                      <span className="text-xs text-secondary">Hỗ trợ PDF, DOCX, XLSX (Tối đa 10MB)</span>
+                    </div>
+                    <input
+                      className="sr-only"
+                      type="file"
+                      required={f.required}
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setDynamic(labelKey, file.name); // in a real app, upload it and save URL
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              );
+            }
+
+            if (f.type === 'USER' || f.type === 'Người duyệt thay') {
+              const labelKey = f.label || f.id;
+              return (
+                <div key={labelKey} className="flex flex-col gap-2">
+                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                  <select
+                    className={fieldCls}
+                    required={f.required}
+                    value={form.dynamic[labelKey] || ''}
+                    onChange={(e) => setDynamic(labelKey, e.target.value)}
+                  >
+                    <option value="">-- Chọn người --</option>
+                    {employees?.map((emp) => (
+                      <option key={emp.id} value={emp.id}>{emp.name} ({emp.position || 'Nhân viên'})</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            }
+
             // Default: render as text input
             const labelKey = f.label || f.id;
             return (
@@ -318,6 +405,103 @@ export default function CreateRequestModal({ onClose }) {
           )}
         </div>
 
+        {/* Luồng phê duyệt (Approval Flow) Visualization */}
+        {activeWorkflow && activeWorkflow.steps && activeWorkflow.steps.length > 0 && (
+          <div className="px-6 py-4 bg-surface-container-lowest border-t border-outline-variant/30">
+            <label className="block font-label-md text-label-md text-on-surface-variant mb-4">Luồng phê duyệt dự kiến</label>
+            <div className="flex items-center gap-3 overflow-x-auto pb-4 px-1 [&::-webkit-scrollbar]:hidden">
+              
+              {/* SENDER NODE */}
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex flex-col items-center gap-1.5 min-w-[80px] max-w-[100px]">
+                  {currentUser?.avatar ? (
+                    <img src={currentUser.avatar} alt="Sender" className="w-10 h-10 rounded-full object-cover shadow-sm border border-outline-variant" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-amber-400 text-amber-950 font-semibold text-sm flex items-center justify-center shadow-sm border border-amber-500/20">
+                      {(() => {
+                        const name = currentUser?.name || 'Tôi';
+                        const parts = name.trim().split(' ');
+                        return parts.length === 1 
+                          ? parts[0].substring(0, 2).toUpperCase() 
+                          : (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+                      })()}
+                    </div>
+                  )}
+                  <span className="text-[12px] font-semibold text-on-surface text-center w-full truncate leading-tight" title={currentUser?.name || 'Tôi'}>
+                    {currentUser?.name || 'Tôi'}
+                  </span>
+                  <span className="text-[10px] text-secondary text-center w-full truncate uppercase tracking-wider font-semibold">
+                    Người gửi
+                  </span>
+                </div>
+                <span className="material-symbols-outlined text-outline-variant text-[18px]">
+                  arrow_forward
+                </span>
+              </div>
+
+              {/* WORKFLOW STEPS */}
+              {activeWorkflow.steps.sort((a,b) => a.stepOrder - b.stepOrder).map((step, idx) => {
+                let isSpecificUser = step.approvalType === 'specific_user' || step.approvalType === 'specific';
+                let emp = null;
+                if (isSpecificUser && (step.specificUserId || step.specificUser)) {
+                  emp = employees?.find(e => e.id === (step.specificUserId || step.specificUser));
+                }
+                const displayName = emp ? emp.name : (step.name || 'Người duyệt');
+                
+                let displayRole = step.roleName || step.role || 'Người duyệt';
+                if (emp) {
+                  displayRole = emp.role === 'ADMIN' ? 'Quản trị viên' : emp.role === 'MANAGER' ? 'Quản lý' : emp.role === 'HR' ? 'Nhân sự' : emp.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên';
+                }
+
+                return (
+                  <div key={step.id || idx} className="flex items-center gap-3 shrink-0">
+                    <div className="flex flex-col items-center gap-1.5 min-w-[80px] max-w-[100px]">
+                      <div className="relative">
+                        {emp ? (
+                          emp.avatar ? (
+                            <img src={emp.avatar} alt="Approver" className="w-10 h-10 rounded-full object-cover shadow-sm border border-outline-variant" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm flex items-center justify-center shadow-sm border border-blue-200">
+                              {(() => {
+                                const parts = emp.name.trim().split(' ');
+                                return parts.length === 1 
+                                  ? parts[0].substring(0, 2).toUpperCase() 
+                                  : (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+                              })()}
+                            </div>
+                          )
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-primary-container text-primary flex items-center justify-center shadow-sm border border-primary/20">
+                            <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-center w-full">
+                        <span className="text-[12px] font-semibold text-on-surface text-center w-full truncate leading-tight" title={displayName}>
+                          {displayName}
+                        </span>
+                        <span className="text-[10px] text-primary text-center w-full truncate uppercase tracking-wider font-semibold">
+                          {displayRole}
+                        </span>
+                        {activeWorkflow.steps.length > 1 && (
+                          <span className="text-[10px] text-secondary font-medium mt-0.5">
+                            Bước {step.stepOrder}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {idx < activeWorkflow.steps.length - 1 && (
+                      <span className="material-symbols-outlined text-outline-variant text-[18px]">
+                        arrow_forward
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex justify-end gap-3 p-6 border-t border-outline-variant/30 bg-surface-container-low">
           <button
@@ -328,14 +512,15 @@ export default function CreateRequestModal({ onClose }) {
             Hủy
           </button>
           <button
-            type="submit"
+            type="button"
+            onClick={submit}
             disabled={!form.documentTypeId || !form.reason.trim()}
             className="px-5 py-2.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Gửi yêu cầu
           </button>
         </div>
-      </form>
+      </div>
     </div>,
     document.body
   );

@@ -200,24 +200,24 @@ export default function UnifiedSidebar({
       <div
         className={`fixed md:static z-50 h-full flex flex-row transform ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 transition-transform duration-300`}
+        } md:translate-x-0 transition-transform duration-300 relative`}
       >
+        {/* Collapse Toggle Button - Premium Design */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden md:flex absolute top-1/2 -right-3.5 -translate-y-1/2 w-7 h-7 bg-white text-slate-600 border border-slate-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-50 cursor-pointer hover:text-primary hover:bg-slate-50 hover:border-primary/20 transition-all group"
+          title={isCollapsed ? "Mở rộng" : "Thu gọn"}
+        >
+          <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
+            {isCollapsed ? 'chevron_right' : 'chevron_left'}
+          </span>
+        </button>
+
         {/* ── Rail ── */}
         <nav
-          className={`relative bg-[#0F172A] ${isCollapsed ? 'w-[72px]' : 'w-[240px]'} h-full flex-shrink-0 flex flex-col justify-between shadow-sm transition-all duration-300`}
+          className={`bg-[#0F172A] ${isCollapsed ? 'w-[72px]' : 'w-[240px]'} h-full flex-shrink-0 flex flex-col justify-between shadow-sm transition-all duration-300`}
           id="sidebar"
         >
-          {/* Collapse Toggle Button - Premium Design */}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden md:flex absolute top-1/2 -right-3.5 -translate-y-1/2 w-7 h-7 bg-white text-slate-600 border border-slate-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-50 cursor-pointer hover:text-primary hover:bg-slate-50 hover:border-primary/20 transition-all group"
-            title={isCollapsed ? "Mở rộng" : "Thu gọn"}
-          >
-            <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
-              {isCollapsed ? 'chevron_right' : 'chevron_left'}
-            </span>
-          </button>
-
           <div>
             {/* User profile */}
             <Link
@@ -270,11 +270,10 @@ export default function UnifiedSidebar({
             {/* Nav items */}
             <ul className="flex flex-col py-2">
               {visibleNavs.filter(item => {
-                // Fallback role checks just in case permission isn't fully set
-                if (!hasPermission) {
-                  if (item.name === 'Nhân sự' && currentUser?.role === 'STAFF') return false;
-                  if (item.name === 'Cấu hình' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
-                }
+                // Explicit role checks for specific menus
+                if (item.name === 'Nhân sự' && currentUser?.role === 'STAFF') return false;
+                if (item.name === 'Cấu hình' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
+                
                 return true;
               }).map((item) => {
                 /* Determine active state */
@@ -332,6 +331,7 @@ export default function UnifiedSidebar({
                   <li key={item.name}>
                     <Link
                       to={item.path}
+                      onClick={() => setOpenSubPanel(null)}
                       title={isCollapsed ? item.name : undefined}
                       className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
                         isActive

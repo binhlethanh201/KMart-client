@@ -5,8 +5,8 @@ const mapToFrontendModel = (a) => {
     id: a.id,
     title: a.title,
     type: a.documentTypeName || 'Yêu cầu',
-    creatorId: a.creatorId,
-    creatorName: a.creatorName,
+    creatorId: a.creatorId || a.applicantId,
+    creatorName: a.creatorName || a.applicantName,
     departmentId: a.departmentId,
     createdAt: new Date(a.createdAt).toLocaleString('vi-VN'),
     status: a.status.toLowerCase(), // 'draft', 'pending', 'approved', 'rejected'

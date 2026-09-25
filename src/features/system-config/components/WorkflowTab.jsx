@@ -28,7 +28,7 @@ const BLOCK_OPTIONS = [
 const APPROVAL_LABELS = APPROVAL_TYPES.reduce((acc, t) => { acc[t.id] = t.label; return acc; }, {});
 
 // Tóm tắt hình thức duyệt cho trạng thái thu gọn
-function approvalSummary(step) {
+function approvalSummary(step, employees = []) {
   switch (step.approvalType) {
     case 'hierarchy': {
       const opt = HIERARCHY_OPTIONS.find((o) => o.id === step.hierarchyOption);
@@ -41,7 +41,11 @@ function approvalSummary(step) {
       return `Theo chức danh / Bộ phận${n ? ` · ${n} người` : ''}`;
     }
     case 'specific':
-      return `Chọn 1 người cụ thể${step.specificUser ? ` · ${step.specificUser}` : ''}`;
+    case 'specific_user': {
+      const userId = step.specificUser || step.specificUserId;
+      const emp = employees.find((e) => e.id === userId);
+      return `Chọn 1 người cụ thể${emp ? ` · ${emp.name}` : (userId ? ` · ${userId.substring(0,6)}...` : '')}`;
+    }
     default:
       return 'Chưa cấu hình';
   }
@@ -1328,7 +1332,7 @@ export default function WorkflowTab() {
                       <div className="text-sm font-semibold text-on-surface truncate">{step.name}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="material-symbols-outlined text-outline text-[14px]">account_tree</span>
-                        <span className="text-xs text-secondary truncate">{approvalSummary(step)}</span>
+                        <span className="text-xs text-secondary truncate">{approvalSummary(step, EMPLOYEES)}</span>
                       </div>
                     </div>
                     <span className="text-[11px] text-secondary px-2 py-0.5 bg-surface-container rounded flex-shrink-0 hidden sm:inline">

@@ -39,7 +39,7 @@ export default function RequestCard({ request: r }) {
               {meta.label}
             </span>
           </div>
-          <p className="text-xs text-secondary mb-2">Mã: {r.id} - {r.type} - {r.createdAt}</p>
+          <p className="text-xs text-secondary mb-2">Mã: {r.id.substring(0, 8).toUpperCase()} - {r.type} - {r.createdAt}</p>
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 bg-surface-container text-secondary rounded text-[10px] uppercase font-medium">
               {creatorRole}
