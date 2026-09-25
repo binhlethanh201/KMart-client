@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FORM_TYPES, INITIAL_WORKFLOW, APPROVAL_TYPES, MULTI_RULES, APPROVAL_ROLES, SPECIFIC_USERS, CONDITION_FIELDS, CONDITION_OPS, TIME_RULES } from '../data/mockData';
+import { FORM_TYPES, APPROVAL_TYPES, MULTI_RULES, APPROVAL_ROLES, SPECIFIC_USERS, CONDITION_FIELDS, CONDITION_OPS, TIME_RULES } from '../data/mockData';
 import { useHr } from '../../hr/context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
@@ -24,14 +24,6 @@ const BLOCK_OPTIONS = [
   { id: 'retail', label: 'Khối Cửa hàng', icon: 'storefront' },
   { id: 'common', label: 'Dùng chung', icon: 'merge' },
 ];
-
-// Bước mẫu theo khối
-const SAMPLE_RETAIL_STEP = {
-  name: 'Cửa hàng trưởng duyệt',
-  approvalType: 'hierarchy',
-  hierarchyOption: 'store_manager',
-  scope: 'retail',
-};
 
 const APPROVAL_LABELS = APPROVAL_TYPES.reduce((acc, t) => { acc[t.id] = t.label; return acc; }, {});
 
@@ -689,6 +681,7 @@ export default function WorkflowTab() {
   const toggleCat = (id) => setExpandedCats(prev => ({...prev, [id]: !prev[id]}));
 
   const [workflows, setWorkflows] = useState({});
+  const [workflowIds, setWorkflowIds] = useState({});
   const [saved, setSaved] = useState(false);
 
   const { formFields } = useApproval();
@@ -728,29 +721,57 @@ export default function WorkflowTab() {
 
   useEffect(() => {
     if (!formType) return;
-    // TODO: fetch workflowService.getByDocumentType(formType)
-    // For now we mock the state transition if data doesn't exist
-    setWorkflows(prev => {
-      if (prev[formType]) return prev;
-      return {
-        ...prev,
-        [formType]: {
-          hq: INITIAL_WORKFLOW.map((s) => ({ ...s, id: `${s.id}_hq`, track: 'hq' })),
-          retail: [{ ...makeStep(SAMPLE_RETAIL_STEP), id: `cht_retail`, track: 'retail' }],
-          common: [
-            {
-              ...INITIAL_WORKFLOW[1],
-              id: `hr_common`,
-              name: 'HR Admin duyệt (chung)',
-              track: 'common',
-              approvalType: 'role',
-              role: 'HR Admin',
-              scope: 'auto',
-            },
-          ],
-        }
-      };
-    });
+    
+    const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formType);
+    
+    if (isGuid) {
+      workflowService.getByDocumentType(formType)
+        .then(res => {
+          const nextHq = res.find(w => w.scope === 'hq');
+          const nextRetail = res.find(w => w.scope === 'retail');
+          const nextCommon = res.find(w => w.scope === 'common');
+          
+          const formatSteps = (wf) => wf && wf.steps ? wf.steps.map(s => ({
+            ...s, 
+            id: s.id || `s${Date.now()}-${Math.random()}`,
+            specificUser: s.specificUserName || s.specificUserId || null
+          })) : [];
+
+          setWorkflows(prev => ({
+            ...prev,
+            [formType]: {
+              hq: formatSteps(nextHq),
+              retail: formatSteps(nextRetail),
+              common: formatSteps(nextCommon)
+            }
+          }));
+
+          setWorkflowIds(prev => ({
+            ...prev,
+            [`${formType}_hq`]: nextHq?.id,
+            [`${formType}_retail`]: nextRetail?.id,
+            [`${formType}_common`]: nextCommon?.id,
+          }));
+        })
+        .catch(err => {
+          console.error("Failed to load workflows:", err);
+          setWorkflows(prev => {
+            if (prev[formType]) return prev;
+            return {
+              ...prev,
+              [formType]: { hq: [], retail: [], common: [] }
+            };
+          });
+        });
+    } else {
+      setWorkflows(prev => {
+        if (prev[formType]) return prev;
+        return {
+          ...prev,
+          [formType]: { hq: [], retail: [], common: [] }
+        };
+      });
+    }
   }, [formType]);
 
   const steps = (workflows[formType] && workflows[formType][block]) || [];
@@ -814,9 +835,56 @@ export default function WorkflowTab() {
     });
 
   const save = async () => {
+    const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formType);
+    if (!isGuid) {
+      console.warn("Cannot save workflow for local form types yet.");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+      return;
+    }
+
     try {
-      // In a real scenario, map workflows[formType] to WorkflowRequest and call API
-      // await workflowService.create({ documentTypeId: formType, name: "Default Workflow", ... });
+      const scopeData = workflows[formType] || { hq: [], retail: [], common: [] };
+      const scopes = ['hq', 'retail', 'common'];
+
+      for (const scope of scopes) {
+        const wfId = workflowIds[`${formType}_${scope}`];
+        const req = {
+          name: `Luồng duyệt ${scope.toUpperCase()} cho form ${formType}`,
+          documentTypeId: formType,
+          scope: scope,
+          isDefault: true,
+          steps: scopeData[scope].map((s, idx) => ({
+            name: s.name,
+            stepOrder: idx + 1,
+            isActive: s.isActive !== false,
+            approvalType: s.approvalType || 'role',
+            hierarchyOption: s.hierarchyOption,
+            chainStart: s.chainStart,
+            chainEnd: s.chainEnd,
+            role: s.role,
+            roleName: s.role,
+            multiRule: s.multiRule,
+            sequentialOrder: s.sequentialOrder,
+            specificUserId: s.specificUser ? EMPLOYEES.find(e => e.name === s.specificUser || e.id === s.specificUser)?.id : null,
+            scope: s.scope || 'auto',
+            condition: s.condition,
+            maxDurationHours: s.maxDurationHours,
+            timeoutEnabled: s.timeoutEnabled || false,
+            timeoutMode: s.timeoutMode,
+            timeoutAction: s.timeoutAction,
+            rejectReasonRequired: s.rejectReasonRequired !== false
+          }))
+        };
+
+        if (wfId) {
+          await workflowService.update(wfId, req);
+        } else if (req.steps.length > 0) {
+          const created = await workflowService.create(req);
+          setWorkflowIds(prev => ({ ...prev, [`${formType}_${scope}`]: created.id }));
+        }
+      }
+      
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {

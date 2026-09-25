@@ -297,37 +297,46 @@ export default function HumanResources() {
                         </td>
                         {/* Thao tác */}
                         <td className="px-4 py-3">
-                          {canEdit && (
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={(ev) => openEdit(e, ev)}
-                                className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
-                                title="Chỉnh sửa"
-                              >
-                                <span className="material-symbols-outlined text-[18px]">edit</span>
-                              </button>
-                              <button
-                                onClick={(ev) => handleResetPassword(e, ev)}
-                                className="text-secondary hover:text-warning hover:bg-warning-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
-                                title="Reset mật khẩu"
-                              >
-                                <span className="material-symbols-outlined text-[18px]">lock_reset</span>
-                              </button>
-                              <button
-                                onClick={(ev) => toggleLock(e, ev)}
-                                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                                  e.status === 'active'
-                                    ? 'text-secondary hover:text-error hover:bg-error-container/40'
-                                    : 'text-secondary hover:text-success hover:bg-success-container/40'
-                                }`}
-                                title={e.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                              >
-                                <span className="material-symbols-outlined text-[18px]">
-                                  {e.status === 'active' ? 'lock_open' : 'lock'}
-                                </span>
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={(ev) => { ev.stopPropagation(); openView(e); }}
+                              className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
+                              title="Xem chi tiết"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">visibility</span>
+                            </button>
+                            {canEdit && (
+                              <>
+                                <button
+                                  onClick={(ev) => openEdit(e, ev)}
+                                  className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
+                                  title="Chỉnh sửa"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                                </button>
+                                <button
+                                  onClick={(ev) => handleResetPassword(e, ev)}
+                                  className="text-secondary hover:text-warning hover:bg-warning-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
+                                  title="Reset mật khẩu"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">lock_reset</span>
+                                </button>
+                                <button
+                                  onClick={(ev) => toggleLock(e, ev)}
+                                  className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                                    e.status === 'active'
+                                      ? 'text-secondary hover:text-error hover:bg-error-container/40'
+                                      : 'text-secondary hover:text-success hover:bg-success-container/40'
+                                  }`}
+                                  title={e.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">
+                                    {e.status === 'active' ? 'lock_open' : 'lock'}
+                                  </span>
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

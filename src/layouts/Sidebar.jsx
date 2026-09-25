@@ -244,10 +244,10 @@ export default function UnifiedSidebar({
                     </h2>
                     <div className="flex flex-col gap-1 mt-1">
                       <span className="text-xs text-slate-400 font-medium tracking-wide">
-                        {currentUser?.position || (currentUser?.role === 'ADMIN' ? 'Quản trị viên' : 
+                        {currentUser?.role === 'ADMIN' ? 'Quản trị viên' : 
                          currentUser?.role === 'HR' ? 'Nhân sự' :
                          currentUser?.role === 'MANAGER' ? 'Quản lý' :
-                         currentUser?.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên')}
+                         currentUser?.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên'}
                       </span>
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
