@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FORM_TYPES } from '../data/mockData';
 import { templateFileStore } from '../data/templateFileStore';
 import { useApproval } from '../../../context/useApproval';
+import { documentTypeService } from '../../../services/documentTypeService';
 
 function Toggle({ checked, onChange, label }) {
   return (
@@ -44,6 +45,66 @@ export default function FormTemplatesTab() {
   useEffect(() => {
     localStorage.setItem('kmart.form.categories', JSON.stringify(categories));
   }, [categories]);
+
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    documentTypeService.getAll().then(data => {
+      setDocumentTypes(data || []);
+      // Sync local fields state with backend data on load
+      const newFields = { ...fields };
+      data.forEach(dt => {
+        if (dt.fields && dt.fields.length > 0) {
+          // transform from backend format (id, name, type, label, etc) to local format
+          newFields[dt.name] = dt.fields.map(f => ({
+            id: f.name, // The backend fieldName maps to id in frontend
+            label: f.label || f.name,
+            type: f.type,
+            required: f.required,
+            sortOrder: f.sortOrder,
+            options: f.options || [],
+            dynamic: '' // Not fully mapped to backend yet
+          }));
+        }
+      });
+      setFields(newFields);
+    }).catch(console.error);
+  }, []);
+
+  const handleSaveToServer = async () => {
+    let currentDocType = documentTypes.find(d => d.name === selectedForm);
+    if (!currentDocType) {
+      try {
+        currentDocType = await documentTypeService.create({ name: selectedForm, code: 'AUTO_' + Date.now() });
+        setDocumentTypes(prev => [...prev, currentDocType]);
+      } catch (err) {
+        pushToast(`Lỗi khi tạo mẫu đơn "${selectedForm}" trên hệ thống`, 'error');
+        return;
+      }
+    }
+
+    const localFields = fields[selectedForm] || [];
+    const payload = localFields.map((f, i) => ({
+      name: f.id || `field_${i}`, // Ensure a name is set
+      label: f.label,
+      type: f.type,
+      required: f.required,
+      sortOrder: i,
+      options: f.options || []
+    }));
+
+    setIsSaving(true);
+    try {
+      await documentTypeService.updateFields(currentDocType.id, payload);
+      pushToast('Đã lưu cấu hình lên Server thành công!', 'success');
+    } catch (err) {
+      console.error(err);
+      pushToast('Lỗi khi lưu cấu hình lên Server', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const [selectedForm, setSelectedForm] = useState(() => Object.keys(fields)[0] || '');
 
@@ -343,13 +404,25 @@ export default function FormTemplatesTab() {
             <h3 className="font-headline-sm text-headline-sm text-on-surface">Quản lý trường: {selectedForm}</h3>
             <p className="text-xs text-secondary mt-0.5">Cấu hình trường dữ liệu và điều kiện hiển thị động</p>
           </div>
-          <button
-            onClick={addField}
-            className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5 cursor-pointer flex-shrink-0"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Thêm trường mới
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSaveToServer}
+              disabled={isSaving}
+              className="bg-surface border border-outline-variant text-on-surface hover:bg-surface-container-low transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {isSaving ? 'sync' : 'save'}
+              </span>
+              {isSaving ? 'Đang lưu...' : 'Lưu đồng bộ DB'}
+            </button>
+            <button
+              onClick={addField}
+              className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Thêm trường mới
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
