@@ -400,6 +400,29 @@ export default function RequestDetail() {
                     </li>
                   );
                 })}
+                {request.steps.length === 0 && (request.status === "pending" || request.status === "pendingapproval" || request.status === "submitted") && (
+                  <li className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-warning-container text-warning flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                      <span className="material-symbols-outlined text-[12px]">schedule</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-warning uppercase tracking-wide">Cấp {request.currentStep || 1}</p>
+                      <p className="text-sm text-on-surface font-medium mt-0.5">Đang chờ hệ thống / người duyệt xử lý</p>
+                    </div>
+                  </li>
+                )}
+                {request.steps.length === 0 && request.status === "approved" && (
+                  <li className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-success-container text-success flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                      <span className="material-symbols-outlined text-[12px]">check</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-success uppercase tracking-wide">Hoàn tất</p>
+                      <p className="text-sm text-on-surface font-medium mt-0.5">Đã phê duyệt</p>
+                    </div>
+                  </li>
+                )}
+
               </ul>
             </div>
           </div>
