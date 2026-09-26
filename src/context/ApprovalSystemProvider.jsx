@@ -279,16 +279,9 @@ export function ApprovalSystemProvider({ children }) {
 
   // Does the current user hold the pending step for this request?
   const canApprove = useCallback(
-    async (r) => {
+    (r) => {
       if (!r || !['pending', 'submitted', 'pendingapproval'].includes(r.status)) return false;
-
-      try {
-        // Verify with backend
-        return await applicationService.canApprove(r.id);
-      } catch (err) {
-        console.error('Failed to check canApprove:', err);
-        return false;
-      }
+      return r._isPendingReq === true;
     },
     []
   );
