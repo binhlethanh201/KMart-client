@@ -10,12 +10,13 @@ const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
 
 const HIERARCHY_OPTIONS = [
-  { id: 'leader', label: 'Quản lý trực tiếp' },
-  { id: 'deputy_manager', label: 'Phó phòng' },
-  { id: 'manager', label: 'Trưởng phòng' },
+  { id: 'direct_manager', label: 'Quản lý trực tiếp' },
+  { id: 'deputy_head', label: 'Phó phòng' },
+  { id: 'department_head', label: 'Trưởng phòng' },
   { id: 'store_manager', label: 'Cửa hàng trưởng' },
-  { id: 'area_manager', label: 'Quản lý chi nhánh / Vùng' },
-  { id: 'higher', label: 'Giám đốc khối / Ban giám đốc' },
+  { id: 'branch_manager', label: 'Quản lý chi nhánh' },
+  { id: 'zone_manager', label: 'Quản lý Vùng' },
+  { id: 'division_director', label: 'Giám đốc khối / Ban giám đốc' },
 ];
 
 // Các khối luồng (track) — tách setup riêng, "common" merge cho cả HQ & Retail
@@ -567,9 +568,9 @@ function makeStep(overrides = {}) {
     id: `s${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     name: 'Bước duyệt mới',
     approvalType: 'hierarchy',
-    hierarchyOption: 'manager',
-    chainStart: 'leader',
-    chainEnd: 'manager',
+    hierarchyOption: 'department_head',
+    chainStart: 'direct_manager',
+    chainEnd: 'department_head',
     role: APPROVAL_ROLES[0],
     specificUser: SPECIFIC_USERS[0],
     multiRule: 'sequential',
