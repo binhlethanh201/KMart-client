@@ -10,13 +10,12 @@ const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
 
 const HIERARCHY_OPTIONS = [
-  { id: 'direct_manager', label: 'Quản lý trực tiếp' },
-  { id: 'deputy_head', label: 'Phó phòng' },
-  { id: 'department_head', label: 'Trưởng phòng' },
+  { id: 'leader', label: 'Quản lý trực tiếp' },
+  { id: 'deputy_manager', label: 'Phó phòng' },
+  { id: 'manager', label: 'Trưởng phòng' },
   { id: 'store_manager', label: 'Cửa hàng trưởng' },
-  { id: 'branch_manager', label: 'Quản lý chi nhánh' },
-  { id: 'zone_manager', label: 'Quản lý Vùng' },
-  { id: 'division_director', label: 'Giám đốc khối / Ban giám đốc' },
+  { id: 'area_manager', label: 'Quản lý chi nhánh / Vùng' },
+  { id: 'higher', label: 'Giám đốc khối / Ban giám đốc' },
 ];
 
 // Các khối luồng (track) — tách setup riêng, "common" merge cho cả HQ & Retail
@@ -568,9 +567,9 @@ function makeStep(overrides = {}) {
     id: `s${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     name: 'Bước duyệt mới',
     approvalType: 'hierarchy',
-    hierarchyOption: 'department_head',
-    chainStart: 'direct_manager',
-    chainEnd: 'department_head',
+    hierarchyOption: 'manager',
+    chainStart: 'leader',
+    chainEnd: 'manager',
     role: APPROVAL_ROLES[0],
     specificUser: SPECIFIC_USERS[0],
     multiRule: 'sequential',
@@ -1197,23 +1196,27 @@ export default function WorkflowTab() {
                                 <span className="text-sm text-secondary whitespace-nowrap">Bắt đầu từ:</span>
                                 <select
                                   className={`${selectCls} min-w-[180px]`}
-                                  value={step.chainStart || 'direct_manager'}
+                                  value={step.chainStart || 'leader'}
                                   onChange={(e) => updateStep(step.id, { chainStart: e.target.value })}
                                 >
-                                  {HIERARCHY_OPTIONS.map((o) => (
-                                    <option key={o.id} value={o.id}>{o.label}</option>
-                                  ))}
+                                  <option value="leader">Tổ trưởng / Trưởng nhóm</option>
+                                  <option value="deputy_manager">Phó phòng</option>
+                                  <option value="manager">Trưởng phòng</option>
+                                  <option value="store_manager">Cửa hàng trưởng</option>
+                                  <option value="area_manager">Quản lý chi nhánh / Vùng</option>
                                 </select>
                                 <span className="material-symbols-outlined text-outline">arrow_forward</span>
                                 <span className="text-sm text-secondary whitespace-nowrap">Tối đa đến:</span>
                                 <select
                                   className={`${selectCls} min-w-[180px]`}
-                                  value={step.chainEnd || 'department_head'}
+                                  value={step.chainEnd || 'manager'}
                                   onChange={(e) => updateStep(step.id, { chainEnd: e.target.value })}
                                 >
-                                  {HIERARCHY_OPTIONS.map((o) => (
-                                    <option key={o.id} value={o.id}>{o.label}</option>
-                                  ))}
+                                  <option value="deputy_manager">Phó phòng</option>
+                                  <option value="manager">Trưởng phòng</option>
+                                  <option value="store_manager">Cửa hàng trưởng</option>
+                                  <option value="area_manager">Quản lý chi nhánh / Vùng</option>
+                                  <option value="higher">Giám đốc / TGĐ</option>
                                 </select>
                               </div>
                             )}
