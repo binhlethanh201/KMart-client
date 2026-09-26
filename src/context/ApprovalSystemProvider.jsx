@@ -160,7 +160,9 @@ export function ApprovalSystemProvider({ children }) {
         setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
         pushToast('Đã phê duyệt bước này', 'success');
       } catch (err) {
-        pushToast('Lỗi phê duyệt', 'error');
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi phê duyệt';
+        pushToast(errorMsg, 'error');
+        console.error('Approve error:', err);
       }
     },
     [pushToast]
@@ -171,9 +173,11 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const updated = await applicationService.reject(reqId, reason);
         setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
-        pushToast('Đã từ chối yêu cầu', 'error');
+        pushToast('Đã từ chối yêu cầu', 'success');
       } catch (err) {
-        pushToast('Lỗi từ chối', 'error');
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi từ chối';
+        pushToast(errorMsg, 'error');
+        console.error('Reject error:', err);
       }
     },
     [pushToast]
@@ -188,7 +192,9 @@ export function ApprovalSystemProvider({ children }) {
         const updated = await applicationService.getById(reqId);
         setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
       } catch (err) {
-        pushToast('Lỗi thêm bình luận', 'error');
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi thêm bình luận';
+        pushToast(errorMsg, 'error');
+        console.error('Add comment error:', err);
       }
     },
     [pushToast]
@@ -273,12 +279,18 @@ export function ApprovalSystemProvider({ children }) {
 
   // Does the current user hold the pending step for this request?
   const canApprove = useCallback(
-    (r) => {
+    async (r) => {
       if (!r || !['pending', 'submitted', 'pendingapproval'].includes(r.status)) return false;
-       
-      return r._isPendingReq === true;
+
+      try {
+        // Verify with backend
+        return await applicationService.canApprove(r.id);
+      } catch (err) {
+        console.error('Failed to check canApprove:', err);
+        return false;
+      }
     },
-    [currentUserId]
+    []
   );
 
   // Kiểm tra user có quyền cụ thể hay không. Wildcard "*" = có mọi quyền.

@@ -30,6 +30,7 @@ export default function RequestDetail() {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [supplementOpen, setSupplementOpen] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [comment, setComment] = useState('');
   const commentRef = useRef(null);
 
@@ -102,14 +103,16 @@ export default function RequestDetail() {
 
           {/* Action bar */}
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => simulateTimeout(request.id)}
-              className="px-3 py-1.5 rounded text-sm font-medium border border-warning text-warning hover:bg-warning-container transition-colors flex items-center gap-2 bg-surface cursor-pointer"
-              title="Giả lập quá hạn 12h không xử lý (BR11)"
-            >
-              <span className="material-symbols-outlined text-[16px]">bolt</span>
-              Giả lập Timeout 12h
-            </button>
+            {import.meta.env.DEV && (
+              <button
+                onClick={() => simulateTimeout(request.id)}
+                className="px-3 py-1.5 rounded text-sm font-medium border border-warning text-warning hover:bg-warning-container transition-colors flex items-center gap-2 bg-surface cursor-pointer"
+                title="Giả lập quá hạn 12h không xử lý (BR11)"
+              >
+                <span className="material-symbols-outlined text-[16px]">bolt</span>
+                Giả lập Timeout 12h
+              </button>
+            )}
             <div className="w-px h-6 bg-outline-variant mx-1"></div>
             <button
               onClick={() => setSupplementOpen(true)}
@@ -128,7 +131,7 @@ export default function RequestDetail() {
               Từ chối
             </button>
             <button
-              onClick={() => approveRequest(request.id)}
+              onClick={() => setShowApproveConfirm(true)}
               disabled={!actionable}
               className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               title={actionable ? 'Phê duyệt yêu cầu' : 'Bạn không phải người duyệt bước này'}
@@ -137,6 +140,43 @@ export default function RequestDetail() {
               Duyệt yêu cầu
             </button>
           </div>
+
+          {/* Approve Confirmation Dialog */}
+          {showApproveConfirm && (
+            <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+              <div className="bg-surface rounded-lg shadow-xl max-w-sm w-full p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-success-container flex items-center justify-center">
+                    <span className="material-symbols-outlined text-success text-[24px]">check_circle</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-on-surface">Xác nhận phê duyệt</h3>
+                    <p className="text-sm text-secondary">Hành động này không thể hoàn tác</p>
+                  </div>
+                </div>
+                <p className="text-sm text-on-surface mb-6">
+                  Bạn có chắc chắn muốn phê duyệt yêu cầu này không?
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowApproveConfirm(false)}
+                    className="px-4 py-2 rounded border border-outline-variant text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowApproveConfirm(false);
+                      approveRequest(request.id);
+                    }}
+                    className="px-4 py-2 rounded bg-primary text-on-primary hover:bg-primary/90 transition-colors cursor-pointer"
+                  >
+                    Xác nhận duyệt
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 

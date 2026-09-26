@@ -59,7 +59,7 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return requests.filter((r) => {
-      const matchQ = !q || r.id.toLowerCase().includes(q) || r.title.toLowerCase().includes(q);
+      const matchQ = !q || String(r.id).toLowerCase().includes(q) || (r.title || '').toLowerCase().includes(q);
       let matchF = true;
       if (filter === 'received')
         matchF = r._isPendingReq === true;
