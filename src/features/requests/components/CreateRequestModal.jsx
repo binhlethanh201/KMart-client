@@ -118,7 +118,10 @@ export default function CreateRequestModal({ onClose }) {
     const payload = {
       documentTypeId: form.documentTypeId,
       reason: form.reason.trim(),
-      data: form.dynamic,
+      data: {
+        ...form.dynamic,
+        departments: form.departments
+      },
     };
     
     // Auto extract dates if present
@@ -441,16 +444,41 @@ export default function CreateRequestModal({ onClose }) {
 
               {/* WORKFLOW STEPS */}
               {activeWorkflow.steps.sort((a,b) => a.stepOrder - b.stepOrder).map((step, idx) => {
-                let isSpecificUser = step.approvalType === 'specific_user' || step.approvalType === 'specific';
+                const appType = (step.approvalType || '').toLowerCase();
                 let emp = null;
-                if (isSpecificUser && (step.specificUserId || step.specificUser)) {
+
+                if (appType === 'specific_user' || appType === 'specific') {
                   emp = employees?.find(e => e.id === (step.specificUserId || step.specificUser));
+                } else if (appType === 'hierarchy' || appType === 'chain') {
+                  if (form.departments && form.departments.length > 0) {
+                    const targetDept = departments.find(d => d.id === form.departments[0]);
+                    if (targetDept && targetDept.managerId) {
+                      emp = employees?.find(e => e.id === targetDept.managerId);
+                    }
+                  } else if (currentUser?.departmentId) {
+                    const primaryDept = departments.find(d => d.id === currentUser.departmentId);
+                    if (primaryDept && primaryDept.managerId) {
+                      emp = employees?.find(e => e.id === primaryDept.managerId);
+                    }
+                  }
+                } else if (appType === 'role' && step.role) {
+                  emp = employees?.find(e => {
+                    if (e.role === step.role) return true;
+                    if (e.roles && Array.isArray(e.roles)) return e.roles.includes(step.role);
+                    return false;
+                  });
                 }
+
                 const displayName = emp ? emp.name : (step.name || 'Người duyệt');
-                
                 let displayRole = step.roleName || step.role || 'Người duyệt';
+                
                 if (emp) {
-                  displayRole = emp.role === 'ADMIN' ? 'Quản trị viên' : emp.role === 'MANAGER' ? 'Quản lý' : emp.role === 'HR' ? 'Nhân sự' : emp.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên';
+                  const r = emp.role || (emp.roles && emp.roles[0]) || '';
+                  if (r.toUpperCase() === 'ADMIN') displayRole = 'Quản trị viên';
+                  else if (r.toUpperCase() === 'MANAGER') displayRole = 'Quản lý';
+                  else if (r.toUpperCase() === 'HR') displayRole = 'Nhân sự';
+                  else if (r.toUpperCase() === 'TEAM_LEADER') displayRole = 'Trưởng nhóm';
+                  else displayRole = r || 'Nhân viên';
                 }
 
                 return (
