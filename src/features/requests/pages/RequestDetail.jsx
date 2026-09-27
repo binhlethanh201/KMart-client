@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import RejectReasonModal from '../components/RejectReasonModal';
@@ -23,7 +23,8 @@ const historyBg = {
 
 export default function RequestDetail() {
   const { id } = useParams();
-  const { requests, currentUser, canApprove, approveRequest, rejectRequest, addComment, simulateTimeout } = useApproval();
+  const navigate = useNavigate();
+  const { requests, currentUser, canApprove, approveRequest, rejectRequest, requestSupplement, addComment, simulateTimeout } = useApproval();
   const { employees } = useHr();
   const request = requests.find((r) => r.id === id);
 
@@ -88,26 +89,14 @@ export default function RequestDetail() {
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-background h-full overflow-hidden">
       <header className="bg-surface border-b border-outline-variant flex-shrink-0 z-20">
-        {/* Breadcrumbs */}
-        <div className="h-12 px-6 flex items-center border-b border-outline-variant/50">
-          <nav className="flex text-sm text-secondary" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-2">
-              <li className="inline-flex items-center">
-                <Link to="/" className="hover:text-primary transition-colors flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[16px]">home</span>
-                  Trang chủ
-                </Link>
-              </li>
-              <li className="flex items-center">
-                <span className="material-symbols-outlined text-[16px] text-outline mx-1">chevron_right</span>
-                <Link to="/my-requests" className="hover:text-primary transition-colors">Yêu cầu &amp; Phê duyệt</Link>
-              </li>
-              <li aria-current="page" className="flex items-center">
-                <span className="material-symbols-outlined text-[16px] text-outline mx-1">chevron_right</span>
-                <span className="text-on-surface font-medium">Chi tiết {request.id.substring(0, 8).toUpperCase()}</span>
-              </li>
-            </ol>
-          </nav>
+        <div className="px-6 py-4 border-b border-outline-variant/50">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1 text-sm text-secondary hover:text-primary transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            Quay lại
+          </button>
         </div>
 
         {/* Action Header */}
@@ -518,7 +507,7 @@ export default function RequestDetail() {
           requestId={request.id}
           onClose={() => setSupplementOpen(false)}
           onConfirm={(reason) => {
-            addComment(request.id, `[Yêu cầu bổ sung] ${reason}`);
+            requestSupplement(request.id, reason);
             setSupplementOpen(false);
           }}
         />

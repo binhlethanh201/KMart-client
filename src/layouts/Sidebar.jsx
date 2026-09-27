@@ -271,7 +271,7 @@ export default function UnifiedSidebar({
             <ul className="flex flex-col py-2">
               {visibleNavs.filter(item => {
                 // Explicit role checks for specific menus
-                if (item.name === 'Nhân sự' && currentUser?.role === 'STAFF') return false;
+                if (item.name === 'Nhân sự' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
                 if (item.name === 'Cấu hình' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
                 
                 return true;

@@ -27,5 +27,6 @@ export const STATUS_META = {
   pending: { label: 'Đang chờ duyệt', badge: 'text-warning', dot: 'bg-warning' },
   approved: { label: 'Đã phê duyệt', badge: 'text-success', dot: 'bg-success' },
   rejected: { label: 'Từ chối / Trả về', badge: 'text-error', dot: 'bg-error' },
+  needssupplement: { label: 'Yêu cầu bổ sung', badge: 'text-warning', dot: 'bg-warning' },
   returned_timeout: { label: 'Trả về (quá hạn 12h)', badge: 'text-error', dot: 'bg-error' },
 };

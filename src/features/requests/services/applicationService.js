@@ -3,12 +3,13 @@ import apiClient from '../../../services/apiClient';
 const mapToFrontendModel = (a) => {
   return {
     id: a.id,
-    title: a.title,
+    title: a.title || (a.documentTypeName || 'Yêu cầu'),
     type: a.documentTypeName || 'Yêu cầu',
     creatorId: a.creatorId || a.applicantId,
     creatorName: a.creatorName || a.applicantName,
     departmentId: a.departmentId,
     createdAt: new Date(a.createdAt).toLocaleString('vi-VN'),
+    _createdAt: a.createdAt,
     status: a.status.toLowerCase(), // 'draft', 'pending', 'approved', 'rejected'
     currentStep: a.currentStepOrder || 0,
     fields: {
@@ -37,13 +38,23 @@ const mapToFrontendModel = (a) => {
 };
 
 export const applicationService = {
+  getAll: async () => {
+    try {
+      const response = await apiClient.get('/applications?limit=1000');
+      return response.data.items.map(mapToFrontendModel);
+    } catch (err) {
+      if (err.response?.status === 403 || err.response?.status === 401) return [];
+      throw err;
+    }
+  },
+
   getMyRequests: async () => {
-    const response = await apiClient.get('/applications/my?limit=100');
+    const response = await apiClient.get('/applications/my?limit=1000');
     return response.data.items.map(mapToFrontendModel);
   },
 
   getPendingApprovals: async () => {
-    const response = await apiClient.get('/applications/pending?limit=100');
+    const response = await apiClient.get('/applications/pending?limit=1000');
     return response.data.items.map(a => ({ ...mapToFrontendModel(a), _isPendingReq: true }));
   },
 
@@ -77,6 +88,11 @@ export const applicationService = {
 
   reject: async (id, reason) => {
     const response = await apiClient.post(`/applications/${id}/reject`, { reason });
+    return mapToFrontendModel(response.data);
+  },
+
+  supplement: async (id, reason) => {
+    const response = await apiClient.post(`/applications/${id}/supplement`, { reason });
     return mapToFrontendModel(response.data);
   },
 

@@ -67,12 +67,13 @@ export function ApprovalSystemProvider({ children }) {
   // Load requests from API
   const loadRequests = useCallback(async () => {
     try {
-      const [myReqs, pendingReqs] = await Promise.all([
+      const [allReqs, myReqs, pendingReqs] = await Promise.all([
+        applicationService.getAll(),
         applicationService.getMyRequests(),
         applicationService.getPendingApprovals()
       ]);
-      // Merge unique
-      const all = [...myReqs, ...pendingReqs];
+      // Merge unique: order is important. pendingReqs comes last so its _isPendingReq overwrites others if same ID
+      const all = [...allReqs, ...myReqs, ...pendingReqs];
       const unique = Array.from(new Map(all.map(item => [item.id, item])).values());
       setRequests(unique);
     } catch (err) {
@@ -178,6 +179,21 @@ export function ApprovalSystemProvider({ children }) {
         const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi từ chối';
         pushToast(errorMsg, 'error');
         console.error('Reject error:', err);
+      }
+    },
+    [pushToast]
+  );
+
+  const requestSupplement = useCallback(
+    async (reqId, reason) => {
+      try {
+        const updated = await applicationService.supplement(reqId, reason);
+        setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
+        pushToast('Đã gửi yêu cầu bổ sung', 'success');
+      } catch (err) {
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi yêu cầu bổ sung';
+        pushToast(errorMsg, 'error');
+        console.error('Supplement error:', err);
       }
     },
     [pushToast]
@@ -307,6 +323,7 @@ export function ApprovalSystemProvider({ children }) {
       createRequest,
       approveRequest,
       rejectRequest,
+      requestSupplement,
       addComment,
       simulateTimeout,
       canApprove,

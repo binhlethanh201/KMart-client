@@ -14,64 +14,65 @@ const STATUS_FILTERS = [
 ];
 
 const TITLES = {
-  all:      'Tất cả đơn từ',
-  received: 'Đơn gửi đến tôi duyệt',
-  sent:     'Đơn tôi gửi đi',
-  pending:  'Đơn đang chờ duyệt',
-  approved: 'Đơn đã phê duyệt',
-  rejected: 'Đơn bị từ chối',
+  sent: 'Đơn từ cá nhân',
+  received: 'Đơn gửi đến tôi duyệt'
 };
 
 /* ─── Component ──────────────────────────────────────────────── */
 
-export default function PersonalRequests({ defaultFilter = 'all' }) {
-  useDocumentTitle('Danh sách Đơn từ');
+export default function PersonalRequests({ mode = 'sent' }) {
+  useDocumentTitle(TITLES[mode] || 'Danh sách Đơn từ');
 
   const { requests, currentUserId, departments } = useApproval();
 
   const [isCreateOpen, setIsCreateOpen]        = useState(false);
-  const [filter, setFilter]                    = useState(defaultFilter);
+  const [statusFilter, setStatusFilter]        = useState('all');
   const [search, setSearch]                    = useState('');
   const [departmentFilter, setDepartmentFilter] = useState(null);
 
-  // Khi chuyển route /my-requests ↔ /my-requests/approvals, defaultFilter thay đổi
-  // nhưng React tái dùng component cũ → cần sync lại state
   useEffect(() => {
-    setFilter(defaultFilter);
+    setStatusFilter('all');
     setSearch('');
     setDepartmentFilter(null);
-  }, [defaultFilter]);
+  }, [mode]);
 
   /* counts per filter tab */
   const counts = useMemo(() => {
-    const c = { all: requests.length, received: 0, sent: 0, pending: 0, approved: 0, rejected: 0 };
+    const c = { all: 0, pending: 0, approved: 0, rejected: 0 };
     for (const r of requests) {
-      if (r.creatorId === currentUserId) c.sent += 1;
-      if (r.status === 'pending' && r.steps[r.currentStep]?.approverId === currentUserId) c.received += 1;
-      if (r.status === 'pending') c.pending += 1;
+      const matchMode = mode === 'sent' 
+        ? r.creatorId === currentUserId 
+        : (r._isPendingReq === true && r.creatorId !== currentUserId);
+
+      if (!matchMode) continue;
+
+      c.all += 1;
+      if (r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval') c.pending += 1;
       if (r.status === 'approved') c.approved += 1;
-      if (r.status === 'rejected' || r.status === 'returned_timeout') c.rejected += 1;
+      if (r.status === 'rejected' || r.status === 'returned_timeout' || r.status === 'needssupplement') c.rejected += 1;
     }
     return c;
-  }, [requests, currentUserId]);
+  }, [requests, currentUserId, mode]);
 
   /* filtered list */
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return requests.filter((r) => {
-      const matchQ = !q || String(r.id).toLowerCase().includes(q) || (r.title || '').toLowerCase().includes(q);
+      const matchMode = mode === 'sent' 
+        ? r.creatorId === currentUserId 
+        : (r._isPendingReq === true && r.creatorId !== currentUserId);
+      if (!matchMode) return false;
+
       let matchF = true;
-      if (filter === 'received')
-        matchF = r._isPendingReq === true;
-      else if (filter === 'sent')     matchF = r.creatorId === currentUserId;
-      else if (filter === 'pending')  matchF = r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval';
-      else if (filter === 'approved') matchF = r.status === 'approved';
-      else if (filter === 'rejected')
-        matchF = r.status === 'rejected' || r.status === 'returned_timeout';
+      if (statusFilter === 'pending')  matchF = r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval';
+      else if (statusFilter === 'approved') matchF = r.status === 'approved';
+      else if (statusFilter === 'rejected') matchF = r.status === 'rejected' || r.status === 'returned_timeout' || r.status === 'needssupplement';
+
+      const matchQ = !q || String(r.id).toLowerCase().includes(q) || (r.title || '').toLowerCase().includes(q);
       const matchD = !departmentFilter || r.departmentId === departmentFilter;
       return matchQ && matchF && matchD;
     });
-  }, [requests, filter, search, currentUserId, departmentFilter]);
+  }, [requests, statusFilter, search, currentUserId, departmentFilter, mode]);
 
   return (
     <div className="flex flex-1 h-full overflow-hidden bg-surface">
@@ -85,10 +86,10 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
                 <span className="material-symbols-outlined text-primary text-[24px]">description</span>
               </div>
               <h1 className="text-2xl font-bold text-on-surface tracking-tight">
-                {TITLES[filter] || 'Danh sách Đơn từ'}
+                {TITLES[mode] || 'Danh sách Đơn từ'}
               </h1>
             </div>
-            {filter !== 'received' && (
+            {mode === 'sent' && (
               <button
                 onClick={() => setIsCreateOpen(true)}
                 className="bg-primary w-full md:w-auto justify-center text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
@@ -146,11 +147,11 @@ export default function PersonalRequests({ defaultFilter = 'all' }) {
           {/* ── Status filter tabs ── */}
           <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
             {STATUS_FILTERS.map((f) => {
-              const active = filter === f.id;
+              const active = statusFilter === f.id;
               return (
                 <button
                   key={f.id}
-                  onClick={() => setFilter(f.id)}
+                  onClick={() => setStatusFilter(f.id)}
                   className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors cursor-pointer border-b-2 flex-shrink-0 ${
                     active
                       ? 'border-primary text-primary'

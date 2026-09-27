@@ -5,11 +5,13 @@ import { useHr } from '../../hr/context/HrProvider';
 import { departmentService } from '../services/departmentService';
 import { STATUS_META, STEP_ROLE, REQUEST_TYPES } from '../../requests/data/constants';
 import UserInfoModal from '../../requests/components/UserInfoModal';
+import DepartmentReport from '../components/DepartmentReport';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 
 const TABS = [
   { id: 'requests', label: 'Danh sách Đơn từ', icon: 'description' },
   { id: 'staff', label: 'Danh sách Nhân sự', icon: 'group' },
+  { id: 'report', label: 'Thống kê Đơn từ', icon: 'analytics' },
 ];
 
 const selectCls =
@@ -42,7 +44,7 @@ export default function DepartmentDetail() {
 
   // All requests belonging to this department.
   const deptRequests = useMemo(
-    () => requests.filter((r) => r.departmentId === Number(id)),
+    () => requests.filter((r) => String(r.departmentId) === String(id)),
     [requests, id]
   );
 
@@ -245,8 +247,9 @@ export default function DepartmentDetail() {
                               <Link
                                 to={`/requests/${r.id}`}
                                 className="text-primary font-medium hover:underline"
+                                title={r.id}
                               >
-                                {r.id}
+                                {r.id.substring(0, 8).toUpperCase()}
                               </Link>
                             </td>
                             <td className="py-3 px-4 text-on-surface max-w-[260px] truncate">{r.title}</td>
@@ -394,6 +397,10 @@ export default function DepartmentDetail() {
           )}
 
 
+          {/* TAB 3: Report */}
+          {tab === 'report' && (
+            <DepartmentReport deptRequests={deptRequests} members={members} employees={employees} />
+          )}
         </div>
       </div>
 

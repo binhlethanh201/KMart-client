@@ -119,8 +119,8 @@ function App() {
                 <Route path="requests/:id" element={<RequestDetail />} />
 
                 {/* Requests pages */}
-                <Route path="my-requests" element={<PersonalRequests defaultFilter="sent" />} />
-                <Route path="my-requests/approvals" element={<PersonalRequests defaultFilter="received" />} />
+                <Route path="my-requests" element={<PersonalRequests mode="sent" />} />
+                <Route path="my-requests/approvals" element={<PersonalRequests mode="received" />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
