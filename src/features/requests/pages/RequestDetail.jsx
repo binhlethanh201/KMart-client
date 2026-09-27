@@ -53,7 +53,31 @@ export default function RequestDetail() {
   const creatorRole = employees.find((u) => u.id === request.creatorId)?.position || 'Nhân viên';
   const creatorAvatar = employees.find((u) => u.id === request.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
   const actionable = canApprove(request);
-  const pendingStep = request.steps[request.currentStep];
+  const isPendingWorkflow = ['pending', 'submitted', 'pendingapproval'].includes(request.status);
+  const isTimeoutWorkflow = request.status === 'returned_timeout';
+  const timeoutStepIndex = (() => {
+    if (!request.steps?.length) return Math.max(0, Number(request.currentStep) || 0);
+
+    const pendingIndex = request.steps.findIndex((step) =>
+      ['pending', 'submitted', 'pendingapproval'].includes((step.status || '').toLowerCase())
+    );
+
+    if (pendingIndex >= 0) return pendingIndex;
+    return Math.min(Number(request.currentStep) || 0, request.steps.length - 1);
+  })();
+  const activeStepIndex = isTimeoutWorkflow ? timeoutStepIndex : (() => {
+    if (!request.steps?.length) return Math.max(0, Number(request.currentStep) || 0);
+
+    const pendingIndex = request.steps.findIndex((step) =>
+      ['pending', 'submitted', 'pendingapproval'].includes((step.status || '').toLowerCase())
+    );
+
+    if (pendingIndex >= 0) return pendingIndex;
+
+    const currentIndex = Number(request.currentStep) || 0;
+    return Math.min(currentIndex, request.steps.length - 1);
+  })();
+  const pendingStep = request.steps[activeStepIndex];
 
   const postComment = () => {
     if (!comment.trim()) return;
@@ -332,7 +356,7 @@ export default function RequestDetail() {
             </h3>
             <p className="text-sm text-on-surface">
               {actionable ? (
-                <>Đơn cần <strong>{currentUser?.name || 'bạn'}</strong> phê duyệt ở bước {request.currentStep + 1}. Hạn chót: <strong>12 giờ</strong>.</>
+                <>Đơn cần <strong>{currentUser?.name || 'bạn'}</strong> phê duyệt ở bước {activeStepIndex + 1}. Hạn chót: <strong>12 giờ</strong>.</>
               ) : request.status === 'approved' ? 'Đơn đã được phê duyệt hoàn tất.' : request.status === 'rejected' ? 'Đơn đã bị từ chối.' : request.status === 'returned_timeout' ? 'Đơn đã trả về nơi khởi tạo do quá hạn.' : 'Đơn đang chờ người duyệt khác xử lý.'}
             </p>
           </div>
@@ -360,7 +384,8 @@ export default function RequestDetail() {
                 {request.steps.map((s, i) => {
                   const u = employees.find((x) => x.id === s.approverId);
                   const approverName = u?.name || 'User';
-                  const isCurrent = i === request.currentStep && request.status === 'pending';
+                  const isCurrent = i === activeStepIndex && (isPendingWorkflow || isTimeoutWorkflow);
+                  const isTimedOut = isTimeoutWorkflow && i === activeStepIndex;
                   if (s.status === 'approved') {
                     return (
                       <li key={i} className="flex items-start gap-3">
@@ -389,21 +414,51 @@ export default function RequestDetail() {
                       </li>
                     );
                   }
+                  if (isTimedOut) {
+                    return (
+                      <li key={i} className="flex items-start gap-3">
+                        <div className="w-7 h-7 rounded-full bg-error text-on-error flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ring-2 ring-error/20 ring-offset-1 ring-offset-surface">
+                          <span className="material-symbols-outlined text-[13px]">close</span>
+                        </div>
+                        <div className="bg-error-container/20 p-2.5 rounded-xl border border-error/30 w-full -mt-1 shadow-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-bold uppercase tracking-wide text-error">{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-error text-on-error px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
+                              Quá hạn
+                            </span>
+                          </div>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}</p>
+                          <p className="text-xs font-medium mt-0.5 text-error">Không phản hồi quá 12h, đơn trả về nơi khởi tạo</p>
+                        </div>
+                      </li>
+                    );
+                  }
                   // pending
                   return (
                     <li key={i} className="flex items-start gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ${isCurrent ? 'bg-warning text-on-warning ring-2 ring-warning/20' : 'bg-surface border border-outline-variant text-secondary'}`}>
-                        <span className="material-symbols-outlined text-[12px]">schedule</span>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm transition-all ${isCurrent ? 'bg-warning text-on-warning ring-2 ring-warning/25 ring-offset-1 ring-offset-surface' : 'bg-surface border border-outline-variant text-secondary'}`}>
+                        <span className="material-symbols-outlined text-[13px]">{isCurrent ? 'pending_actions' : 'schedule'}</span>
                       </div>
-                      <div className={isCurrent ? 'bg-warning-container/20 p-2 rounded border border-warning/20 w-full -mt-1' : ''}>
-                        <p className={`text-xs font-bold uppercase tracking-wide ${isCurrent ? 'text-warning' : 'text-secondary'}`}>{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
+                      <div className={isCurrent ? 'bg-warning-container/25 p-2.5 rounded-xl border border-warning/30 w-full -mt-1 shadow-sm' : 'w-full'}>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={`text-xs font-bold uppercase tracking-wide ${isCurrent ? 'text-warning' : 'text-secondary'}`}>{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
+                          {isCurrent && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-warning text-on-warning px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
+                              Đang duyệt
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}{pendingStep?.approverId === s.approverId && actionable ? ' (Bạn)' : ''}</p>
-                        <p className={`text-xs font-medium mt-0.5 ${isCurrent ? 'text-warning' : 'text-secondary'}`}>{isCurrent ? 'Đang chờ xử lý' : 'Chưa đến lượt'}</p>
+                        <p className={`text-xs font-medium mt-0.5 ${isCurrent ? 'text-warning' : 'text-secondary'}`}>
+                          {isCurrent ? (isTimeoutWorkflow ? 'Quá hạn 12h - chưa phản hồi' : 'Đang chờ xử lý') : 'Chưa đến lượt'}
+                        </p>
                       </div>
                     </li>
                   );
                 })}
-                {request.steps.length === 0 && (request.status === "pending" || request.status === "pendingapproval" || request.status === "submitted") && (
+                {request.steps.length === 0 && isPendingWorkflow && (
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-warning-container text-warning flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                       <span className="material-symbols-outlined text-[12px]">schedule</span>

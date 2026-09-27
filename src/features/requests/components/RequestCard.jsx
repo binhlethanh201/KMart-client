@@ -35,7 +35,15 @@ export default function RequestCard({ request: r }) {
   let summaryColor = 'text-secondary';
   let statusIcon = 'horizontal_rule';
 
-  if (isPending) {
+  if (r.status === 'returned_timeout') {
+    const timeoutIndex = r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase())) >= 0
+      ? r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase()))
+      : Math.min(Number(r.currentStep) || 0, r.steps.length - 1);
+    currentActorStep = r.steps[timeoutIndex] || r.steps[r.steps.length - 1];
+    summaryText = 'Quá hạn 12h';
+    summaryColor = 'text-error';
+    statusIcon = 'close';
+  } else if (isPending) {
     currentActorStep = r.steps.find(s => s.status === 'pending' || s.status === 'submitted' || s.status === 'pendingapproval');
     summaryText = 'Đang chờ duyệt';
     summaryColor = 'text-warning';
@@ -128,7 +136,7 @@ export default function RequestCard({ request: r }) {
                   {getInitials(currentActorName)}
                 </div>
               )}
-              <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'approved' ? 'bg-success' : r.status === 'pending' ? 'bg-warning' : 'bg-error'}`}>
+              <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'approved' ? 'bg-success' : r.status === 'returned_timeout' ? 'bg-error' : r.status === 'pending' ? 'bg-warning' : 'bg-error'}`}>
                 <span className="material-symbols-outlined text-white text-[10px] font-bold">
                   {statusIcon}
                 </span>
@@ -217,9 +225,9 @@ export default function RequestCard({ request: r }) {
                         </div>
                       )}
                       {/* Status badge */}
-                      <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center ${s.status === 'approved' ? 'bg-success' : s.status === 'pending' ? 'bg-warning' : s.status === 'rejected' || s.status === 'canceled' ? 'bg-error' : 'bg-outline-variant'}`}>
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'returned_timeout' && idx === (r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase())) >= 0 ? r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase())) : Math.min(Number(r.currentStep) || 0, r.steps.length - 1)) ? 'bg-error' : s.status === 'approved' ? 'bg-success' : s.status === 'pending' ? 'bg-warning' : s.status === 'rejected' || s.status === 'canceled' ? 'bg-error' : 'bg-outline-variant'}`}>
                         <span className="material-symbols-outlined text-white text-[8px] font-bold">
-                          {s.status === 'approved' ? 'check' : s.status === 'pending' ? 'schedule' : s.status === 'rejected' || s.status === 'canceled' ? 'close' : 'more_horiz'}
+                          {r.status === 'returned_timeout' && idx === (r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase())) >= 0 ? r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase())) : Math.min(Number(r.currentStep) || 0, r.steps.length - 1)) ? 'close' : s.status === 'approved' ? 'check' : s.status === 'pending' ? 'schedule' : s.status === 'rejected' || s.status === 'canceled' ? 'close' : 'more_horiz'}
                         </span>
                       </div>
                     </div>
