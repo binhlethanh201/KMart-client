@@ -59,7 +59,7 @@ export default function UserInfoModal({ user, onClose }) {
           <div>
             <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Mã nhân sự</label>
             <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50">
-              {user.employeeId || 'EMP-0000'}
+              {user.shortId || user.employeeId || 'EMP-0000'}
             </p>
           </div>
 
@@ -90,17 +90,24 @@ export default function UserInfoModal({ user, onClose }) {
           <div>
             <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Vai trò hệ thống</label>
             <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50">
-              {user.subtitle || 'Nhân viên'}
+              {user.role === 'ADMIN' ? 'Quản trị viên' : user.role === 'HR' ? 'Nhân sự' : user.role === 'MANAGER' ? 'Quản lý' : 'Nhân viên'}
             </p>
           </div>
           
           <div>
             <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Trạng thái</label>
             <div className="flex items-center mt-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium bg-[#E8F8EE] text-[#037847]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#037847]"></span>
-                Đang hoạt động
-              </span>
+              {user.status === 'active' || user.status === 'Đang hoạt động' ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium bg-[#E8F8EE] text-[#037847]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#037847]"></span>
+                  Đang hoạt động
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium bg-error-container text-on-error-container">
+                  <span className="w-1.5 h-1.5 rounded-full bg-error"></span>
+                  Đã khóa
+                </span>
+              )}
             </div>
           </div>
         </div>

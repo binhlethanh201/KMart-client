@@ -11,7 +11,13 @@ const mapToFrontendModel = (a) => {
     createdAt: new Date(a.createdAt).toLocaleString('vi-VN'),
     status: a.status.toLowerCase(), // 'draft', 'pending', 'approved', 'rejected'
     currentStep: a.currentStepOrder || 0,
-    fields: (typeof a.data === 'string') ? (() => { try { return JSON.parse(a.data); } catch { return {}; } })() : (a.data || {}),
+    fields: {
+      ...((typeof a.data === 'string') ? (() => { try { return JSON.parse(a.data); } catch { return {}; } })() : (a.data || {})),
+      ...(a.startDate ? { startTime: new Date(a.startDate).toLocaleString('vi-VN') } : {}),
+      ...(a.endDate ? { endTime: new Date(a.endDate).toLocaleString('vi-VN') } : {}),
+      ...(a.totalDays ? { totalDays: a.totalDays } : {}),
+      ...(a.reason ? { reason: a.reason } : {})
+    },
     steps: (a.steps || []).map(s => ({
       approverId: s.approverId,
       status: s.status.toLowerCase(),

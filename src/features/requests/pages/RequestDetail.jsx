@@ -228,11 +228,14 @@ export default function RequestDetail() {
                     else if (key === 'endTime') label = 'Thời gian kết thúc';
                     else if (key === 'reason') label = 'Lý do cụ thể';
                     else if (key === 'impact') label = 'Ảnh hưởng công việc';
+                    else if (key === 'totalDays') label = 'Tổng số ngày';
 
                     return (
                       <tr key={key}>
                         <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{label}</th>
-                        <td className="py-3 px-4 text-on-surface">{Array.isArray(val) ? val.join(', ') : val}</td>
+                        <td className="py-3 px-4 text-on-surface">
+                          {Array.isArray(val) ? val.join(', ') : (typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val))}
+                        </td>
                       </tr>
                     );
                   })}
@@ -468,15 +471,17 @@ export default function RequestDetail() {
 
       {showUserInfo && (
         <UserInfoModal
-          user={{
+          user={employees.find((u) => u.id === request.creatorId) || {
             id: request.creatorId,
             name: creatorName,
             role: creatorRole,
             avatar: creatorAvatar,
             employeeId: String(request.creatorId).substring(0, 8).toUpperCase(),
-            email: employees.find((u) => u.id === request.creatorId)?.email,
-            personalEmail: employees.find((u) => u.id === request.creatorId)?.personalEmail,
-            phone: employees.find((u) => u.id === request.creatorId)?.phone
+            email: null,
+            personalEmail: null,
+            phone: null,
+            departmentId: null,
+            status: 'active'
           }}
           onClose={() => setShowUserInfo(false)}
         />
