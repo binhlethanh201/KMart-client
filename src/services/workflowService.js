@@ -1,6 +1,11 @@
 import apiClient from './apiClient';
 
 export const workflowService = {
+  getActiveForDocumentType: async (documentTypeId) => {
+    const response = await apiClient.get(`/workflows/document-type/${documentTypeId}/active`);
+    return response.data;
+  },
+
   getByDocumentType: async (documentTypeId) => {
     const response = await apiClient.get(`/workflows/document-type/${documentTypeId}`);
     return response.data;

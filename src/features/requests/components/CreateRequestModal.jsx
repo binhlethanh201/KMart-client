@@ -63,9 +63,9 @@ export default function CreateRequestModal({ onClose }) {
     setForm(f => ({ ...f, dynamic: {} }));
     
     if (form.documentTypeId) {
-      workflowService.getByDocumentType(form.documentTypeId)
+      workflowService.getActiveForDocumentType(form.documentTypeId)
         .then(workflows => {
-          if (workflows && workflows.length > 0) {
+          if (workflows && !Array.isArray(workflows)) { setActiveWorkflow(workflows); } else if (workflows && workflows.length > 0) {
             setActiveWorkflow(workflows[0]);
           } else {
             setActiveWorkflow(null);
