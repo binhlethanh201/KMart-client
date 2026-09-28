@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import RequestCard from '../components/RequestCard';
 import CreateRequestModal from '../components/CreateRequestModal';
 import { useApproval } from '../../../context/useApproval';
@@ -73,6 +73,36 @@ export default function PersonalRequests({ mode = 'sent' }) {
       return matchQ && matchF && matchD;
     });
   }, [requests, statusFilter, search, currentUserId, departmentFilter, mode]);
+
+  /* pagination for infinite scroll */
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [mode, statusFilter, search, departmentFilter]);
+
+  const visibleFiltered = useMemo(() => {
+    return filtered.slice(0, page * itemsPerPage);
+  }, [filtered, page, itemsPerPage]);
+
+  const loaderRef = useRef(null);
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setPage(prev => (prev * itemsPerPage < filtered.length ? prev + 1 : prev));
+      }
+    }, { threshold: 0.1 });
+    
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+    
+    return () => {
+      if (loaderRef.current) observer.unobserve(loaderRef.current);
+    };
+  }, [filtered.length, itemsPerPage]);
 
   return (
     <div className="flex flex-1 h-full overflow-hidden bg-surface">
@@ -190,7 +220,21 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 Không có đơn từ phù hợp bộ lọc.
               </div>
             ) : (
-              filtered.map((r) => <RequestCard key={r.id} request={r} />)
+              <>
+                {visibleFiltered.map((r, index) => (
+                  <div key={r.id} className="animate-slide-fade" style={{ animationDelay: `${(index % itemsPerPage) * 50}ms` }}>
+                    <RequestCard request={r} />
+                  </div>
+                ))}
+                
+                {/* Loader element for intersection observer */}
+                {page * itemsPerPage < filtered.length && (
+                  <div ref={loaderRef} className="w-full py-4 flex justify-center items-center text-secondary">
+                    <span className="material-symbols-outlined animate-spin text-[24px]">progress_activity</span>
+                    <span className="ml-2 text-sm font-medium">Đang tải thêm...</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -90,7 +90,16 @@ export default function UserInfoModal({ user, onClose }) {
           <div>
             <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Vai trò hệ thống</label>
             <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50">
-              {user.role === 'ADMIN' ? 'Quản trị viên' : user.role === 'HR' ? 'Nhân sự' : user.role === 'MANAGER' ? 'Quản lý' : 'Nhân viên'}
+              {(() => {
+                const sysRole = user.systemRole || user.systemRoles?.[0] || user.role;
+                if (!sysRole) return 'Nhân viên';
+                const lower = sysRole.toLowerCase();
+                if (lower.includes('admin') || lower.includes('quản trị')) return 'Quản trị viên';
+                if (lower.includes('hr') || lower.includes('nhân sự')) return 'Nhân sự';
+                if (lower.includes('manager') || lower.includes('quản lý')) return 'Quản lý';
+                if (lower.includes('leader') || lower.includes('trưởng nhóm')) return 'Trưởng nhóm';
+                return 'Nhân viên';
+              })()}
             </p>
           </div>
           

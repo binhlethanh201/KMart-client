@@ -17,6 +17,25 @@ const TABS = [
 const selectCls =
   'bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
 
+const getSystemRoleInfo = (roles) => {
+  const role = roles?.[0] || 'Nhân viên';
+  const roleLower = role.toLowerCase();
+  
+  if (roleLower.includes('admin') || roleLower.includes('quản trị')) {
+    return { label: 'Quản trị viên', color: 'bg-error', textColor: 'text-error' };
+  }
+  if (roleLower.includes('manager') || roleLower.includes('quản lý')) {
+    return { label: 'Quản lý', color: 'bg-[#8B5CF6]', textColor: 'text-[#8B5CF6]' };
+  }
+  if (roleLower.includes('leader') || roleLower.includes('trưởng nhóm')) {
+    return { label: 'Trưởng nhóm', color: 'bg-[#F59E0B]', textColor: 'text-[#F59E0B]' };
+  }
+  if (roleLower.includes('hr') || roleLower.includes('nhân sự')) {
+    return { label: 'Nhân sự', color: 'bg-[#3B82F6]', textColor: 'text-[#3B82F6]' };
+  }
+  return { label: 'Nhân viên', color: 'bg-[#10B981]', textColor: 'text-[#10B981]' };
+};
+
 export default function DepartmentDetail() {
   const { id } = useParams();
   const { requests, currentUser, canApprove, approveRequest, pushToast, departments } = useApproval();
@@ -30,6 +49,7 @@ export default function DepartmentDetail() {
   const [statusF, setStatusF] = useState('all');
   const [members, setMembers] = useState([]);
   const [showUserInfo, setShowUserInfo] = useState(null);
+  const [popoverId, setPopoverId] = useState(null);
 
   // Nạp danh sách nhân sự thực của phòng ban khi vào trang.
   useEffect(() => {
@@ -83,7 +103,6 @@ export default function DepartmentDetail() {
 
   const quickApprove = (r) => {
     approveRequest(r.id);
-    pushToast(`Đã duyệt nhanh ${r.id}`, 'success');
   };
 
 
@@ -208,7 +227,7 @@ export default function DepartmentDetail() {
               {/* Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-surface-container-lowest text-secondary border-b border-outline-variant">
+                  <thead className="bg-surface-container-lowest text-secondary border-b border-outline-variant uppercase text-xs">
                     <tr>
                       <th className="py-3 px-4 font-medium whitespace-nowrap">Mã đơn</th>
                       <th className="py-3 px-4 font-medium whitespace-nowrap">Tiêu đề</th>
@@ -310,6 +329,20 @@ export default function DepartmentDetail() {
                   </tbody>
                 </table>
               </div>
+              <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex items-center justify-between">
+                <div>
+                  Hiển thị 
+                  <select className="mx-2 bg-surface border border-outline-variant rounded px-1 py-0.5 outline-none">
+                    <option>10 dòng</option>
+                  </select>
+                  1 - {filtered.length} trong tổng số {deptRequests.length} đơn từ
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-outline cursor-not-allowed">chevron_left</span>
+                  <span>Trang 1 / 1</span>
+                  <span className="material-symbols-outlined text-[16px] text-outline cursor-not-allowed">chevron_right</span>
+                </div>
+              </div>
             </section>
           )}
 
@@ -318,19 +351,21 @@ export default function DepartmentDetail() {
             <section className="bg-surface border border-outline-variant rounded-lg shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-surface-container-lowest text-secondary border-b border-outline-variant">
+                  <thead className="bg-surface-container-lowest text-secondary border-b border-outline-variant uppercase text-xs">
                     <tr>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Mã NV</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Họ tên</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Chức vụ</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Email</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">Mã & Họ tên</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">Liên hệ</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">Phòng ban & Chức vụ</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">Kiêm nhiệm</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">Vai trò hệ thống</th>
                       <th className="py-3 px-4 font-medium whitespace-nowrap">Trạng thái</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap text-right">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant">
                     {members.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="py-10 px-4 text-center text-secondary">
+                        <td colSpan={7} className="py-10 px-4 text-center text-secondary">
                           <span className="material-symbols-outlined text-[36px] block mb-2 text-outline">
                             group_off
                           </span>
@@ -338,17 +373,99 @@ export default function DepartmentDetail() {
                         </td>
                       </tr>
                     ) : (
-                      members.map((s) => (
-                        <tr key={s.id} className="hover:bg-surface-container-low transition-colors">
-                          <td className="py-3 px-4 text-secondary whitespace-nowrap" title={s.id}>{s.shortId}</td>
-                          <td className="py-3 px-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <img
-                                className="w-7 h-7 rounded-full border border-outline-variant object-cover"
-                                src={s.avatar}
-                                alt={s.name}
-                              />
-                              <span className="text-on-surface font-medium">{s.name}</span>
+                      members.map((s) => {
+                        const extraPositions = (s.positions || []).length > 1 ? s.positions.length - 1 : 0;
+                        const roleInfo = getSystemRoleInfo(s.systemRoles);
+                        
+                        return (
+                          <tr key={s.id} className="hover:bg-surface-container-low transition-colors">
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  className="w-10 h-10 rounded-full border border-outline-variant object-cover"
+                                  src={s.avatar}
+                                  alt={s.name}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="text-on-surface font-medium">{s.name}</span>
+                                  <span className="text-xs text-secondary">{s.shortId}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="flex flex-col gap-1 text-secondary text-[13px]">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[14px]">mail</span>
+                                  {s.email}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="material-symbols-outlined text-[14px]">call</span>
+                                  {s.phone || 'Chưa cập nhật'}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-on-surface font-medium text-[13px]">{s.departmentName || dept.name}</span>
+                                <span className="text-secondary text-[13px]">{s.role}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="relative">
+                                {extraPositions === 0 ? (
+                                  <span className="text-secondary text-[13px]">Không</span>
+                                ) : (
+                                  <button
+                                    onClick={(ev) => { ev.stopPropagation(); setPopoverId(popoverId === s.id ? null : s.id); }}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-container/40 text-primary text-xs font-medium hover:bg-primary-container/70 transition-colors cursor-pointer"
+                                  >
+                                    <span className="material-symbols-outlined text-[14px]">workspaces</span>
+                                    +{extraPositions} vị trí
+                                  </button>
+                                )}
+                                {popoverId === s.id && (
+                                  <>
+                                    <div className="fixed inset-0 z-40" onClick={(ev) => { ev.stopPropagation(); setPopoverId(null); }} />
+                                    <div onClick={(ev) => ev.stopPropagation()} className="absolute z-50 left-0 top-full mt-1 w-72 bg-surface border border-outline-variant rounded-lg shadow-lg p-3">
+                                      <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-2">
+                                        Vị trí kiêm nhiệm
+                                      </div>
+                                      <div className="flex flex-col gap-2 whitespace-normal">
+                                        {(s.positions || []).filter(p => String(p.departmentId) !== String(dept.id)).map((p, i) => (
+                                          <div key={i} className="flex items-start gap-2">
+                                            <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">badge</span>
+                                            <div className="text-sm">
+                                              <div className="text-on-surface font-medium">{p.departmentName || `Phòng ban ${p.departmentId}`}</div>
+                                              <div className="text-xs text-secondary">{p.positionName || 'Nhân sự'}</div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className={`flex items-center gap-1.5 ${roleInfo.textColor} text-[13px] font-medium`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${roleInfo.color}`}></span>
+                                {roleInfo.label}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${s.status === 'active'
+                                  ? 'bg-[#E8F8EE] text-[#037847]'
+                                  : 'bg-[#F1F5F9] text-[#475569]'
+                                  }`}
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${s.status === 'active' ? 'bg-[#037847]' : 'bg-[#64748B]'}`}
+                                ></span>
+                                {s.status === 'active' ? 'Đang hoạt động' : 'Nghỉ'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 whitespace-nowrap text-right">
                               <button
                                 onClick={() => setShowUserInfo({
                                   id: s.id,
@@ -360,38 +477,36 @@ export default function DepartmentDetail() {
                                   subtitle: s.subtitle,
                                   email: s.email,
                                   personalEmail: s.personalEmail,
-                                  phone: s.phone
+                                  phone: s.phone,
+                                  status: s.status,
+                                  systemRole: s.systemRoles?.[0]
                                 })}
-                                className="p-1 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer"
+                                className="p-1.5 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer inline-flex"
                                 title="Xem thông tin chi tiết"
                               >
-                                <span className="material-symbols-outlined text-[16px]">info</span>
+                                <span className="material-symbols-outlined text-[18px]">visibility</span>
                               </button>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-on-surface-variant whitespace-nowrap">{s.role}</td>
-                          <td className="py-3 px-4 text-secondary whitespace-nowrap">{s.email}</td>
-                          <td className="py-3 px-4 whitespace-nowrap">
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${s.status === 'active'
-                                ? 'bg-[#E8F8EE] text-[#037847]'
-                                : 'bg-[#F1F5F9] text-[#475569]'
-                                }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${s.status === 'active' ? 'bg-[#037847]' : 'bg-[#64748B]'}`}
-                              ></span>
-                              {s.status === 'active' ? 'Đang làm' : 'Nghỉ'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
               </div>
-              <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary text-right">
-                Tổng cộng {members.length} nhân sự được hiển thị
+              <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex items-center justify-between">
+                <div>
+                  Hiển thị 
+                  <select className="mx-2 bg-surface border border-outline-variant rounded px-1 py-0.5 outline-none">
+                    <option>10 dòng</option>
+                  </select>
+                  1 - {members.length} trong tổng số {members.length} nhân sự
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-outline cursor-not-allowed">chevron_left</span>
+                  <span>Trang 1 / 1</span>
+                  <span className="material-symbols-outlined text-[16px] text-outline cursor-not-allowed">chevron_right</span>
+                </div>
               </div>
             </section>
           )}

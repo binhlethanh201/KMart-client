@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import EmployeeModal from '../components/EmployeeModal';
 import UserProfile from '../../profile/pages/UserProfile';
@@ -6,6 +6,7 @@ import { useHr } from '../context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
+import { userService } from '../services/userService';
 
 const pad = (n) => String(n).padStart(2, '0');
 const DAY = 24 * 60 * 60 * 1000;
@@ -15,123 +16,6 @@ const formatDate = (value) => {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '—';
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-};
-
-// Deterministic per-employee activity log derived from the real record.
-// Historical events (onboarding) anchor at the hire date; recent events
-// (logins, contact update, lock) land a few days before today so the feed
-// feels live. Each entry carries a title + detail line for a cleaner log.
-function buildActivityLog(e) {
-  const num = parseInt(e.id.replace(/\D/g, ''), 10) || 101;
-  const hire = new Date(2023, 0, 1);
-  hire.setDate(hire.getDate() + (num % 90));
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const hist = (back, h, m) => {
-    const d = new Date(hire.getTime() + back * DAY);
-    d.setHours(h, m, 0, 0);
-    return d;
-  };
-  const recent = (back, h, m) => {
-    const d = new Date(today.getTime() - back * DAY);
-    d.setHours(h, m, 0, 0);
-    return d;
-  };
-
-  const entries = [
-    {
-      icon: 'person_add',
-      type: 'create',
-      date: hist(0, 8, 30),
-      title: 'Khởi tạo hồ sơ nhân sự',
-      detail: `Mã NV ${e.id.substring(0, 8).toUpperCase()} • Do Phòng Nhân sự thực hiện`,
-    },
-    {
-      icon: 'apartment',
-      type: 'assign',
-      date: hist(1, 9, 15),
-      title: 'Phân công phòng ban',
-      detail: e.department,
-    },
-    {
-      icon: 'workspace_premium',
-      type: 'promote',
-      date: hist(4, 9, 0),
-      title: 'Bổ nhiệm chức vụ',
-      detail: e.position,
-    },
-    {
-      icon: 'admin_panel_settings',
-      type: 'role',
-      date: hist(6, 9, 45),
-      title: 'Cấp vai trò hệ thống',
-      detail: ROLE_STYLES[e.role]?.label || e.role,
-    },
-  ];
-
-  e.secondary.forEach((s, i) => {
-    entries.push({
-      icon: 'workspaces',
-      type: 'secondary',
-      date: hist(20 + i * 22, 10, 20),
-      title: 'Bổ nhiệm kiêm nhiệm',
-      detail: `${s.department} • ${s.position}`,
-    });
-  });
-
-  entries.push({
-    icon: 'contact_page',
-    type: 'update',
-    date: recent(6, 16, 5),
-    title: 'Cập nhật thông tin liên hệ',
-    detail: 'Email / số điện thoại',
-  });
-  entries.push({
-    icon: 'photo_camera',
-    type: 'update',
-    date: recent(4, 11, 30),
-    title: 'Cập nhật ảnh đại diện',
-    detail: 'Hồ sơ cá nhân',
-  });
-  entries.push({
-    icon: 'login',
-    type: 'login',
-    date: recent(1, 7, 55),
-    title: 'Đăng nhập hệ thống',
-    detail: 'Web • Trình duyệt Chrome',
-  });
-
-  if (e.status === 'inactive') {
-    entries.push({
-      icon: 'lock',
-      type: 'lock',
-      date: recent(0, 10, 0),
-      title: 'Khóa tài khoản',
-      detail: 'Ngừng hoạt động',
-    });
-  } else {
-    entries.push({
-      icon: 'login',
-      type: 'login',
-      date: recent(0, 8, 10),
-      title: 'Đăng nhập gần nhất',
-      detail: 'Thành công',
-    });
-  }
-
-  return entries.sort((a, b) => (a.date < b.date ? 1 : -1));
-}
-
-const TYPE_STYLE = {
-  create: 'bg-primary/10 text-primary',
-  assign: 'bg-blue-50 text-blue-700',
-  promote: 'bg-[#FEF3C7] text-[#B45309]',
-  role: 'bg-purple-50 text-purple-700',
-  secondary: 'bg-[#E8F8EE] text-[#037847]',
-  update: 'bg-surface-container-high text-on-surface-variant',
-  login: 'bg-surface-container-high text-on-surface-variant',
-  lock: 'bg-[#F1F5F9] text-[#475569]',
 };
 
 function InfoCell({ label, children }) {
@@ -177,7 +61,46 @@ export default function EmployeeDetail() {
   const canLockEmployee = hasPermission ? hasPermission('PERSONNEL_LOCK') : true;
 
   const employee = useMemo(() => getEmployee(id), [getEmployee, id]);
-  const log = useMemo(() => (employee ? buildActivityLog(employee) : []), [employee]);
+  const [log, setLog] = useState([]);
+  const [logLoading, setLogLoading] = useState(false);
+
+  useEffect(() => {
+    if (!employee?.id) return;
+    setLogLoading(true);
+    userService.getActivityLog(employee.id, 1, 100) // fetch up to 100 recent logs
+      .then(res => {
+        const rawLogs = Array.isArray(res) ? res : (res.items || []);
+        const formatted = rawLogs.map(l => {
+          const date = new Date(l.createdAt);
+          let title = l.action;
+          let detail = l.description || l.entityType;
+
+          if (l.entityType === 'Application') {
+            if (l.action === 'CREATE') title = 'Tạo đơn từ mới';
+            else if (l.action === 'UPDATE') title = 'Cập nhật đơn từ';
+            else if (l.action === 'DELETE') title = 'Xóa đơn từ';
+            else title = `Thao tác đơn từ (${l.action})`;
+            
+            if (l.description) detail = `Chi tiết: ${l.description}`;
+          } else if (l.entityType === 'User' || l.entityType === 'Profile') {
+            if (l.action === 'UPDATE') title = 'Cập nhật hồ sơ cá nhân';
+            else title = `Thao tác hồ sơ (${l.action})`;
+          } else if (l.entityType === 'Department') {
+            title = `${l.action === 'CREATE' ? 'Tạo' : 'Cập nhật'} phòng ban`;
+          } else if (l.action === 'LOGIN') {
+            title = 'Đăng nhập hệ thống';
+            detail = `IP: ${l.ipAddress || 'Unknown'}`;
+          }
+
+          return { title, detail, date };
+        });
+        // Sort newest first
+        formatted.sort((a, b) => b.date - a.date);
+        setLog(formatted);
+      })
+      .catch(console.error)
+      .finally(() => setLogLoading(false));
+  }, [employee?.id]);
 
   const [editOpen, setEditOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -362,10 +285,19 @@ export default function EmployeeDetail() {
              <h2 className="text-base font-bold text-on-surface tracking-tight">Lịch sử hoạt động</h2>
            </div>
            
-           <div className="p-6">
+            <div className="p-6">
               <div className="flex flex-col">
-                 <ol className="relative border-l border-outline-variant ml-2 space-y-8">
-                   {pagedLog.map((entry, idx) => (
+                {logLoading ? (
+                  <div className="flex justify-center items-center py-10">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : pagedLog.length === 0 ? (
+                  <div className="text-center py-10 text-secondary italic">
+                    Chưa có hoạt động nào được ghi nhận.
+                  </div>
+                ) : (
+                  <ol className="relative border-l border-outline-variant ml-2 space-y-8">
+                    {pagedLog.map((entry, idx) => (
                      <li key={idx} className="relative pl-6">
                        {/* Simple Blue Dot */}
                        <span className="absolute -left-[5.5px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#004B8D] ring-4 ring-white"></span>
@@ -383,8 +315,9 @@ export default function EmployeeDetail() {
                          )}
                        </div>
                      </li>
-                   ))}
-                 </ol>
+                    ))}
+                  </ol>
+                )}
               </div>
            </div>
            

@@ -152,5 +152,10 @@ export const userService = {
   resetPassword: async (id) => {
     const response = await apiClient.post(`/users/${id}/reset-password`, { sendEmail: false });
     return response.data.tempPassword;
+  },
+
+  getActivityLog: async (userId, page = 1, pageSize = 50) => {
+    const response = await apiClient.get(`/admin/audit-logs?userId=${userId}&page=${page}&pageSize=${pageSize}`);
+    return response.data;
   }
 };

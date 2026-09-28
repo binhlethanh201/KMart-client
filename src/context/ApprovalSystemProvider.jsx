@@ -3,7 +3,7 @@ import { ApprovalSystemContext } from './approvalStore';
 import { departmentService } from '../features/departments/services/departmentService';
 import { applicationService } from '../features/requests/services/applicationService';
 import { authService } from '../features/auth/services/authService';
-import { userService } from '../features/hr/services/userService';
+import { userService, getFullAvatarUrl } from '../features/hr/services/userService';
 import { PERMISSIONS } from '../constants/permissions';
 
 const STORAGE_KEY = 'kmart.approval.v3';
@@ -85,7 +85,6 @@ export function ApprovalSystemProvider({ children }) {
     authService.getCurrentUser().then(async u => {
       const positionsList = u.positions || u.departments || [];
       const primaryPos = positionsList.find(p => p.isPrimary) || positionsList[0];
-      const { getFullAvatarUrl } = await import('../features/hr/services/userService');
       const actualAvatar = getFullAvatarUrl(u.avatarUrl);
       const parsedRoles = (u.roles || []).map(r => typeof r === 'string' ? r : r.roleName || r.name || r.role || '').filter(Boolean);
       let perms = (u.permissions || []).filter(p => typeof p === 'string');

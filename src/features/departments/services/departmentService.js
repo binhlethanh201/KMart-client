@@ -34,9 +34,13 @@ const mapMemberToFrontend = (u) => {
     name: u.fullName,
     avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`,
     role: primaryPos?.positionName || 'Nhân viên',
+    departmentName: primaryPos?.departmentName || '',
     email: u.email,
     personalEmail: u.personalEmail,
-    status: u.status?.toLowerCase() === 'active' ? 'active' : 'inactive'
+    phone: u.phone || '',
+    status: u.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
+    positions: u.positions || [],
+    systemRoles: u.roles || []
   };
 };
 
