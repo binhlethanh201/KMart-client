@@ -563,7 +563,7 @@ function GroupHeader({ icon, label, hint }) {
   );
 }
 
-function makeStep(overrides = {}) {
+function makeStep(overrides = {}, dynamicRoles = [], employees = []) {
   return {
     id: `s${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     name: 'Bước duyệt mới',
@@ -571,8 +571,8 @@ function makeStep(overrides = {}) {
     hierarchyOption: 'department_head',
     chainStart: 'direct_manager',
     chainEnd: 'department_head',
-    role: APPROVAL_ROLES[0],
-    specificUser: SPECIFIC_USERS[0],
+    role: dynamicRoles.length > 0 ? dynamicRoles[0] : (APPROVAL_ROLES[0] || ''),
+    specificUser: employees.length > 0 ? employees[0].id : (SPECIFIC_USERS[0] || ''),
     multiRule: 'sequential',
     scope: 'auto',
     condition: null,
@@ -656,7 +656,14 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange }) {
 }
 
 export default function WorkflowTab() {
-  const { employees: EMPLOYEES } = useHr();
+  const { employees: EMPLOYEES, departments, positions } = useHr();
+  
+  const APPROVAL_ROLES_DYNAMIC = useMemo(() => {
+    const deptNames = departments?.map(d => d.name) || [];
+    const posNames = positions?.map(p => p.name) || [];
+    const unique = [...new Set([...deptNames, ...posNames])];
+    return unique.length > 0 ? unique : APPROVAL_ROLES;
+  }, [departments, positions]);
 
   const [documentTypes, setDocumentTypes] = useState([]);
   const [formType, setFormType] = useState('');
@@ -805,7 +812,7 @@ export default function WorkflowTab() {
     });
   };
   const addStep = () => {
-    const newStep = makeStep({ track: block, name: 'Bước duyệt mới' });
+    const newStep = makeStep({ track: block, name: 'Bước duyệt mới' }, APPROVAL_ROLES_DYNAMIC, EMPLOYEES);
     setWorkflows((prev) => ({
       ...prev,
       [formType]: {
@@ -1111,9 +1118,9 @@ export default function WorkflowTab() {
                                   value={step.role}
                                   onChange={(e) => updateStep(step.id, { role: e.target.value })}
                                 >
-                                  {APPROVAL_ROLES.map((r) => (
+                                  {APPROVAL_ROLES_DYNAMIC.map((r) => (
                                     <option key={r} value={r}>
-                                      Duyệt theo chức danh: {r}
+                                      Duyệt theo chức danh/bộ phận: {r}
                                     </option>
                                   ))}
                                 </select>

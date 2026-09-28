@@ -4,7 +4,6 @@ import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { workflowService } from '../../../services/workflowService';
-import { FORM_FIELDS } from '../../system-config/data/mockData';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
@@ -52,18 +51,6 @@ export default function CreateRequestModal({ onClose }) {
   if (typeof currentFields === 'string') {
     try { currentFields = JSON.parse(currentFields); } catch (e) { currentFields = []; }
   }
-  if (currentFields.length === 0 && selectedDocType) {
-    currentFields = FORM_FIELDS[selectedDocType.name] || [];
-  }
-  currentFields = currentFields.map(field => {
-    if ((field.type === 'SELECT' || field.type === 'Lựa chọn') && (!field.options || field.options.length === 0)) {
-       const fallback = FORM_FIELDS[selectedDocType.name]?.find(x => x.name === field.name || x.id === field.id || x.label === field.label);
-       if (fallback && fallback.options) {
-         return { ...field, options: fallback.options };
-       }
-    }
-    return field;
-  });
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();

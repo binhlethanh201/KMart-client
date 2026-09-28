@@ -4,7 +4,6 @@ import { departmentService } from '../features/departments/services/departmentSe
 import { applicationService } from '../features/requests/services/applicationService';
 import { authService } from '../features/auth/services/authService';
 import { userService } from '../features/hr/services/userService';
-import { FORM_FIELDS } from '../features/system-config/data/mockData';
 import { PERMISSIONS } from '../constants/permissions';
 
 const STORAGE_KEY = 'kmart.approval.v3';
@@ -16,13 +15,13 @@ function load() {
       const p = JSON.parse(raw);
       if (p && Array.isArray(p.requests)) {
         return {
-          formFields: p.formFields || FORM_FIELDS
+          formFields: p.formFields || {}
         };
       }
     }
   } catch (e) { }
   return {
-    formFields: FORM_FIELDS
+    formFields: {}
   };
 }
 
