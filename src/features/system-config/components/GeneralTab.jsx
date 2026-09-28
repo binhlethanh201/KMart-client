@@ -1,14 +1,85 @@
-import { useState } from 'react';
-import { ZALO_CONFIG, TIME_RULES } from '../data/mockData';
+import { useState, useEffect } from 'react';
+import { TIME_RULES } from '../data/mockData';
+import apiClient from '../../../services/apiClient';
 
 const fieldCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
 export default function GeneralTab() {
-  const [zalo, setZalo] = useState(ZALO_CONFIG);
+  const [zalo, setZalo] = useState({
+    status: 'disconnected',
+    appId: '',
+    secretKey: '',
+    oaId: '',
+    templates: []
+  });
   const [timeRule, setTimeRule] = useState('business');
   const [showSecret, setShowSecret] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  // Fetch settings & Zalo config from BE
+  useEffect(() => {
+    Promise.all([
+      apiClient.get('/settings').catch(() => ({ data: null })),
+      apiClient.get('/settings/zalo').catch(() => ({ data: null }))
+    ]).then(([settingsRes, zaloRes]) => {
+      // Map settings
+      if (settingsRes.data?.timeCalculationMode) {
+        setTimeRule(settingsRes.data.timeCalculationMode);
+      }
+
+      // Map Zalo config
+      if (zaloRes.data) {
+        setZalo({
+          status: zaloRes.data.isConnected ? 'connected' : 'disconnected',
+          appId: zaloRes.data.appId || '',
+          secretKey: zaloRes.data.secretKey || '',
+          oaId: zaloRes.data.oaId || '',
+          templates: zaloRes.data.templates || []
+        });
+      }
+
+      setLoading(false);
+    }).catch(err => {
+      console.error("Failed to load settings:", err);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleSaveZalo = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      await apiClient.put('/settings/zalo', {
+        appId: zalo.appId,
+        secretKey: zalo.secretKey,
+        oaId: zalo.oaId
+      });
+
+      // Test connection
+      const testResult = await apiClient.post('/settings/zalo/test', {
+        appId: zalo.appId,
+        secretKey: zalo.secretKey,
+        oaId: zalo.oaId
+      });
+
+      if (testResult.data?.success) {
+        setZalo(prev => ({ ...prev, status: 'connected' }));
+        setMessage({ type: 'success', text: 'Kết nối Zalo OA thành công!' });
+      } else {
+        setZalo(prev => ({ ...prev, status: 'disconnected' }));
+        setMessage({ type: 'error', text: testResult.data?.message || 'Kết nối thất bại. Vui lòng kiểm tra lại thông tin.' });
+      }
+    } catch (err) {
+      console.error("Failed to save Zalo config:", err);
+      setMessage({ type: 'error', text: 'Lỗi khi lưu cấu hình Zalo.' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const connected = zalo.status === 'connected';
   const toggleTemplate = (id) =>
@@ -33,64 +104,82 @@ export default function GeneralTab() {
           </span>
         </div>
         <div className="p-5 flex flex-col gap-4">
-          <div>
-            <label className={labelCls}>Zalo App ID</label>
-            <input className={fieldCls} value={zalo.appId} onChange={(e) => setZalo((z) => ({ ...z, appId: e.target.value }))} />
-          </div>
-          <div>
-            <label className={labelCls}>Zalo Secret Key</label>
-            <div className="relative">
-              <input
-                className={fieldCls + ' pr-10'}
-                type={showSecret ? 'text' : 'password'}
-                value={zalo.secretKey}
-                onChange={(e) => setZalo((z) => ({ ...z, secretKey: e.target.value }))}
-              />
-              <button
-                type="button"
-                onClick={() => setShowSecret((s) => !s)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-on-surface cursor-pointer"
-                aria-label="Hiện mật khẩu"
-              >
-                <span className="material-symbols-outlined text-[18px]">{showSecret ? 'visibility_off' : 'visibility'}</span>
-              </button>
+          {loading ? (
+            <div className="text-center py-8">
+              <span className="material-symbols-outlined animate-spin text-primary text-2xl">sync</span>
+              <p className="text-sm text-secondary mt-2">Đang tải cấu hình...</p>
             </div>
-          </div>
-          <div>
-            <label className={labelCls}>Oa ID</label>
-            <input className={fieldCls} value={zalo.oaId} onChange={(e) => setZalo((z) => ({ ...z, oaId: e.target.value }))} />
-          </div>
-
-          {/* ZNS templates */}
-          <div className="border-t border-outline-variant pt-4">
-            <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-3">
-              Mẫu thông báo ZNS
-            </div>
-            <div className="flex flex-col gap-2">
-              {zalo.templates.map((t) => (
-                <label key={t.id} className="flex items-center justify-between p-2.5 rounded-md border border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
-                  <span className="text-sm text-on-surface flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-secondary">{t.enabled ? 'notifications_active' : 'notifications_off'}</span>
-                    {t.name}
-                  </span>
+          ) : (
+            <>
+              <div>
+                <label className={labelCls}>Zalo App ID</label>
+                <input className={fieldCls} value={zalo.appId} onChange={(e) => setZalo((z) => ({ ...z, appId: e.target.value }))} />
+              </div>
+              <div>
+                <label className={labelCls}>Zalo Secret Key</label>
+                <div className="relative">
+                  <input
+                    className={fieldCls + ' pr-10'}
+                    type={showSecret ? 'text' : 'password'}
+                    value={zalo.secretKey}
+                    onChange={(e) => setZalo((z) => ({ ...z, secretKey: e.target.value }))}
+                  />
                   <button
                     type="button"
-                    onClick={() => toggleTemplate(t.id)}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer flex-shrink-0 ${t.enabled ? 'bg-primary' : 'bg-surface-container-highest'}`}
-                    aria-pressed={t.enabled}
-                    aria-label={t.name}
+                    onClick={() => setShowSecret((s) => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-on-surface cursor-pointer"
+                    aria-label="Hiện mật khẩu"
                   >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${t.enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    <span className="material-symbols-outlined text-[18px]">{showSecret ? 'visibility_off' : 'visibility'}</span>
                   </button>
-                </label>
-              ))}
-            </div>
-          </div>
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Oa ID</label>
+                <input className={fieldCls} value={zalo.oaId} onChange={(e) => setZalo((z) => ({ ...z, oaId: e.target.value }))} />
+              </div>
 
-          <button className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center justify-center gap-2 cursor-pointer mt-1">
-            <span className="material-symbols-outlined text-[18px]">sync</span>
-            Kiểm tra &amp; Lưu kết nối
-          </button>
+              {/* ZNS templates */}
+              <div className="border-t border-outline-variant pt-4">
+                <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-3">
+                  Mẫu thông báo ZNS
+                </div>
+                <div className="flex flex-col gap-2">
+                  {zalo.templates.map((t) => (
+                    <label key={t.id} className="flex items-center justify-between p-2.5 rounded-md border border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+                      <span className="text-sm text-on-surface flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[18px] text-secondary">{t.enabled ? 'notifications_active' : 'notifications_off'}</span>
+                        {t.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleTemplate(t.id)}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer flex-shrink-0 ${t.enabled ? 'bg-primary' : 'bg-surface-container-highest'}`}
+                        aria-pressed={t.enabled}
+                        aria-label={t.name}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${t.enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                      </button>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleSaveZalo}
+                disabled={saving}
+                className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center justify-center gap-2 cursor-pointer mt-1 disabled:opacity-50"
+              >
+                <span className={`material-symbols-outlined text-[18px] ${saving ? 'animate-spin' : ''}`}>sync</span>
+                {saving ? 'Đang kiểm tra...' : 'Kiểm tra & Lưu kết nối'}
+              </button>
+              {message && (
+                <div className={`text-sm px-3 py-2 rounded-md ${message.type === 'success' ? 'bg-success-container text-on-success-container' : 'bg-error-container text-on-error-container'}`}>
+                  {message.text}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
