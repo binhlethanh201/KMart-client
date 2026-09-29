@@ -7,10 +7,11 @@ import useDocumentTitle from '../../../hooks/useDocumentTitle';
 /* ─── Constants ──────────────────────────────────────────────── */
 
 const STATUS_FILTERS = [
-  { id: 'all',      label: 'Tất cả',       icon: 'inbox' },
-  { id: 'pending',  label: 'Chờ duyệt',    dot: 'bg-amber-400' },
-  { id: 'approved', label: 'Đã phê duyệt', dot: 'bg-emerald-400' },
-  { id: 'rejected', label: 'Từ chối',      dot: 'bg-red-400' },
+  { id: 'all',        label: 'Tất cả',       icon: 'inbox' },
+  { id: 'pending',    label: 'Chờ duyệt',    dot: 'bg-amber-400' },
+  { id: 'supplement', label: 'Cần bổ sung',  dot: 'bg-orange-400' },
+  { id: 'approved',   label: 'Đã phê duyệt', dot: 'bg-emerald-400' },
+  { id: 'rejected',   label: 'Từ chối',      dot: 'bg-red-400' },
 ];
 
 const TITLES = {
@@ -58,14 +59,15 @@ export default function PersonalRequests({ mode = 'sent' }) {
 
   /* counts per filter tab */
   const counts = useMemo(() => {
-    const c = { all: 0, pending: 0, approved: 0, rejected: 0 };
+    const c = { all: 0, pending: 0, supplement: 0, approved: 0, rejected: 0 };
     for (const r of requests) {
       if (!matchesMode(r)) continue;
 
       c.all += 1;
       if (r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval') c.pending += 1;
       if (r.status === 'approved') c.approved += 1;
-      // BE-05: 'needssupplement' có màn hình riêng, không tính vào tab "Từ chối" nữa
+      // BE-15: 'needssupplement' gộp vào "Đơn từ cá nhân" và có tab riêng, không tính vào "Từ chối"
+      if (r.status === 'needssupplement') c.supplement += 1;
       if (r.status === 'rejected' || r.status === 'returned_timeout') c.rejected += 1;
     }
     return c;
@@ -79,6 +81,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
 
       let matchF = true;
       if (statusFilter === 'pending')  matchF = r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval';
+      else if (statusFilter === 'supplement') matchF = r.status === 'needssupplement';
       else if (statusFilter === 'approved') matchF = r.status === 'approved';
       else if (statusFilter === 'rejected') matchF = r.status === 'rejected' || r.status === 'returned_timeout';
 
@@ -248,8 +251,9 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 {visibleFiltered.map((r, index) => (
                   <div key={r.id} className="animate-slide-fade flex flex-col gap-2" style={{ animationDelay: `${(index % itemsPerPage) * 50}ms` }}>
                     <RequestCard request={r} />
-                    {/* BE-05: hiện lý do cần bổ sung + lối vào bổ sung ngay, không phải mở từng đơn */}
-                    {mode === 'supplement' && (
+                    {/* BE-05/BE-15: hiện lý do cần bổ sung + lối vào bổ sung ngay.
+                        Đơn cần bổ sung giờ nằm chung trong "Đơn từ cá nhân" (mode sent). */}
+                    {(mode === 'supplement' || (mode === 'sent' && r.status === 'needssupplement')) && (
                       <div className="px-4 py-2.5 rounded-lg bg-surface border border-outline-variant flex items-center gap-3 flex-wrap">
                         {supplementReason(r) && (
                           <span className="flex items-start gap-2 text-sm text-on-surface flex-1 min-w-[220px]">

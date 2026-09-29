@@ -7,9 +7,19 @@ import { STATUS_META } from '../data/constants';
 // Status-driven request card. Clicking navigates to the detail page.
 export default function RequestCard({ request: r }) {
   const navigate = useNavigate();
-  const { canApprove } = useApproval();
+  const { canApprove, departments } = useApproval();
   const { employees } = useHr();
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // BE-16: phòng ban mà đơn nhắm tới (Data.departments) -> hiện rõ "đơn phòng nào"
+  const targetDeptCodes = (() => {
+    const ids = r._rawData?.departments;
+    if (!Array.isArray(ids) || ids.length === 0) return [];
+    return ids
+      .map((id) => (departments || []).find((d) => d.id === id))
+      .filter(Boolean)
+      .map((d) => d.code || d.name);
+  })();
 
   const meta = STATUS_META[r.status] || { badge: 'bg-surface-container text-on-surface', dot: 'bg-outline', label: 'Không rõ' };
 
@@ -89,6 +99,17 @@ export default function RequestCard({ request: r }) {
      else if (currentActorUser.position) currentActorRole = currentActorUser.position;
   }
 
+  // BE-16: bước đang chờ có thể có NHIỀU người duyệt cùng lúc (nhiều phòng ban song song).
+  // Hiển thị đủ danh sách thay vì chỉ người đại diện.
+  const pendingApproverIds = (isPending && currentActorStep)
+    ? (currentActorStep.approverIds?.length ? currentActorStep.approverIds : [currentActorStep.approverId])
+    : [];
+  const pendingApprovers = pendingApproverIds
+    .map((id) => employees.find((x) => x.id === id))
+    .filter(Boolean)
+    .map((u) => ({ id: u.id, name: u.name, avatar: u.avatar }));
+  const isMultiApprover = pendingApprovers.length > 1;
+
   return (
     <div className={`bg-surface rounded-xl shadow-sm border border-outline-variant hover:shadow-md hover:border-primary/30 transition-all flex flex-col relative overflow-hidden group ${isRejected ? 'opacity-80' : ''}`}>
       
@@ -134,6 +155,14 @@ export default function RequestCard({ request: r }) {
               <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">tag</span><span className="font-medium text-on-surface">{r.id.substring(0, 8).toUpperCase()}</span></span>
               <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">category</span><span className="font-medium text-on-surface">{r.type}</span></span>
               <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">schedule</span><span className="font-medium text-on-surface">{r.createdAt}</span></span>
+              {targetDeptCodes.length > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">apartment</span>
+                  {targetDeptCodes.map((code) => (
+                    <span key={code} className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wide">{code}</span>
+                  ))}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -141,25 +170,55 @@ export default function RequestCard({ request: r }) {
         {/* RIGHT SIDE SUMMARY */}
         {currentActorUser && (
           <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-outline-variant pt-4 md:pt-0 md:pl-5 min-w-[200px]">
-            <div className="relative">
-              {currentActorAvatar ? (
-                <img src={currentActorAvatar} alt={currentActorName} className="w-10 h-10 rounded-full object-cover shadow-sm border border-outline-variant" />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-[#29b6f6] text-on-surface font-normal text-[14px] flex items-center justify-center shadow-sm">
-                  {getInitials(currentActorName)}
+            {isMultiApprover ? (
+              <>
+                {/* BE-16: nhiều người duyệt cùng cấp -> chồng avatar + tổng số */}
+                <div className="relative flex-shrink-0 h-10 w-10">
+                  {pendingApprovers.slice(0, 3).map((u, i) => (
+                    <div key={u.id} className="absolute" style={{ left: `${i * 12}px`, zIndex: 3 - i }}>
+                      {u.avatar ? (
+                        <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded-full object-cover shadow-sm border-2 border-white" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-[#29b6f6] text-white text-[11px] flex items-center justify-center border-2 border-white">
+                          {getInitials(u.name)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              )}
-              <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'approved' ? 'bg-success' : r.status === 'returned_timeout' ? 'bg-error' : (r.status === 'pending' || r.status === 'needssupplement') ? 'bg-warning' : 'bg-error'}`}>
-                <span className="material-symbols-outlined text-white text-[10px] font-bold">
-                  {statusIcon}
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col flex-1 min-w-0">
-              <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${summaryColor}`}>{summaryText}</span>
-              <span className="text-[13px] font-bold text-on-surface truncate w-full" title={currentActorName}>{currentActorName}</span>
-              <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5">{currentActorRole}</span>
-            </div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${summaryColor}`}>{summaryText}</span>
+                  <span className="text-[13px] font-bold text-on-surface truncate w-full" title={pendingApprovers.map(u => u.name).join(', ')}>
+                    {pendingApprovers.length} người duyệt
+                  </span>
+                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5" title={pendingApprovers.map(u => u.name).join(', ')}>
+                    {pendingApprovers.map(u => u.name).join(', ')}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="relative">
+                  {currentActorAvatar ? (
+                    <img src={currentActorAvatar} alt={currentActorName} className="w-10 h-10 rounded-full object-cover shadow-sm border border-outline-variant" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[#29b6f6] text-on-surface font-normal text-[14px] flex items-center justify-center shadow-sm">
+                      {getInitials(currentActorName)}
+                    </div>
+                  )}
+                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'approved' ? 'bg-success' : r.status === 'returned_timeout' ? 'bg-error' : (r.status === 'pending' || r.status === 'needssupplement') ? 'bg-warning' : 'bg-error'}`}>
+                    <span className="material-symbols-outlined text-white text-[10px] font-bold">
+                      {statusIcon}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${summaryColor}`}>{summaryText}</span>
+                  <span className="text-[13px] font-bold text-on-surface truncate w-full" title={currentActorName}>{currentActorName}</span>
+                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5">{currentActorRole}</span>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -8,24 +8,20 @@ import { clearSessionStorage } from '../utils/session';
 function RequestsSubPanel({ pendingCount, supplementCount }) {
   const location = useLocation();
 
+  // BE-15: "Đơn cần bổ sung" không còn là mục riêng (bị trùng với Đơn từ cá nhân);
+  // các đơn này hiển thị ngay trong Đơn từ cá nhân kèm badge nhắc bổ sung.
   const links = [
     {
       to: '/my-requests',
       icon: 'folder_shared',
       label: 'Đơn từ cá nhân',
+      badge: supplementCount,
     },
     {
       to: '/my-requests/approvals',
       icon: 'pending_actions',
       label: 'Đơn chờ tôi duyệt',
       badge: pendingCount,
-    },
-    {
-      /* BE-05: man hinh rieng cho don dang bi yeu cau bo sung */
-      to: '/my-requests/supplements',
-      icon: 'edit_note',
-      label: 'Yêu cầu bổ sung',
-      badge: supplementCount,
     },
   ];
 

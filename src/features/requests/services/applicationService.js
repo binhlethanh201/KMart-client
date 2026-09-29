@@ -1,5 +1,19 @@
 import apiClient from '../../../services/apiClient';
 
+// BE-15: nhãn tiếng Việt + màu cho từng loại hành động trong "Nhật ký hệ thống".
+// Backend trả Action dạng hằng số (APPROVED, SUPPLEMENT_REQUESTED...).
+const HISTORY_META = {
+  created: { type: 'create', text: 'Đơn được tạo' },
+  submitted: { type: 'create', text: 'Gửi đơn để phê duyệt' },
+  approved: { type: 'approve', text: 'Đã phê duyệt' },
+  rejected: { type: 'reject', text: 'Đã từ chối đơn' },
+  canceled: { type: 'timeout', text: 'Đã hủy đơn' },
+  cancelled: { type: 'timeout', text: 'Đã hủy đơn' },
+  supplement_requested: { type: 'supplement', text: 'Yêu cầu bổ sung thông tin' },
+  supplement_completed: { type: 'supplement', text: 'Đã bổ sung và gửi lại' },
+  timeout: { type: 'timeout', text: 'Quá hạn xử lý' },
+};
+
 const mapToFrontendModel = (a) => {
   const rawData = (typeof a.data === 'string')
     ? (() => { try { return JSON.parse(a.data); } catch { return {}; } })()
@@ -36,15 +50,26 @@ const mapToFrontendModel = (a) => {
       actedAt: s.actedAt ? new Date(s.actedAt).toLocaleString('vi-VN') : null
     })),
     comments: (a.comments || []).map(c => ({
+      id: c.id,
       userId: c.userId,
+      userName: c.userName,
       text: c.content,
       at: new Date(c.createdAt).toLocaleString('vi-VN')
     })),
-    history: (a.histories || []).map(h => ({
-      at: new Date(h.createdAt).toLocaleString('vi-VN'),
-      text: h.action,
-      type: h.actionType?.toLowerCase() || 'info'
-    }))
+    history: (a.histories || []).map(h => {
+      // BE-15: dịch Action -> nhãn tiếng Việt, kèm tên người thực hiện và lý do (nếu có)
+      const key = (h.action || '').toLowerCase();
+      const meta = HISTORY_META[key] || { type: 'comment', text: h.action || 'Cập nhật' };
+      const actor = h.userName ? `${h.userName}` : '';
+      let text = meta.text;
+      if (actor) text += ` - ${actor}`;
+      if (h.comment && !['supplement_requested'].includes(key)) text += `: ${h.comment}`;
+      return {
+        at: new Date(h.createdAt).toLocaleString('vi-VN'),
+        text,
+        type: meta.type
+      };
+    })
   };
 };
 

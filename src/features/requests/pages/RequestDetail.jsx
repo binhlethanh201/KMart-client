@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import RejectReasonModal from '../components/RejectReasonModal';
 import SupplementReasonModal from '../components/SupplementReasonModal';
+import CreateRequestModal from '../components/CreateRequestModal';
 import UserInfoModal from '../components/UserInfoModal';
 import { STATUS_META, STEP_ROLE } from '../data/constants';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
@@ -21,6 +22,7 @@ const historyBorder = {
   approve: 'border-success',
   reject: 'border-error',
   timeout: 'border-error',
+  supplement: 'border-warning',
   comment: 'border-outline-variant',
   create: 'border-outline-variant',
 };
@@ -28,17 +30,43 @@ const historyBg = {
   approve: 'bg-success-container/10',
   reject: 'bg-error-container/10',
   timeout: 'bg-error-container/10',
+  supplement: 'bg-warning-container/10',
 };
 
 export default function RequestDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { requests, currentUser, canApprove, approveRequest, rejectRequest, requestSupplement, addComment, simulateTimeout, pushToast } = useApproval();
+  const { requests, currentUser, currentUserId, canApprove, approveRequest, rejectRequest, requestSupplement, addComment, simulateTimeout, pushToast } = useApproval();
   const { employees } = useHr();
-  const request = requests.find((r) => r.id === id);
+  const listRequest = requests.find((r) => r.id === id);
+
+  // BE-15: dữ liệu danh sách (getAll/my/pending) KHÔNG kèm comments/histories nên trang chi tiết
+  // luôn trống. Fetch riêng /applications/{id} để có đủ bình luận + nhật ký + lý do bổ sung.
+  const [detail, setDetail] = useState(null);
+  const refreshDetail = useCallback(() => {
+    applicationService.getById(id)
+      .then((data) => setDetail(data))
+      .catch(() => setDetail(null));
+  }, [id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setDetail(null);
+    applicationService.getById(id)
+      .then((data) => { if (!cancelled) setDetail(data); })
+      .catch(() => { if (!cancelled) setDetail(null); });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  // BE-15: giữ cờ _isPendingReq của bản ghi trong danh sách "chờ tôi duyệt"
+  // vì getById không trả cờ này -> nếu ghi đè thẳng sẽ làm nút Duyệt bị vô hiệu.
+  const request = detail && detail.id === id
+    ? { ...detail, _isPendingReq: listRequest?._isPendingReq }
+    : listRequest;
 
   const [rejectOpen, setRejectOpen] = useState(false);
   const [supplementOpen, setSupplementOpen] = useState(false);
+  const [supplementEditOpen, setSupplementEditOpen] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [comment, setComment] = useState('');
@@ -46,6 +74,12 @@ export default function RequestDetail() {
 
   // BE-09: tài liệu đính kèm thật của đơn (lấy từ /applications/{id}/attachments)
   const [attachments, setAttachments] = useState([]);
+  const refreshAttachments = useCallback(() => {
+    applicationService.getAttachments(id)
+      .then((data) => setAttachments(data || []))
+      .catch(() => setAttachments([]));
+  }, [id]);
+
   useEffect(() => {
     let cancelled = false;
     applicationService.getAttachments(id)
@@ -112,10 +146,23 @@ export default function RequestDetail() {
   })();
   const pendingStep = request.steps[activeStepIndex];
 
-  const postComment = () => {
+  // BE-15: đơn đang chờ CHÍNH người tạo bổ sung thông tin
+  const isSupplementWorkflow = request.status === 'needssupplement';
+  const isSupplementOwner = isSupplementWorkflow && currentUserId && request.creatorId === currentUserId;
+
+  // Lý do bổ sung do người duyệt gửi (comment "[Yêu cầu bổ sung] ..."), lấy từ lịch sử thảo luận
+  const supplementReasons = (request.comments || [])
+    .filter((c) => (c.text || '').startsWith('[Yêu cầu bổ sung]'))
+    .map((c) => ({ text: (c.text || '').replace('[Yêu cầu bổ sung]', '').trim(), at: c.at }));
+  const lastSupplementReason = supplementReasons.length ? supplementReasons[supplementReasons.length - 1] : null;
+
+  const postComment = async () => {
     if (!comment.trim()) return;
-    addComment(request.id, comment);
+    const text = comment;
     setComment('');
+    // BE-15: chờ gửi xong rồi tải lại chi tiết để bình luận xuất hiện ngay
+    await addComment(request.id, text);
+    refreshDetail();
   };
 
   return (
@@ -148,44 +195,63 @@ export default function RequestDetail() {
 
           {/* Action bar */}
           <div className="flex flex-wrap items-center gap-2">
-            {import.meta.env.DEV && (
-              <button
-                onClick={() => simulateTimeout(request.id)}
-                className="px-3 py-1.5 rounded text-sm font-medium border border-warning text-warning hover:bg-warning-container transition-colors flex items-center gap-2 bg-surface cursor-pointer"
-                title="Giả lập quá hạn 12h không xử lý (BR11)"
-              >
-                <span className="material-symbols-outlined text-[16px]">bolt</span>
-                Giả lập Timeout 12h
-              </button>
+            {/* BE-15: đơn đang chờ chính người tạo bổ sung -> cho bổ sung & gửi lại ngay tại đây */}
+            {isSupplementOwner ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning-container text-on-warning-container text-xs font-semibold">
+                  <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                  Người duyệt yêu cầu bạn bổ sung thông tin
+                </span>
+                <button
+                  onClick={() => setSupplementEditOpen(true)}
+                  className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                  Bổ sung &amp; gửi lại
+                </button>
+              </>
+            ) : (
+              <>
+                {import.meta.env.DEV && (
+                  <button
+                    onClick={() => simulateTimeout(request.id)}
+                    className="px-3 py-1.5 rounded text-sm font-medium border border-warning text-warning hover:bg-warning-container transition-colors flex items-center gap-2 bg-surface cursor-pointer"
+                    title="Giả lập quá hạn 12h không xử lý (BR11)"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">bolt</span>
+                    Giả lập Timeout 12h
+                  </button>
+                )}
+                <div className="w-px h-6 bg-outline-variant mx-1"></div>
+                <button
+                  onClick={() => setSupplementOpen(true)}
+                  disabled={!actionable}
+                  className="px-3 py-1.5 rounded text-sm font-medium border border-outline-variant text-on-surface hover:bg-surface-container transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={actionable ? 'Yêu cầu người gửi bổ sung thông tin' : 'Bạn không phải người duyệt bước này'}
+                >
+                  <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                  Yêu cầu bổ sung
+                </button>
+                <button
+                  onClick={() => setRejectOpen(true)}
+                  disabled={!actionable}
+                  className="px-4 py-1.5 rounded text-sm font-medium border border-error text-error hover:bg-error-container transition-colors flex items-center gap-2 bg-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={actionable ? 'Từ chối yêu cầu' : 'Bạn không phải người duyệt bước này'}
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  Từ chối
+                </button>
+                <button
+                  onClick={() => setShowApproveConfirm(true)}
+                  disabled={!actionable}
+                  className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={actionable ? 'Phê duyệt yêu cầu' : 'Bạn không phải người duyệt bước này'}
+                >
+                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                  Duyệt yêu cầu
+                </button>
+              </>
             )}
-            <div className="w-px h-6 bg-outline-variant mx-1"></div>
-            <button
-              onClick={() => setSupplementOpen(true)}
-              disabled={!actionable}
-              className="px-3 py-1.5 rounded text-sm font-medium border border-outline-variant text-on-surface hover:bg-surface-container transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title={actionable ? 'Yêu cầu người gửi bổ sung thông tin' : 'Bạn không phải người duyệt bước này'}
-            >
-              <span className="material-symbols-outlined text-[16px]">edit_note</span>
-              Yêu cầu bổ sung
-            </button>
-            <button
-              onClick={() => setRejectOpen(true)}
-              disabled={!actionable}
-              className="px-4 py-1.5 rounded text-sm font-medium border border-error text-error hover:bg-error-container transition-colors flex items-center gap-2 bg-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title={actionable ? 'Từ chối yêu cầu' : 'Bạn không phải người duyệt bước này'}
-            >
-              <span className="material-symbols-outlined text-[16px]">close</span>
-              Từ chối
-            </button>
-            <button
-              onClick={() => setShowApproveConfirm(true)}
-              disabled={!actionable}
-              className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title={actionable ? 'Phê duyệt yêu cầu' : 'Bạn không phải người duyệt bước này'}
-            >
-              <span className="material-symbols-outlined text-[16px]">check_circle</span>
-              Duyệt yêu cầu
-            </button>
           </div>
 
           {/* Approve Confirmation Dialog */}
@@ -212,9 +278,11 @@ export default function RequestDetail() {
                     Hủy
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setShowApproveConfirm(false);
-                      approveRequest(request.id);
+                      // chờ API xong rồi mới tải lại chi tiết (tránh race -> UI bị stale)
+                      await approveRequest(request.id);
+                      refreshDetail();
                     }}
                     className="px-4 py-2 rounded bg-primary text-on-primary hover:bg-primary/90 transition-colors cursor-pointer"
                   >
@@ -231,6 +299,35 @@ export default function RequestDetail() {
         {/* Left: detail + discussion */}
         <div className="flex-1 overflow-y-auto p-6 border-r border-outline-variant">
           <div className="w-full space-y-6">
+            {/* BE-15: banner lý do cần bổ sung (lấy từ comment "[Yêu cầu bổ sung] ...") */}
+            {isSupplementWorkflow && (
+              <section className="bg-warning-container/30 border border-warning/30 rounded-lg shadow-sm overflow-hidden">
+                <div className="px-4 py-3 flex items-start gap-3">
+                  <span className="material-symbols-outlined text-warning text-[20px] flex-shrink-0">edit_note</span>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-sm text-on-surface font-semibold">Đơn đang chờ bổ sung thông tin</h2>
+                    {lastSupplementReason ? (
+                      <p className="text-sm text-on-surface mt-1">
+                        <strong className="font-semibold">Lý do cần bổ sung:</strong> {lastSupplementReason.text}
+                        {lastSupplementReason.at && <span className="text-xs text-secondary ml-1">({lastSupplementReason.at})</span>}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-secondary mt-1 italic">Người duyệt yêu cầu bạn bổ sung thông tin cho đơn này.</p>
+                    )}
+                    {isSupplementOwner && (
+                      <button
+                        onClick={() => setSupplementEditOpen(true)}
+                        className="mt-2 px-3.5 py-1.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                        Bổ sung &amp; gửi lại
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
+
             {/* Detail block */}
             <section className="bg-surface border border-outline-variant rounded-lg shadow-sm overflow-hidden">
               <div className="px-4 py-3 bg-surface-container-low border-b border-outline-variant flex items-center gap-2">
@@ -334,12 +431,34 @@ export default function RequestDetail() {
                 )}
                 {request.comments?.map((c, i) => {
                   const u = employees.find((x) => x.id === c.userId);
+                  const authorName = u?.name || c.userName || 'User';
+                  // BE-15: comment "[Yêu cầu bổ sung] ..." hiển thị nổi bật kèm lý do cụ thể
+                  const isSupplement = (c.text || '').startsWith('[Yêu cầu bổ sung]');
+                  if (isSupplement) {
+                    const reason = (c.text || '').replace('[Yêu cầu bổ sung]', '').trim();
+                    return (
+                      <div key={i} className="flex gap-3">
+                        <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={u?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=128`} alt={authorName} />
+                        <div className="flex-1 bg-warning-container/40 border border-warning/30 rounded-md p-3">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="flex items-center gap-1.5 font-semibold text-sm text-warning">
+                              <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                              Yêu cầu bổ sung
+                            </span>
+                            <span className="text-xs text-secondary">{c.at}</span>
+                          </div>
+                          <p className="text-xs text-secondary mb-1">Người gửi: {authorName}</p>
+                          <p className="text-sm text-on-surface whitespace-pre-wrap">{reason}</p>
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
                     <div key={i} className="flex gap-3">
-                      <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={u?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u?.name || 'User')}&background=random&color=fff&size=128`} alt={u?.name || 'User'} />
+                      <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={u?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=128`} alt={authorName} />
                       <div className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-md p-3">
                         <div className="flex justify-between items-start mb-1">
-                          <span className="font-medium text-sm text-on-surface">{u?.name || 'User'}</span>
+                          <span className="font-medium text-sm text-on-surface">{authorName}</span>
                           <span className="text-xs text-secondary">{c.at}</span>
                         </div>
                         <p className="text-sm text-on-surface whitespace-pre-wrap">{c.text}</p>
@@ -384,15 +503,17 @@ export default function RequestDetail() {
         {/* Right: workflow + audit */}
         <div className="w-full lg:w-[360px] bg-surface flex-shrink-0 flex flex-col overflow-y-auto">
           {/* Action reminder */}
-          <div className={`border-b p-4 ${actionable ? 'bg-warning-container/30 border-warning/20' : 'bg-surface-container-low border-outline-variant'}`}>
-            <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1 ${actionable ? 'text-warning' : 'text-secondary'}`}>
-              <span className="material-symbols-outlined text-[14px]">{actionable ? 'warning' : 'task_alt'}</span>
-              {actionable ? 'Yêu cầu hành động' : 'Trạng thái'}
+          <div className={`border-b p-4 ${(actionable || isSupplementOwner) ? 'bg-warning-container/30 border-warning/20' : 'bg-surface-container-low border-outline-variant'}`}>
+            <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1 ${(actionable || isSupplementOwner) ? 'text-warning' : 'text-secondary'}`}>
+              <span className="material-symbols-outlined text-[14px]">{(actionable || isSupplementOwner) ? 'warning' : 'task_alt'}</span>
+              {(actionable || isSupplementOwner) ? 'Yêu cầu hành động' : 'Trạng thái'}
             </h3>
             <p className="text-sm text-on-surface">
-              {actionable ? (
+              {isSupplementOwner ? (
+                <>Đơn cần <strong>bạn bổ sung thông tin</strong> theo yêu cầu của người duyệt rồi gửi lại.</>
+              ) : actionable ? (
                 <>Đơn cần <strong>{currentUser?.name || 'bạn'}</strong> phê duyệt ở bước {activeStepIndex + 1}. Hạn chót: <strong>12 giờ</strong>.</>
-              ) : request.status === 'approved' ? 'Đơn đã được phê duyệt hoàn tất.' : request.status === 'rejected' ? 'Đơn đã bị từ chối.' : request.status === 'returned_timeout' ? 'Đơn đã trả về nơi khởi tạo do quá hạn.' : 'Đơn đang chờ người duyệt khác xử lý.'}
+              ) : request.status === 'approved' ? 'Đơn đã được phê duyệt hoàn tất.' : request.status === 'rejected' ? 'Đơn đã bị từ chối.' : request.status === 'returned_timeout' ? 'Đơn đã trả về nơi khởi tạo do quá hạn.' : isSupplementWorkflow ? 'Đơn đang chờ người gửi bổ sung thông tin.' : 'Đơn đang chờ người duyệt khác xử lý.'}
             </p>
           </div>
 
@@ -427,6 +548,8 @@ export default function RequestDetail() {
                     : (stepApproverNames[0] || u?.name || 'User');
                   const isCurrent = i === activeStepIndex && (isPendingWorkflow || isTimeoutWorkflow);
                   const isTimedOut = isTimeoutWorkflow && i === activeStepIndex;
+                  // BE-15: bước đang giữ vì chờ người gửi bổ sung (không phải "đang duyệt")
+                  const isSupplementPaused = isSupplementWorkflow && i === activeStepIndex;
                   if (s.status === 'approved') {
                     return (
                       <li key={i} className="flex items-start gap-3">
@@ -479,7 +602,7 @@ export default function RequestDetail() {
                   return (
                     <li key={i} className="flex items-start gap-3">
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm transition-all ${isCurrent ? 'bg-warning text-on-warning ring-2 ring-warning/25 ring-offset-1 ring-offset-surface' : 'bg-surface border border-outline-variant text-secondary'}`}>
-                        <span className="material-symbols-outlined text-[13px]">{isCurrent ? 'pending_actions' : 'schedule'}</span>
+                        <span className="material-symbols-outlined text-[13px]">{isSupplementPaused ? 'edit_note' : isCurrent ? 'pending_actions' : 'schedule'}</span>
                       </div>
                       <div className={isCurrent ? 'bg-warning-container/25 p-2.5 rounded-xl border border-warning/30 w-full -mt-1 shadow-sm' : 'w-full'}>
                         <div className="flex items-center justify-between gap-2">
@@ -487,18 +610,38 @@ export default function RequestDetail() {
                           {isCurrent && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-warning text-on-warning px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
-                              Đang duyệt
+                              {isSupplementPaused ? 'Chờ bổ sung' : 'Đang duyệt'}
                             </span>
                           )}
                         </div>
                         <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}{pendingStep?.approverId === s.approverId && actionable ? ' (Bạn)' : ''}</p>
                         <p className={`text-xs font-medium mt-0.5 ${isCurrent ? 'text-warning' : 'text-secondary'}`}>
-                          {isCurrent ? (isTimeoutWorkflow ? 'Quá hạn 12h - chưa phản hồi' : 'Đang chờ xử lý') : 'Chưa đến lượt'}
+                          {isSupplementPaused ? 'Đã yêu cầu bổ sung - chờ người gửi cập nhật' : isCurrent ? (isTimeoutWorkflow ? 'Quá hạn 12h - chưa phản hồi' : 'Đang chờ xử lý') : 'Chưa đến lượt'}
                         </p>
                       </div>
                     </li>
                   );
                 })}
+                {/* BE-15: đơn bị yêu cầu bổ sung -> luồng quay về người gửi */}
+                {isSupplementWorkflow && (
+                  <li className="flex items-start gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ring-2 ring-warning/25 ring-offset-1 ring-offset-surface ${isSupplementOwner ? 'bg-warning text-on-warning' : 'bg-warning-container text-warning'}`}>
+                      <span className="material-symbols-outlined text-[13px]">edit_note</span>
+                    </div>
+                    <div className="bg-warning-container/25 p-2.5 rounded-xl border border-warning/30 w-full -mt-1 shadow-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-wide text-warning">Bổ sung thông tin</p>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-warning text-on-warning px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
+                          {isSupplementOwner ? 'Cần bạn xử lý' : 'Chờ người gửi'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-on-surface font-medium mt-0.5">{creatorName} (Người gửi)</p>
+                      <p className="text-xs font-medium mt-0.5 text-warning">Người duyệt yêu cầu bổ sung thông tin, đơn quay về người gửi</p>
+                    </div>
+                  </li>
+                )}
+
                 {request.steps.length === 0 && isPendingWorkflow && (
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-warning-container text-warning flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
@@ -547,9 +690,10 @@ export default function RequestDetail() {
         <RejectReasonModal
           requestId={request.id}
           onClose={() => setRejectOpen(false)}
-          onConfirm={(reason) => {
-            rejectRequest(request.id, reason);
+          onConfirm={async (reason) => {
             setRejectOpen(false);
+            await rejectRequest(request.id, reason);
+            refreshDetail();
           }}
         />
       )}
@@ -558,9 +702,23 @@ export default function RequestDetail() {
         <SupplementReasonModal
           requestId={request.id}
           onClose={() => setSupplementOpen(false)}
-          onConfirm={(reason) => {
-            requestSupplement(request.id, reason);
+          onConfirm={async (reason) => {
             setSupplementOpen(false);
+            await requestSupplement(request.id, reason);
+            refreshDetail();
+          }}
+        />
+      )}
+
+      {/* BE-15: bổ sung & gửi lại ngay trên trang chi tiết (không cần sang màn khác) */}
+      {supplementEditOpen && (
+        <CreateRequestModal
+          existingRequest={request}
+          onClose={() => setSupplementEditOpen(false)}
+          onSubmitted={() => {
+            // Bổ sung xong -> tải lại chi tiết + tài liệu đính kèm
+            refreshAttachments();
+            refreshDetail();
           }}
         />
       )}
