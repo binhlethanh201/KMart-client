@@ -4,7 +4,7 @@ import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { workflowService } from '../../../services/workflowService';
-import { departmentService } from '../../departments/services/departmentService';
+import ApprovalFlowTree from './ApprovalFlowTree';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
@@ -44,30 +44,15 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     dynamic: {}
   });
 
-  // BE-03: quản lý của các phòng ban đang được tick chọn
-  const [deptManagers, setDeptManagers] = useState([]);
-
   // BE-04: người duyệt do người tạo chọn (chỉ cần khi bước 1 có nhiều ứng viên)
   const [selectedApproverId, setSelectedApproverId] = useState('');
+
+  // BE-20: popup xem full luồng phê duyệt
+  const [flowOpen, setFlowOpen] = useState(false);
 
   // BE-09: File thật của các trường "Tải file", khoá theo nhãn trường.
   // Trước đây chỉ lưu file.name vào form.dynamic nên file CHƯA BAO GIỜ được upload.
   const [files, setFiles] = useState({});
-
-  useEffect(() => {
-    if (!form.departments.length) {
-      setDeptManagers([]);
-      return;
-    }
-    let cancelled = false;
-    departmentService.getManagers(form.departments)
-      .then((data) => { if (!cancelled) setDeptManagers(data || []); })
-      .catch((err) => {
-        console.error('Failed to load department managers:', err);
-        if (!cancelled) setDeptManagers([]);
-      });
-    return () => { cancelled = true; };
-  }, [form.departments]);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const setDynamic = (name, val) => setForm((f) => ({
@@ -156,7 +141,16 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     return [...steps].sort((a, b) => a.stepOrder - b.stepOrder)[0];
   }, [activeWorkflow]);
 
-  // BE-04: danh sách người CÓ THỂ duyệt bước 1. Nhiều hơn 1 thì bắt người tạo chọn 1.
+  // Loại hình duyệt của bước 1 — quyết định phần "Phòng ban liên quan" hiện hay ẩn
+  const firstStepAppType = (firstStep?.approvalType || '').toLowerCase();
+  // BE-17: chỉ luồng "theo chức danh / bộ phận" (role) mới cần chọn phòng ban liên quan.
+  const showDepartmentPicker = firstStepAppType === 'role';
+  // Luồng tự tìm người theo phòng/chức vụ của người tạo: quản lý trực tiếp / chuỗi quản lý
+  const isHierarchyFlow = firstStepAppType === 'hierarchy';
+  const isChainFlow = firstStepAppType === 'chain';
+  const isSpecificFlow = firstStepAppType === 'specific_user' || firstStepAppType === 'specific';
+
+  // BE-04: danh sách người CÓ THỂ duyệt bước 1.
   const firstStepCandidates = useMemo(() => {
     if (!firstStep) return [];
     const appType = (firstStep.approvalType || '').toLowerCase();
@@ -178,18 +172,19 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     }
 
     if (appType === 'hierarchy' || appType === 'chain') {
-      // Quản lý của TẤT CẢ phòng ban đã chọn (BE-03), không chỉ phòng ban đầu tiên
-      const deptIds = form.departments.length
-        ? form.departments
-        : (currentUser?.departmentId ? [currentUser.departmentId] : []);
-      return deptIds
-        .map(deptId => deptManagers.find(m => m.departmentId === deptId))
-        .filter(m => m && m.managerId)
-        .map(m => ({ id: m.managerId, name: m.managerName || 'Quản lý' }));
+      // BE-17: người quản lý trực tiếp của CHÍNH người tạo đơn (theo phòng ban & chức vụ
+      // mà người tạo được phân bổ), KHÔNG phải theo phòng ban liên quan.
+      const ownDeptId = currentUser?.departmentId;
+      const ownManager = ownDeptId ? departments.find(d => d.id === ownDeptId)?.managerId : null;
+      if (ownManager) {
+        const emp = employees?.find(e => e.id === ownManager);
+        return emp ? [{ id: emp.id, name: emp.name, position: emp.position }] : [];
+      }
+      return [];
     }
 
     return [];
-  }, [firstStep, employees, form.departments, deptManagers, currentUser]);
+  }, [firstStep, employees, departments, currentUser]);
 
   // Bỏ lựa chọn cũ nếu nó không còn trong danh sách ứng viên
   useEffect(() => {
@@ -198,19 +193,13 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     }
   }, [firstStepCandidates, selectedApproverId]);
 
-  const mustPickApprover = firstStepCandidates.length > 1;
-
-  // BE-16: bước gửi tới NHIỀU PHÒNG BAN (hierarchy/chain) thì đơn đi tới TẤT CẢ quản lý
-  // cùng lúc (song song) -> KHÔNG bắt người tạo chọn 1 người. Chỉ bắt chọn khi bước
-  // resolve ra nhiều người nhưng KHÔNG gắn với phòng ban (vd bước theo role).
-  const firstStepAppType = (firstStep?.approvalType || '').toLowerCase();
-  const isMultiDeptStep = firstStepAppType === 'hierarchy' || firstStepAppType === 'chain';
-  const needPickApprover = mustPickApprover && !isMultiDeptStep;
+  // BE-17: chỉ bắt chọn khi luồng theo chức danh/bộ phận resolve ra nhiều người.
+  const mustPickApprover = firstStepAppType === 'role' && firstStepCandidates.length > 1;
 
   const submit = (e) => {
     e.preventDefault();
     if (!form.reason.trim() || !form.documentTypeId) return;
-    if (needPickApprover && !selectedApproverId) return;
+    if (mustPickApprover && !selectedApproverId) return;
     
     // Build payload theo BE DTO
     const payload = {
@@ -218,7 +207,9 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
       reason: form.reason.trim(),
       data: {
         ...form.dynamic,
-        departments: form.departments
+        // BE-17: chỉ luồng "theo chức danh / bộ phận" mới lưu phòng ban liên quan;
+        // các luồng khác tự resolve theo phòng/chức vụ người tạo nên không gửi.
+        departments: showDepartmentPicker ? form.departments : []
       },
     };
     
@@ -233,8 +224,8 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
       payload.totalDays = parseInt(form.dynamic['Tổng số ngày']);
     }
 
-    // BE-04: chỉ gửi khi bước 1 thật sự PHẢI chọn 1 người (không phải bước nhiều phòng ban)
-    if (needPickApprover && selectedApproverId) {
+    // BE-04: chỉ gửi khi bước 1 (theo chức danh) có nhiều người và đã chọn 1
+    if (mustPickApprover && selectedApproverId) {
       payload.selectedApproverId = selectedApproverId;
     }
 
@@ -302,8 +293,8 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             </select>
           </div>
 
-          {/* Department Checkboxes */}
-          {departments.length > 0 && (
+          {/* Department Checkboxes — BE-17: chỉ hiện với luồng "theo chức danh / bộ phận" */}
+          {showDepartmentPicker && departments.length > 0 && (
             <div className="flex flex-col gap-2">
               <label className={labelCls}>Phòng ban liên quan</label>
               <div className="flex gap-2.5 flex-wrap mt-0.5">
@@ -338,19 +329,44 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             </div>
           )}
 
-          {/* BE-16: bước nhiều phòng ban -> gửi tới tất cả, chỉ hiện thông báo (không bắt chọn) */}
-          {isMultiDeptStep && firstStepCandidates.length > 1 && (
+          {/* BE-17: quản lý trực tiếp / chuỗi quản lý -> người duyệt tự suy ra từ phòng & chức vụ của người tạo */}
+          {(isHierarchyFlow || isChainFlow) && (
             <div className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-on-surface">
-              <span className="material-symbols-outlined text-[18px] text-primary flex-shrink-0">call_split</span>
+              <span className="material-symbols-outlined text-[18px] text-primary flex-shrink-0">
+                {isHierarchyFlow ? 'supervisor_account' : 'account_tree'}
+              </span>
               <span>
-                Đơn sẽ được gửi tới <strong>{firstStepCandidates.length} quản lý phòng ban</strong> song song
-                ({firstStepCandidates.map(c => c.name).join(', ')}). Không cần chọn từng người.
+                {isHierarchyFlow ? (
+                  <>Người duyệt là <strong>quản lý trực tiếp</strong> theo phòng ban &amp; chức vụ của bạn{firstStepCandidates[0] ? <>: <strong>{firstStepCandidates[0].name}</strong></> : ' (chưa xác định được quản lý)'}.</>
+                ) : (
+                  <>Đơn đi theo <strong>chuỗi quản lý liên tiếp</strong> (tăng dần theo chức danh/bộ phận) của phòng ban bạn thuộc.</>
+                )}
               </span>
             </div>
           )}
 
-          {/* BE-04: bước 1 có nhiều người nhưng KHÔNG gắn phòng ban -> bắt buộc chọn 1 */}
-          {needPickApprover && (
+          {/* BE-17: chỉ định người -> hiện đúng 1 người duy nhất được chỉ định */}
+          {isSpecificFlow && firstStepCandidates[0] && (
+            <div className="flex flex-col gap-2">
+              <label className={labelCls}>Người duyệt (chỉ định)</label>
+              <div className="flex items-center gap-2.5 rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2.5">
+                {firstStepCandidates[0].avatar ? (
+                  <img src={firstStepCandidates[0].avatar} alt={firstStepCandidates[0].name} className="w-8 h-8 rounded-full object-cover border border-outline-variant" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#29b6f6] text-white text-[12px] flex items-center justify-center">
+                    {(firstStepCandidates[0].name || '?').trim().split(' ').slice(-1)[0].substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-on-surface">{firstStepCandidates[0].name}</span>
+                  <span className="text-xs text-secondary">{firstStepCandidates[0].position || 'Người duyệt'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* BE-17: luồng theo chức danh/bộ phận, nhiều người -> bắt buộc chọn 1 */}
+          {mustPickApprover && (
             <div className="flex flex-col gap-2">
               <label className={labelCls}>
                 Chọn người duyệt <span className="text-error">*</span>
@@ -571,209 +587,82 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           )}
         </div>
 
-        {/* BE-03/BE-16: quản lý theo phòng ban đã chọn được gộp vào "Luồng phê duyệt dự kiến" bên dưới
-            (mỗi bước hierarchy/chain tách thành 1 node/phòng ban, ghi rõ phòng ban đó). */}
-
-        {/* Luồng phê duyệt (Approval Flow) Visualization — dạng biểu đồ cây (trên xuống) */}
+        {/* Luồng phê duyệt dự kiến — bản thu gọn (mờ) + nút xem full luồng.
+            BE-20: modal linh động, cây to quá thì thu nhỏ/mờ và có popup xem đầy đủ. */}
         {activeWorkflow && activeWorkflow.steps && activeWorkflow.steps.length > 0 && (
           <div className="px-6 py-4 bg-surface-container-lowest border-t border-outline-variant/30">
-            <label className="block font-label-md text-label-md text-on-surface-variant mb-4">Luồng phê duyệt dự kiến</label>
-            <div className="overflow-x-auto pb-2 px-1 [&::-webkit-scrollbar]:hidden">
-              {(() => {
-                const sortedSteps = [...activeWorkflow.steps].sort((a, b) => a.stepOrder - b.stepOrder);
+            <div className="flex items-center justify-between mb-3">
+              <label className="block font-label-md text-label-md text-on-surface-variant">Luồng phê duyệt dự kiến</label>
+              <button
+                type="button"
+                onClick={() => setFlowOpen(true)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">open_in_full</span>
+                Xem chi tiết luồng
+              </button>
+            </div>
+            <div className="relative">
+              {/* Bản xem trước: thu nhỏ + mờ để bao quát toàn bộ sơ đồ */}
+              <div className="overflow-hidden max-h-[220px] rounded-lg border border-outline-variant/50 bg-surface-container-low/40">
+                <div className="scale-[0.82] origin-top pointer-events-none opacity-70 overflow-x-auto">
+                  <ApprovalFlowTree
+                    steps={activeWorkflow.steps}
+                    departments={departments}
+                    employees={employees}
+                    currentUser={currentUser}
+                    selectedApproverId={selectedApproverId}
+                    variant="inline"
+                  />
+                </div>
+              </div>
+              {/* Lớp phủ mời bấm xem full */}
+              <button
+                type="button"
+                onClick={() => setFlowOpen(true)}
+                className="absolute inset-0 flex items-end justify-center pb-2 bg-gradient-to-t from-surface/90 to-transparent cursor-pointer group"
+              >
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-on-primary text-xs font-semibold shadow-sm group-hover:bg-primary/90 transition-colors">
+                  <span className="material-symbols-outlined text-[16px]">open_in_full</span>
+                  Bấm vào đây để xem chi tiết luồng
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
 
-                const senderInitials = (() => {
-                  const name = currentUser?.name || 'Tôi';
-                  const parts = name.trim().split(' ');
-                  return parts.length === 1 ? parts[0].substring(0, 2).toUpperCase()
-                    : (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-                })();
-
-                // Mỗi bước -> 1 tầng; hierarchy/chain -> nhiều nhánh (phòng ban) chạy song song
-                const stages = sortedSteps.map((step, idx) => {
-                  const appType = (step.approvalType || '').toLowerCase();
-
-                  if (appType === 'hierarchy' || appType === 'chain') {
-                    const deptIds = (form.departments && form.departments.length > 0)
-                      ? form.departments
-                      : (currentUser?.departmentId ? [currentUser.departmentId] : []);
-
-                    const branches = deptIds.length > 0
-                      ? deptIds.map((deptId) => {
-                          const dept = departments.find((d) => d.id === deptId);
-                          const info = deptManagers.find((m) => m.departmentId === deptId);
-                          const managerId = info?.managerId || dept?.managerId;
-                          const mgrEmp = employees?.find((e) => e.id === managerId);
-                          const managerName = info?.managerName || mgrEmp?.name;
-                          return {
-                            key: `dept-${deptId}`,
-                            badge: dept?.code || dept?.name || 'Phòng ban',
-                            badgeTitle: dept?.name || info?.departmentName || 'Phòng ban',
-                            name: managerId ? (managerName || 'Quản lý') : 'Chưa có quản lý',
-                            hasManager: Boolean(managerId),
-                            avatar: mgrEmp?.avatar,
-                            role: `Quản lý ${dept?.code || dept?.name || 'phòng ban'}`,
-                            isStep: false,
-                          };
-                        })
-                      : [{ key: `dept-empty-${idx}`, badge: 'Chọn phòng ban', badgeTitle: 'Chọn phòng ban', name: 'Chưa có quản lý', hasManager: false, avatar: null, role: 'Chờ chọn phòng ban', isStep: false }];
-
-                    return { key: step.id || idx, parallel: true, branches };
-                  }
-
-                  let emp = null;
-                  if (idx === 0 && selectedApproverId) {
-                    emp = employees?.find(e => e.id === selectedApproverId)
-                      || deptManagers.find(m => m.managerId === selectedApproverId)
-                      || null;
-                  }
-                  if (appType === 'specific_user' || appType === 'specific') {
-                    emp = employees?.find(e => e.id === (step.specificUserId || step.specificUser));
-                  } else if (appType === 'role' && step.role) {
-                    emp = employees?.find(e => {
-                      if (e.role === step.role) return true;
-                      if (e.roles && Array.isArray(e.roles)) return e.roles.includes(step.role);
-                      return false;
-                    });
-                  }
-                  const displayName = emp ? emp.name : (step.name || 'Người duyệt');
-                  let displayRole = step.roleName || step.role || 'Người duyệt';
-                  if (emp) {
-                    const r = emp.role || (emp.roles && emp.roles[0]) || '';
-                    if (r.toUpperCase() === 'ADMIN') displayRole = 'Quản trị viên';
-                    else if (r.toUpperCase() === 'MANAGER') displayRole = 'Quản lý';
-                    else if (r.toUpperCase() === 'HR') displayRole = 'Nhân sự';
-                    else if (r.toUpperCase() === 'TEAM_LEADER') displayRole = 'Trưởng nhóm';
-                    else displayRole = r || 'Nhân viên';
-                  }
-                  return {
-                    key: step.id || idx,
-                    parallel: false,
-                    branches: [{
-                      key: `step-${step.id || idx}`,
-                      badge: `Cấp ${step.stepOrder}`,
-                      badgeTitle: `Bước ${step.stepOrder}`,
-                      name: displayName,
-                      hasManager: Boolean(emp),
-                      avatar: emp?.avatar,
-                      role: displayRole,
-                      isStep: true,
-                    }],
-                  };
-                });
-
-                // 1 "chip" người duyệt trong biểu đồ
-                const chip = (node) => {
-                  const parts = (node.name || 'QL').trim().split(' ');
-                  const initials = parts.length === 1 ? parts[0].substring(0, 2).toUpperCase()
-                    : (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-                  return (
-                    <div key={node.key} className="flex items-center gap-2.5 rounded-lg border border-outline-variant bg-surface px-3 py-2 shadow-sm w-[220px]">
-                      <div className="relative flex-shrink-0">
-                        {node.hasManager ? (
-                          node.avatar ? (
-                            <img src={node.avatar} alt={node.name} className="w-9 h-9 rounded-full object-cover border border-outline-variant" />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-semibold text-[12px] flex items-center justify-center border border-blue-200">
-                              {initials}
-                            </div>
-                          )
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-warning-container text-warning flex items-center justify-center border border-warning/20">
-                            <span className="material-symbols-outlined text-[18px]">warning</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span
-                            className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide flex-shrink-0 ${node.hasManager ? 'bg-primary/10 text-primary' : 'bg-warning-container text-warning'}`}
-                            title={node.badgeTitle || node.badge}
-                          >
-                            <span className="material-symbols-outlined text-[11px]">{node.isStep ? 'account_tree' : 'apartment'}</span>
-                            {node.badge}
-                          </span>
-                          <span className="text-[12px] font-semibold text-on-surface truncate" title={node.name}>{node.name}</span>
-                        </div>
-                        <span className={`text-[10px] truncate font-medium ${node.hasManager ? 'text-secondary' : 'text-warning'}`} title={node.role}>{node.role}</span>
-                      </div>
-                    </div>
-                  );
-                };
-
-                return (
-                  <div className="flex flex-col items-center min-w-fit">
-                    {/* Người gửi */}
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-2.5 rounded-lg border-2 border-primary/30 bg-primary/5 px-4 py-2 shadow-sm">
-                        {currentUser?.avatar ? (
-                          <img src={currentUser.avatar} alt="Sender" className="w-9 h-9 rounded-full object-cover border border-primary/20" />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-amber-400 text-amber-950 font-semibold text-[12px] flex items-center justify-center">{senderInitials}</div>
-                        )}
-                        <div className="flex flex-col">
-                          <span className="text-[13px] font-bold text-on-surface">{currentUser?.name || 'Tôi'}</span>
-                          <span className="text-[10px] text-primary uppercase tracking-wider font-semibold">Người gửi</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Các tầng duyệt */}
-                    {stages.map((stage, si) => (
-                      <div key={stage.key} className="flex flex-col items-center">
-                        {/* Nối dọc trên */}
-                        <div className="w-px h-5 bg-outline-variant" />
-
-                        {stage.parallel && stage.branches.length > 1 ? (
-                          <div className="flex flex-col items-center">
-                            {/* Nhãn cấp + song song */}
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
-                              <span className="material-symbols-outlined text-[12px]">call_split</span>
-                              Bước {si + 1} (Cấp {si + 1}) · song song
-                            </span>
-                            {/* Cuống xuống đường ngang */}
-                            <div className="w-px h-3 bg-outline-variant" />
-                            {/* Các nhánh + đường nối ngang dạng bracket */}
-                            <div className="flex items-start">
-                              {stage.branches.map((node, bi) => (
-                                <div key={node.key} className="flex flex-col items-center px-3">
-                                  {/* Nửa đường ngang trái/phải (ẩn ở nhánh đầu/cuối) */}
-                                  <div className="flex w-full">
-                                    <div className={`h-px flex-1 ${bi === 0 ? 'bg-transparent' : 'bg-outline-variant'}`} />
-                                    <div className={`h-px flex-1 ${bi === stage.branches.length - 1 ? 'bg-transparent' : 'bg-outline-variant'}`} />
-                                  </div>
-                                  {/* Nhánh dọc xuống chip */}
-                                  <div className="w-px h-3 bg-outline-variant" />
-                                  {chip(node)}
-                                </div>
-                              ))}
-                            </div>
-                            {/* Cuống gom xuống */}
-                            <div className="w-px h-3 bg-outline-variant" />
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center">
-                            {/* Nhãn cấp cho tầng 1 người */}
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
-                              <span className="material-symbols-outlined text-[12px]">account_tree</span>
-                              Bước {si + 1} (Cấp {si + 1})
-                            </span>
-                            <div className="w-px h-3 bg-outline-variant" />
-                            {chip(stage.branches[0])}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-
-                    {/* Nối + Hoàn tất */}
-                    <div className="w-px h-5 bg-outline-variant" />
-                    <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success-container/30 px-4 py-1.5 shadow-sm">
-                      <span className="material-symbols-outlined text-success text-[18px]">flag</span>
-                      <span className="text-[12px] font-semibold text-success">Hoàn tất</span>
-                    </div>
+        {/* BE-20: popup xem FULL luồng phê duyệt */}
+        {flowOpen && (
+          <div
+            className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-4"
+            onClick={() => setFlowOpen(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-surface rounded-xl shadow-2xl w-full max-w-4xl max-h-[88vh] flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/40">
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-primary text-[22px]">account_tree</span>
+                  <div>
+                    <h3 className="text-base font-bold text-on-surface">Chi tiết luồng phê duyệt</h3>
+                    <p className="text-xs text-secondary">{selectedDocType?.name || 'Đề xuất'} · {activeWorkflow?.name || ''}</p>
                   </div>
-                );
-              })()}
+                </div>
+                <button type="button" onClick={() => setFlowOpen(false)} className="p-1.5 rounded-full text-on-surface-variant hover:bg-surface-variant cursor-pointer">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="flex-1 overflow-auto p-6 bg-surface-container-lowest">
+                <ApprovalFlowTree
+                  steps={activeWorkflow.steps}
+                  departments={departments}
+                  employees={employees}
+                  currentUser={currentUser}
+                  selectedApproverId={selectedApproverId}
+                  variant="full"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -790,7 +679,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           <button
             type="button"
             onClick={submit}
-            disabled={!form.documentTypeId || !form.reason.trim() || (needPickApprover && !selectedApproverId)}
+            disabled={!form.documentTypeId || !form.reason.trim() || (mustPickApprover && !selectedApproverId)}
             className="px-5 py-2.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isEdit ? 'Bổ sung & gửi lại' : 'Gửi yêu cầu'}

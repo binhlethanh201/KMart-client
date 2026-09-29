@@ -339,7 +339,24 @@ export function ApprovalSystemProvider({ children }) {
       // BE-08: don cua chinh minh thi khong bao gio "can ban duyet",
       // ke ca khi BE tra ve trong danh sach pending.
       if (currentUserId && r.creatorId === currentUserId) return false;
-      return r._isPendingReq === true;
+      if (r._isPendingReq !== true) return false;
+
+      // BE-18: danh sách /pending của backend trả CẢ những đơn người này đã đi qua
+      // (để hiện trong "Đã phê duyệt"/"Từ chối"), không chỉ đơn đang tới lượt.
+      // Vì vậy phải kiểm tra đúng người này có thuộc BƯỚC ĐANG CHỜ hiện tại hay không,
+      // nếu không người đã duyệt xong bước trước vẫn thấy nút Duyệt và bị 403.
+      const steps = r.steps || [];
+      const currentOrder = Number(r.currentStep) || 0;
+      if (steps.length > 0 && currentOrder > 0) {
+        const currentStep = steps.find((s) => Number(s.stepOrder) === currentOrder);
+        if (!currentStep) return false;
+        const ids = currentStep.approverIds?.length
+          ? currentStep.approverIds
+          : (currentStep.approverId ? [currentStep.approverId] : []);
+        if (ids.length > 0 && !ids.includes(currentUserId)) return false;
+      }
+
+      return true;
     },
     [currentUserId]
   );

@@ -7,6 +7,7 @@ const HISTORY_META = {
   submitted: { type: 'create', text: 'Gửi đơn để phê duyệt' },
   approved: { type: 'approve', text: 'Đã phê duyệt' },
   rejected: { type: 'reject', text: 'Đã từ chối đơn' },
+  rejected: { type: 'reject', text: 'Đã từ chối đơn' },
   canceled: { type: 'timeout', text: 'Đã hủy đơn' },
   cancelled: { type: 'timeout', text: 'Đã hủy đơn' },
   supplement_requested: { type: 'supplement', text: 'Yêu cầu bổ sung thông tin' },
@@ -47,7 +48,10 @@ const mapToFrontendModel = (a) => {
         ? s.approverIds
         : (s.approverId ? [s.approverId] : []),
       status: s.status.toLowerCase(),
-      actedAt: s.actedAt ? new Date(s.actedAt).toLocaleString('vi-VN') : null
+      actedAt: s.actedAt ? new Date(s.actedAt).toLocaleString('vi-VN') : null,
+      // BE-18: cần giữ stepOrder để biết bước nào đang chờ (phân biệt người tới lượt
+      // với người đã duyệt xong bước trước trong cùng danh sách /pending).
+      stepOrder: s.stepOrder
     })),
     comments: (a.comments || []).map(c => ({
       id: c.id,
@@ -55,6 +59,18 @@ const mapToFrontendModel = (a) => {
       userName: c.userName,
       text: c.content,
       at: new Date(c.createdAt).toLocaleString('vi-VN')
+    })),
+    // BE-25: nhật ký thô để card biết CHÍNH XÁC ai từ chối / ai yêu cầu bổ sung ở bước nào.
+    // Không dùng `history` (đã ghép chuỗi tiếng Việt) vì cần userId + stepOrder + thời điểm.
+    histories: (a.histories || []).map(h => ({
+      userId: h.userId,
+      userName: h.userName,
+      action: (h.action || '').toLowerCase(),
+      stepOrder: h.stepOrder,
+      comment: h.comment,
+      at: h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : null,
+      // BE-30: giữ mốc thời gian THÔ để sắp thứ tự duyệt trong cùng một bước
+      atRaw: h.createdAt || null
     })),
     history: (a.histories || []).map(h => {
       // BE-15: dịch Action -> nhãn tiếng Việt, kèm tên người thực hiện và lý do (nếu có)
@@ -165,14 +181,28 @@ export const applicationService = {
       `/applications/${applicationId}/attachments/${attachmentId}/download`,
       { responseType: 'blob' }
     );
-    const url = window.URL.createObjectURL(response.data);
+    // BE-21: blob trả về có thể là JSON lỗi (vd 404) dù status 200 -> kiểm tra để báo đúng.
+    const blob = response.data;
+    if (blob && blob.type && blob.type.includes('application/json')) {
+      const text = await blob.text();
+      let msg = 'Không tải được tài liệu';
+      try { msg = JSON.parse(text)?.error || msg; } catch { /* ignore */ }
+      throw new Error(msg);
+    }
+
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName || 'attachment';
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+    // BUG FIX: trước đây remove() + revokeObjectURL() gọi NGAY sau click() khiến trình duyệt
+    // thu hồi URL trước khi kịp tải -> file không tải được. Trễ cả hai một nhịp.
+    setTimeout(() => {
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    }, 1500);
   },
 
   // Bổ sung thông tin cho đơn đang ở trạng thái NeedsSupplement

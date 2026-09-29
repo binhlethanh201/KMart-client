@@ -18,19 +18,15 @@ const formatFileSize = (bytes) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const historyBorder = {
-  approve: 'border-success',
-  reject: 'border-error',
-  timeout: 'border-error',
-  supplement: 'border-warning',
-  comment: 'border-outline-variant',
-  create: 'border-outline-variant',
-};
-const historyBg = {
-  approve: 'bg-success-container/10',
-  reject: 'bg-error-container/10',
-  timeout: 'bg-error-container/10',
-  supplement: 'bg-warning-container/10',
+// BE-26: màu/viền cho từng loại mốc trong dòng thời gian xử lý
+// BE-27: "đang duyệt" dùng màu CAM (khớp chỉ báo "Cần bạn duyệt" ngoài danh sách)
+const stepTone = {
+  approved: { ring: 'bg-success text-on-success', text: 'text-success', box: '' },
+  rejected: { ring: 'bg-error text-on-error', text: 'text-error', box: '' },
+  timeout: { ring: 'bg-error text-on-error', text: 'text-error', box: 'bg-error-container/20 border border-error/30' },
+  supplement: { ring: 'bg-pink-600 text-white', text: 'text-pink-700', box: 'bg-pink-50 border border-pink-200' },
+  current: { ring: 'bg-orange-500 text-white', text: 'text-orange-700', box: 'bg-orange-50 border border-orange-300' },
+  idle: { ring: 'bg-surface border border-outline-variant text-secondary', text: 'text-secondary', box: '' },
 };
 
 export default function RequestDetail() {
@@ -116,6 +112,11 @@ export default function RequestDetail() {
   }
 
   const meta = STATUS_META[request.status] || { badge: 'bg-gray-100 text-gray-800', dot: 'bg-gray-500', label: 'Không rõ' };
+  // BE-28: trong trang chi tiết dùng TEAL cho "yêu cầu bổ sung" (đồng bộ các khối bên dưới),
+  // còn danh sách vẫn giữ màu tím của STATUS_META.
+  const statusBadge = request.status === 'needssupplement'
+    ? { badge: 'text-pink-700', dot: 'bg-pink-600' }
+    : meta;
   const creatorName = request.creatorName || employees.find((u) => u.id === request.creatorId)?.name;
   const creatorRole = employees.find((u) => u.id === request.creatorId)?.position || 'Nhân viên';
   const creatorAvatar = employees.find((u) => u.id === request.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
@@ -156,6 +157,129 @@ export default function RequestDetail() {
     .map((c) => ({ text: (c.text || '').replace('[Yêu cầu bổ sung]', '').trim(), at: c.at }));
   const lastSupplementReason = supplementReasons.length ? supplementReasons[supplementReasons.length - 1] : null;
 
+  // BE-18: lý do từ chối (comment "[Từ chối] ..."), hiển thị banner khi đơn bị từ chối
+  const rejectReasons = (request.comments || [])
+    .filter((c) => (c.text || '').startsWith('[Từ chối]'))
+    .map((c) => ({ text: (c.text || '').replace('[Từ chối]', '').trim(), at: c.at }));
+  const lastRejectReason = rejectReasons.length ? rejectReasons[rejectReasons.length - 1] : (request.rejectReason ? { text: request.rejectReason, at: null } : null);
+
+  // BE-26: gộp "Cấp bậc Phê duyệt" + "Nhật ký hệ thống" -> 1 dòng thời gian.
+  // Lấy giờ duyệt RIÊNG của từng người trong bước (nhiều người duyệt cùng bước có thể duyệt lệch giờ).
+  const histories = request.histories || [];
+  const actedAtOf = {};
+  // BE-30: giữ cả mốc thô để sắp thứ tự duyệt trong cùng 1 bước
+  const actedAtRawOf = {};
+  histories.forEach((h) => {
+    if (h.action === 'approved' && h.at) actedAtOf[`${h.stepOrder}:${h.userId}`] = h.at;
+    if (h.atRaw) actedAtRawOf[`${h.stepOrder}:${h.userId}`] = h.atRaw;
+  });
+  // BE-30: trạng thái RIÊNG của từng người trong bước (để mỗi người một màu:
+  // đã duyệt = xanh lá, từ chối = đỏ, đã yêu cầu bổ sung = hồng).
+  // BE-31: ưu tiên theo TRẠNG THÁI HIỆN TẠI của bước — nếu bước đã duyệt thì người
+  // vừa yêu cầu bổ sung vừa duyệt sẽ hiện "Đã duyệt" (tránh hiện mãi hành động cũ).
+  const actedByOf = {};
+  histories.forEach((h) => {
+    if (!h.at) return;
+    const key = `${h.stepOrder}:${h.userId}`;
+    const stepStatus = (request.steps || []).find(x => (x.stepOrder ?? 0) === h.stepOrder)?.status;
+    // BE-31: bước đã duyệt xong thì bỏ qua mốc "yêu cầu bổ sung" cũ (tránh hiện mãi hành động đã qua)
+    if (stepStatus === 'approved' && h.action === 'supplement_requested') return;
+    const rank = stepStatus === 'approved'
+      ? { approved: 3, rejected: 2 }
+      : { rejected: 3, supplement_requested: 2, approved: 1 };
+    const r = rank[h.action] || 0;
+    if (!actedByOf[key] || r > (rank[actedByOf[key]] || 0)) actedByOf[key] = h.action;
+  });
+
+  // BE-31: FALLBACK cho đơn CŨ thiếu mốc nhật ký (từ chối trước khi có tính năng lưu history).
+  // Khi bước đã kết thúc (approved/rejected) thì `step.approverId` chính là NGƯỜI ĐÃ THAO TÁC,
+  // và `step.actedAt` là giờ họ thao tác.
+  const stepActorOf = {};
+  (request.steps || []).forEach((s) => {
+    const n = s.stepOrder ?? 0;
+    if ((s.status === 'approved' || s.status === 'rejected') && s.approverId) {
+      stepActorOf[n] = {
+        userId: s.approverId,
+        action: s.status === 'approved' ? 'approved' : 'rejected',
+        at: s.actedAt,
+      };
+    }
+  });
+  const supplementEvents = histories.filter((h) => h.action === 'supplement_requested');
+  const supplementDone = histories.filter((h) => h.action === 'supplement_completed');
+  const nameOf = (uid) => employees.find((x) => x.id === uid)?.name || 'Người dùng';
+  // BE-31: mốc nào xảy ra TRƯỚC thì hiện trước (so theo thời gian thực)
+  const msOf = (v) => (v ? new Date(v).getTime() : Number.MAX_SAFE_INTEGER);
+  const stepDoneMs = (n) => {
+    const times = histories
+      .filter((h) => h.stepOrder === n && (h.action === 'approved' || h.action === 'rejected') && h.atRaw)
+      .map((h) => new Date(h.atRaw).getTime());
+    const step = (request.steps || []).find((x) => (x.stepOrder ?? 0) === n);
+    if (step?.actedAt) times.push(new Date(step.actedAt).getTime());
+    return times.length ? Math.min(...times) : Number.MAX_SAFE_INTEGER;
+  };
+
+  // BE-26: sắp mốc theo bước để "yêu cầu bổ sung" / "đã bổ sung" nằm ĐÚNG chỗ trong dòng thời gian
+  const stepOrdered = (request.steps || []).map((s, i) => ({ step: s, index: i }))
+    .sort((a, b) => (a.step.stepOrder ?? a.index + 1) - (b.step.stepOrder ?? b.index + 1));
+
+  // BE-26: gộp mọi mốc thành 1 danh sách rồi sắp theo bước -> đọc như một dòng thời gian thật.
+  // Thứ tự trong cùng 1 bước: yêu cầu bổ sung -> bước duyệt -> đã bổ sung và gửi lại.
+  // BE-27: mỗi NGƯỜI duyệt là 1 CHẤM riêng (to/nhỏ) để thấy rõ ai duyệt trước ai duyệt sau.
+  const timelineItems = [{ kind: 'creator', key: 'creator', order: 0 }];
+  stepOrdered.forEach(({ step: s, index: i }) => {
+    const n = s.stepOrder ?? i + 1;
+    timelineItems.push({ kind: 'step', step: s, index: i, key: `step-${i}`, order: n * 100 + 20 });
+    const ids = (s.approverIds?.length ? s.approverIds : [s.approverId]).filter(Boolean);
+    // BE-30: trong bước, ai duyệt TRƯỚC hiện trước (theo giờ thực); người chưa duyệt giữ nguyên thứ tự.
+    const sortedIds = [...ids].sort((a, b) => {
+      const ta = actedAtRawOf[`${n}:${a}`];
+      const tb = actedAtRawOf[`${n}:${b}`];
+      if (ta && tb) return new Date(ta) - new Date(tb);
+      if (ta) return -1;
+      if (tb) return 1;
+      return 0;
+    });
+    sortedIds.forEach((aid, k) => {
+      timelineItems.push({
+        kind: 'person',
+        step: s,
+        index: i,
+        approverId: aid,
+        key: `person-${i}-${k}`,
+        order: n * 100 + 25 + k,   // giữ đúng thứ tự duyệt trong bước
+      });
+    });
+  });
+  supplementEvents.forEach((h, i) => {
+    const n = h.stepOrder || 1;
+    // BE-31: nếu bước đã kết thúc TRƯỚC khi yêu cầu bổ sung -> hiện yêu cầu bổ sung SAU bước
+    const after = msOf(h.atRaw) > stepDoneMs(n);
+    timelineItems.push({
+      kind: 'suppRequest',
+      h,
+      key: `suppreq-${i}`,
+      order: after ? n * 100 + 40 : n * 100 + 5,
+    });
+  });
+  supplementDone.forEach((h, i) => {
+    const n = h.stepOrder || 1;
+    const after = msOf(h.atRaw) > stepDoneMs(n);
+    timelineItems.push({
+      kind: 'suppDone',
+      h,
+      key: `suppdone-${i}`,
+      order: after ? n * 100 + 50 : n * 100 + 6,
+    });
+  });
+  // đơn chờ bổ sung nhưng chưa có mốc nhật ký -> vẫn hiện để biết đang chờ ai
+  if (isSupplementWorkflow && supplementEvents.length === 0) {
+    timelineItems.push({ kind: 'suppPending', key: 'supppending', order: (request.currentStep || 1) * 100 + 15 });
+  }
+  // BE-27: mốc kết thúc luôn nằm cuối, KHÔNG bị mất khi đơn hoàn tất / hủy / từ chối / quá hạn
+  timelineItems.push({ kind: 'finish', key: 'finish', order: 999999 });
+  timelineItems.sort((a, b) => a.order - b.order);
+
   const postComment = async () => {
     if (!comment.trim()) return;
     const text = comment;
@@ -183,8 +307,8 @@ export default function RequestDetail() {
           <div>
             <div className="flex items-center gap-3 mb-1 flex-wrap">
               <h1 className="font-display-lg text-on-surface">{request.title}</h1>
-              <span className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${meta.badge}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+              <span className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${statusBadge.badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot}`} />
                 {meta.label}
               </span>
             </div>
@@ -198,7 +322,7 @@ export default function RequestDetail() {
             {/* BE-15: đơn đang chờ chính người tạo bổ sung -> cho bổ sung & gửi lại ngay tại đây */}
             {isSupplementOwner ? (
               <>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-warning-container text-on-warning-container text-xs font-semibold">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 text-pink-800 text-xs font-semibold border border-pink-200">
                   <span className="material-symbols-outlined text-[16px]">edit_note</span>
                   Người duyệt yêu cầu bạn bổ sung thông tin
                 </span>
@@ -301,9 +425,9 @@ export default function RequestDetail() {
           <div className="w-full space-y-6">
             {/* BE-15: banner lý do cần bổ sung (lấy từ comment "[Yêu cầu bổ sung] ...") */}
             {isSupplementWorkflow && (
-              <section className="bg-warning-container/30 border border-warning/30 rounded-lg shadow-sm overflow-hidden">
+              <section className="bg-pink-50/60 border border-pink-200 rounded-lg shadow-sm overflow-hidden">
                 <div className="px-4 py-3 flex items-start gap-3">
-                  <span className="material-symbols-outlined text-warning text-[20px] flex-shrink-0">edit_note</span>
+                  <span className="material-symbols-outlined text-pink-700 text-[20px] flex-shrink-0">edit_note</span>
                   <div className="flex-1 min-w-0">
                     <h2 className="text-sm text-on-surface font-semibold">Đơn đang chờ bổ sung thông tin</h2>
                     {lastSupplementReason ? (
@@ -314,15 +438,25 @@ export default function RequestDetail() {
                     ) : (
                       <p className="text-sm text-secondary mt-1 italic">Người duyệt yêu cầu bạn bổ sung thông tin cho đơn này.</p>
                     )}
-                    {isSupplementOwner && (
-                      <button
-                        onClick={() => setSupplementEditOpen(true)}
-                        className="mt-2 px-3.5 py-1.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium inline-flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">edit_note</span>
-                        Bổ sung &amp; gửi lại
-                      </button>
-                    )}
+                    <p className="text-xs text-pink-700 mt-2 font-medium">
+                      {isSupplementOwner ? 'Bấm "Bổ sung & gửi lại" ở góc trên bên phải để cập nhật và gửi lại đơn.' : 'Đang chờ người gửi cập nhật và gửi lại.'}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* BE-18: banner lý do từ chối (comment "[Từ chối] ..." hoặc rejectReason cũ) */}
+            {request.status === 'rejected' && lastRejectReason && (
+              <section className="bg-error-container/30 border border-error/30 rounded-lg shadow-sm overflow-hidden">
+                <div className="px-4 py-3 flex items-start gap-3">
+                  <span className="material-symbols-outlined text-error text-[20px] flex-shrink-0">block</span>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-sm text-on-surface font-semibold">Đơn đã bị từ chối</h2>
+                    <p className="text-sm text-on-surface mt-1">
+                      <strong className="font-semibold">Lý do từ chối:</strong> {lastRejectReason.text}
+                      {lastRejectReason.at && <span className="text-xs text-secondary ml-1">({lastRejectReason.at})</span>}
+                    </p>
                   </div>
                 </div>
               </section>
@@ -364,7 +498,9 @@ export default function RequestDetail() {
                   {Object.entries(request.fields).map(([key, val]) => {
                     // Skip internal or special fields
                     if (['title', 'type', 'attachment'].includes(key)) return null;
+                    if (key.startsWith('__')) return null; // BE-19: ẩn trường nội bộ (snapshot người duyệt)
                     if (val === undefined || val === null || val === '') return null; // hide empty
+                    if (Array.isArray(val) && val.length === 0) return null; // ẩn mảng rỗng (vd departments)
 
                     // Map legacy keys to nice labels for seed data compatibility
                     let label = key;
@@ -434,20 +570,41 @@ export default function RequestDetail() {
                   const authorName = u?.name || c.userName || 'User';
                   // BE-15: comment "[Yêu cầu bổ sung] ..." hiển thị nổi bật kèm lý do cụ thể
                   const isSupplement = (c.text || '').startsWith('[Yêu cầu bổ sung]');
+                  // BE-18: comment "[Từ chối] ..." hiển thị nổi bật kèm lý do từ chối
+                  const isReject = (c.text || '').startsWith('[Từ chối]');
                   if (isSupplement) {
                     const reason = (c.text || '').replace('[Yêu cầu bổ sung]', '').trim();
                     return (
                       <div key={i} className="flex gap-3">
                         <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={u?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=128`} alt={authorName} />
-                        <div className="flex-1 bg-warning-container/40 border border-warning/30 rounded-md p-3">
+                        <div className="flex-1 bg-pink-50/70 border border-pink-200 rounded-md p-3">
                           <div className="flex justify-between items-start mb-1">
-                            <span className="flex items-center gap-1.5 font-semibold text-sm text-warning">
+                            <span className="flex items-center gap-1.5 font-semibold text-sm text-pink-700">
                               <span className="material-symbols-outlined text-[16px]">edit_note</span>
                               Yêu cầu bổ sung
                             </span>
                             <span className="text-xs text-secondary">{c.at}</span>
                           </div>
                           <p className="text-xs text-secondary mb-1">Người gửi: {authorName}</p>
+                          <p className="text-sm text-on-surface whitespace-pre-wrap">{reason}</p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (isReject) {
+                    const reason = (c.text || '').replace('[Từ chối]', '').trim();
+                    return (
+                      <div key={i} className="flex gap-3">
+                        <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={u?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=128`} alt={authorName} />
+                        <div className="flex-1 bg-error-container/40 border border-error/30 rounded-md p-3">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="flex items-center gap-1.5 font-semibold text-sm text-error">
+                              <span className="material-symbols-outlined text-[16px]">block</span>
+                              Từ chối
+                            </span>
+                            <span className="text-xs text-secondary">{c.at}</span>
+                          </div>
+                          <p className="text-xs text-secondary mb-1">Người duyệt: {authorName}</p>
                           <p className="text-sm text-on-surface whitespace-pre-wrap">{reason}</p>
                         </div>
                       </div>
@@ -503,8 +660,8 @@ export default function RequestDetail() {
         {/* Right: workflow + audit */}
         <div className="w-full lg:w-[360px] bg-surface flex-shrink-0 flex flex-col overflow-y-auto">
           {/* Action reminder */}
-          <div className={`border-b p-4 ${(actionable || isSupplementOwner) ? 'bg-warning-container/30 border-warning/20' : 'bg-surface-container-low border-outline-variant'}`}>
-            <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1 ${(actionable || isSupplementOwner) ? 'text-warning' : 'text-secondary'}`}>
+          <div className={`border-b p-4 ${isSupplementOwner ? 'bg-pink-50/60 border-pink-200' : actionable ? 'bg-warning-container/30 border-warning/20' : 'bg-surface-container-low border-outline-variant'}`}>
+            <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1 ${isSupplementOwner ? 'text-pink-700' : actionable ? 'text-warning' : 'text-secondary'}`}>
               <span className="material-symbols-outlined text-[14px]">{(actionable || isSupplementOwner) ? 'warning' : 'task_alt'}</span>
               {(actionable || isSupplementOwner) ? 'Yêu cầu hành động' : 'Trạng thái'}
             </h3>
@@ -517,171 +674,288 @@ export default function RequestDetail() {
             </p>
           </div>
 
-          {/* Workflow chain */}
-          <div className="p-6 border-b border-outline-variant">
+          {/* BE-26: gộp "Cấp bậc Phê duyệt" + "Nhật ký hệ thống" -> 1 dòng thời gian duy nhất,
+              mỗi mốc ghi rõ người thực hiện + thời gian; UI giữ nguyên phong cách timeline cũ. */}
+          <div className="p-6">
             <h3 className="text-xs text-secondary uppercase tracking-widest mb-4 flex items-center gap-2 font-semibold">
               <span className="material-symbols-outlined text-[16px]">account_tree</span>
-              Cấp bậc Phê duyệt
+              Tiến trình xử lý
             </h3>
             <div className="relative">
               <div className="absolute left-[11px] top-3 bottom-3 w-px bg-outline-variant z-0"></div>
               <ul className="space-y-5 relative z-10">
-                {/* creator */}
-                <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-surface border border-outline-variant flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="material-symbols-outlined text-[12px] text-secondary">person</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-secondary uppercase tracking-wide">Người nộp đơn</p>
-                    <p className="text-sm text-on-surface font-medium mt-0.5">{creatorName}</p>
-                  </div>
-                </li>
-                {/* steps */}
-                {request.steps.map((s, i) => {
-                  const u = employees.find((x) => x.id === s.approverId);
-                  // Bước And/Sequential có nhiều người cùng duyệt -> hiện đủ thay vì chỉ người đầu tiên
-                  const stepApproverNames = (s.approverIds?.length ? s.approverIds : [s.approverId])
-                    .map((aid) => employees.find((x) => x.id === aid)?.name)
-                    .filter(Boolean);
-                  const approverName = stepApproverNames.length > 1
-                    ? `${stepApproverNames.join(', ')} (${stepApproverNames.length} người)`
-                    : (stepApproverNames[0] || u?.name || 'User');
+                {timelineItems.map((item) => {
+                  /* 1) Người nộp đơn */
+                  if (item.kind === 'creator') {
+                    return (
+                      <li key={item.key} className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-surface border border-outline-variant flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="material-symbols-outlined text-[12px] text-secondary">person</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-secondary uppercase tracking-wide">Người nộp đơn</p>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{creatorName}</p>
+                          <p className="text-[11px] text-secondary mt-0.5">Đã nộp: {request.createdAt}</p>
+                        </div>
+                      </li>
+                    );
+                  }
+
+                  /* 2) Người duyệt đã yêu cầu bổ sung */
+                  if (item.kind === 'suppRequest') {
+                    const h = item.h;
+                    const reason = (h.comment || '').replace('[Yêu cầu bổ sung]', '').trim();
+                    return (
+                      <li key={item.key} className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-pink-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                          <span className="material-symbols-outlined text-[12px]">edit_note</span>
+                        </div>
+                        <div className="bg-pink-50/70 border border-pink-200 p-2.5 rounded-xl -mt-1 shadow-sm w-full min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-bold uppercase tracking-wide text-pink-700">Yêu cầu bổ sung</p>
+                            <span className="text-[11px] font-medium text-pink-700 flex-shrink-0">{h.at}</span>
+                          </div>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{nameOf(h.userId)} (Người duyệt)</p>
+                          {reason && <p className="text-[11px] text-pink-700 mt-1">{reason}</p>}
+                        </div>
+                      </li>
+                    );
+                  }
+
+                  /* 3) Người gửi đã bổ sung và gửi lại */
+                  if (item.kind === 'suppDone') {
+                    const h = item.h;
+                    return (
+                      <li key={item.key} className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-pink-600/15 text-pink-700 border border-pink-300 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="material-symbols-outlined text-[12px]">refresh</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-pink-700 uppercase tracking-wide">Bổ sung thông tin</p>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{nameOf(h.userId)} (Người gửi)</p>
+                          <p className="text-[11px] text-pink-700 mt-0.5">Đã bổ sung và gửi lại · {h.at}</p>
+                        </div>
+                      </li>
+                    );
+                  }
+
+                  /* 4) Đơn đang chờ bổ sung (chưa có mốc nhật ký) */
+                  if (item.kind === 'suppPending') {
+                    return (
+                      <li key={item.key} className="flex items-start gap-3">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ring-2 ring-pink-500/20 ring-offset-1 ring-offset-surface ${isSupplementOwner ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-700 border border-pink-300'}`}>
+                          <span className="material-symbols-outlined text-[12px]">edit_note</span>
+                        </div>
+                        <div className="bg-pink-50/70 border border-pink-200 p-2.5 rounded-xl -mt-1 shadow-sm w-full min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-bold uppercase tracking-wide text-pink-700">Bổ sung thông tin</p>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-pink-600 text-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
+                              {isSupplementOwner ? 'Cần bạn xử lý' : 'Chờ người gửi'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{creatorName} (Người gửi)</p>
+                          <p className="text-[11px] font-medium mt-1 text-pink-700">Người duyệt yêu cầu bổ sung thông tin, đơn quay về người gửi</p>
+                        </div>
+                      </li>
+                    );
+                  }
+
+                  /* 5) Một người duyệt: CHẤM to/nhỏ + giờ, thấy rõ ai trước ai sau.
+                     BE-30: MỖI NGƯỜI mang màu theo trạng thái riêng của họ
+                     (đã duyệt = xanh, từ chối = đỏ, yêu cầu bổ sung = hồng, đang chờ = cam). */
+                  if (item.kind === 'person') {
+                    const { step: s, index: i, approverId } = item;
+                    const person = employees.find((x) => x.id === approverId);
+                    const stepKey = `${s.stepOrder ?? i + 1}:${approverId}`;
+                    // BE-30/31: màu + nhãn theo trạng thái RIÊNG của người này.
+                    // Ưu tiên nhật ký; nếu đơn cũ thiếu nhật ký thì lấy người thao tác từ chính bước.
+                    const stepNo = s.stepOrder ?? i + 1;
+                    const fallbackActor = stepActorOf[stepNo];
+                    const isFallbackActor = fallbackActor && fallbackActor.userId === approverId;
+                    // BE-31: bước đã duyệt xong -> người vừa xin bổ sung vừa duyệt coi như ĐÃ DUYỆT
+                    const actedByRaw = actedByOf[stepKey]
+                      || (isFallbackActor ? fallbackActor.action : undefined)
+                      // không có nhật ký nhưng cả bước đã duyệt -> coi như đã duyệt
+                      || (s.status === 'approved' ? 'approved' : undefined);
+                    const actedBy = (s.status === 'approved' && actedByRaw === 'supplement_requested')
+                      ? 'approved'
+                      : actedByRaw;
+                    const at = actedBy === 'supplement_requested'
+                      ? (histories.find(h => h.stepOrder === stepNo && h.userId === approverId && h.action === 'supplement_requested')?.at || s.actedAt)
+                      : actedAtOf[stepKey] || (isFallbackActor ? fallbackActor.at : null) || (actedBy ? s.actedAt : null);
+
+                    const isCurrent = i === activeStepIndex && (isPendingWorkflow || isTimeoutWorkflow);
+                    const isTimedOut = isTimeoutWorkflow && i === activeStepIndex;
+                    const isSupplementPaused = isSupplementWorkflow && i === activeStepIndex;
+                    // BE-31: đơn đã dừng (từ chối / hủy / quá hạn) -> người chưa thao tác không còn "chưa đến lượt"
+                    const isTerminated = request.status === 'rejected' || request.status === 'canceled' || isTimeoutWorkflow;
+
+                    // Trạng thái riêng của người này
+                    let personTone;
+                    let personLabel;
+                    if (actedBy === 'rejected') {
+                      personTone = stepTone.rejected; personLabel = 'Đã từ chối';
+                    } else if (actedBy === 'supplement_requested') {
+                      personTone = stepTone.supplement; personLabel = 'Đã yêu cầu bổ sung';
+                    } else if (actedBy === 'approved') {
+                      personTone = stepTone.approved; personLabel = 'Đã duyệt';
+                    } else if (isTimedOut) {
+                      personTone = stepTone.timeout; personLabel = 'Quá hạn';
+                    } else if (isSupplementPaused) {
+                      // chưa thao tác, chỉ đang bị giữ vì người khác xin bổ sung -> màu trung tính
+                      personTone = stepTone.idle; personLabel = 'Chờ bổ sung';
+                    } else if (isTerminated) {
+                      // đơn đã dừng -> người này không còn cơ hội xử lý
+                      personTone = stepTone.idle; personLabel = 'Không xử lý';
+                    } else if (isCurrent) {
+                      personTone = stepTone.current; personLabel = 'Đang chờ xử lý';
+                    } else {
+                      personTone = stepTone.idle; personLabel = 'Chưa đến lượt';
+                    }
+
+                    const isMe = pendingStep?.approverId === approverId && actionable;
+                    // người đã thao tác (duyệt / từ chối / yêu cầu bổ sung) -> chấm to có icon
+                    const done = ['approved', 'rejected', 'supplement_requested'].includes(actedBy) || isTimedOut;
+
+                    return (
+                      <li key={item.key} className="flex items-center gap-3">
+                        {/* BE-27: chấm NHỎ = từng người trong bước (chấm to w-6 là cả bước) */}
+                        <div className={`rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${done ? 'w-[18px] h-[18px] ml-[3px]' : 'w-[10px] h-[10px] ml-[7px] border'} ${personTone.ring}`}>
+                          {done && (
+                            <span className="material-symbols-outlined text-[11px]">
+                              {actedBy === 'approved' ? 'check' : actedBy === 'rejected' ? 'close' : actedBy === 'supplement_requested' ? 'edit_note' : 'schedule'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-baseline justify-between gap-2 flex-1 min-w-0 py-0.5">
+                          <span className={`text-[13px] font-medium truncate ${done ? 'text-on-surface' : 'text-secondary'}`} title={person?.name}>
+                            {person?.name || 'User'}{isMe ? ' (Bạn)' : ''}
+                          </span>
+                          {/* người đã thao tác chỉ hiện giờ (màu đã thể hiện trạng thái); người chưa thao tác hiện trạng thái ngắn */}
+                          <span className={`text-[11px] font-medium flex-shrink-0 ${personTone.text}`}>
+                            {done && at ? at : personLabel}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  }
+
+                  /* 6) Một bước duyệt (nhãn + trạng thái) */
+                  if (item.kind === 'step') {
+                    const { step: s, index: i } = item;
+                    const stepLabel = STEP_ROLE[s.approverId] || `Cấp ${s.stepOrder || i + 1}`;
                   const isCurrent = i === activeStepIndex && (isPendingWorkflow || isTimeoutWorkflow);
                   const isTimedOut = isTimeoutWorkflow && i === activeStepIndex;
                   // BE-15: bước đang giữ vì chờ người gửi bổ sung (không phải "đang duyệt")
                   const isSupplementPaused = isSupplementWorkflow && i === activeStepIndex;
-                  if (s.status === 'approved') {
-                    return (
-                      <li key={i} className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-success text-on-success flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                          <span className="material-symbols-outlined text-[12px]">check</span>
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-success uppercase tracking-wide">{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
-                          <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}</p>
-                          <p className="text-xs text-success font-medium mt-0.5">Đã duyệt ({s.actedAt})</p>
-                        </div>
-                      </li>
-                    );
-                  }
-                  if (s.status === 'rejected') {
-                    return (
-                      <li key={i} className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-error text-on-error flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                          <span className="material-symbols-outlined text-[12px]">close</span>
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-error uppercase tracking-wide">{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
-                          <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}</p>
-                          <p className="text-xs text-error font-medium mt-0.5">Đã từ chối ({s.actedAt})</p>
-                        </div>
-                      </li>
-                    );
-                  }
-                  if (isTimedOut) {
-                    return (
-                      <li key={i} className="flex items-start gap-3">
-                        <div className="w-7 h-7 rounded-full bg-error text-on-error flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ring-2 ring-error/20 ring-offset-1 ring-offset-surface">
-                          <span className="material-symbols-outlined text-[13px]">close</span>
-                        </div>
-                        <div className="bg-error-container/20 p-2.5 rounded-xl border border-error/30 w-full -mt-1 shadow-sm">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-bold uppercase tracking-wide text-error">{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
+                  // BE-31: đơn đã dừng -> bước chưa xử lý không còn là "chưa đến lượt"
+                  const isTerminated = request.status === 'rejected' || request.status === 'canceled' || isTimeoutWorkflow;
+
+                  const toneKey = s.status === 'approved' ? 'approved'
+                    : s.status === 'rejected' ? 'rejected'
+                      : isTimedOut ? 'timeout'
+                        : isSupplementPaused ? 'supplement'
+                          : isCurrent ? 'current' : 'idle';
+                  const tone = stepTone[toneKey];
+
+                  return (
+                    <li key={item.key} className="flex items-start gap-3">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ${tone.ring} ${(isCurrent || isTimedOut) ? 'ring-2 ring-current/20 ring-offset-1 ring-offset-surface' : ''}`}>
+                        <span className="material-symbols-outlined text-[12px]">
+                          {s.status === 'approved' ? 'check' : (s.status === 'rejected' || isTimedOut) ? 'close' : isSupplementPaused ? 'edit_note' : isCurrent ? 'pending_actions' : 'schedule'}
+                        </span>
+                      </div>
+                      <div className="w-full min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={`text-xs font-bold uppercase tracking-wide ${tone.text}`}>{stepLabel}</p>
+                          {(s.status === 'approved' || s.status === 'rejected') && (
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.status === 'approved' ? 'bg-success-container text-on-success-container' : 'bg-error-container text-on-error-container'}`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
+                              {s.status === 'approved' ? 'Đã duyệt' : 'Từ chối'}
+                            </span>
+                          )}
+                          {isTimedOut && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-error text-on-error px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
                               Quá hạn
                             </span>
-                          </div>
-                          <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}</p>
-                          <p className="text-xs font-medium mt-0.5 text-error">Không phản hồi quá 12h, đơn trả về nơi khởi tạo</p>
-                        </div>
-                      </li>
-                    );
-                  }
-                  // pending
-                  return (
-                    <li key={i} className="flex items-start gap-3">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm transition-all ${isCurrent ? 'bg-warning text-on-warning ring-2 ring-warning/25 ring-offset-1 ring-offset-surface' : 'bg-surface border border-outline-variant text-secondary'}`}>
-                        <span className="material-symbols-outlined text-[13px]">{isSupplementPaused ? 'edit_note' : isCurrent ? 'pending_actions' : 'schedule'}</span>
-                      </div>
-                      <div className={isCurrent ? 'bg-warning-container/25 p-2.5 rounded-xl border border-warning/30 w-full -mt-1 shadow-sm' : 'w-full'}>
-                        <div className="flex items-center justify-between gap-2">
-                          <p className={`text-xs font-bold uppercase tracking-wide ${isCurrent ? 'text-warning' : 'text-secondary'}`}>{STEP_ROLE[s.approverId] || `Cấp ${i + 1}`}</p>
-                          {isCurrent && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-warning text-on-warning px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                          )}
+                          {isCurrent && !isTimedOut && (
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${isSupplementPaused ? 'bg-pink-600 text-white' : 'bg-orange-500 text-white'}`}>
                               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
                               {isSupplementPaused ? 'Chờ bổ sung' : 'Đang duyệt'}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-on-surface font-medium mt-0.5">{approverName}{pendingStep?.approverId === s.approverId && actionable ? ' (Bạn)' : ''}</p>
-                        <p className={`text-xs font-medium mt-0.5 ${isCurrent ? 'text-warning' : 'text-secondary'}`}>
-                          {isSupplementPaused ? 'Đã yêu cầu bổ sung - chờ người gửi cập nhật' : isCurrent ? (isTimeoutWorkflow ? 'Quá hạn 12h - chưa phản hồi' : 'Đang chờ xử lý') : 'Chưa đến lượt'}
+                        <p className={`text-[11px] font-medium mt-0.5 ${tone.text}`}>
+                          {s.status === 'approved' ? 'Đã phê duyệt'
+                            : s.status === 'rejected' ? 'Đã từ chối đơn'
+                              : isTimedOut ? 'Không phản hồi quá 12h, đơn trả về nơi khởi tạo'
+                                : isSupplementPaused ? 'Đã yêu cầu bổ sung - chờ người gửi cập nhật'
+                                  : isTerminated ? 'Không xử lý (đơn đã dừng)'
+                                    : isCurrent ? 'Đang chờ xử lý' : 'Chưa đến lượt'}
                         </p>
                       </div>
                     </li>
                   );
+                  }
+
+                  /* 7) Mốc kết thúc: LUÔN hiện khi đơn đã dừng (hoàn tất / từ chối / hủy / quá hạn) */
+                  if (item.kind === 'finish') {
+                    if (request.status === 'approved') {
+                      return (
+                        <li key={item.key} className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-success text-on-success flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                            <span className="material-symbols-outlined text-[12px]">task_alt</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-success uppercase tracking-wide">Hoàn tất</p>
+                            <p className="text-sm text-on-surface font-medium mt-0.5">Đơn đã được phê duyệt đầy đủ các cấp</p>
+                          </div>
+                        </li>
+                      );
+                    }
+                    if (request.status === 'rejected' || isTimeoutWorkflow || request.status === 'canceled') {
+                      const label = isTimeoutWorkflow ? 'Trả về nơi khởi tạo' : request.status === 'canceled' ? 'Đã hủy đơn' : 'Đã từ chối';
+                      const desc = isTimeoutWorkflow ? 'Quá hạn xử lý 12h'
+                        : request.status === 'canceled' ? 'Người gửi đã hủy đơn này'
+                          : (lastRejectReason ? `Lý do: ${lastRejectReason.text}` : 'Đơn đã bị từ chối');
+                      return (
+                        <li key={item.key} className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-error text-on-error flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                            <span className="material-symbols-outlined text-[12px]">block</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-error uppercase tracking-wide">{label}</p>
+                            <p className="text-sm text-on-surface font-medium mt-0.5">{desc}</p>
+                            {request.status === 'rejected' && lastRejectReason?.at && (
+                              <p className="text-[11px] text-error mt-0.5">{lastRejectReason.at}</p>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    }
+                    if (request.steps.length === 0 && isPendingWorkflow) {
+                      return (
+                        <li key={item.key} className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                            <span className="material-symbols-outlined text-[12px]">schedule</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-orange-700 uppercase tracking-wide">Cấp {request.currentStep || 1}</p>
+                            <p className="text-sm text-on-surface font-medium mt-0.5">Đang chờ hệ thống / người duyệt xử lý</p>
+                          </div>
+                        </li>
+                      );
+                    }
+                    return null;
+                  }
+
+                  return null;
                 })}
-                {/* BE-15: đơn bị yêu cầu bổ sung -> luồng quay về người gửi */}
-                {isSupplementWorkflow && (
-                  <li className="flex items-start gap-3">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ring-2 ring-warning/25 ring-offset-1 ring-offset-surface ${isSupplementOwner ? 'bg-warning text-on-warning' : 'bg-warning-container text-warning'}`}>
-                      <span className="material-symbols-outlined text-[13px]">edit_note</span>
-                    </div>
-                    <div className="bg-warning-container/25 p-2.5 rounded-xl border border-warning/30 w-full -mt-1 shadow-sm">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold uppercase tracking-wide text-warning">Bổ sung thông tin</p>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-warning text-on-warning px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
-                          {isSupplementOwner ? 'Cần bạn xử lý' : 'Chờ người gửi'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-on-surface font-medium mt-0.5">{creatorName} (Người gửi)</p>
-                      <p className="text-xs font-medium mt-0.5 text-warning">Người duyệt yêu cầu bổ sung thông tin, đơn quay về người gửi</p>
-                    </div>
-                  </li>
-                )}
-
-                {request.steps.length === 0 && isPendingWorkflow && (
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-warning-container text-warning flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                      <span className="material-symbols-outlined text-[12px]">schedule</span>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-warning uppercase tracking-wide">Cấp {request.currentStep || 1}</p>
-                      <p className="text-sm text-on-surface font-medium mt-0.5">Đang chờ hệ thống / người duyệt xử lý</p>
-                    </div>
-                  </li>
-                )}
-                {request.steps.length === 0 && request.status === "approved" && (
-                  <li className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-success-container text-success flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                      <span className="material-symbols-outlined text-[12px]">check</span>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-success uppercase tracking-wide">Hoàn tất</p>
-                      <p className="text-sm text-on-surface font-medium mt-0.5">Đã phê duyệt</p>
-                    </div>
-                  </li>
-                )}
-
               </ul>
             </div>
-          </div>
-
-          {/* Audit log */}
-          <div className="p-6">
-            <h3 className="text-xs text-secondary uppercase tracking-widest mb-4 flex items-center gap-2 font-semibold">
-              <span className="material-symbols-outlined text-[16px]">history</span>
-              Nhật ký hệ thống
-            </h3>
-            <ul className="space-y-3">
-              {request.history?.map((h, i) => (
-                <li key={i} className={`text-xs text-secondary border-l-2 pl-3 py-1 ${historyBorder[h.type] || 'border-outline-variant'} ${historyBg[h.type] || ''}`}>
-                  <span className="font-medium text-on-surface">{h.at}</span> - {h.text}
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       </main>

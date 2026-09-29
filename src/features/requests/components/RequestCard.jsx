@@ -99,16 +99,46 @@ export default function RequestCard({ request: r }) {
      else if (currentActorUser.position) currentActorRole = currentActorUser.position;
   }
 
-  // BE-16: bước đang chờ có thể có NHIỀU người duyệt cùng lúc (nhiều phòng ban song song).
-  // Hiển thị đủ danh sách thay vì chỉ người đại diện.
-  const pendingApproverIds = (isPending && currentActorStep)
-    ? (currentActorStep.approverIds?.length ? currentActorStep.approverIds : [currentActorStep.approverId])
+  // BE-23: lấy danh sách người duyệt của bước liên quan để hiển thị ĐỦ số người
+  // (cả đơn đang chờ LẪN đơn đã duyệt/từ chối) thay vì chỉ 1 người đại diện.
+  const actorApproverIds = currentActorStep
+    ? (currentActorStep.approverIds?.length
+      ? currentActorStep.approverIds
+      : (currentActorStep.approverId ? [currentActorStep.approverId] : []))
     : [];
-  const pendingApprovers = pendingApproverIds
+  const actorApprovers = actorApproverIds
     .map((id) => employees.find((x) => x.id === id))
     .filter(Boolean)
     .map((u) => ({ id: u.id, name: u.name, avatar: u.avatar }));
-  const isMultiApprover = pendingApprovers.length > 1;
+  const isMultiApprover = actorApprovers.length > 1;
+
+  // BE-24/25: với đơn TỪ CHỐI -> "ai từ chối · bước nào".
+  // Ưu tiên nhật ký; đơn cũ thiếu nhật ký thì `step.approverId` chính là người đã bấm từ chối.
+  const rejectHistory = (r.histories || []).filter(h => h.action === 'rejected').slice(-1)[0];
+  const rejectedStep = r.steps.find(s => s.status === 'rejected');
+  const rejectedByUser = employees.find(x => x.id === (rejectHistory?.userId || rejectedStep?.approverId));
+  const rejectedStepOrder = rejectHistory?.stepOrder || rejectedStep?.stepOrder;
+
+  // BE-25: chức vụ/phòng ban của người thực hiện để hiện dưới tên
+  const roleLabel = (u) => {
+    if (!u) return '';
+    if (u.role === 'ADMIN') return 'QUẢN TRỊ VIÊN';
+    if (u.role === 'HR') return 'NHÂN SỰ';
+    if (u.role === 'MANAGER') return 'QUẢN LÝ';
+    if (u.role === 'TEAM_LEADER') return 'TRƯỞNG NHÓM';
+    if (u.department) return u.department;
+    if (u.position) return u.position;
+    return '';
+  };
+
+  // BE-24/25: với đơn BỔ SUNG -> "ai yêu cầu bổ sung · bước nào".
+  // Ưu tiên nhật ký SUPPLEMENT_REQUESTED; đơn cũ không có thì lấy comment; cuối cùng lấy người giữ bước.
+  const suppHistory = (r.histories || []).filter(h => h.action === 'supplement_requested').slice(-1)[0];
+  const suppComment = (r.comments || []).find(c => (c.text || '').startsWith('[Yêu cầu bổ sung]'));
+  const suppStep = r.steps.find(s => s.status === 'pending' || s.status === 'submitted' || s.status === 'pendingapproval');
+  const suppUserId = suppHistory?.userId || suppComment?.userId || suppStep?.approverId;
+  const suppStepOrder = suppHistory?.stepOrder || suppStep?.stepOrder;
+  const suppByUser = employees.find(x => x.id === suppUserId);
 
   return (
     <div className={`bg-surface rounded-xl shadow-sm border border-outline-variant hover:shadow-md hover:border-primary/30 transition-all flex flex-col relative overflow-hidden group ${isRejected ? 'opacity-80' : ''}`}>
@@ -118,7 +148,7 @@ export default function RequestCard({ request: r }) {
       {!isActionable && isPending && <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning/40 z-10 pointer-events-none"></div>}
       {isApproved && <div className="absolute left-0 top-0 bottom-0 w-1 bg-success/40 z-10 pointer-events-none"></div>}
       {isRejected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-error/40 z-10 pointer-events-none"></div>}
-      {isNeedsSupplement && <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning/70 z-10 pointer-events-none"></div>}
+      {isNeedsSupplement && <div className="absolute left-0 top-0 bottom-0 w-1 bg-supplement/70 z-10 pointer-events-none"></div>}
 
       {/* MAIN CARD BODY (Clickable) */}
       <div 
@@ -126,7 +156,7 @@ export default function RequestCard({ request: r }) {
         className="p-4 flex flex-col md:flex-row gap-4 md:items-center cursor-pointer"
       >
         <div className="flex items-start gap-4 flex-1 min-w-0">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${isApproved ? 'bg-success/10 border-success/20 text-success' : (isPending || isNeedsSupplement) ? 'bg-warning/10 border-warning/20 text-warning' : 'bg-error/10 border-error/20 text-error'}`}>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${isApproved ? 'bg-success/10 border-success/20 text-success' : isNeedsSupplement ? 'bg-supplement/10 border-supplement/20 text-supplement' : isPending ? 'bg-warning/10 border-warning/20 text-warning' : 'bg-error/10 border-error/20 text-error'}`}>
             <span className="material-symbols-outlined text-[24px]">
               {isApproved ? 'task_alt' : isPending ? 'pending_actions' : isNeedsSupplement ? 'edit_note' : 'block'}
             </span>
@@ -170,29 +200,82 @@ export default function RequestCard({ request: r }) {
         {/* RIGHT SIDE SUMMARY */}
         {currentActorUser && (
           <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-outline-variant pt-4 md:pt-0 md:pl-5 min-w-[200px]">
-            {isMultiApprover ? (
+            {/* BE-24: đơn TỪ CHỐI -> chỉ hiện ai từ chối ở bước nào */}
+            {isRejected ? (
               <>
-                {/* BE-16: nhiều người duyệt cùng cấp -> chồng avatar + tổng số */}
-                <div className="relative flex-shrink-0 h-10 w-10">
-                  {pendingApprovers.slice(0, 3).map((u, i) => (
-                    <div key={u.id} className="absolute" style={{ left: `${i * 12}px`, zIndex: 3 - i }}>
+                <div className="relative flex-shrink-0">
+                  {rejectedByUser?.avatar ? (
+                    <img src={rejectedByUser.avatar} alt={rejectedByUser.name} className="w-10 h-10 rounded-full object-cover shadow-sm border border-error/20" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-error/10 text-error text-[13px] font-bold flex items-center justify-center">
+                      {getInitials(rejectedByUser?.name || currentActorName)}
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white bg-error flex items-center justify-center">
+                    <span className="material-symbols-outlined text-white text-[10px] font-bold">close</span>
+                  </div>
+                </div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-error">{summaryText}</span>
+                  <span className="text-[13px] font-bold text-on-surface truncate w-full" title={rejectedByUser?.name}>
+                    {rejectedByUser?.name || currentActorName}
+                  </span>
+                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5">
+                    {rejectedByUser ? `${roleLabel(rejectedByUser)}${rejectedStepOrder ? ` · Bước ${rejectedStepOrder}` : ''}` : currentActorRole}
+                  </span>
+                </div>
+              </>
+            ) : isNeedsSupplement ? (
+              <>
+                <div className="relative flex-shrink-0">
+                  {suppByUser?.avatar ? (
+                    <img src={suppByUser.avatar} alt={suppByUser.name} className="w-10 h-10 rounded-full object-cover shadow-sm border border-supplement/20" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-supplement/10 text-supplement text-[13px] font-bold flex items-center justify-center">
+                      {getInitials(suppByUser?.name || creatorName)}
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white bg-supplement flex items-center justify-center">
+                    <span className="material-symbols-outlined text-white text-[10px] font-bold">edit_note</span>
+                  </div>
+                </div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-supplement">Yêu cầu bổ sung</span>
+                  <span className="text-[13px] font-bold text-on-surface truncate w-full" title={suppByUser?.name || creatorName}>
+                    {suppByUser?.name || 'Người duyệt'}
+                  </span>
+                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5">
+                    {suppByUser ? `${roleLabel(suppByUser)}${suppStepOrder ? ` · Bước ${suppStepOrder}` : ''}` : 'Yêu cầu người gửi bổ sung'}
+                  </span>
+                </div>
+              </>
+            ) : isMultiApprover ? (
+              <>
+                {/* BE-24: nhiều người duyệt -> chồng avatar tối đa 2 + SỐ Ở GÓC TRÊN BÊN PHẢI */}
+                <div className="relative flex-shrink-0 h-10" style={{ width: `${32 + Math.min(actorApprovers.length - 1, 1) * 20}px` }}>
+                  {actorApprovers.slice(0, 2).map((u, i) => (
+                    <div key={u.id} className="absolute top-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-sm overflow-hidden" style={{ left: `${i * 20}px`, zIndex: 4 - i }}>
                       {u.avatar ? (
-                        <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded-full object-cover shadow-sm border-2 border-white" />
+                        <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded-full object-cover" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#29b6f6] text-white text-[11px] flex items-center justify-center border-2 border-white">
+                        <div className="w-8 h-8 rounded-full bg-[#29b6f6] text-white text-[11px] flex items-center justify-center">
                           {getInitials(u.name)}
                         </div>
                       )}
                     </div>
                   ))}
+                  {/* Số người ở GÓC TRÊN BÊN PHẢI cụm avatar (xám trung tính, không chói) */}
+                  <div className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-slate-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-sm z-10">
+                    {actorApprovers.length}
+                  </div>
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${summaryColor}`}>{summaryText}</span>
-                  <span className="text-[13px] font-bold text-on-surface truncate w-full" title={pendingApprovers.map(u => u.name).join(', ')}>
-                    {pendingApprovers.length} người duyệt
+                  <span className="text-[13px] font-bold text-on-surface truncate w-full">
+                    {actorApprovers.length} người {isApproved ? 'đồng ý' : 'duyệt'}
                   </span>
-                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5" title={pendingApprovers.map(u => u.name).join(', ')}>
-                    {pendingApprovers.map(u => u.name).join(', ')}
+                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5" title={actorApprovers.map(u => u.name).join(', ')}>
+                    {actorApprovers[0]?.name}, ...
                   </span>
                 </div>
               </>
@@ -266,64 +349,78 @@ export default function RequestCard({ request: r }) {
               </div>
               
               {r.steps.length > 0 && (
-                <span className="material-symbols-outlined text-outline-variant/60 text-[16px] mx-0.5 -mt-6">
+                <span className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
                   arrow_forward
                 </span>
               )}
             </div>
 
-            {/* Approver Nodes */}
+            {/* Approver Nodes — BE-20: bước nhiều người hiển thị TỪNG người rõ ràng */}
             {r.steps.map((s, idx) => {
-              const u = employees.find((x) => x.id === s.approverId);
-              // Bước And/Sequential có nhiều người cùng duyệt -> hiện đủ thay vì chỉ người đầu tiên
-              const stepApproverNames = (s.approverIds?.length ? s.approverIds : [s.approverId])
-                .map((aid) => employees.find((x) => x.id === aid)?.name)
-                .filter(Boolean);
-              const isGroupStep = stepApproverNames.length > 1;
-              const approverName = isGroupStep
-                ? `${stepApproverNames.join(', ')}`
-                : (stepApproverNames[0] || u?.name || 'Người duyệt');
-              let approverRole = 'NHÂN SỰ';
-              if (u) {
-                 if (u.role === 'ADMIN') approverRole = 'QUẢN TRỊ VIÊN';
-                 else if (u.role === 'HR') approverRole = 'NHÂN SỰ';
-                 else if (u.role === 'MANAGER') approverRole = 'QUẢN LÝ';
-                 else if (u.department) approverRole = u.department;
-                 else if (u.position) approverRole = u.position;
-              }
-              if (isGroupStep) approverRole = `${stepApproverNames.length} NGƯỜI DUYỆT`;
-              
-              return (
-                <div key={idx} className="flex items-center gap-1 shrink-0 pt-1">
-                  <div className="flex flex-col items-center min-w-[60px] max-w-[80px] relative">
+              const ids = s.approverIds?.length ? s.approverIds : (s.approverId ? [s.approverId] : []);
+              const isGroupStep = ids.length > 1;
+              const isTimeoutStep = r.status === 'returned_timeout' && idx === (r.steps.findIndex(x => ['pending', 'submitted', 'pendingapproval'].includes((x.status || '').toLowerCase())) >= 0 ? r.steps.findIndex(x => ['pending', 'submitted', 'pendingapproval'].includes((x.status || '').toLowerCase())) : Math.min(Number(r.currentStep) || 0, r.steps.length - 1));
+
+              // Badge trạng thái cho từng người: nếu bước đã duyệt/từ chối thì dùng chung, còn lại theo bước
+              const nodeBadge = isTimeoutStep ? 'error'
+                : s.status === 'approved' ? 'success'
+                  : s.status === 'pending' ? 'warning'
+                    : (s.status === 'rejected' || s.status === 'canceled') ? 'error'
+                      : 'muted';
+              const badgeClass = nodeBadge === 'success' ? 'bg-success' : nodeBadge === 'warning' ? 'bg-warning' : nodeBadge === 'error' ? 'bg-error' : 'bg-outline-variant';
+              const badgeIcon = nodeBadge === 'success' ? 'check' : nodeBadge === 'warning' ? 'schedule' : nodeBadge === 'error' ? 'close' : 'more_horiz';
+
+              const renderPerson = (aid) => {
+                const u = employees.find((x) => x.id === aid);
+                const nm = u?.name || 'Người duyệt';
+                let role = 'NHÂN SỰ';
+                if (u) {
+                  if (u.role === 'ADMIN') role = 'QUẢN TRỊ VIÊN';
+                  else if (u.role === 'HR') role = 'NHÂN SỰ';
+                  else if (u.role === 'MANAGER') role = 'QUẢN LÝ';
+                  else if (u.department) role = u.department;
+                  else if (u.position) role = u.position;
+                }
+                return (
+                  <div key={aid} className="flex flex-col items-center min-w-[64px] max-w-[88px]">
                     <div className="relative">
                       {u?.avatar ? (
-                        <img src={u.avatar} alt={approverName} className="w-8 h-8 rounded-full object-cover shadow-sm border border-outline-variant" />
+                        <img src={u.avatar} alt={nm} className="w-8 h-8 rounded-full object-cover shadow-sm border border-outline-variant" />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-[#29b6f6] text-on-surface font-normal text-[13px] flex items-center justify-center shadow-sm">
-                          {getInitials(approverName)}
+                          {getInitials(nm)}
                         </div>
                       )}
-                      {/* Status badge */}
-                      <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'returned_timeout' && idx === (r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase())) >= 0 ? r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase())) : Math.min(Number(r.currentStep) || 0, r.steps.length - 1)) ? 'bg-error' : s.status === 'approved' ? 'bg-success' : s.status === 'pending' ? 'bg-warning' : s.status === 'rejected' || s.status === 'canceled' ? 'bg-error' : 'bg-outline-variant'}`}>
-                        <span className="material-symbols-outlined text-white text-[8px] font-bold">
-                          {r.status === 'returned_timeout' && idx === (r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase())) >= 0 ? r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase())) : Math.min(Number(r.currentStep) || 0, r.steps.length - 1)) ? 'close' : s.status === 'approved' ? 'check' : s.status === 'pending' ? 'schedule' : s.status === 'rejected' || s.status === 'canceled' ? 'close' : 'more_horiz'}
-                        </span>
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center ${badgeClass}`}>
+                        <span className="material-symbols-outlined text-white text-[8px] font-bold">{badgeIcon}</span>
                       </div>
                     </div>
-                    
                     <div className="flex flex-col items-center w-full mt-1.5 gap-0.5">
-                      <span className="text-[11px] font-bold text-on-surface text-center w-full truncate leading-tight" title={approverName}>
-                        {approverName}
-                      </span>
-                      <span className="text-[9px] text-primary text-center w-full truncate uppercase font-medium tracking-wide">
-                        {approverRole}
-                      </span>
+                      <span className="text-[11px] font-bold text-on-surface text-center w-full truncate leading-tight" title={nm}>{nm}</span>
+                      <span className="text-[9px] text-primary text-center w-full truncate uppercase font-medium tracking-wide">{role}</span>
                     </div>
                   </div>
-                  
+                );
+              };
+
+              return (
+                <div key={idx} className="flex items-center gap-1 shrink-0 pt-1">
+                  {isGroupStep ? (
+                    <div className="relative rounded-lg border border-dashed border-outline-variant bg-surface px-2.5 pb-1.5 pt-4">
+                      <span className="absolute -top-2 left-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[8px] font-bold uppercase tracking-wider">
+                        <span className="material-symbols-outlined text-[10px]">call_split</span>
+                        Bước {s.stepOrder} · {ids.length} người
+                      </span>
+                      <div className="flex items-start gap-2">
+                        {ids.map(renderPerson)}
+                      </div>
+                    </div>
+                  ) : (
+                    renderPerson(ids[0])
+                  )}
+
                   {idx < r.steps.length - 1 && (
-                    <span className="material-symbols-outlined text-outline-variant/60 text-[16px] mx-0.5 -mt-6">
+                    <span className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
                       arrow_forward
                     </span>
                   )}

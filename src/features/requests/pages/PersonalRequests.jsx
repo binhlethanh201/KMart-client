@@ -9,7 +9,7 @@ import useDocumentTitle from '../../../hooks/useDocumentTitle';
 const STATUS_FILTERS = [
   { id: 'all',        label: 'Tất cả',       icon: 'inbox' },
   { id: 'pending',    label: 'Chờ duyệt',    dot: 'bg-amber-400' },
-  { id: 'supplement', label: 'Cần bổ sung',  dot: 'bg-orange-400' },
+  { id: 'supplement', label: 'Cần bổ sung',  dot: 'bg-supplement' },
   { id: 'approved',   label: 'Đã phê duyệt', dot: 'bg-emerald-400' },
   { id: 'rejected',   label: 'Từ chối',      dot: 'bg-red-400' },
 ];
@@ -22,14 +22,6 @@ const TITLES = {
 };
 
 /* ─── Helpers ────────────────────────────────────────────────── */
-
-// BE-05: lấy lý do yêu cầu bổ sung gần nhất.
-// Backend ghi comment dạng "[Yêu cầu bổ sung] <lý do>" khi người duyệt bấm nút này.
-const supplementReason = (r) => {
-  const hits = (r.comments || []).filter((c) => (c.text || '').startsWith('[Yêu cầu bổ sung]'));
-  const last = hits[hits.length - 1];
-  return last ? last.text.replace('[Yêu cầu bổ sung]', '').trim() : null;
-};
 
 /* ─── Component ──────────────────────────────────────────────── */
 
@@ -249,27 +241,10 @@ export default function PersonalRequests({ mode = 'sent' }) {
             ) : (
               <>
                 {visibleFiltered.map((r, index) => (
-                  <div key={r.id} className="animate-slide-fade flex flex-col gap-2" style={{ animationDelay: `${(index % itemsPerPage) * 50}ms` }}>
+                  <div key={r.id} className="animate-slide-fade" style={{ animationDelay: `${(index % itemsPerPage) * 50}ms` }}>
+                    {/* BE-27: bỏ nút "Bổ sung & gửi lại" trùng lặp ngoài danh sách;
+                        chỉ còn hành động này trong trang chi tiết đơn. */}
                     <RequestCard request={r} />
-                    {/* BE-05/BE-15: hiện lý do cần bổ sung + lối vào bổ sung ngay.
-                        Đơn cần bổ sung giờ nằm chung trong "Đơn từ cá nhân" (mode sent). */}
-                    {(mode === 'supplement' || (mode === 'sent' && r.status === 'needssupplement')) && (
-                      <div className="px-4 py-2.5 rounded-lg bg-surface border border-outline-variant flex items-center gap-3 flex-wrap">
-                        {supplementReason(r) && (
-                          <span className="flex items-start gap-2 text-sm text-on-surface flex-1 min-w-[220px]">
-                            <span className="material-symbols-outlined text-[18px] text-warning flex-shrink-0">edit_note</span>
-                            <span><strong className="font-semibold">Lý do cần bổ sung:</strong> {supplementReason(r)}</span>
-                          </span>
-                        )}
-                        <button
-                          onClick={() => setEditingRequest(r)}
-                          className="ml-auto px-3.5 py-1.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-1.5 cursor-pointer flex-shrink-0"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">edit_note</span>
-                          Bổ sung &amp; gửi lại
-                        </button>
-                      </div>
-                    )}
                   </div>
                 ))}
                 

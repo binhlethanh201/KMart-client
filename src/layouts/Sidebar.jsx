@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApproval } from '../context/useApproval';
 import { clearSessionStorage } from '../utils/session';
+import NotificationBell from '../components/NotificationBell';
 
 /* ─── Sub-panel: chỉ 2 link điều hướng ──────────────────────── */
 
@@ -232,13 +233,13 @@ export default function UnifiedSidebar({
           id="sidebar"
         >
           <div>
-            {/* User profile */}
-            <Link
-              to="/profile"
-              className={`block ${isCollapsed ? 'px-2' : 'px-4'} py-3 border-b border-white/10 hover:bg-white/5 transition-colors`}
-              title={isCollapsed ? (currentUser?.name || 'Nguyễn Văn A') : undefined}
-            >
-              <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+            {/* User profile — BE-22: chuông tách RIÊNG khỏi Link để không bị điều hướng sang profile */}
+            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-1'} px-4 py-3 border-b border-white/10`}>
+              <Link
+                to="/profile"
+                className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'} hover:opacity-90 transition-opacity`}
+                title={isCollapsed ? (currentUser?.name || 'Nguyễn Văn A') : undefined}
+              >
                 <div className="relative shrink-0">
                   <img
                     alt="User avatar"
@@ -269,16 +270,14 @@ export default function UnifiedSidebar({
                     </div>
                   </div>
                 )}
-                {!isCollapsed && (
-                  <div className="relative cursor-pointer group shrink-0" onClick={(e) => e.preventDefault()}>
-                    <span className="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-white transition-colors">
-                      notifications
-                    </span>
-                    <div className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-[#0F172A]" />
-                  </div>
-                )}
-              </div>
-            </Link>
+              </Link>
+              {!isCollapsed && (
+                <div className="shrink-0">
+                  {/* BE-22: chuông thông báo thật (đếm chưa đọc, xem danh sách) */}
+                  <NotificationBell />
+                </div>
+              )}
+            </div>
 
             {/* Nav items */}
             <ul className="flex flex-col py-2">

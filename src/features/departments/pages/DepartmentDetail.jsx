@@ -62,9 +62,15 @@ export default function DepartmentDetail() {
       });
   }, [dept?.id]);
 
-  // All requests belonging to this department.
+  // BE-19: đơn thuộc phòng ban nếu phòng ban là ĐÍCH trong đơn (Data.departments)
+// HOẶC là phòng ban chính của người tạo. Trước đây chỉ lọc theo phòng người tạo
+// nên phòng ban được gửi tới (đơn theo chức danh/bộ phận) không nhận được đơn.
   const deptRequests = useMemo(
-    () => requests.filter((r) => String(r.departmentId) === String(id)),
+    () => requests.filter((r) => {
+      if (String(r.departmentId) === String(id)) return true;
+      const targets = r._rawData?.departments;
+      return Array.isArray(targets) && targets.some((d) => String(d) === String(id));
+    }),
     [requests, id]
   );
 

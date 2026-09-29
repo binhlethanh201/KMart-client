@@ -27,6 +27,7 @@ export const STATUS_META = {
   pending: { label: 'Đang chờ duyệt', badge: 'text-warning', dot: 'bg-warning' },
   approved: { label: 'Đã phê duyệt', badge: 'text-success', dot: 'bg-success' },
   rejected: { label: 'Từ chối / Trả về', badge: 'text-error', dot: 'bg-error' },
-  needssupplement: { label: 'Yêu cầu bổ sung', badge: 'text-warning', dot: 'bg-warning' },
+  // BE-26: "yêu cầu bổ sung" dùng màu tím riêng, trước đây trùng màu vàng với "chờ duyệt"
+  needssupplement: { label: 'Yêu cầu bổ sung', badge: 'text-supplement', dot: 'bg-supplement' },
   returned_timeout: { label: 'Trả về (quá hạn 12h)', badge: 'text-error', dot: 'bg-error' },
 };
