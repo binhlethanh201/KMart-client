@@ -39,8 +39,6 @@ export default function HumanResources() {
   
   const canEdit = canEditEmployee || canAddEmployee;
 
-  if (isStaff) return null;
-
   const [search, setSearch] = useState('');
   const [dept, setDept] = useState('Tất cả');
   const [role, setRole] = useState('Tất cả');
@@ -79,6 +77,11 @@ export default function HumanResources() {
 
   // Reset to first page whenever any filter changes.
   useEffect(() => { setPage(1); }, [search, dept, role, status, employees]);
+
+  // rules-of-hooks: MỌI hook phải được gọi trước early-return này.
+  // Trước đây `if (isStaff) return null;` nằm phía trên 12 hook (10 useState + useMemo + useEffect)
+  // nên số lượng/thứ tự hook thay đổi theo quyền của user -> React có thể loạn state hoặc crash.
+  if (isStaff) return null;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);

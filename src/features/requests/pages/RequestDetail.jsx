@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
@@ -7,6 +7,15 @@ import SupplementReasonModal from '../components/SupplementReasonModal';
 import UserInfoModal from '../components/UserInfoModal';
 import { STATUS_META, STEP_ROLE } from '../data/constants';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
+import { applicationService } from '../services/applicationService';
+
+// BE-09: định dạng dung lượng file đính kèm
+const formatFileSize = (bytes) => {
+  if (!bytes && bytes !== 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const historyBorder = {
   approve: 'border-success',
@@ -24,7 +33,7 @@ const historyBg = {
 export default function RequestDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { requests, currentUser, canApprove, approveRequest, rejectRequest, requestSupplement, addComment, simulateTimeout } = useApproval();
+  const { requests, currentUser, canApprove, approveRequest, rejectRequest, requestSupplement, addComment, simulateTimeout, pushToast } = useApproval();
   const { employees } = useHr();
   const request = requests.find((r) => r.id === id);
 
@@ -34,6 +43,29 @@ export default function RequestDetail() {
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [comment, setComment] = useState('');
   const commentRef = useRef(null);
+
+  // BE-09: tài liệu đính kèm thật của đơn (lấy từ /applications/{id}/attachments)
+  const [attachments, setAttachments] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    applicationService.getAttachments(id)
+      .then((data) => { if (!cancelled) setAttachments(data || []); })
+      .catch(() => { if (!cancelled) setAttachments([]); });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  const handleDownloadAttachment = async (attachment) => {
+    try {
+      await applicationService.downloadAttachment(
+        id,
+        attachment.id,
+        attachment.originalFileName || attachment.fileName
+      );
+    } catch (err) {
+      console.error('Failed to download attachment', err);
+      pushToast('Không tải được tài liệu này', 'error');
+    }
+  };
 
   useDocumentTitle(request ? `Chi tiết yêu cầu ${request.id.substring(0, 8).toUpperCase()}` : 'Chi tiết yêu cầu');
 
@@ -129,7 +161,9 @@ export default function RequestDetail() {
             <div className="w-px h-6 bg-outline-variant mx-1"></div>
             <button
               onClick={() => setSupplementOpen(true)}
-              className="px-3 py-1.5 rounded text-sm font-medium border border-outline-variant text-on-surface hover:bg-surface-container transition-colors flex items-center gap-2 cursor-pointer"
+              disabled={!actionable}
+              className="px-3 py-1.5 rounded text-sm font-medium border border-outline-variant text-on-surface hover:bg-surface-container transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              title={actionable ? 'Yêu cầu người gửi bổ sung thông tin' : 'Bạn không phải người duyệt bước này'}
             >
               <span className="material-symbols-outlined text-[16px]">edit_note</span>
               Yêu cầu bổ sung
@@ -261,11 +295,23 @@ export default function RequestDetail() {
                   <tr>
                     <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">Tài liệu đính kèm</th>
                     <td className="py-3 px-4">
-                      {request.fields.attachment ? (
-                        <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-2 border border-outline-variant rounded bg-surface px-3 py-1.5 text-sm hover:border-primary transition-colors text-on-surface group">
-                          <span className="material-symbols-outlined text-[16px] text-secondary group-hover:text-primary">attach_file</span>
-                          {request.fields.attachment}
-                        </a>
+                      {attachments.length > 0 ? (
+                        <div className="flex flex-col gap-1.5 items-start">
+                          {attachments.map((a) => (
+                            <button
+                              key={a.id}
+                              type="button"
+                              onClick={() => handleDownloadAttachment(a)}
+                              title={a.uploaderName ? `Người tải lên: ${a.uploaderName}` : undefined}
+                              className="inline-flex items-center gap-2 border border-outline-variant rounded bg-surface px-3 py-1.5 text-sm hover:border-primary transition-colors text-on-surface group cursor-pointer max-w-full"
+                            >
+                              <span className="material-symbols-outlined text-[16px] text-secondary group-hover:text-primary">attach_file</span>
+                              <span className="font-medium truncate">{a.originalFileName || a.fileName}</span>
+                              <span className="text-xs text-secondary flex-shrink-0">{formatFileSize(a.fileSize)}</span>
+                              <span className="material-symbols-outlined text-[16px] text-secondary group-hover:text-primary flex-shrink-0">download</span>
+                            </button>
+                          ))}
+                        </div>
                       ) : (
                         <span className="text-secondary text-xs italic">Không có tài liệu</span>
                       )}
@@ -372,7 +418,13 @@ export default function RequestDetail() {
                 {/* steps */}
                 {request.steps.map((s, i) => {
                   const u = employees.find((x) => x.id === s.approverId);
-                  const approverName = u?.name || 'User';
+                  // Bước And/Sequential có nhiều người cùng duyệt -> hiện đủ thay vì chỉ người đầu tiên
+                  const stepApproverNames = (s.approverIds?.length ? s.approverIds : [s.approverId])
+                    .map((aid) => employees.find((x) => x.id === aid)?.name)
+                    .filter(Boolean);
+                  const approverName = stepApproverNames.length > 1
+                    ? `${stepApproverNames.join(', ')} (${stepApproverNames.length} người)`
+                    : (stepApproverNames[0] || u?.name || 'User');
                   const isCurrent = i === activeStepIndex && (isPendingWorkflow || isTimeoutWorkflow);
                   const isTimedOut = isTimeoutWorkflow && i === activeStepIndex;
                   if (s.status === 'approved') {

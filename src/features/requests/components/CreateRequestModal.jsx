@@ -1,17 +1,21 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { workflowService } from '../../../services/workflowService';
+import { departmentService } from '../../departments/services/departmentService';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
-export default function CreateRequestModal({ onClose }) {
-  const { createRequest, departments, currentUser } = useApproval();
+export default function CreateRequestModal({ onClose, existingRequest = null }) {
+  const { createRequest, updateRequest, departments, currentUser } = useApproval();
   const { employees } = useHr();
+
+  // Chế độ bổ sung: mở lại đơn đang ở trạng thái "Yêu cầu bổ sung" để sửa rồi gửi lại
+  const isEdit = Boolean(existingRequest);
   
   // Load document types từ BE
   const [documentTypes, setDocumentTypes] = useState([]);
@@ -19,7 +23,8 @@ export default function CreateRequestModal({ onClose }) {
   const [activeWorkflow, setActiveWorkflow] = useState(null);
   
   useEffect(() => {
-    documentTypeService.getAll()
+    // BE-07: chỉ lấy loại đơn đã có luồng duyệt active
+    documentTypeService.getAvailable()
       .then(data => {
         setDocumentTypes(data || []);
         setLoading(false);
@@ -38,6 +43,31 @@ export default function CreateRequestModal({ onClose }) {
     departments: [],
     dynamic: {}
   });
+
+  // BE-03: quản lý của các phòng ban đang được tick chọn
+  const [deptManagers, setDeptManagers] = useState([]);
+
+  // BE-04: người duyệt do người tạo chọn (chỉ cần khi bước 1 có nhiều ứng viên)
+  const [selectedApproverId, setSelectedApproverId] = useState('');
+
+  // BE-09: File thật của các trường "Tải file", khoá theo nhãn trường.
+  // Trước đây chỉ lưu file.name vào form.dynamic nên file CHƯA BAO GIỜ được upload.
+  const [files, setFiles] = useState({});
+
+  useEffect(() => {
+    if (!form.departments.length) {
+      setDeptManagers([]);
+      return;
+    }
+    let cancelled = false;
+    departmentService.getManagers(form.departments)
+      .then((data) => { if (!cancelled) setDeptManagers(data || []); })
+      .catch((err) => {
+        console.error('Failed to load department managers:', err);
+        if (!cancelled) setDeptManagers([]);
+      });
+    return () => { cancelled = true; };
+  }, [form.departments]);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const setDynamic = (name, val) => setForm((f) => ({
@@ -58,9 +88,31 @@ export default function CreateRequestModal({ onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // Chế độ bổ sung: nạp lại dữ liệu đơn cũ vào form.
+  // skipDynamicResetRef chặn effect "reset dynamic khi đổi loại đơn" xoá mất dữ liệu vừa nạp.
+  const skipDynamicResetRef = useRef(false);
+  useEffect(() => {
+    if (!existingRequest || loading) return;
+    const raw = existingRequest._rawData || {};
+    const { departments: deptIds, ...dynamic } = raw;
+    skipDynamicResetRef.current = true;
+    setForm({
+      documentTypeId: existingRequest.documentTypeId || '',
+      reason: existingRequest.fields?.reason || '',
+      departments: Array.isArray(deptIds) ? deptIds : [],
+      dynamic
+    });
+    setSelectedApproverId(existingRequest.selectedApproverId || '');
+    setFiles({});
+  }, [existingRequest, loading]);
+
   // Reset dynamic fields when document type changes
   useEffect(() => {
-    setForm(f => ({ ...f, dynamic: {} }));
+    if (skipDynamicResetRef.current) {
+      skipDynamicResetRef.current = false;
+    } else {
+      setForm(f => ({ ...f, dynamic: {} }));
+    }
     
     if (form.documentTypeId) {
       workflowService.getActiveForDocumentType(form.documentTypeId)
@@ -97,9 +149,61 @@ export default function CreateRequestModal({ onClose }) {
     }
   }, [form.dynamic['Từ ngày'], form.dynamic['Đến ngày']]);
 
+  // BE-04: bước đầu tiên của luồng duyệt
+  const firstStep = useMemo(() => {
+    const steps = activeWorkflow?.steps;
+    if (!Array.isArray(steps) || steps.length === 0) return null;
+    return [...steps].sort((a, b) => a.stepOrder - b.stepOrder)[0];
+  }, [activeWorkflow]);
+
+  // BE-04: danh sách người CÓ THỂ duyệt bước 1. Nhiều hơn 1 thì bắt người tạo chọn 1.
+  const firstStepCandidates = useMemo(() => {
+    if (!firstStep) return [];
+    const appType = (firstStep.approvalType || '').toLowerCase();
+
+    if (appType === 'specific_user' || appType === 'specific') {
+      const emp = employees?.find(e => e.id === (firstStep.specificUserId || firstStep.specificUser));
+      return emp ? [emp] : [];
+    }
+
+    if (appType === 'role' && firstStep.role) {
+      const role = String(firstStep.role).toUpperCase();
+      const matched = (employees || []).filter((e) => {
+        if (String(e.role || '').toUpperCase() === role) return true;
+        if (Array.isArray(e.roles) && e.roles.includes(firstStep.role)) return true;
+        return Array.isArray(e.systemRoles)
+          && e.systemRoles.some(r => String(r?.roleName || r || '').toUpperCase() === role);
+      });
+      return matched.map(e => ({ id: e.id, name: e.name, position: e.position || e.role }));
+    }
+
+    if (appType === 'hierarchy' || appType === 'chain') {
+      // Quản lý của TẤT CẢ phòng ban đã chọn (BE-03), không chỉ phòng ban đầu tiên
+      const deptIds = form.departments.length
+        ? form.departments
+        : (currentUser?.departmentId ? [currentUser.departmentId] : []);
+      return deptIds
+        .map(deptId => deptManagers.find(m => m.departmentId === deptId))
+        .filter(m => m && m.managerId)
+        .map(m => ({ id: m.managerId, name: m.managerName || 'Quản lý' }));
+    }
+
+    return [];
+  }, [firstStep, employees, form.departments, deptManagers, currentUser]);
+
+  // Bỏ lựa chọn cũ nếu nó không còn trong danh sách ứng viên
+  useEffect(() => {
+    if (selectedApproverId && !firstStepCandidates.some(c => c.id === selectedApproverId)) {
+      setSelectedApproverId('');
+    }
+  }, [firstStepCandidates, selectedApproverId]);
+
+  const mustPickApprover = firstStepCandidates.length > 1;
+
   const submit = (e) => {
     e.preventDefault();
     if (!form.reason.trim() || !form.documentTypeId) return;
+    if (mustPickApprover && !selectedApproverId) return;
     
     // Build payload theo BE DTO
     const payload = {
@@ -121,8 +225,24 @@ export default function CreateRequestModal({ onClose }) {
     if (form.dynamic['Tổng số ngày']) {
       payload.totalDays = parseInt(form.dynamic['Tổng số ngày']);
     }
-    
-    createRequest(payload);
+
+    // BE-04: chỉ gửi khi bước 1 thật sự có nhiều ứng viên
+    if (mustPickApprover && selectedApproverId) {
+      payload.selectedApproverId = selectedApproverId;
+    }
+
+    // BE-09: File thật để provider upload sau khi có applicationId
+    // (applicationService.create chỉ đọc các field nó cần nên key này không lọt ra BE)
+    const pendingFiles = Object.values(files);
+    if (pendingFiles.length > 0) {
+      payload.attachments = pendingFiles;
+    }
+
+    if (isEdit) {
+      updateRequest(existingRequest.id, payload);
+    } else {
+      createRequest(payload);
+    }
     onClose();
   };
 
@@ -140,8 +260,14 @@ export default function CreateRequestModal({ onClose }) {
         {/* Header */}
         <div className="flex justify-between items-start p-6 border-b border-outline-variant/30">
           <div>
-            <h2 className="font-headline-sm text-headline-sm text-on-surface">Tạo Đề Xuất Mới</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">Điền đầy đủ thông tin để gửi yêu cầu phê duyệt</p>
+            <h2 className="font-headline-sm text-headline-sm text-on-surface">
+              {isEdit ? 'Bổ Sung Đơn Từ' : 'Tạo Đề Xuất Mới'}
+            </h2>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">
+              {isEdit
+                ? 'Cập nhật thông tin theo yêu cầu của người duyệt rồi gửi lại'
+                : 'Điền đầy đủ thông tin để gửi yêu cầu phê duyệt'}
+            </p>
           </div>
           <button type="button" onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer">
             <span className="material-symbols-outlined">close</span>
@@ -154,8 +280,9 @@ export default function CreateRequestModal({ onClose }) {
           <div className="flex flex-col gap-2">
             <label className={labelCls}>Loại Đề Xuất</label>
             <select 
-              className={fieldCls} 
+              className={`${fieldCls} disabled:opacity-60 disabled:cursor-not-allowed`}
               value={form.documentTypeId} 
+              disabled={isEdit}
               onChange={(e) => setForm(f => ({ ...f, documentTypeId: e.target.value }))}
             >
               <option value="">-- Chọn loại đề xuất --</option>
@@ -198,6 +325,30 @@ export default function CreateRequestModal({ onClose }) {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* BE-04: bước 1 có nhiều người có thể duyệt -> bắt buộc chọn 1 */}
+          {mustPickApprover && (
+            <div className="flex flex-col gap-2">
+              <label className={labelCls}>
+                Chọn người duyệt <span className="text-error">*</span>
+                <span className="ml-1.5 text-xs normal-case font-normal text-secondary">
+                  (bước 1 có {firstStepCandidates.length} người có thể duyệt)
+                </span>
+              </label>
+              <select
+                className={fieldCls}
+                value={selectedApproverId}
+                onChange={(e) => setSelectedApproverId(e.target.value)}
+              >
+                <option value="">-- Chọn người duyệt --</option>
+                {firstStepCandidates.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}{c.position ? ` · ${c.position}` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -327,7 +478,9 @@ export default function CreateRequestModal({ onClose }) {
                     <span className="material-symbols-outlined text-[24px] text-outline group-hover:text-primary transition-colors">cloud_upload</span>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors">
-                        {form.dynamic[labelKey] ? form.dynamic[labelKey] : 'Nhấn để chọn file tải lên'}
+                        {(files[labelKey]?.name || form.dynamic[labelKey])
+                          ? (files[labelKey]?.name || form.dynamic[labelKey])
+                          : 'Nhấn để chọn file tải lên'}
                       </span>
                       <span className="text-xs text-secondary">Hỗ trợ PDF, DOCX, XLSX (Tối đa 10MB)</span>
                     </div>
@@ -338,7 +491,9 @@ export default function CreateRequestModal({ onClose }) {
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
-                          setDynamic(labelKey, file.name); // in a real app, upload it and save URL
+                          setDynamic(labelKey, file.name);
+                          // BE-09: giữ File thật để upload sau khi đơn được tạo
+                          setFiles((prev) => ({ ...prev, [labelKey]: file }));
                         }
                       }}
                     />
@@ -395,6 +550,39 @@ export default function CreateRequestModal({ onClose }) {
           )}
         </div>
 
+        {/* BE-03: Quản lý của TẤT CẢ phòng ban đã chọn (không chỉ phòng ban đầu tiên) */}
+        {form.departments.length > 0 && (
+          <div className="px-6 py-4 bg-surface-container-lowest border-t border-outline-variant/30">
+            <label className="block font-label-md text-label-md text-on-surface-variant mb-3">
+              Người duyệt theo phòng ban đã chọn
+            </label>
+            <div className="flex flex-col gap-2">
+              {form.departments.map((deptId) => {
+                const dept = departments.find((d) => d.id === deptId);
+                const info = deptManagers.find((m) => m.departmentId === deptId);
+                return (
+                  <div key={deptId} className="flex items-center gap-2 text-sm min-w-0">
+                    <span className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">apartment</span>
+                    <span className="font-medium text-on-surface truncate">{dept?.name || info?.departmentName || 'Phòng ban'}</span>
+                    <span className="material-symbols-outlined text-[16px] text-outline-variant flex-shrink-0">arrow_forward</span>
+                    {info?.managerId ? (
+                      <span className="text-on-surface-variant truncate">
+                        {info.managerName || 'Quản lý'}
+                        {info.managerEmail && <span className="text-secondary"> · {info.managerEmail}</span>}
+                      </span>
+                    ) : (
+                      <span className="text-warning font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[16px]">warning</span>
+                        Chưa có quản lý
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Luồng phê duyệt (Approval Flow) Visualization */}
         {activeWorkflow && activeWorkflow.steps && activeWorkflow.steps.length > 0 && (
           <div className="px-6 py-4 bg-surface-container-lowest border-t border-outline-variant/30">
@@ -433,6 +621,13 @@ export default function CreateRequestModal({ onClose }) {
               {activeWorkflow.steps.sort((a,b) => a.stepOrder - b.stepOrder).map((step, idx) => {
                 const appType = (step.approvalType || '').toLowerCase();
                 let emp = null;
+
+                // BE-04: bước 1 hiển thị đúng người mà người tạo đã chọn
+                if (idx === 0 && selectedApproverId) {
+                  emp = employees?.find(e => e.id === selectedApproverId)
+                    || deptManagers.find(m => m.managerId === selectedApproverId)
+                    || null;
+                }
 
                 if (appType === 'specific_user' || appType === 'specific') {
                   emp = employees?.find(e => e.id === (step.specificUserId || step.specificUser));
@@ -529,10 +724,10 @@ export default function CreateRequestModal({ onClose }) {
           <button
             type="button"
             onClick={submit}
-            disabled={!form.documentTypeId || !form.reason.trim()}
+            disabled={!form.documentTypeId || !form.reason.trim() || (mustPickApprover && !selectedApproverId)}
             className="px-5 py-2.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Gửi yêu cầu
+            {isEdit ? 'Bổ sung & gửi lại' : 'Gửi yêu cầu'}
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import RequestCard from '../components/RequestCard';
 import CreateRequestModal from '../components/CreateRequestModal';
 import { useApproval } from '../../../context/useApproval';
@@ -15,7 +15,19 @@ const STATUS_FILTERS = [
 
 const TITLES = {
   sent: 'Đơn từ cá nhân',
-  received: 'Đơn gửi đến tôi duyệt'
+  received: 'Đơn gửi đến tôi duyệt',
+  /* BE-05: màn hình riêng cho đơn đang bị yêu cầu bổ sung */
+  supplement: 'Đơn cần bổ sung'
+};
+
+/* ─── Helpers ────────────────────────────────────────────────── */
+
+// BE-05: lấy lý do yêu cầu bổ sung gần nhất.
+// Backend ghi comment dạng "[Yêu cầu bổ sung] <lý do>" khi người duyệt bấm nút này.
+const supplementReason = (r) => {
+  const hits = (r.comments || []).filter((c) => (c.text || '').startsWith('[Yêu cầu bổ sung]'));
+  const last = hits[hits.length - 1];
+  return last ? last.text.replace('[Yêu cầu bổ sung]', '').trim() : null;
 };
 
 /* ─── Component ──────────────────────────────────────────────── */
@@ -29,6 +41,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
   const [statusFilter, setStatusFilter]        = useState('all');
   const [search, setSearch]                    = useState('');
   const [departmentFilter, setDepartmentFilter] = useState(null);
+  const [editingRequest, setEditingRequest]   = useState(null);
 
   useEffect(() => {
     setStatusFilter('all');
@@ -36,43 +49,44 @@ export default function PersonalRequests({ mode = 'sent' }) {
     setDepartmentFilter(null);
   }, [mode]);
 
+  /* BE-05: đơn thuộc màn hình hiện tại */
+  const matchesMode = useCallback((r) => {
+    if (mode === 'sent') return r.creatorId === currentUserId;
+    if (mode === 'supplement') return r.creatorId === currentUserId && r.status === 'needssupplement';
+    return r._isPendingReq === true && r.creatorId !== currentUserId;
+  }, [mode, currentUserId]);
+
   /* counts per filter tab */
   const counts = useMemo(() => {
     const c = { all: 0, pending: 0, approved: 0, rejected: 0 };
     for (const r of requests) {
-      const matchMode = mode === 'sent' 
-        ? r.creatorId === currentUserId 
-        : (r._isPendingReq === true && r.creatorId !== currentUserId);
-
-      if (!matchMode) continue;
+      if (!matchesMode(r)) continue;
 
       c.all += 1;
       if (r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval') c.pending += 1;
       if (r.status === 'approved') c.approved += 1;
-      if (r.status === 'rejected' || r.status === 'returned_timeout' || r.status === 'needssupplement') c.rejected += 1;
+      // BE-05: 'needssupplement' có màn hình riêng, không tính vào tab "Từ chối" nữa
+      if (r.status === 'rejected' || r.status === 'returned_timeout') c.rejected += 1;
     }
     return c;
-  }, [requests, currentUserId, mode]);
+  }, [requests, matchesMode]);
 
   /* filtered list */
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return requests.filter((r) => {
-      const matchMode = mode === 'sent' 
-        ? r.creatorId === currentUserId 
-        : (r._isPendingReq === true && r.creatorId !== currentUserId);
-      if (!matchMode) return false;
+      if (!matchesMode(r)) return false;
 
       let matchF = true;
       if (statusFilter === 'pending')  matchF = r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval';
       else if (statusFilter === 'approved') matchF = r.status === 'approved';
-      else if (statusFilter === 'rejected') matchF = r.status === 'rejected' || r.status === 'returned_timeout' || r.status === 'needssupplement';
+      else if (statusFilter === 'rejected') matchF = r.status === 'rejected' || r.status === 'returned_timeout';
 
       const matchQ = !q || String(r.id).toLowerCase().includes(q) || (r.title || '').toLowerCase().includes(q);
       const matchD = !departmentFilter || r.departmentId === departmentFilter;
       return matchQ && matchF && matchD;
     });
-  }, [requests, statusFilter, search, currentUserId, departmentFilter, mode]);
+  }, [requests, statusFilter, search, departmentFilter, matchesMode]);
 
   /* pagination for infinite scroll */
   const [page, setPage] = useState(1);
@@ -158,7 +172,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
             <div className="relative min-w-[200px]">
               <select
                 value={departmentFilter || ''}
-                onChange={(e) => setDepartmentFilter(e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) => setDepartmentFilter(e.target.value || null)}
                 className="w-full pl-3 pr-8 py-2 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none transition-colors cursor-pointer"
               >
                 <option value="">Tất cả phòng ban</option>
@@ -174,8 +188,8 @@ export default function PersonalRequests({ mode = 'sent' }) {
             </div>
           </div>
 
-          {/* ── Status filter tabs ── */}
-          <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
+          {/* ── Status filter tabs ── (BE-05: ẩn ở màn "Đơn cần bổ sung" vì chỉ có 1 trạng thái) */}
+          <div className={`items-center gap-0.5 overflow-x-auto scrollbar-hide ${mode === 'supplement' ? 'hidden' : 'flex'}`}>
             {STATUS_FILTERS.map((f) => {
               const active = statusFilter === f.id;
               return (
@@ -211,19 +225,47 @@ export default function PersonalRequests({ mode = 'sent' }) {
 
         {/* ── List ── */}
         <div className="flex-1 p-6 overflow-y-auto">
+          {/* BE-05: hướng dẫn nhanh cho màn bổ sung */}
+          {mode === 'supplement' && (
+            <div className="mb-4 px-4 py-3 rounded-lg bg-warning-container/40 border border-warning/30 flex items-start gap-2.5 text-sm text-on-surface">
+              <span className="material-symbols-outlined text-[20px] text-warning flex-shrink-0">info</span>
+              <span>
+                Đây là các đơn của bạn bị người duyệt trả lại để bổ sung thông tin.
+                Mở đơn để xem chi tiết, bổ sung rồi gửi lại cho người duyệt.
+              </span>
+            </div>
+          )}
           <div className="w-full flex flex-col gap-3 pb-8">
             {filtered.length === 0 ? (
               <div className="bg-surface rounded-lg border border-outline-variant p-12 text-center text-secondary">
                 <span className="material-symbols-outlined text-[40px] block mb-2 text-outline">
-                  search_off
+                  {mode === 'supplement' ? 'task_alt' : 'search_off'}
                 </span>
-                Không có đơn từ phù hợp bộ lọc.
+                {mode === 'supplement' ? 'Không có đơn nào cần bổ sung.' : 'Không có đơn từ phù hợp bộ lọc.'}
               </div>
             ) : (
               <>
                 {visibleFiltered.map((r, index) => (
-                  <div key={r.id} className="animate-slide-fade" style={{ animationDelay: `${(index % itemsPerPage) * 50}ms` }}>
+                  <div key={r.id} className="animate-slide-fade flex flex-col gap-2" style={{ animationDelay: `${(index % itemsPerPage) * 50}ms` }}>
                     <RequestCard request={r} />
+                    {/* BE-05: hiện lý do cần bổ sung + lối vào bổ sung ngay, không phải mở từng đơn */}
+                    {mode === 'supplement' && (
+                      <div className="px-4 py-2.5 rounded-lg bg-surface border border-outline-variant flex items-center gap-3 flex-wrap">
+                        {supplementReason(r) && (
+                          <span className="flex items-start gap-2 text-sm text-on-surface flex-1 min-w-[220px]">
+                            <span className="material-symbols-outlined text-[18px] text-warning flex-shrink-0">edit_note</span>
+                            <span><strong className="font-semibold">Lý do cần bổ sung:</strong> {supplementReason(r)}</span>
+                          </span>
+                        )}
+                        <button
+                          onClick={() => setEditingRequest(r)}
+                          className="ml-auto px-3.5 py-1.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                          Bổ sung &amp; gửi lại
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
                 
@@ -241,6 +283,12 @@ export default function PersonalRequests({ mode = 'sent' }) {
       </section>
 
       {isCreateOpen && <CreateRequestModal onClose={() => setIsCreateOpen(false)} />}
+      {editingRequest && (
+        <CreateRequestModal
+          existingRequest={editingRequest}
+          onClose={() => setEditingRequest(null)}
+        />
+      )}
     </div>
   );
 }

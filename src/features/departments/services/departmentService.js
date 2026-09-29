@@ -110,6 +110,19 @@ export const departmentService = {
     return response.data;
   },
 
+  // BE-03: lấy quản lý của NHIỀU phòng ban trong 1 lần gọi.
+  // GET /api/departments/managers?departmentIds=id1,id2
+  // Trả về [{ departmentId, departmentName, managerId, managerName, managerEmail }]
+  // (phòng ban chưa có quản lý vẫn có trong kết quả với managerId = null).
+  getManagers: async (departmentIds) => {
+    const ids = (departmentIds || []).filter(Boolean);
+    if (ids.length === 0) return [];
+    const response = await apiClient.get('/departments/managers', {
+      params: { departmentIds: ids.join(',') },
+    });
+    return response.data || [];
+  },
+
   getMembers: async (id) => {
     const response = await apiClient.get(`/departments/${id}/members`);
     return response.data.map(mapMemberToFrontend);

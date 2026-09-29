@@ -22,6 +22,7 @@ export default function RequestCard({ request: r }) {
   const isPending = r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval';
   const isApproved = r.status === 'approved';
   const isRejected = r.status === 'rejected' || r.status === 'returned_timeout' || r.status === 'canceled';
+  const isNeedsSupplement = r.status === 'needssupplement';
 
   const getInitials = (name) => {
     const parts = name.trim().split(' ');
@@ -58,18 +59,29 @@ export default function RequestCard({ request: r }) {
     summaryText = r.status === 'canceled' ? 'Đã hủy' : 'Đã từ chối';
     summaryColor = 'text-error';
     statusIcon = 'close';
+  } else if (isNeedsSupplement) {
+    // BE-06: đơn đang chờ NGƯỜI GỬI bổ sung - trước đây hiện "Không rõ"
+    currentActorStep = null;
+    summaryText = 'Yêu cầu bổ sung';
+    summaryColor = 'text-warning';
+    statusIcon = 'edit_note';
   }
 
-  // If no step is found (e.g. no steps defined yet or all steps approved but request is not), fallback
-  if (!currentActorStep && r.steps.length > 0) {
-     currentActorStep = r.steps[0];
+  // BE-06: với đơn cần bổ sung, người phải hành động là người gửi nên không lấy step nào cả
+  if (isNeedsSupplement) {
+    currentActorStep = null;
+  } else if (!currentActorStep && r.steps.length > 0) {
+    // If no step is found (e.g. no steps defined yet or all steps approved but request is not), fallback
+    currentActorStep = r.steps[0];
   }
 
-  const currentActorUser = currentActorStep ? employees.find(x => x.id === currentActorStep.approverId) : null;
+  const currentActorUser = isNeedsSupplement
+    ? { name: creatorName, avatar: creatorAvatar }
+    : (currentActorStep ? employees.find(x => x.id === currentActorStep.approverId) : null);
   const currentActorName = currentActorUser?.name || 'Người duyệt';
   const currentActorAvatar = currentActorUser?.avatar;
-  let currentActorRole = 'NGƯỜI DUYỆT';
-  if (currentActorUser) {
+  let currentActorRole = isNeedsSupplement ? 'NGƯỜI GỬI' : 'NGƯỜI DUYỆT';
+  if (!isNeedsSupplement && currentActorUser) {
      if (currentActorUser.role === 'ADMIN') currentActorRole = 'QUẢN TRỊ VIÊN';
      else if (currentActorUser.role === 'HR') currentActorRole = 'NHÂN SỰ';
      else if (currentActorUser.role === 'MANAGER') currentActorRole = 'QUẢN LÝ';
@@ -85,6 +97,7 @@ export default function RequestCard({ request: r }) {
       {!isActionable && isPending && <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning/40 z-10 pointer-events-none"></div>}
       {isApproved && <div className="absolute left-0 top-0 bottom-0 w-1 bg-success/40 z-10 pointer-events-none"></div>}
       {isRejected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-error/40 z-10 pointer-events-none"></div>}
+      {isNeedsSupplement && <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning/70 z-10 pointer-events-none"></div>}
 
       {/* MAIN CARD BODY (Clickable) */}
       <div 
@@ -92,9 +105,9 @@ export default function RequestCard({ request: r }) {
         className="p-4 flex flex-col md:flex-row gap-4 md:items-center cursor-pointer"
       >
         <div className="flex items-start gap-4 flex-1 min-w-0">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${isApproved ? 'bg-success/10 border-success/20 text-success' : isPending ? 'bg-warning/10 border-warning/20 text-warning' : 'bg-error/10 border-error/20 text-error'}`}>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${isApproved ? 'bg-success/10 border-success/20 text-success' : (isPending || isNeedsSupplement) ? 'bg-warning/10 border-warning/20 text-warning' : 'bg-error/10 border-error/20 text-error'}`}>
             <span className="material-symbols-outlined text-[24px]">
-              {isApproved ? 'task_alt' : isPending ? 'pending_actions' : 'block'}
+              {isApproved ? 'task_alt' : isPending ? 'pending_actions' : isNeedsSupplement ? 'edit_note' : 'block'}
             </span>
           </div>
           <div className="flex flex-col min-w-0 flex-1">
@@ -136,7 +149,7 @@ export default function RequestCard({ request: r }) {
                   {getInitials(currentActorName)}
                 </div>
               )}
-              <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'approved' ? 'bg-success' : r.status === 'returned_timeout' ? 'bg-error' : r.status === 'pending' ? 'bg-warning' : 'bg-error'}`}>
+              <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'approved' ? 'bg-success' : r.status === 'returned_timeout' ? 'bg-error' : (r.status === 'pending' || r.status === 'needssupplement') ? 'bg-warning' : 'bg-error'}`}>
                 <span className="material-symbols-outlined text-white text-[10px] font-bold">
                   {statusIcon}
                 </span>
@@ -203,7 +216,14 @@ export default function RequestCard({ request: r }) {
             {/* Approver Nodes */}
             {r.steps.map((s, idx) => {
               const u = employees.find((x) => x.id === s.approverId);
-              const approverName = u?.name || 'Người duyệt';
+              // Bước And/Sequential có nhiều người cùng duyệt -> hiện đủ thay vì chỉ người đầu tiên
+              const stepApproverNames = (s.approverIds?.length ? s.approverIds : [s.approverId])
+                .map((aid) => employees.find((x) => x.id === aid)?.name)
+                .filter(Boolean);
+              const isGroupStep = stepApproverNames.length > 1;
+              const approverName = isGroupStep
+                ? `${stepApproverNames.join(', ')}`
+                : (stepApproverNames[0] || u?.name || 'Người duyệt');
               let approverRole = 'NHÂN SỰ';
               if (u) {
                  if (u.role === 'ADMIN') approverRole = 'QUẢN TRỊ VIÊN';
@@ -212,6 +232,7 @@ export default function RequestCard({ request: r }) {
                  else if (u.department) approverRole = u.department;
                  else if (u.position) approverRole = u.position;
               }
+              if (isGroupStep) approverRole = `${stepApproverNames.length} NGƯỜI DUYỆT`;
               
               return (
                 <div key={idx} className="flex items-center gap-1 shrink-0 pt-1">

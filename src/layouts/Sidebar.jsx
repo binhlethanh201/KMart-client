@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApproval } from '../context/useApproval';
+import { clearSessionStorage } from '../utils/session';
 
 /* ─── Sub-panel: chỉ 2 link điều hướng ──────────────────────── */
 
-function RequestsSubPanel({ pendingCount }) {
+function RequestsSubPanel({ pendingCount, supplementCount }) {
   const location = useLocation();
 
   const links = [
@@ -19,6 +20,13 @@ function RequestsSubPanel({ pendingCount }) {
       label: 'Đơn chờ tôi duyệt',
       badge: pendingCount,
     },
+    {
+      /* BE-05: man hinh rieng cho don dang bi yeu cau bo sung */
+      to: '/my-requests/supplements',
+      icon: 'edit_note',
+      label: 'Yêu cầu bổ sung',
+      badge: supplementCount,
+    },
   ];
 
   return (
@@ -30,7 +38,7 @@ function RequestsSubPanel({ pendingCount }) {
         </span>
       </div>
 
-      {/* 2 nav links */}
+      {/* nav links */}
       <ul className="flex flex-col py-2 px-2">
         {links.map((item) => {
           const active = location.pathname === item.to;
@@ -139,7 +147,7 @@ const NAV_ITEMS = [
     icon: 'description',
     subPanel: 'requests',
     /* paths that should highlight this rail item */
-    matchPaths: ['/my-requests', '/my-requests/approvals'],
+    matchPaths: ['/my-requests', '/my-requests/approvals', '/my-requests/supplements'],
     badge: null, /* optionally set dynamically */
   },
   {
@@ -162,8 +170,8 @@ export default function UnifiedSidebar({
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('kmart_token');
-    localStorage.removeItem('kmart_user');
+    // BE-14: xoa toan bo trang thai phien (token + formFields + requests cache)
+    clearSessionStorage();
     window.location.href = '/login';
   };
 
@@ -175,6 +183,15 @@ export default function UnifiedSidebar({
         (r) =>
           r.status === 'pending' &&
           r.steps[r.currentStep]?.approverId === currentUserId
+      ).length,
+    [requests, currentUserId]
+  );
+
+  // BE-05: so don cua toi dang bi yeu cau bo sung
+  const supplementCount = useMemo(
+    () =>
+      requests.filter(
+        (r) => r.status === 'needssupplement' && r.creatorId === currentUserId
       ).length,
     [requests, currentUserId]
   );
@@ -379,7 +396,7 @@ export default function UnifiedSidebar({
             openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
           }`}
         >
-          {openSubPanel === 'requests' && <RequestsSubPanel pendingCount={pendingCount} />}
+          {openSubPanel === 'requests' && <RequestsSubPanel pendingCount={pendingCount} supplementCount={supplementCount} />}
           {openSubPanel === 'settings' && <SettingsSubPanel />}
         </div>
       </div>

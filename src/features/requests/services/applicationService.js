@@ -1,10 +1,17 @@
 import apiClient from '../../../services/apiClient';
 
 const mapToFrontendModel = (a) => {
+  const rawData = (typeof a.data === 'string')
+    ? (() => { try { return JSON.parse(a.data); } catch { return {}; } })()
+    : (a.data || {});
   return {
     id: a.id,
     title: a.title || (a.documentTypeName || 'Yêu cầu'),
     type: a.documentTypeName || 'Yêu cầu',
+    // cần cho BE-04 (chọn người duyệt) và cho luồng bổ sung rồi gửi lại
+    documentTypeId: a.documentTypeId,
+    selectedApproverId: a.selectedApproverId || null,
+    _rawData: rawData,
     creatorId: a.creatorId || a.applicantId,
     creatorName: a.creatorName || a.applicantName,
     departmentId: a.departmentId,
@@ -13,7 +20,7 @@ const mapToFrontendModel = (a) => {
     status: a.status.toLowerCase(), // 'draft', 'pending', 'approved', 'rejected'
     currentStep: a.currentStepOrder || 0,
     fields: {
-      ...((typeof a.data === 'string') ? (() => { try { return JSON.parse(a.data); } catch { return {}; } })() : (a.data || {})),
+      ...rawData,
       ...(a.startDate ? { startTime: new Date(a.startDate).toLocaleString('vi-VN') } : {}),
       ...(a.endDate ? { endTime: new Date(a.endDate).toLocaleString('vi-VN') } : {}),
       ...(a.totalDays ? { totalDays: a.totalDays } : {}),
@@ -21,6 +28,10 @@ const mapToFrontendModel = (a) => {
     },
     steps: (a.steps || []).map(s => ({
       approverId: s.approverId,
+      // bước MultiRule = And/Sequential có nhiều người cùng duyệt, phải hiện đủ
+      approverIds: (s.approverIds && s.approverIds.length)
+        ? s.approverIds
+        : (s.approverId ? [s.approverId] : []),
       status: s.status.toLowerCase(),
       actedAt: s.actedAt ? new Date(s.actedAt).toLocaleString('vi-VN') : null
     })),
@@ -71,6 +82,8 @@ export const applicationService = {
       startDate: data.startDate || null,
       endDate: data.endDate || null,
       totalDays: data.totalDays || null,
+      // BE-04: người duyệt do người tạo chọn (chỉ gửi khi bước 1 có nhiều ứng viên)
+      selectedApproverId: data.selectedApproverId || null,
     };
     const response = await apiClient.post('/applications', payload);
     return mapToFrontendModel(response.data);
@@ -99,5 +112,54 @@ export const applicationService = {
   addComment: async (id, content) => {
     const response = await apiClient.post(`/applications/${id}/comments`, { content });
     return response.data;
+  },
+
+  // BE-09: tài liệu đính kèm. Backend đã có sẵn nhóm endpoint
+  // /api/applications/{id}/attachments (list/upload/download/delete) nhưng FE chưa từng gọi.
+  getAttachments: async (applicationId) => {
+    const response = await apiClient.get(`/applications/${applicationId}/attachments`);
+    return response.data || [];
+  },
+
+  // BE-09: upload file thật. Phải có applicationId trước nên chỉ gọi được SAU khi tạo đơn.
+  uploadAttachment: async (applicationId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post(
+      `/applications/${applicationId}/attachments`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  },
+
+  // Endpoint download có [Authorize] nên không dùng <a href> được (không gửi kèm Bearer token).
+  // Phải tải qua axios rồi bơm vào object URL.
+  downloadAttachment: async (applicationId, attachmentId, fileName) => {
+    const response = await apiClient.get(
+      `/applications/${applicationId}/attachments/${attachmentId}/download`,
+      { responseType: 'blob' }
+    );
+    const url = window.URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName || 'attachment';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  // Bổ sung thông tin cho đơn đang ở trạng thái NeedsSupplement
+  update: async (id, data) => {
+    const payload = {
+      reason: data.reason || '',
+      data: data.data || {},
+      startDate: data.startDate || null,
+      endDate: data.endDate || null,
+      totalDays: data.totalDays || null,
+    };
+    const response = await apiClient.put(`/applications/${id}`, payload);
+    return mapToFrontendModel(response.data);
   }
 };
