@@ -205,6 +205,15 @@ export default function RequestDetail() {
       };
     }
   });
+  // BE-34: khi bước đã kết thúc mà có ít nhất 1 mốc nhật ký thì CHỈ người có mốc mới được coi
+  // là đã thao tác. Trước đây fallback "cả bước đã duyệt thì ai cũng đã duyệt" khiến người
+  // không hề duyệt (vd bước chỉ Vũ Thanh Hằng duyệt) cũng hiện "đã duyệt".
+  const stepHasActorHistory = {};
+  histories.forEach((h) => {
+    if (h.action === 'approved' || h.action === 'rejected') {
+      stepHasActorHistory[h.stepOrder] = true;
+    }
+  });
   const supplementEvents = histories.filter((h) => h.action === 'supplement_requested');
   const supplementDone = histories.filter((h) => h.action === 'supplement_completed');
   const nameOf = (uid) => employees.find((x) => x.id === uid)?.name || 'Người dùng';
@@ -772,12 +781,13 @@ export default function RequestDetail() {
                     // Ưu tiên nhật ký; nếu đơn cũ thiếu nhật ký thì lấy người thao tác từ chính bước.
                     const stepNo = s.stepOrder ?? i + 1;
                     const fallbackActor = stepActorOf[stepNo];
-                    const isFallbackActor = fallbackActor && fallbackActor.userId === approverId;
+                    // BE-34: chỉ dùng fallback (người thao tác suy từ bước) khi bước KHÔNG có
+                    // mốc nhật ký nào (đơn cũ). Có nhật ký rồi thì chỉ tin nhật ký.
+                    const isFallbackActor = !stepHasActorHistory[stepNo]
+                      && fallbackActor && fallbackActor.userId === approverId;
                     // BE-31: bước đã duyệt xong -> người vừa xin bổ sung vừa duyệt coi như ĐÃ DUYỆT
                     const actedByRaw = actedByOf[stepKey]
-                      || (isFallbackActor ? fallbackActor.action : undefined)
-                      // không có nhật ký nhưng cả bước đã duyệt -> coi như đã duyệt
-                      || (s.status === 'approved' ? 'approved' : undefined);
+                      || (isFallbackActor ? fallbackActor.action : undefined);
                     const actedBy = (s.status === 'approved' && actedByRaw === 'supplement_requested')
                       ? 'approved'
                       : actedByRaw;
@@ -807,6 +817,11 @@ export default function RequestDetail() {
                       personTone = stepTone.idle; personLabel = 'Chờ bổ sung';
                     } else if (isTerminated) {
                       // đơn đã dừng -> người này không còn cơ hội xử lý
+                      personTone = stepTone.idle; personLabel = 'Không xử lý';
+                    } else if (s.status === 'approved') {
+                      // BE-34: bước đã duyệt xong, người không có mốc nhật ký = không tham gia duyệt
+                      personTone = stepTone.idle; personLabel = 'Không duyệt bước này';
+                    } else if (s.status === 'rejected') {
                       personTone = stepTone.idle; personLabel = 'Không xử lý';
                     } else if (isCurrent) {
                       personTone = stepTone.current; personLabel = 'Đang chờ xử lý';
