@@ -689,7 +689,7 @@ export default function WorkflowTab() {
   const [workflowIds, setWorkflowIds] = useState({});
   const [saved, setSaved] = useState(false);
 
-  const { formFields } = useApproval();
+  const { formFields, pushToast } = useApproval();
 
   // Fetch roles từ API
   useEffect(() => {
@@ -830,6 +830,43 @@ export default function WorkflowTab() {
       },
     }));
 
+  /**
+   * BE-46: đổi HÌNH THỨC DUYỆT phải khởi tạo luôn các trường mà backend yêu cầu.
+   *
+   * Trước đây chỉ set { approvalType } nên khi đổi sang một hình thức khác, các trường
+   * bắt buộc của hình thức mới vẫn là null (step cũ load từ API không có sẵn) -> backend
+   * trả 400 và luồng duyệt KHÔNG lưu được.
+   *
+   *   hierarchy -> cần hierarchyOption
+   *   chain     -> cần chainStart + chainEnd
+   *   role      -> cần role
+   *   specific  -> cần specificUser
+   */
+  const changeApprovalType = (id, approvalType) =>
+    setWorkflows((prev) => ({
+      ...prev,
+      [formType]: {
+        ...prev[formType],
+        [block]: prev[formType][block].map((s) => {
+          if (s.id !== id) return s;
+          const next = { ...s, approvalType };
+          if (approvalType === 'hierarchy' && !next.hierarchyOption) {
+            next.hierarchyOption = 'department_head';
+          }
+          if (approvalType === 'chain') {
+            if (!next.chainStart) next.chainStart = 'direct_manager';
+            if (!next.chainEnd) next.chainEnd = 'department_head';
+          }
+          if (approvalType === 'role' && !next.role) {
+            next.role = approvalRoles.length > 0
+              ? (typeof approvalRoles[0] === 'string' ? approvalRoles[0] : approvalRoles[0]?.name || '')
+              : '';
+          }
+          return next;
+        }),
+      },
+    }));
+
   // BE-35: đổi CHỨC DANH thì phải xoá người duyệt đã chọn trước đó.
   // Người cũ thuộc chức danh khác nên sẽ không còn trong danh sách ứng viên mới ->
   // giữ lại sẽ gây "specificUserId" mâu thuẫn, đơn có thể không ai duyệt được.
@@ -893,12 +930,74 @@ export default function WorkflowTab() {
       return next;
     });
 
+  /**
+   * BE-46: quy đổi giá trị người duyệt về ID thật.
+   *
+   * `UserSelect` lưu TÊN nhân sự (`onChange(e.name)`), còn backend cần `specificUserId`.
+   * Trước đây `save()` chỉ so sánh theo ID nên KHÔNG BAO GIỜ khớp -> gửi null -> 400.
+   */
+  const resolveEmployeeId = (val) => {
+    if (!val) return null;
+    const byId = EMPLOYEES.find((e) => e.id === val);
+    if (byId) return byId.id;
+    const byName = EMPLOYEES.find((e) => e.name === val);
+    return byName ? byName.id : null;
+  };
+
+  /**
+   * BE-46: gom mọi bước của cả 3 khối để kiểm tra trước khi lưu.
+   */
+  const scopeDataForValidation = () => {
+    const data = workflows[formType] || { hq: [], retail: [], common: [] };
+    return ['hq', 'retail', 'common'].flatMap((scope) =>
+      (data[scope] || []).map((s, i) => ({ step: s, scope, index: i }))
+    );
+  };
+
+  /**
+   * BE-46: kiểm tra hợp lệ giống backend, trả về danh sách lỗi dạng chuỗi.
+   * Giúp người dùng biết CHÍNH XÁC thiếu gì thay vì "lưu không được".
+   */
+  const validateSteps = (items) =>
+    items.flatMap(({ step, scope, index }) => {
+      const where = `${scope.toUpperCase()} · Bước ${index + 1}`;
+      const errs = [];
+      const type = step.approvalType || 'role';
+      if (type === 'hierarchy' && !step.hierarchyOption) {
+        errs.push(t('{v0}: Cần chọn cấp bậc cho hình thức quản lý trực tiếp', { v0: where }));
+      }
+      if (type === 'chain') {
+        if (!step.chainStart) errs.push(t('{v0}: Cần chọn cấp bắt đầu của chuỗi', { v0: where }));
+        if (!step.chainEnd) errs.push(t('{v0}: Cần chọn cấp kết thúc của chuỗi', { v0: where }));
+      }
+      if (type === 'role' && !step.role) {
+        errs.push(t('{v0}: Cần chọn chức danh/bộ phận cho hình thức này', { v0: where }));
+      }
+      if (type === 'specific') {
+        const hasUser =
+          resolveEmployeeId(step.specificUser) ||
+          (Array.isArray(step.approvers) && step.approvers.length === 1 && resolveEmployeeId(step.approvers[0]));
+        if (!hasUser) errs.push(t('{v0}: Cần chọn người duyệt cụ thể', { v0: where }));
+      }
+      return errs;
+    });
+
   const save = async () => {
     const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formType);
     if (!isGuid) {
       console.warn(t('Chưa thể lưu luồng duyệt cho loại đơn cục bộ.'));
+      pushToast(t('Chưa thể lưu luồng duyệt cho loại đơn cục bộ.'), 'warning');
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
+      return;
+    }
+
+    // BE-46: kiểm tra trước khi gửi để báo lỗi RÕ RÀNG cho người dùng,
+    // thay vì để backend trả 400 rồi nuốt lỗi trong console.
+    const invalid = validateSteps(scopeDataForValidation());
+    if (invalid.length > 0) {
+      pushToast(invalid[0], 'error');
+      console.error('Luồng duyệt chưa hợp lệ:', invalid);
       return;
     }
 
@@ -915,18 +1014,14 @@ export default function WorkflowTab() {
           isDefault: true,
           steps: scopeData[scope].map((s, idx) => {
             // BE-35: người được CHỈ ĐỊNH cho bước "theo chức danh".
-            // Trước đây chỉ lấy từ `s.specificUser` (vốn chỉ có ở bước hình thức "Chỉ định"),
-            // nên lựa chọn trong hộp "Chọn người duyệt" của bước chức danh BỊ MẤT khi lưu.
+            // BE-46: resolve được cả khi giá trị là TÊN (UserSelect) hoặc ID.
             const designatedUserId = (() => {
-              if (Array.isArray(s.approvers) && s.approvers.length === 1) return s.approvers[0];
-              if (s.specificUser && EMPLOYEES.some(e => e.id === s.specificUser)) return s.specificUser;
-              if (s.specificUserId && EMPLOYEES.some(e => e.id === s.specificUserId)) return s.specificUserId;
+              if (Array.isArray(s.approvers) && s.approvers.length === 1) return resolveEmployeeId(s.approvers[0]);
+              if (s.specificUser) return resolveEmployeeId(s.specificUser);
+              if (s.specificUserId) return resolveEmployeeId(s.specificUserId);
               return null;
             })();
-            // chỉ gửi khi thực sự là người trong hệ thống (tránh gửi tên/hiển thị nhầm)
-            const specificUserId = (designatedUserId && EMPLOYEES.some(e => e.id === designatedUserId))
-              ? designatedUserId
-              : null;
+            const specificUserId = designatedUserId;
 
             return {
               name: s.name,
@@ -971,8 +1066,13 @@ export default function WorkflowTab() {
       
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
+      pushToast(t('Đã lưu cấu hình luồng duyệt'), 'success');
     } catch (err) {
       console.error(t('Không lưu được luồng duyệt:'), err);
+      // Hiển thị thông báo lỗi từ backend (validator trả về mảng errors)
+      const data = err?.response?.data;
+      const detail = Array.isArray(data?.errors) ? data.errors.join(' • ') : (data?.message || data?.error);
+      pushToast(detail || t('Không lưu được luồng duyệt'), 'error');
     }
   };
 
@@ -1171,7 +1271,7 @@ export default function WorkflowTab() {
                                 key={at.id}
                                 name={`approval-${step.id}`}
                                 checked={step.approvalType === at.id}
-                                onClick={() => updateStep(step.id, { approvalType: at.id })}
+                                onClick={() => changeApprovalType(step.id, at.id)}
                                 title={t(at.label)}
                               />
                             ))}
