@@ -183,7 +183,7 @@ export default function DepartmentDetail() {
                     {dept.leaders.map((l, i) => (
                       <span key={i} className="inline-flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px] text-primary">badge</span>
-                        {l.title}: <strong className="text-on-surface">{l.name}</strong>
+                        {t(l.title)}: <strong className="text-on-surface">{l.name}</strong>
                         {i < dept.leaders.length - 1 && <span className="mx-1 text-outline">,</span>}
                       </span>
                     ))}
@@ -200,19 +200,19 @@ export default function DepartmentDetail() {
 
           {/* Tabs */}
           <div className="px-6 flex gap-1 -mb-px">
-            {TABS.map((t) => {
-              const active = tab === t.id;
+            {TABS.map((tabItem) => {
+              const active = tab === tabItem.id;
               return (
                 <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
+                  key={tabItem.id}
+                  onClick={() => setTab(tabItem.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer ${active
                     ? 'border-primary text-primary'
                     : 'border-transparent text-secondary hover:text-on-surface hover:bg-surface-container-low'
                     }`}
                 >
-                  <span className="material-symbols-outlined text-[18px]">{t.icon}</span>
-                  {t(t.label)}
+                  <span className="material-symbols-outlined text-[18px]">{tabItem.icon}</span>
+                  {t(tabItem.label)}
                 </button>
               );
             })}
@@ -469,8 +469,8 @@ export default function DepartmentDetail() {
                             </td>
                             <td className="py-3 px-4 whitespace-nowrap">
                               <div className="flex flex-col gap-0.5">
-                                <span className="text-on-surface font-medium text-[13px]">{s.departmentName || dept.name}</span>
-                                <span className="text-secondary text-[13px]">{s.role}</span>
+                                <span className="text-on-surface font-medium text-[13px]">{t(s.departmentName || dept.name)}</span>
+                                <span className="text-secondary text-[13px]">{t(s.role)}</span>
                               </div>
                             </td>
                             <td className="py-3 px-4 whitespace-nowrap">

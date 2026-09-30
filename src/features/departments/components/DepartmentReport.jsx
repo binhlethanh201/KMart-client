@@ -250,8 +250,8 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
                          <span className="text-[10px] font-medium text-secondary mt-1 text-center w-[200%] truncate" title={row.name}>
                             {row.name.split(' ').pop()}
                          </span>
-                         <span className="text-[9px] text-outline mt-0.5 truncate w-[200%] text-center uppercase tracking-wider" title={row.title || t('Nhân sự')}>
-                            {row.title || t('Nhân sự')}
+                         <span className="text-[9px] text-outline mt-0.5 truncate w-[200%] text-center uppercase tracking-wider" title={t(row.title) || t('Nhân sự')}>
+                            {t(row.title) || t('Nhân sự')}
                          </span>
                       </div>
                     </div>
@@ -305,7 +305,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
               )}
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-base text-on-surface truncate group-hover:text-primary transition-colors">{row.name}</h3>
-                <p className="text-xs text-secondary font-medium uppercase tracking-wider truncate mt-0.5">{row.title || t('Nhân sự')}</p>
+                <p className="text-xs text-secondary font-medium uppercase tracking-wider truncate mt-0.5">{t(row.title) || t('Nhân sự')}</p>
               </div>
               <div className="text-center shrink-0 ml-2">
                 <div className="bg-success/10 text-success w-12 h-12 rounded-xl flex flex-col items-center justify-center border border-success/20">
