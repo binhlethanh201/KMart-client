@@ -236,7 +236,13 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 <span className="material-symbols-outlined text-[40px] block mb-2 text-outline">
                   {mode === 'supplement' ? 'task_alt' : 'search_off'}
                 </span>
-                {mode === 'supplement' ? 'Không có đơn nào cần bổ sung.' : 'Không có đơn từ phù hợp bộ lọc.'}
+                {mode === 'supplement'
+                  ? 'Không có đơn nào cần bổ sung.'
+                  : mode === 'received'
+                    ? (requests.some(matchesMode)
+                        ? 'Không có đơn từ phù hợp bộ lọc.'
+                        : 'Hiện không có đơn nào đang chờ bạn duyệt.')
+                    : 'Không có đơn từ phù hợp bộ lọc.'}
               </div>
             ) : (
               <>
