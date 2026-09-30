@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useI18n } from '../../../i18n/I18nProvider';
+import LanguageSwitcher from '../../../components/LanguageSwitcher';
 
 const LandingPage = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -16,27 +19,27 @@ const LandingPage = () => {
   // NỘI DUNG ĐƯỢC CHỌN LỌC TỪ BẢNG KHẢO SÁT (Đã ẩn danh và viết lại thành tính năng phần mềm)
   const HR_SOLUTIONS = [
     {
-      title: "Quy trình duyệt đơn linh hoạt",
+      title: t('Quy trình duyệt đơn linh hoạt'),
       description:
-        "Tự động hóa luân chuyển đơn từ theo cấp bậc (Nhân viên - Quản lý - Ban Giám đốc). Tùy biến luồng duyệt tuần tự theo từng loại đơn.",
+        t('Tự động hóa luân chuyển đơn từ theo cấp bậc (Nhân viên - Quản lý - Ban Giám đốc). Tùy biến luồng duyệt tuần tự theo từng loại đơn.'),
       icon: "account_tree",
     },
     {
-      title: "Kiểm soát thời gian xử lý (SLA)",
+      title: t('Kiểm soát thời gian xử lý (SLA)'),
       description:
-        "Thiết lập thời hạn xử lý đơn (ví dụ: tự động hoàn trả sau 12h nếu không duyệt). Yêu cầu nhập lý do chi tiết khi từ chối đơn.",
+        t('Thiết lập thời hạn xử lý đơn (ví dụ: tự động hoàn trả sau 12h nếu không duyệt). Yêu cầu nhập lý do chi tiết khi từ chối đơn.'),
       icon: "pending_actions",
     },
     {
-      title: "Biểu mẫu động thông minh",
+      title: t('Biểu mẫu động thông minh'),
       description:
-        "Các trường dữ liệu thay đổi linh hoạt theo loại đơn (Nghỉ phép, Làm thêm, Thai sản...). Dễ dàng đính kèm hình ảnh và tài liệu chứng minh.",
+        t('Các trường dữ liệu thay đổi linh hoạt theo loại đơn (Nghỉ phép, Làm thêm, Thai sản...). Dễ dàng đính kèm hình ảnh và tài liệu chứng minh.'),
       icon: "dynamic_form",
     },
     {
-      title: "Phân quyền & Báo cáo tập trung",
+      title: t('Phân quyền & Báo cáo tập trung'),
       description:
-        "Bảo mật thông tin tuyệt đối giữa các phòng ban. Cung cấp báo cáo tổng hợp đa chiều giúp bộ phận Nhân sự dễ dàng theo dõi và xuất dữ liệu.",
+        t('Bảo mật thông tin tuyệt đối giữa các phòng ban. Cung cấp báo cáo tổng hợp đa chiều giúp bộ phận Nhân sự dễ dàng theo dõi và xuất dữ liệu.'),
       icon: "admin_panel_settings",
     },
   ];
@@ -67,12 +70,13 @@ const LandingPage = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              <LanguageSwitcher variant="light" />
               <button
                 type="button"
                 onClick={() => handleSmoothNavigate("/login")}
                 className="rounded-md bg-primary px-5 py-2 text-label-md text-on-primary shadow-sm transition-all hover:bg-on-primary-fixed-variant active:scale-95 hidden sm:block"
               >
-                Đăng nhập ngay
+                {t('Đăng nhập ngay')}
               </button>
             </div>
           </header>
@@ -88,24 +92,23 @@ const LandingPage = () => {
                   <span className="material-symbols-outlined text-[14px] text-primary">
                     verified
                   </span>
-                  Nền tảng duyệt đơn nội bộ
+                  {t('Nền tảng duyệt đơn nội bộ')}
                 </div>
 
                 <h1 className="text-display-lg text-on-surface md:text-[2.9rem] md:leading-[1.15]">
-                  Số hóa quy trình duyệt đơn
+                  {t('Số hóa quy trình duyệt đơn')}
                   <br />
                   <span className="text-primary">
-                    Quản trị nhân sự thông minh
+                    {t('Quản trị nhân sự thông minh')}
                   </span>
                 </h1>
 
                 <p className="max-w-xl text-body-lg text-on-surface-variant">
-                  Giải quyết triệt để sự cồng kềnh của giấy tờ.{" "}
+                  {t('Giải quyết triệt để sự cồng kềnh của giấy tờ.')}{" "}
                   <strong className="text-on-surface font-semibold">
                     Kmart
                   </strong>{" "}
-                  tự động hóa luồng phê duyệt từ nhân viên đến ban giám đốc,
-                  tích hợp biểu mẫu động và hệ thống thông báo tức thì.
+                  {t('tự động hóa luồng phê duyệt từ nhân viên đến ban giám đốc,\n                  tích hợp biểu mẫu động và hệ thống thông báo tức thì.')}
                 </p>
 
                 <div className="flex w-full flex-col gap-3 pt-4 text-label-md sm:w-auto sm:flex-row">
@@ -114,7 +117,7 @@ const LandingPage = () => {
                     onClick={() => handleSmoothNavigate("/login")}
                     className="group flex items-center justify-center gap-2 rounded-md bg-primary px-8 py-3 text-on-primary shadow-sm transition-all hover:bg-on-primary-fixed-variant active:scale-95"
                   >
-                    <span>Truy cập hệ thống</span>
+                    <span>{t('Truy cập hệ thống')}</span>
                     <span className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">
                       arrow_forward
                     </span>
@@ -179,12 +182,11 @@ const LandingPage = () => {
             <div className="mx-auto max-w-7xl">
               <div className="mb-12 text-left md:text-center">
                 <h2 className="text-headline-md text-on-surface">
-                  Giải pháp toàn diện cho nghiệp vụ Đơn từ
+                  {t('Giải pháp toàn diện cho nghiệp vụ Đơn từ')}
                 </h2>
                 <div className="mt-3 h-1 w-12 bg-primary md:mx-auto rounded-full" />
                 <p className="mt-4 text-body-md text-on-surface-variant max-w-2xl mx-auto">
-                  Thiết kế chuyên sâu dựa trên nhu cầu vận hành thực tế, đáp ứng
-                  mọi quy chuẩn luân chuyển hồ sơ phức tạp nhất.
+                  {t('Thiết kế chuyên sâu dựa trên nhu cầu vận hành thực tế, đáp ứng\n                  mọi quy chuẩn luân chuyển hồ sơ phức tạp nhất.')}
                 </p>
               </div>
 
@@ -223,8 +225,9 @@ const LandingPage = () => {
                 </span>
               </div>
               <span className="text-[11px] uppercase tracking-widest text-outline">
-                &copy; 2026 Kmart Internal Systems. Bảo lưu mọi quyền lợi.
+                {t('© 2026 Kmart Internal Systems. Bảo lưu mọi quyền lợi.')}
               </span>
+              <LanguageSwitcher variant="light" />
             </div>
           </footer>
         </div>
@@ -244,7 +247,7 @@ const LandingPage = () => {
             {/* Spinner màu trắng trong suốt */}
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/20 border-t-white" />
             <span className="text-label-md uppercase tracking-widest text-white/90">
-              Đang kết nối hệ thống...
+              {t('Đang kết nối hệ thống...')}
             </span>
           </div>
         </div>

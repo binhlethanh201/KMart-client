@@ -2,8 +2,10 @@ import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { roleLabel } from '../../../utils/roleLabels';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 export default function UserInfoModal({ user, onClose }) {
+  const { t } = useI18n();
   const { departments } = useApproval();
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -21,7 +23,7 @@ export default function UserInfoModal({ user, onClose }) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Thông tin chi tiết nhân sự"
+      aria-label={t('Thông tin chi tiết nhân sự')}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -43,7 +45,7 @@ export default function UserInfoModal({ user, onClose }) {
                 type="button"
                 onClick={onClose}
                 className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer z-10 bg-surface/50 backdrop-blur"
-                aria-label="Đóng"
+                aria-label={t('Đóng')}
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -58,7 +60,7 @@ export default function UserInfoModal({ user, onClose }) {
         {/* Body */}
         <div className="p-6 flex flex-col gap-5">
           <div>
-            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Mã nhân sự</label>
+            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">{t('Mã nhân sự')}</label>
             <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50">
               {user.shortId || user.employeeId || 'EMP-0000'}
             </p>
@@ -66,47 +68,47 @@ export default function UserInfoModal({ user, onClose }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Số điện thoại</label>
+              <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">{t('Số điện thoại')}</label>
               <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50">
-                {user.phone || <span className="text-secondary italic">Chưa cập nhật</span>}
+                {user.phone || <span className="text-secondary italic">{t('Chưa cập nhật')}</span>}
               </p>
             </div>
             
             <div>
-              <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Email cá nhân</label>
+              <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">{t('Email cá nhân')}</label>
               <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50 truncate" title={user.personalEmail}>
-                {user.personalEmail || <span className="text-secondary italic">Chưa cập nhật</span>}
+                {user.personalEmail || <span className="text-secondary italic">{t('Chưa cập nhật')}</span>}
               </p>
             </div>
           </div>
           
           <div>
-            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Phòng ban</label>
+            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">{t('Phòng ban')}</label>
             <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50 flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px] text-secondary">{department?.icon || 'corporate_fare'}</span>
-              {department?.name || 'Không có dữ liệu'}
+              {department?.name || t('Không có dữ liệu')}
             </p>
           </div>
           
           <div>
-            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Vai trò hệ thống</label>
+            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">{t('Vai trò hệ thống')}</label>
             <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50">
               {roleLabel(user.systemRole || user.systemRoles?.[0] || user.role)}
             </p>
           </div>
           
           <div>
-            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">Trạng thái</label>
+            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">{t('Trạng thái')}</label>
             <div className="flex items-center mt-2">
               {user.status === 'active' || user.status === 'Đang hoạt động' ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium bg-[#E8F8EE] text-[#037847]">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#037847]"></span>
-                  Đang hoạt động
+                  {t('Đang hoạt động')}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium bg-error-container text-on-error-container">
                   <span className="w-1.5 h-1.5 rounded-full bg-error"></span>
-                  Đã khóa
+                  {t('Đã khóa')}
                 </span>
               )}
             </div>
@@ -120,7 +122,7 @@ export default function UserInfoModal({ user, onClose }) {
             onClick={onClose}
             className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
           >
-            Đóng
+            {t('Đóng')}
           </button>
         </div>
       </div>

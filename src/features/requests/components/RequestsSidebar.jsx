@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 // Dark contextual filter rail for the request list pages.
 // Controlled by the parent list page (filter + search live there).
@@ -13,6 +14,7 @@ const FILTERS = [
 ];
 
 export default function RequestsSidebar({ filter, onFilter, counts = {}, search, onSearch, departmentFilter, onDepartmentFilter, departments = [] }) {
+  const { t } = useI18n();
   const { currentUser } = useApproval();
 
   return (
@@ -21,7 +23,7 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
       <div className="p-5 border-b border-white/10">
         <Link to="/" className="flex items-center gap-1 text-slate-400 hover:text-white text-xs mb-3 transition-colors">
           <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          Về trang chủ
+          {t('Về trang chủ')}
         </Link>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -39,12 +41,12 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
       <div className="py-3 px-3 border-b border-white/10">
         <Link to="/my-requests" className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${filter === 'sent' ? 'bg-primary/10 text-white border-l-4 border-primary' : 'text-slate-400 hover:bg-white/5 hover:text-white border-l-4 border-transparent'}`}>
           <span className="material-symbols-outlined text-[20px]">folder_shared</span>
-          <span className="text-sm font-medium">Đơn từ cá nhân</span>
+          <span className="text-sm font-medium">{t('Đơn từ cá nhân')}</span>
         </Link>
         <button onClick={() => onFilter('received')} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${filter === 'received' ? 'bg-primary/10 text-white border-l-4 border-primary' : 'text-slate-400 hover:bg-white/5 hover:text-white border-l-4 border-transparent'}`}>
           <span className="flex items-center gap-3">
             <span className="material-symbols-outlined text-[20px]">inbox</span>
-            <span className="text-sm font-medium">Đơn chờ tôi duyệt</span>
+            <span className="text-sm font-medium">{t('Đơn chờ tôi duyệt')}</span>
           </span>
           {counts.received > 0 && <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full">{counts.received}</span>}
         </button>
@@ -58,7 +60,7 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 bg-slate-800/60 border border-slate-700 rounded-md text-sm text-white outline-none focus:border-primary placeholder:text-slate-500"
-            placeholder="Tìm theo mã, tiêu đề..."
+            placeholder={t('Tìm theo mã, tiêu đề...')}
             type="text"
           />
         </div>
@@ -66,7 +68,7 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
 
       {/* Status filters */}
       <div className="flex-1 overflow-y-auto py-3 px-3">
-        <div className="text-slate-500 uppercase tracking-widest text-[11px] px-3 mb-2 font-label-md">Bộ lọc Trạng thái</div>
+        <div className="text-slate-500 uppercase tracking-widest text-[11px] px-3 mb-2 font-label-md">{t('Bộ lọc Trạng thái')}</div>
         <ul className="flex flex-col gap-0.5">
           {FILTERS.map((f) => {
             const active = filter === f.id;
@@ -82,7 +84,7 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
                     ) : (
                       <span className="material-symbols-outlined text-[20px]">{f.icon}</span>
                     )}
-                    <span className="text-sm font-medium">{f.label}</span>
+                    <span className="text-sm font-medium">{t(f.label)}</span>
                   </span>
                   {counts[f.id] > 0 && <span className="text-xs text-slate-500">{counts[f.id]}</span>}
                 </button>
@@ -97,7 +99,7 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
         <div className="py-3 px-3 border-t border-white/10 flex-shrink-0">
           <div className="flex items-center gap-1 text-slate-500 uppercase tracking-widest text-[11px] px-3 mb-2 font-label-md">
             <span className="material-symbols-outlined text-[14px]">apartment</span>
-            Phòng ban
+            {t('Phòng ban')}
           </div>
           <div className="flex flex-wrap gap-1.5 px-1">
             <button
@@ -108,7 +110,7 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
                   : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-700/60'
               }`}
             >
-              Tất cả
+              {t('Tất cả')}
             </button>
             {departments.map((d) => {
               const active = departmentFilter === d.id;
@@ -121,7 +123,7 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
                       ? 'bg-primary text-on-primary'
                       : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-700/60'
                   }`}
-                  title={d.name}
+                  title={t(d.name)}
                 >
                   {d.code}
                 </button>

@@ -1,13 +1,16 @@
 import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApproval } from '../context/useApproval';
+import { useI18n } from '../i18n/I18nProvider';
 import { clearSessionStorage } from '../utils/session';
 import NotificationBell from '../components/NotificationBell';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 /* ─── Sub-panel: chỉ 2 link điều hướng ──────────────────────── */
 
 function RequestsSubPanel({ pendingCount, supplementCount }) {
   const location = useLocation();
+  const { t } = useI18n();
 
   // "Đơn cần bổ sung" không còn là mục riêng (bị trùng với Đơn từ cá nhân);
   // các đơn này hiển thị ngay trong Đơn từ cá nhân kèm badge nhắc bổ sung.
@@ -17,13 +20,13 @@ function RequestsSubPanel({ pendingCount, supplementCount }) {
     {
       to: '/my-requests',
       icon: 'folder_shared',
-      label: 'Đơn từ cá nhân',
+      label: t('Đơn từ cá nhân'),
       badge: supplementCount,
     },
     {
       to: '/my-requests/approvals',
       icon: 'pending_actions',
-      label: 'Đơn chờ tôi duyệt',
+      label: t('Đơn chờ tôi duyệt'),
       badge: pendingCount,
     },
   ];
@@ -33,7 +36,7 @@ function RequestsSubPanel({ pendingCount, supplementCount }) {
       {/* Header */}
       <div className="px-4 py-3 border-b border-white/10">
         <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">
-          Đơn từ
+          {t('Đơn từ')}
         </span>
       </div>
 
@@ -55,7 +58,7 @@ function RequestsSubPanel({ pendingCount, supplementCount }) {
                   <span className="material-symbols-outlined text-[18px] flex-shrink-0">
                     {item.icon}
                   </span>
-                  <span className="text-sm font-medium truncate">{item.label}</span>
+                  <span className="text-sm font-medium truncate">{t(item.label)}</span>
                 </span>
                 {item.badge > 0 && (
                   <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none flex-shrink-0 ml-2">
@@ -75,17 +78,18 @@ function RequestsSubPanel({ pendingCount, supplementCount }) {
 
 function SettingsSubPanel() {
   const location = useLocation();
+  const { t } = useI18n();
 
   const links = [
     {
       to: '/settings/forms',
       icon: 'description',
-      label: 'Mẫu đơn & Form',
+      label: t('Mẫu đơn & Form'),
     },
     {
       to: '/settings/workflow',
       icon: 'account_tree',
-      label: 'Luồng duyệt',
+      label: t('Luồng duyệt'),
     },
     {
       to: '/settings/general',
@@ -99,7 +103,7 @@ function SettingsSubPanel() {
       {/* Header */}
       <div className="px-4 py-3 border-b border-white/10">
         <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">
-          Cấu hình
+          {t('Cấu hình')}
         </span>
       </div>
 
@@ -121,7 +125,7 @@ function SettingsSubPanel() {
                   <span className="material-symbols-outlined text-[18px] flex-shrink-0">
                     {item.icon}
                   </span>
-                  <span className="text-sm font-medium truncate">{item.label}</span>
+                  <span className="text-sm font-medium truncate">{t(item.label)}</span>
                 </span>
               </Link>
             </li>
@@ -165,6 +169,7 @@ export default function UnifiedSidebar({
   currentUser,
 }) {
   const location = useLocation();
+  const { t } = useI18n();
   const [openSubPanel, setOpenSubPanel] = useState(null); // 'requests' | null
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -222,7 +227,7 @@ export default function UnifiedSidebar({
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="hidden md:flex absolute top-1/2 -right-3.5 -translate-y-1/2 w-7 h-7 bg-white text-slate-600 border border-slate-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-50 cursor-pointer hover:text-primary hover:bg-slate-50 hover:border-primary/20 transition-all group"
-          title={isCollapsed ? "Mở rộng" : "Thu gọn"}
+          title={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
         >
           <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
             {isCollapsed ? 'chevron_right' : 'chevron_left'}
@@ -240,7 +245,7 @@ export default function UnifiedSidebar({
               <Link
                 to="/profile"
                 className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'} hover:opacity-90 transition-opacity`}
-                title={isCollapsed ? (currentUser?.name || 'Nguyễn Văn A') : undefined}
+                title={isCollapsed ? (currentUser?.name || t('Nguyễn Văn A')) : undefined}
               >
                 <div className="relative shrink-0">
                   <img
@@ -256,18 +261,18 @@ export default function UnifiedSidebar({
                 {!isCollapsed && (
                   <div className="flex-1 min-w-0">
                     <h2 className="text-white text-sm font-semibold truncate leading-tight">
-                      {currentUser?.name || 'Nguyễn Văn A'}
+                      {currentUser?.name || t('Nguyễn Văn A')}
                     </h2>
                     <div className="flex flex-col gap-1 mt-1">
                       <span className="text-xs text-slate-400 font-medium tracking-wide">
-                        {currentUser?.role === 'ADMIN' ? 'Quản trị viên' : 
-                         currentUser?.role === 'HR' ? 'Nhân sự' :
-                         currentUser?.role === 'MANAGER' ? 'Quản lý' :
-                         currentUser?.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên'}
+                        {t(currentUser?.role === 'ADMIN' ? 'Quản trị viên' :
+                           currentUser?.role === 'HR' ? 'Nhân sự' :
+                           currentUser?.role === 'MANAGER' ? 'Quản lý' :
+                           currentUser?.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên')}
                       </span>
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                        <span className="text-[11px] text-slate-500 font-medium">Trực tuyến</span>
+                        <span className="text-[11px] text-slate-500 font-medium">{t('Trực tuyến')}</span>
                       </div>
                     </div>
                   </div>
@@ -284,7 +289,8 @@ export default function UnifiedSidebar({
             {/* Nav items */}
             <ul className="flex flex-col py-2">
               {visibleNavs.filter(item => {
-                // Explicit role checks for specific menus
+                // item.name là hằng cấp module (chưa dịch) nên so sánh bằng chuỗi gốc,
+                // KHÔNG bọc t() ở đây vì t() sẽ đổi theo ngôn ngữ và làm sai điều kiện.
                 if (item.name === 'Nhân sự' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
                 if (item.name === 'Cấu hình' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
                 
@@ -306,7 +312,7 @@ export default function UnifiedSidebar({
                     <li key={item.name}>
                       <button
                         onClick={() => toggleSubPanel(item.subPanel)}
-                        title={isCollapsed ? item.name : undefined}
+                        title={isCollapsed ? t(item.name) : undefined}
                         className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
                           isActive || isSubPanelOpen
                             ? 'border-primary bg-primary-container/10 text-white font-semibold'
@@ -320,7 +326,7 @@ export default function UnifiedSidebar({
                               <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
                             )}
                           </span>
-                          {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
+                          {!isCollapsed && <span className="text-sm truncate">{t(item.name)}</span>}
                         </div>
                         {!isCollapsed && badge > 0 && (
                           <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none mr-1">
@@ -346,7 +352,7 @@ export default function UnifiedSidebar({
                     <Link
                       to={item.path}
                       onClick={() => setOpenSubPanel(null)}
-                      title={isCollapsed ? item.name : undefined}
+                      title={isCollapsed ? t(item.name) : undefined}
                       className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
                         isActive
                           ? 'border-primary bg-primary-container/10 text-white font-semibold'
@@ -360,7 +366,7 @@ export default function UnifiedSidebar({
                             <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
                           )}
                         </span>
-                        {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
+                        {!isCollapsed && <span className="text-sm truncate">{t(item.name)}</span>}
                       </div>
                       {!isCollapsed && badge > 0 && (
                         <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
@@ -375,15 +381,19 @@ export default function UnifiedSidebar({
           </div>
 
           {/* Footer */}
-          <div className="p-3 border-t border-white/10">
-            <button 
-              onClick={handleLogout}
-              title={isCollapsed ? "Đăng xuất" : undefined}
-              className={`w-full text-slate-400 hover:text-white flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-center px-4 gap-2'} py-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer`}
-            >
-              <span className="material-symbols-outlined text-[20px]">logout</span>
-              {!isCollapsed && <span className="text-sm font-medium">Đăng xuất</span>}
-            </button>
+          <div>
+            {/* Chuyển ngôn ngữ VI | EN | KO */}
+            <LanguageSwitcher isCollapsed={isCollapsed} />
+            <div className="p-3 border-t border-white/10">
+              <button
+                onClick={handleLogout}
+                title={isCollapsed ? t('Đăng xuất') : undefined}
+                className={`w-full text-slate-400 hover:text-white flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-center px-4 gap-2'} py-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer`}
+              >
+                <span className="material-symbols-outlined text-[20px]">logout</span>
+                {!isCollapsed && <span className="text-sm font-medium">{t('Đăng xuất')}</span>}
+              </button>
+            </div>
           </div>
         </nav>
 

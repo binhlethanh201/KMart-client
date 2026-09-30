@@ -5,9 +5,11 @@ import EditDepartmentModal from '../components/EditDepartmentModal';
 import Pagination from '../../../components/Pagination';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useApproval } from '../../../context/useApproval';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 export default function DepartmentDashboard() {
-  useDocumentTitle('Cơ cấu tổ chức & Siêu thị');
+  const { t } = useI18n();
+  useDocumentTitle(t('Cơ cấu tổ chức & Siêu thị'));
   const { departments, toggleDepartmentStatus, deleteDepartment, currentUser, hasPermission } = useApproval();
 
   // Use hasPermission if available, fallback to role check
@@ -81,7 +83,7 @@ export default function DepartmentDashboard() {
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-[24px]">account_tree</span>
               </div>
-              <h1 className="text-2xl font-bold text-on-surface tracking-tight">Cơ cấu tổ chức &amp; Siêu thị</h1>
+              <h1 className="text-2xl font-bold text-on-surface tracking-tight">{t('Cơ cấu tổ chức & Siêu thị')}</h1>
             </div>
             <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
               {canEdit && (
@@ -90,7 +92,7 @@ export default function DepartmentDashboard() {
                   className="w-full sm:w-auto justify-center bg-primary text-on-primary hover:bg-primary-fixed-variant px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">add</span>
-                  Thêm phòng ban
+                  {t('Thêm phòng ban')}
                 </button>
               )}
             </div>
@@ -105,7 +107,7 @@ export default function DepartmentDashboard() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-1.5 bg-surface border border-outline-variant rounded-md focus:ring-1 focus:ring-primary focus:border-primary text-sm outline-none placeholder:text-secondary"
-                  placeholder="Tìm kiếm mã, tên đơn vị..."
+                  placeholder={t('Tìm kiếm mã, tên đơn vị...')}
                   type="text"
                 />
               </div>
@@ -114,19 +116,19 @@ export default function DepartmentDashboard() {
                 onChange={(e) => setFilterType(e.target.value)}
                 className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
               >
-                <option value="all">Loại đơn vị: Tất cả</option>
-                <option value="Phòng ban">Phòng ban</option>
-                <option value="Khối chuyên môn">Khối chuyên môn</option>
-                <option value="Siêu thị / Chi nhánh">Siêu thị / Chi nhánh</option>
+                <option value="all">{t('Loại đơn vị: Tất cả')}</option>
+                <option value="Phòng ban">{t('Phòng ban')}</option>
+                <option value="Khối chuyên môn">{t('Khối chuyên môn')}</option>
+                <option value="Siêu thị / Chi nhánh">{t('Siêu thị / Chi nhánh')}</option>
               </select>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
               >
-                <option value="all">Trạng thái: Tất cả</option>
-                <option value="active">Đang hoạt động</option>
-                <option value="inactive">Ngừng hoạt động</option>
+                <option value="all">{t('Trạng thái: Tất cả')}</option>
+                <option value="active">{t('Đang hoạt động')}</option>
+                <option value="inactive">{t('Ngừng hoạt động')}</option>
               </select>
             </div>
           </div>
@@ -135,7 +137,7 @@ export default function DepartmentDashboard() {
           {filteredDepartments.length === 0 ? (
             <div className="py-12 text-center text-secondary border border-dashed border-outline-variant rounded-lg bg-surface-container-lowest">
               <span className="material-symbols-outlined text-[48px] opacity-20 mb-3">account_tree</span>
-              <p className="text-sm">Không tìm thấy đơn vị nào phù hợp với bộ lọc.</p>
+              <p className="text-sm">{t('Không tìm thấy đơn vị nào phù hợp với bộ lọc.')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

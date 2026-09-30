@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { TIME_RULES } from '../data/mockData';
 import apiClient from '../../../services/apiClient';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const fieldCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
 export default function GeneralTab() {
+  const { t } = useI18n();
   const [zalo, setZalo] = useState({
     status: 'disconnected',
     appId: '',
@@ -44,7 +46,7 @@ export default function GeneralTab() {
 
       setLoading(false);
     }).catch(err => {
-      console.error("Không tải được cấu hình:", err);
+      console.error(t('Không tải được cấu hình:'), err);
       setLoading(false);
     });
   }, []);
@@ -68,14 +70,14 @@ export default function GeneralTab() {
 
       if (testResult.data?.success) {
         setZalo(prev => ({ ...prev, status: 'connected' }));
-        setMessage({ type: 'success', text: 'Kết nối Zalo OA thành công!' });
+        setMessage({ type: 'success', text: t('Kết nối Zalo OA thành công!') });
       } else {
         setZalo(prev => ({ ...prev, status: 'disconnected' }));
-        setMessage({ type: 'error', text: testResult.data?.message || 'Kết nối thất bại. Vui lòng kiểm tra lại thông tin.' });
+        setMessage({ type: 'error', text: testResult.data?.message || t('Kết nối thất bại. Vui lòng kiểm tra lại thông tin.') });
       }
     } catch (err) {
-      console.error("Không lưu được cấu hình Zalo:", err);
-      setMessage({ type: 'error', text: 'Lỗi khi lưu cấu hình Zalo.' });
+      console.error(t('Không lưu được cấu hình Zalo:'), err);
+      setMessage({ type: 'error', text: t('Lỗi khi lưu cấu hình Zalo.') });
     } finally {
       setSaving(false);
     }
@@ -92,7 +94,7 @@ export default function GeneralTab() {
         <div className="px-5 py-4 border-b border-outline-variant flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">hub</span>
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">Tích hợp Zalo OA</h3>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('Tích hợp Zalo OA')}</h3>
           </div>
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -100,23 +102,23 @@ export default function GeneralTab() {
             }`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-success' : 'bg-outline'}`} />
-            {connected ? 'Đã kết nối' : 'Chưa kết nối'}
+            {connected ? t('Đã kết nối') : t('Chưa kết nối')}
           </span>
         </div>
         <div className="p-5 flex flex-col gap-4">
           {loading ? (
             <div className="text-center py-8">
               <span className="material-symbols-outlined animate-spin text-primary text-2xl">sync</span>
-              <p className="text-sm text-secondary mt-2">Đang tải cấu hình...</p>
+              <p className="text-sm text-secondary mt-2">{t('Đang tải cấu hình...')}</p>
             </div>
           ) : (
             <>
               <div>
-                <label className={labelCls}>Mã ứng dụng Zalo (App ID)</label>
+                <label className={labelCls}>{t('Mã ứng dụng Zalo (App ID)')}</label>
                 <input className={fieldCls} value={zalo.appId} onChange={(e) => setZalo((z) => ({ ...z, appId: e.target.value }))} />
               </div>
               <div>
-                <label className={labelCls}>Khoá bảo mật Zalo (Secret Key)</label>
+                <label className={labelCls}>{t('Khoá bảo mật Zalo (Secret Key)')}</label>
                 <div className="relative">
                   <input
                     className={fieldCls + ' pr-10'}
@@ -128,21 +130,21 @@ export default function GeneralTab() {
                     type="button"
                     onClick={() => setShowSecret((s) => !s)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-on-surface cursor-pointer"
-                    aria-label="Hiện mật khẩu"
+                    aria-label={t('Hiện mật khẩu')}
                   >
                     <span className="material-symbols-outlined text-[18px]">{showSecret ? 'visibility_off' : 'visibility'}</span>
                   </button>
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Mã OA (Official Account)</label>
+                <label className={labelCls}>{t('Mã OA (Official Account)')}</label>
                 <input className={fieldCls} value={zalo.oaId} onChange={(e) => setZalo((z) => ({ ...z, oaId: e.target.value }))} />
               </div>
 
               {/* ZNS templates */}
               <div className="border-t border-outline-variant pt-4">
                 <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-3">
-                  Mẫu thông báo ZNS
+                  {t('Mẫu thông báo ZNS')}
                 </div>
                 <div className="flex flex-col gap-2">
                   {zalo.templates.map((t) => (
@@ -171,7 +173,7 @@ export default function GeneralTab() {
                 className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center justify-center gap-2 cursor-pointer mt-1 disabled:opacity-50"
               >
                 <span className={`material-symbols-outlined text-[18px] ${saving ? 'animate-spin' : ''}`}>sync</span>
-                {saving ? 'Đang kiểm tra...' : 'Kiểm tra & Lưu kết nối'}
+                {saving ? t('Đang kiểm tra...') : t('Kiểm tra & Lưu kết nối')}
               </button>
               {message && (
                 <div className={`text-sm px-3 py-2 rounded-md ${message.type === 'success' ? 'bg-success-container text-on-success-container' : 'bg-error-container text-on-error-container'}`}>
@@ -187,21 +189,21 @@ export default function GeneralTab() {
       <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-outline-variant flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">schedule</span>
-          <h3 className="font-headline-sm text-headline-sm text-on-surface">Quy tắc thời gian &amp; xử lý quá hạn</h3>
+          <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('Quy tắc thời gian & xử lý quá hạn')}</h3>
         </div>
         <div className="p-5 flex flex-col gap-4">
           <div className="bg-primary-container/20 border border-primary/20 rounded-md p-4 flex items-start gap-2.5">
             <span className="material-symbols-outlined text-primary text-[20px] flex-shrink-0">timer</span>
             <div>
-              <div className="text-sm font-medium text-on-surface">Quy tắc BR11: quá hạn 12 giờ</div>
+              <div className="text-sm font-medium text-on-surface">{t('Quy tắc BR11: quá hạn 12 giờ')}</div>
               <p className="text-xs text-secondary mt-0.5">
-                Đơn không được xử lý sau 12 giờ sẽ tự động chuyển trả theo cấu hình từng bước duyệt.
+                {t('Đơn không được xử lý sau 12 giờ sẽ tự động chuyển trả theo cấu hình từng bước duyệt.')}
               </p>
             </div>
           </div>
 
           <div>
-            <label className={labelCls}>Cách tính 12 giờ quá hạn</label>
+            <label className={labelCls}>{t('Cách tính 12 giờ quá hạn')}</label>
             <div className="flex flex-col gap-2">
               {TIME_RULES.map((r) => {
                 const active = timeRule === r.id;
@@ -212,9 +214,9 @@ export default function GeneralTab() {
                   >
                     <input type="radio" name="timerule" checked={active} onChange={() => setTimeRule(r.id)} className="mt-0.5 text-primary focus:ring-primary cursor-pointer" />
                     <div>
-                      <div className={`text-sm font-medium ${active ? 'text-primary' : 'text-on-surface'}`}>{r.label}</div>
+                      <div className={`text-sm font-medium ${active ? 'text-primary' : 'text-on-surface'}`}>{t(r.label)}</div>
                       <div className="text-xs text-secondary mt-0.5">
-                        {r.id === 'business' ? 'Chỉ tính thứ 2 đến thứ 6, bỏ qua cuối tuần và ngày lễ.' : 'Đếm 12 giờ liên tục kể từ lúc tạo / chuyển bước, bất kể ngày đêm.'}
+                        {r.id === 'business' ? t('Chỉ tính thứ 2 đến thứ 6, bỏ qua cuối tuần và ngày lễ.') : t('Đếm 12 giờ liên tục kể từ lúc tạo / chuyển bước, bất kể ngày đêm.')}
                       </div>
                     </div>
                   </label>
@@ -224,14 +226,14 @@ export default function GeneralTab() {
           </div>
 
           <div className="border-t border-outline-variant pt-4">
-            <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-3">Giờ hành chính mặc định</div>
+            <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-3">{t('Giờ hành chính mặc định')}</div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>Giờ bắt đầu</label>
+                <label className={labelCls}>{t('Giờ bắt đầu')}</label>
                 <input className={fieldCls} defaultValue="08:00" type="time" />
               </div>
               <div>
-                <label className={labelCls}>Giờ kết thúc</label>
+                <label className={labelCls}>{t('Giờ kết thúc')}</label>
                 <input className={fieldCls} defaultValue="17:30" type="time" />
               </div>
             </div>

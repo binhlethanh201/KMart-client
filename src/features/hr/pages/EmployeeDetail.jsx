@@ -7,6 +7,7 @@ import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
 import { userService } from '../services/userService';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const pad = (n) => String(n).padStart(2, '0');
 const DAY = 24 * 60 * 60 * 1000;
@@ -50,7 +51,8 @@ function ActionButton({ icon, label, onClick, tone = 'default', title }) {
 }
 
 export default function EmployeeDetail() {
-  useDocumentTitle('Chi tiết Nhân sự');
+  const { t } = useI18n();
+  useDocumentTitle(t('Chi tiết Nhân sự'));
   const { id } = useParams();
   const navigate = useNavigate();
   const { getEmployee, saveEmployee, toggleLock, resetPassword, departments, positions, roles } = useHr();
@@ -76,19 +78,19 @@ export default function EmployeeDetail() {
           let detail = l.description || l.entityType;
 
           if (l.entityType === 'Application') {
-            if (l.action === 'CREATE') title = 'Tạo đơn từ mới';
-            else if (l.action === 'UPDATE') title = 'Cập nhật đơn từ';
-            else if (l.action === 'DELETE') title = 'Xóa đơn từ';
-            else title = `Thao tác đơn từ (${l.action})`;
+            if (l.action === 'CREATE') title = t('Tạo đơn từ mới');
+            else if (l.action === 'UPDATE') title = t('Cập nhật đơn từ');
+            else if (l.action === 'DELETE') title = t('Xóa đơn từ');
+            else title = t('Thao tác đơn từ ({v0})', { v0: l.action });
             
-            if (l.description) detail = `Chi tiết: ${l.description}`;
+            if (l.description) detail = t('Chi tiết: {v0}', { v0: l.description });
           } else if (l.entityType === 'User' || l.entityType === 'Profile') {
-            if (l.action === 'UPDATE') title = 'Cập nhật hồ sơ cá nhân';
-            else title = `Thao tác hồ sơ (${l.action})`;
+            if (l.action === 'UPDATE') title = t('Cập nhật hồ sơ cá nhân');
+            else title = t('Thao tác hồ sơ ({v0})', { v0: l.action });
           } else if (l.entityType === 'Department') {
-            title = `${l.action === 'CREATE' ? 'Tạo' : 'Cập nhật'} phòng ban`;
+            title = t('{v0} phòng ban', { v0: l.action === 'CREATE' ? 'Tạo' : 'Cập nhật' });
           } else if (l.action === 'LOGIN') {
-            title = 'Đăng nhập hệ thống';
+            title = t('Đăng nhập hệ thống');
             detail = `IP: ${l.ipAddress || 'Unknown'}`;
           }
 
@@ -129,10 +131,10 @@ export default function EmployeeDetail() {
       <section className="flex-1 overflow-y-auto bg-surface p-6">
         <div className="max-w-3xl mx-auto text-center py-16">
           <span className="material-symbols-outlined text-[48px] text-outline block mb-3">person_off</span>
-          <p className="text-on-surface font-medium">Không tìm thấy nhân sự với mã {id}.</p>
+          <p className="text-on-surface font-medium">{t('Không tìm thấy nhân sự với mã')} {id}.</p>
           <Link to="/personnel" className="inline-flex items-center gap-2 mt-4 text-primary hover:underline font-medium">
             <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-            Quay lại danh sách
+            {t('Quay lại danh sách')}
           </Link>
         </div>
       </section>
@@ -144,18 +146,18 @@ export default function EmployeeDetail() {
   const isActive = employee.status === 'active';
 
   const handleResetPassword = async () => {
-    if (!window.confirm(`Đặt lại mật khẩu cho "${employee.name}"? Một mật khẩu tạm sẽ được tạo.`)) return;
+    if (!window.confirm(t('Đặt lại mật khẩu cho "{v0}"? Một mật khẩu tạm sẽ được tạo.', { v0: employee.name }))) return;
     const pwd = await resetPassword(employee.id);
     if (pwd) {
-      pushToast(`Đã đặt lại mật khẩu tạm cho ${employee.name}: ${pwd}`, 'success');
+      pushToast(t('Đã đặt lại mật khẩu tạm cho {v0}: {v1}', { v0: employee.name, v1: pwd }), 'success');
     } else {
-      pushToast(`Không thể đặt lại mật khẩu cho ${employee.name}.`, 'error');
+      pushToast(t('Không thể đặt lại mật khẩu cho {v0}.', { v0: employee.name }), 'error');
     }
   };
 
   const handleToggleLock = () => {
     toggleLock(employee.id);
-    pushToast(isActive ? `Đã khóa tài khoản ${employee.name}` : `Đã mở khóa tài khoản ${employee.name}`, isActive ? 'warning' : 'success');
+    pushToast(isActive ? t('Đã khóa tài khoản {v0}', { v0: employee.name }) : t('Đã mở khóa tài khoản {v0}', { v0: employee.name }), isActive ? 'warning' : 'success');
   };
 
   return (
@@ -168,7 +170,7 @@ export default function EmployeeDetail() {
           className="inline-flex items-center gap-2 text-secondary hover:text-primary transition-colors font-medium text-sm cursor-pointer mb-2"
         >
           <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-          Quay lại danh sách
+          {t('Quay lại danh sách')}
         </button>
 
         {/* Profile Header Card */}
@@ -182,7 +184,7 @@ export default function EmployeeDetail() {
             <div className="flex flex-col gap-1.5">
                <div className="flex items-center gap-2">
                  <h1 className="text-xl md:text-2xl font-bold text-on-surface tracking-tight leading-none">{employee.name}</h1>
-                 <button onClick={() => setProfileModalOpen(true)} title="Xem hồ sơ chi tiết" className="w-6 h-6 rounded-full border border-outline-variant text-secondary hover:text-primary hover:border-primary hover:bg-primary/5 flex items-center justify-center transition-colors cursor-pointer">
+                 <button onClick={() => setProfileModalOpen(true)} title={t('Xem hồ sơ chi tiết')} className="w-6 h-6 rounded-full border border-outline-variant text-secondary hover:text-primary hover:border-primary hover:bg-primary/5 flex items-center justify-center transition-colors cursor-pointer">
                    <span className="material-symbols-outlined text-[14px]">person_search</span>
                  </button>
                </div>
@@ -207,7 +209,7 @@ export default function EmployeeDetail() {
                className="w-full md:w-auto justify-center bg-[#004B8D] text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 hover:bg-[#003B73] transition-colors shadow-sm cursor-pointer relative z-50"
              >
                <span className="material-symbols-outlined text-[18px]">settings</span>
-               Thao tác
+               {t('Thao tác')}
                <span className="material-symbols-outlined text-[18px]">expand_more</span>
              </button>
              
@@ -220,16 +222,16 @@ export default function EmployeeDetail() {
              <div className={`absolute right-0 top-full mt-1 w-48 bg-white border border-outline-variant shadow-lg rounded-md py-1 transition-all z-50 transform origin-top-right ${dropdownOpen ? 'opacity-100 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95'}`}>
                 <button onClick={() => { setEditOpen(true); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2 cursor-pointer">
                    <span className="material-symbols-outlined text-[18px]">edit</span>
-                   Chỉnh sửa thông tin
+                   {t('Chỉnh sửa thông tin')}
                 </button>
                 <button onClick={() => { handleResetPassword(); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-warning hover:bg-warning-container/30 flex items-center gap-2 cursor-pointer">
                    <span className="material-symbols-outlined text-[18px]">lock_reset</span>
-                   Đặt lại mật khẩu
+                   {t('Đặt lại mật khẩu')}
                 </button>
                 <div className="h-px bg-outline-variant/50 my-1 w-full" />
                 <button onClick={() => { handleToggleLock(); setDropdownOpen(false); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 cursor-pointer ${isActive ? 'text-error hover:bg-error-container/30' : 'text-success hover:bg-success-container/30'}`}>
                    <span className="material-symbols-outlined text-[18px]">{isActive ? 'lock' : 'lock_open'}</span>
-                   {isActive ? 'Khóa tài khoản' : 'Mở khóa'}
+                   {isActive ? t('Khóa tài khoản') : t('Mở khóa')}
                 </button>
              </div>
           </div>
@@ -240,7 +242,7 @@ export default function EmployeeDetail() {
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
                  <span className="material-symbols-outlined text-[16px]">badge</span>
-                 <span className="text-[10px] font-bold uppercase tracking-wider">Mã nhân sự</span>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">{t('Mã nhân sự')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm truncate" title={employee.id}>{employee.id.substring(0, 8).toUpperCase()}</div>
            </div>
@@ -248,7 +250,7 @@ export default function EmployeeDetail() {
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
                  <span className="material-symbols-outlined text-[16px]">mail</span>
-                 <span className="text-[10px] font-bold uppercase tracking-wider">Email công ty</span>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">{t('Email công ty')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm truncate" title={employee.email}>{employee.email}</div>
            </div>
@@ -256,15 +258,15 @@ export default function EmployeeDetail() {
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
                  <span className="material-symbols-outlined text-[16px]">mail</span>
-                 <span className="text-[10px] font-bold uppercase tracking-wider">Email cá nhân</span>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">{t('Email cá nhân')}</span>
               </div>
-              <div className="font-bold text-on-surface text-sm truncate" title={employee.personalEmail || 'Không có'}>{employee.personalEmail || 'Không có'}</div>
+              <div className="font-bold text-on-surface text-sm truncate" title={employee.personalEmail || t('Không có')}>{employee.personalEmail || t('Không có')}</div>
            </div>
 
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
                  <span className="material-symbols-outlined text-[16px]">call</span>
-                 <span className="text-[10px] font-bold uppercase tracking-wider">Số điện thoại</span>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">{t('Số điện thoại')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm">{employee.phone}</div>
            </div>
@@ -272,7 +274,7 @@ export default function EmployeeDetail() {
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
                  <span className="material-symbols-outlined text-[16px]">event</span>
-                 <span className="text-[10px] font-bold uppercase tracking-wider">Ngày tạo</span>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">{t('Ngày tạo')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm">{formatDate(employee.createdAt)}</div>
            </div>
@@ -282,7 +284,7 @@ export default function EmployeeDetail() {
         <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
            <div className="flex items-center gap-2 px-6 py-4 border-b border-outline-variant/50">
              <span className="material-symbols-outlined text-primary text-[20px]">history</span>
-             <h2 className="text-base font-bold text-on-surface tracking-tight">Lịch sử hoạt động</h2>
+             <h2 className="text-base font-bold text-on-surface tracking-tight">{t('Lịch sử hoạt động')}</h2>
            </div>
            
             <div className="p-6">
@@ -293,7 +295,7 @@ export default function EmployeeDetail() {
                   </div>
                 ) : pagedLog.length === 0 ? (
                   <div className="text-center py-10 text-secondary italic">
-                    Chưa có hoạt động nào được ghi nhận.
+                    {t('Chưa có hoạt động nào được ghi nhận.')}
                   </div>
                 ) : (
                   <ol className="relative border-l border-outline-variant ml-2 space-y-8">
@@ -325,7 +327,7 @@ export default function EmployeeDetail() {
            <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant gap-4">
              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
                <span className="text-xs text-secondary flex items-center gap-2">
-                 Hiển thị
+                 {t('Hiển thị')}
                  <select
                    value={pageSize}
                    onChange={(e) => {
@@ -334,13 +336,13 @@ export default function EmployeeDetail() {
                    }}
                    className="bg-surface border border-outline-variant/50 rounded-md px-2 py-1 text-xs text-on-surface outline-none focus:border-primary cursor-pointer hover:bg-surface-container-low transition-colors"
                  >
-                   <option value={5}>5 dòng</option>
-                   <option value={10}>10 dòng</option>
-                   <option value={20}>20 dòng</option>
-                   <option value={50}>50 dòng</option>
+                   <option value={5}>{t('5 dòng')}</option>
+                   <option value={10}>{t('10 dòng')}</option>
+                   <option value={20}>{t('20 dòng')}</option>
+                   <option value={50}>{t('50 dòng')}</option>
                  </select>
                  <span>
-                   {log.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, log.length)} trong tổng số {log.length} hoạt động
+                   {log.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, log.length)} {t('trong tổng số')} {log.length} {t('hoạt động')}
                  </span>
                </span>
              </div>
@@ -354,7 +356,7 @@ export default function EmployeeDetail() {
                  <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                </button>
                <div className="px-2 flex items-center justify-center min-w-[4rem]">
-                 <span className="text-xs text-secondary">Trang {safePage} / {totalPages}</span>
+                 <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: safePage, v1: totalPages })}</span>
                </div>
                <button
                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

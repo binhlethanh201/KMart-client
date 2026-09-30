@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 // Bộ chọn icon đại diện cho phòng ban: 2 chế độ — "Icon" (preset material symbols)
 // hoặc "Ảnh" (tải lên ảnh đại diện, tự thu nhỏ về 160px để persist an toàn vào localStorage).
@@ -43,6 +44,7 @@ function readImageDownscaled(file, maxSize, onData, onError) {
 }
 
 export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
+  const { t } = useI18n();
   const [mode, setMode] = useState(iconImage ? 'image' : 'icon');
   const [error, setError] = useState('');
 
@@ -62,12 +64,12 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setError('Chỉ chấp nhận file ảnh.');
+      setError(t('Chỉ chấp nhận file ảnh.'));
       return;
     }
     setError('');
     readImageDownscaled(file, 160, (dataUrl) => onChange({ iconImage: dataUrl }), () =>
-      setError('Không đọc được file ảnh.')
+      setError(t('Không đọc được file ảnh.'))
     );
     e.target.value = '';
   };
@@ -76,13 +78,13 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <label className="block font-label-md text-label-md text-on-surface-variant">
-          Icon đại diện
+          {t('Icon đại diện')}
         </label>
         {/* Mode toggle */}
         <div className="flex bg-surface-container-highest rounded-md p-0.5">
           {[
             { v: 'icon', label: 'Icon' },
-            { v: 'image', label: 'Ảnh' },
+            { v: 'image', label: t('Ảnh') },
           ].map((opt) => {
             const active = mode === opt.v;
             return (
@@ -105,14 +107,14 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
       {mode === 'image' && iconImage && (
         <div className="flex items-center gap-2 mb-2 bg-surface-container-low border border-outline-variant/60 rounded-md px-3 py-2">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
-            <img src={iconImage} alt="Ảnh đại diện" className="w-full h-full object-cover" />
+            <img src={iconImage} alt={t('Ảnh đại diện')} className="w-full h-full object-cover" />
           </div>
-          <span className="text-xs text-secondary flex-1">Ảnh đại diện đã chọn.</span>
+          <span className="text-xs text-secondary flex-1">{t('Ảnh đại diện đã chọn.')}</span>
           <button
             type="button"
             onClick={() => onChange({ iconImage: null })}
             className="text-secondary hover:text-error p-1 rounded hover:bg-error-container/30 transition-colors cursor-pointer"
-            title="Xóa ảnh"
+            title={t('Xóa ảnh')}
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
@@ -128,7 +130,7 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
                 key={p.icon}
                 type="button"
                 onClick={() => pickIcon(p.icon)}
-                title={p.label}
+                title={t(p.label)}
                 className={`relative flex flex-col items-center gap-1 py-2.5 rounded-md border transition-colors cursor-pointer ${
                   active
                     ? 'border-primary bg-primary/10 text-primary'
@@ -136,7 +138,7 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
                 }`}
               >
                 <span className="material-symbols-outlined text-[22px]">{p.icon}</span>
-                <span className="text-[10px] truncate w-full text-center px-1">{p.label}</span>
+                <span className="text-[10px] truncate w-full text-center px-1">{t(p.label)}</span>
                 {active && (
                   <span className="absolute top-1 right-1 material-symbols-outlined text-[14px] text-primary">
                     check_circle
@@ -149,8 +151,8 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
       ) : (
         <label className="flex flex-col items-center justify-center gap-1 py-6 rounded-md border border-dashed border-primary/50 text-primary hover:bg-primary-container/20 transition-colors cursor-pointer">
           <span className="material-symbols-outlined text-[28px]">add_photo_alternate</span>
-          <span className="text-sm font-medium">Tải lên ảnh đại diện</span>
-          <span className="text-[11px] text-secondary">PNG, JPG — tự thu nhỏ về 160×160</span>
+          <span className="text-sm font-medium">{t('Tải lên ảnh đại diện')}</span>
+          <span className="text-[11px] text-secondary">{t('PNG, JPG — tự thu nhỏ về 160×160')}</span>
           <input type="file" accept="image/*" className="sr-only" onChange={onFile} />
         </label>
       )}

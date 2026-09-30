@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
 import { EmployeeSelect } from './AddDepartmentModal';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
 
@@ -11,6 +12,7 @@ const inputCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
 
 export default function EditDepartmentModal({ department, onClose }) {
+  const { t } = useI18n();
   const { updateDepartment, employees } = useApproval();
   
   const [code, setCode] = useState(department.code || '');
@@ -67,8 +69,8 @@ export default function EditDepartmentModal({ department, onClose }) {
               <span className="material-symbols-outlined">edit_document</span>
             </div>
             <div>
-              <h2 className="font-headline-md text-on-surface">Chỉnh sửa thông tin</h2>
-              <p className="text-xs text-secondary mt-0.5">Cập nhật tên và mã phòng ban</p>
+              <h2 className="font-headline-md text-on-surface">{t('Chỉnh sửa thông tin')}</h2>
+              <p className="text-xs text-secondary mt-0.5">{t('Cập nhật tên và mã phòng ban')}</p>
             </div>
           </div>
           <button
@@ -82,7 +84,7 @@ export default function EditDepartmentModal({ department, onClose }) {
 
         <div className="p-5 space-y-4">
           <div>
-            <label className={labelCls}>Mã đơn vị <span className="text-error">*</span></label>
+            <label className={labelCls}>{t('Mã đơn vị')} <span className="text-error">*</span></label>
             <input
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -92,17 +94,17 @@ export default function EditDepartmentModal({ department, onClose }) {
           </div>
 
           <div>
-            <label className={labelCls}>Tên đơn vị / Phòng ban <span className="text-error">*</span></label>
+            <label className={labelCls}>{t('Tên đơn vị / Phòng ban')} <span className="text-error">*</span></label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={inputCls}
-              placeholder="VD: Phòng Hành chính Nhân sự"
+              placeholder={t('VD: Phòng Hành chính Nhân sự')}
             />
           </div>
 
           <div>
-            <label className={labelCls}>Loại đơn vị</label>
+            <label className={labelCls}>{t('Loại đơn vị')}</label>
             <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
               {TYPES.map((t) => (
                 <option key={t}>{t}</option>
@@ -123,28 +125,28 @@ export default function EditDepartmentModal({ department, onClose }) {
 
           <div className="grid grid-cols-1 gap-3">
             <div>
-              <label className={labelCls}>{isStore ? 'Cửa hàng trưởng' : 'Trưởng phòng'}</label>
+              <label className={labelCls}>{isStore ? t('Cửa hàng trưởng') : t('Trưởng phòng')}</label>
               <EmployeeSelect
                 employees={employees}
                 value={head}
                 onChange={setHead}
-                placeholder="trưởng phòng"
+                placeholder={t('trưởng phòng')}
                 exclude={deputy ? [deputy.id] : []}
                 allowClear
               />
             </div>
             <div>
-              <label className={labelCls}>Phó phòng</label>
+              <label className={labelCls}>{t('Phó phòng')}</label>
               <EmployeeSelect
                 employees={employees}
                 value={deputy}
                 onChange={setDeputy}
-                placeholder="phó phòng"
+                placeholder={t('phó phòng')}
                 exclude={head ? [head.id] : []}
                 allowClear
               />
               <p className="text-xs text-secondary mt-1">
-                Dùng cho bước duyệt “Phó phòng / Phó cửa hàng”. Để trống nếu không có.
+                {t('Dùng cho bước duyệt “Phó phòng / Phó cửa hàng”. Để trống nếu không có.')}
               </p>
             </div>
           </div>
@@ -156,7 +158,7 @@ export default function EditDepartmentModal({ department, onClose }) {
             onClick={onClose}
             className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
           >
-            Hủy
+            {t('Hủy')}
           </button>
           <button
             type="submit"
@@ -164,7 +166,7 @@ export default function EditDepartmentModal({ department, onClose }) {
             className="font-label-md text-on-primary bg-primary hover:bg-on-primary-fixed-variant px-5 py-2 rounded-md transition-colors shadow-sm cursor-pointer disabled:opacity-40 flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-[18px]">save</span>
-            Lưu thay đổi
+            {t('Lưu thay đổi')}
           </button>
         </div>
       </form>

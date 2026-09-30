@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { ROLE_LABELS } from '../../../utils/roleLabels';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 // BE-20: biểu đồ cây luồng phê duyệt dự kiến, tách riêng để tái sử dụng
 // cho cả bản thu gọn (inline trong modal) và bản đầy đủ (popup toàn màn hình).
@@ -14,6 +15,7 @@ export default function ApprovalFlowTree({
   departmentsSelected = [],
   variant = 'inline',
 }) {
+  const { t } = useI18n();
   const isFull = variant === 'full';
 
   const sortedSteps = useMemo(
@@ -22,7 +24,7 @@ export default function ApprovalFlowTree({
   );
 
   const senderInitials = (() => {
-    const name = currentUser?.name || 'Tôi';
+    const name = currentUser?.name || t('Tôi');
     const parts = name.trim().split(' ');
     return parts.length === 1
       ? parts[0].substring(0, 2).toUpperCase()
@@ -32,11 +34,11 @@ export default function ApprovalFlowTree({
   const ownDeptId = currentUser?.departmentId;
   const empById = (id) => employees?.find((e) => e.id === id);
   const roleLabel = (emp, fallback) => {
-    if (!emp) return fallback || 'Người duyệt';
+    if (!emp) return fallback || t('Người duyệt');
     const r = emp.role || (emp.roles && emp.roles[0]) || '';
     const code = String(typeof r === 'string' ? r : (r?.roleName || '')).toUpperCase();
     if (ROLE_LABELS[code]) return ROLE_LABELS[code];
-    return emp.position || code || 'Nhân viên';
+    return emp.position || code || t('Nhân viên');
   };
 
   // Dựng các tầng duyệt theo từng loại luồng
@@ -52,12 +54,12 @@ export default function ApprovalFlowTree({
         parallel: false,
         branches: [{
           key: `hier-${step.id || idx}`,
-          badge: dept?.code || 'Phòng ban',
-          badgeTitle: dept?.name || 'Phòng ban của người tạo',
-          name: emp ? emp.name : 'Chưa có quản lý',
+          badge: dept?.code || t('Phòng ban'),
+          badgeTitle: dept?.name || t('Phòng ban của người tạo'),
+          name: emp ? emp.name : t('Chưa có quản lý'),
           hasManager: Boolean(emp),
           avatar: emp?.avatar,
-          role: emp ? roleLabel(emp, 'Quản lý trực tiếp') : 'Chưa có quản lý',
+          role: emp ? roleLabel(emp, 'Quản lý trực tiếp') : t('Chưa có quản lý'),
           isStep: true,
         }],
       }];
@@ -77,7 +79,7 @@ export default function ApprovalFlowTree({
         return [{
           key: step.id || idx,
           parallel: false,
-          branches: [{ key: `chain-empty-${idx}`, badge: 'Chuỗi quản lý', badgeTitle: '', name: 'Chưa xác định', hasManager: false, avatar: null, role: 'Chưa xác định', isStep: true }],
+          branches: [{ key: `chain-empty-${idx}`, badge: t('Chuỗi quản lý'), badgeTitle: '', name: t('Chưa xác định'), hasManager: false, avatar: null, role: t('Chưa xác định'), isStep: true }],
         }];
       }
       return chainDepts.map((dept) => {
@@ -87,12 +89,12 @@ export default function ApprovalFlowTree({
           parallel: false,
           branches: [{
             key: `chain-${dept.id}`,
-            badge: dept.code || 'Phòng ban',
+            badge: dept.code || t('Phòng ban'),
             badgeTitle: dept.name || '',
-            name: emp ? emp.name : 'Chưa có quản lý',
+            name: emp ? emp.name : t('Chưa có quản lý'),
             hasManager: Boolean(emp),
             avatar: emp?.avatar,
-            role: emp ? roleLabel(emp, 'Quản lý') : 'Chưa có quản lý',
+            role: emp ? roleLabel(emp, 'Quản lý') : t('Chưa có quản lý'),
             isStep: true,
           }],
         };
@@ -118,8 +120,8 @@ export default function ApprovalFlowTree({
       parallel: false,
       branches: [{
         key: `step-${step.id || idx}`,
-        badge: `Cấp ${step.stepOrder}`,
-        badgeTitle: `Bước ${step.stepOrder}`,
+        badge: t('Cấp {v0}', { v0: step.stepOrder }),
+        badgeTitle: t('Bước {v0}', { v0: step.stepOrder }),
         name: emp ? emp.name : (step.name || 'Người duyệt'),
         hasManager: Boolean(emp),
         avatar: emp?.avatar,
@@ -181,8 +183,8 @@ export default function ApprovalFlowTree({
             <div className="w-9 h-9 rounded-full bg-amber-400 text-amber-950 font-semibold text-[12px] flex items-center justify-center">{senderInitials}</div>
           )}
           <div className="flex flex-col">
-            <span className="text-[13px] font-bold text-on-surface">{currentUser?.name || 'Tôi'}</span>
-            <span className="text-[10px] text-primary uppercase tracking-wider font-semibold">Người gửi</span>
+            <span className="text-[13px] font-bold text-on-surface">{currentUser?.name || t('Tôi')}</span>
+            <span className="text-[10px] text-primary uppercase tracking-wider font-semibold">{t('Người gửi')}</span>
           </div>
         </div>
       </div>
@@ -196,7 +198,7 @@ export default function ApprovalFlowTree({
             <div className="flex flex-col items-center">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
                 <span className="material-symbols-outlined text-[12px]">call_split</span>
-                Bước {si + 1} (Cấp {si + 1}) · song song
+                {t('Bước')} {si + 1} {t('(Cấp')} {si + 1}) · song song
               </span>
               <div className="w-px h-3 bg-outline-variant" />
               <div className="flex items-start">
@@ -217,7 +219,7 @@ export default function ApprovalFlowTree({
             <div className="flex flex-col items-center">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
                 <span className="material-symbols-outlined text-[12px]">account_tree</span>
-                Bước {si + 1} (Cấp {si + 1})
+                {t('Bước')} {si + 1} {t('(Cấp')} {si + 1})
               </span>
               <div className="w-px h-3 bg-outline-variant" />
               {chip(stage.branches[0])}
@@ -230,7 +232,7 @@ export default function ApprovalFlowTree({
       <div className="w-px h-5 bg-outline-variant" />
       <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success-container/30 px-4 py-1.5 shadow-sm">
         <span className="material-symbols-outlined text-success text-[18px]">flag</span>
-        <span className="text-[12px] font-semibold text-success">Hoàn tất</span>
+        <span className="text-[12px] font-semibold text-success">{t('Hoàn tất')}</span>
       </div>
     </div>
   );

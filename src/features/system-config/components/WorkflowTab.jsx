@@ -7,6 +7,7 @@ import { documentTypeService } from '../../../services/documentTypeService';
 import { workflowService } from '../services/workflowService';
 import { roleService } from '../../hr/services/roleService';
 import { roleLabel } from '../../../utils/roleLabels';
+import { useI18n, translate } from '../../../i18n/I18nProvider';
 
 const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
@@ -39,26 +40,27 @@ function approvalSummary(step, employees = []) {
   switch (step.approvalType) {
     case 'hierarchy': {
       const opt = HIERARCHY_OPTIONS.find((o) => o.id === step.hierarchyOption);
-      return `${APPROVAL_LABELS.hierarchy}${opt ? ` · ${opt.label}` : ''}`;
+      return `${translate(APPROVAL_LABELS.hierarchy)}${opt ? ` · ${translate(opt.label)}` : ''}`;
     }
     case 'chain':
-      return APPROVAL_LABELS.chain;
+      return translate(APPROVAL_LABELS.chain);
     case 'role': {
       const n = Array.isArray(step.approvers) ? step.approvers.length : 0;
-      return `Theo chức danh / Bộ phận${n ? ` · ${n} người` : ''}`;
+      return translate('Theo chức danh / Bộ phận{v0}', { v0: n ? ` · ${n} người` : '' });
     }
     case 'specific':
     case 'specific_user': {
       const userId = step.specificUser || step.specificUserId;
       const emp = employees.find((e) => e.id === userId);
-      return `Chọn 1 người cụ thể${emp ? ` · ${emp.name}` : (userId ? ` · ${userId.substring(0,6)}...` : '')}`;
+      return translate('Chọn 1 người cụ thể{v0}', { v0: emp ? ` · ${emp.name}` : userId ? ` · ${userId.substring(0, 6)}...` : '' });
     }
     default:
-      return 'Chưa cấu hình';
+      return translate('Chưa cấu hình');
   }
 }
 
 function SequentialOrderList({ role, order, onChange }) {
+  const { t } = useI18n();
   const { employees: EMPLOYEES } = useHr();
   const currentIds = useMemo(() => {
     if (Array.isArray(order)) return order;
@@ -110,14 +112,14 @@ function SequentialOrderList({ role, order, onChange }) {
   return (
     <div className="mt-3 bg-surface-container-lowest border border-outline-variant rounded-md p-3">
       <div className="text-xs font-semibold text-on-surface mb-3 flex items-center justify-between">
-        <span>Danh sách người duyệt tuần tự</span>
+        <span>{t('Danh sách người duyệt tuần tự')}</span>
         <span className="text-[10px] text-secondary font-normal px-2 py-0.5 bg-surface-container rounded-full">
-          {displayList.length} nhân sự
+          {displayList.length} {t('nhân sự')}
         </span>
       </div>
       <div className="flex flex-col gap-1.5">
         {displayList.length === 0 && (
-          <div className="text-xs text-secondary italic py-2">Chưa có người duyệt nào.</div>
+          <div className="text-xs text-secondary italic py-2">{t('Chưa có người duyệt nào.')}</div>
         )}
         {displayList.map((emp, idx) => (
           <div
@@ -139,22 +141,21 @@ function SequentialOrderList({ role, order, onChange }) {
               <img src={emp.avatar} alt={emp.name} className="w-7 h-7 rounded-full object-cover ml-1 flex-shrink-0" />
               <div className="min-w-0 flex-1 flex flex-col">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-sm text-on-surface font-medium truncate">{emp.name}</span>
-                  {emp.position && (
+                  <span className="text-sm text-on-surface font-medium truncate">{emp.name}</span>                  {emp.position && (
                     <span className="text-[10px] font-semibold text-primary bg-primary-container/40 border border-primary/20 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                      {emp.position}
+                      {t(emp.position)}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-secondary truncate">
-                  <span className="truncate">({emp.id.substring(0, 8).toUpperCase()}){emp.department ? ` · ${emp.department}` : ''}</span>
+                  <span className="truncate">({emp.id.substring(0, 8).toUpperCase()}){emp.department ? ` · ${t(emp.department)}` : ''}</span>
                 </div>
               </div>
             </div>
             <button
               onClick={() => removeUser(idx)}
               className="text-outline hover:text-error hover:bg-error-container/30 p-1 rounded transition-colors cursor-pointer"
-              title="Loại bỏ"
+              title={t('Loại bỏ')}
             >
               <span className="material-symbols-outlined text-[16px]">close</span>
             </button>
@@ -168,7 +169,7 @@ function SequentialOrderList({ role, order, onChange }) {
             className="mt-1 flex items-center gap-1.5 text-xs font-medium text-primary hover:bg-primary-container/30 w-fit px-2 py-1.5 rounded transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">add</span>
-            Thêm người duyệt
+            {t('Thêm người duyệt')}
           </button>
         ) : (
           <div className="mt-1 bg-surface border border-outline-variant rounded-md shadow-lg overflow-hidden flex flex-col relative z-10 w-full sm:w-80">
@@ -177,7 +178,7 @@ function SequentialOrderList({ role, order, onChange }) {
               <input
                 type="text"
                 autoFocus
-                placeholder="Tìm tên hoặc mã nhân sự..."
+                placeholder={t('Tìm tên hoặc mã nhân sự...')}
                 className="flex-1 bg-transparent text-xs text-on-surface outline-none"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -194,7 +195,7 @@ function SequentialOrderList({ role, order, onChange }) {
             </div>
             <div className="max-h-[180px] overflow-y-auto p-1.5 flex flex-col gap-1">
               {filteredToAdd.length === 0 ? (
-                <div className="text-xs text-secondary text-center py-4 italic">Không tìm thấy nhân sự nào</div>
+                <div className="text-xs text-secondary text-center py-4 italic">{t('Không tìm thấy nhân sự nào')}</div>
               ) : (
                 filteredToAdd.map((e) => (
                   <button
@@ -212,12 +213,12 @@ function SequentialOrderList({ role, order, onChange }) {
                         <span className="text-xs font-semibold text-on-surface truncate">{e.name}</span>
                         {e.position && (
                           <span className="text-[10px] font-semibold text-primary bg-primary-container/40 border border-primary/20 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                            {e.position}
+                            {t(e.position)}
                           </span>
                         )}
                       </div>
                       <div className="text-[10px] text-secondary truncate">
-                        {e.id.substring(0, 8).toUpperCase()}{e.department ? ` • ${e.department}` : ''}
+                        {e.id.substring(0, 8).toUpperCase()}{e.department ? ` • ${t(e.department)}` : ''}
                       </div>
                     </div>
                   </button>
@@ -232,6 +233,7 @@ function SequentialOrderList({ role, order, onChange }) {
 }
 
 function UserSelect({ value, onChange }) {
+  const { t } = useI18n();
   const { employees: EMPLOYEES } = useHr();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -260,7 +262,7 @@ function UserSelect({ value, onChange }) {
             </div>
           </div>
         ) : (
-          <span className="text-sm text-secondary">Chọn nhân sự...</span>
+          <span className="text-sm text-secondary">{t('Chọn nhân sự...')}</span>
         )}
         <span className="material-symbols-outlined text-outline">expand_more</span>
       </div>
@@ -274,7 +276,7 @@ function UserSelect({ value, onChange }) {
               <input
                 type="text"
                 autoFocus
-                placeholder="Tìm tên hoặc mã nhân sự..."
+                placeholder={t('Tìm tên hoặc mã nhân sự...')}
                 className="flex-1 bg-transparent text-xs text-on-surface outline-none"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -282,7 +284,7 @@ function UserSelect({ value, onChange }) {
             </div>
             <div className="max-h-[200px] overflow-y-auto p-1.5 flex flex-col gap-1 relative z-50">
               {filtered.length === 0 ? (
-                <div className="text-xs text-secondary text-center py-4 italic">Không tìm thấy nhân sự</div>
+                <div className="text-xs text-secondary text-center py-4 italic">{t('Không tìm thấy nhân sự')}</div>
               ) : (
                 filtered.map((e) => (
                   <button
@@ -321,6 +323,7 @@ function UserSelect({ value, onChange }) {
 
 // Popup cấu hình nâng cao — tích chọn người tham gia bước duyệt
 function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
+  const { t } = useI18n();
   const { employees: EMPLOYEES } = useHr();
   const [selected, setSelected] = useState(() => new Set(Array.isArray(approvers) ? approvers : []));
   const [search, setSearch] = useState('');
@@ -380,9 +383,9 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
           <div className="flex items-center gap-2.5">
             <span className="material-symbols-outlined text-primary">tune</span>
             <div>
-              <h2 className="font-label-md text-on-surface font-semibold">Cấu hình nâng cao — chọn người duyệt</h2>
+              <h2 className="font-label-md text-on-surface font-semibold">{t('Cấu hình nâng cao — chọn người duyệt')}</h2>
               <p className="text-xs text-secondary">
-                Đã chọn <span className="font-medium text-primary">{selected.size}</span> người tham gia duyệt
+                {t('Đã chọn')} <span className="font-medium text-primary">{selected.size}</span> {t('người tham gia duyệt')}
               </p>
             </div>
           </div>
@@ -403,7 +406,7 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm theo tên / mã / chức vụ..."
+              placeholder={t('Tìm theo tên / mã / chức vụ...')}
               className="flex-1 bg-transparent text-sm text-on-surface outline-none"
             />
           </div>
@@ -412,7 +415,7 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
             value={dept}
             onChange={(e) => setDept(e.target.value)}
           >
-            <option value="all">Tất cả phòng ban</option>
+            <option value="all">{t('Tất cả phòng ban')}</option>
             {departments.map((d) => (
               <option key={d} value={d}>
                 {d}
@@ -424,21 +427,21 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
             onClick={selectAllVisible}
             className="text-xs text-primary hover:bg-primary-container/30 px-2.5 py-1.5 rounded transition-colors cursor-pointer"
           >
-            Chọn tất cả
+            {t('Chọn tất cả')}
           </button>
           <button
             type="button"
             onClick={clearAll}
             className="text-xs text-secondary hover:text-error hover:bg-error-container/30 px-2.5 py-1.5 rounded transition-colors cursor-pointer"
           >
-            Bỏ chọn
+            {t('Bỏ chọn')}
           </button>
         </div>
 
         {/* Danh sách nhân sự */}
         <div className="overflow-y-auto max-h-[55vh] p-3 flex flex-col gap-1.5">
           {filtered.length === 0 ? (
-            <div className="text-sm text-secondary text-center py-8 italic">Không tìm thấy nhân sự nào.</div>
+            <div className="text-sm text-secondary text-center py-8 italic">{t('Không tìm thấy nhân sự nào.')}</div>
           ) : (
             filtered.map((e) => {
               const isSel = selected.has(e.id);
@@ -465,12 +468,12 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
                     <div className="flex items-center gap-2 flex-wrap text-[11px] text-secondary mt-0.5">
                       <span className="flex items-center gap-0.5">
                         <span className="material-symbols-outlined text-[13px]">apartment</span>
-                        {e.department}
+                        {t(e.department)}
                       </span>
                       <span className="text-outline-variant">·</span>
                       <span className="flex items-center gap-0.5">
                         <span className="material-symbols-outlined text-[13px]">work</span>
-                        {e.position}
+                        {t(e.position)}
                       </span>
                       <span className="text-outline-variant">·</span>
                       <span className="flex items-center gap-0.5">
@@ -481,15 +484,15 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
                     {/* Vị trí kiêm nhiệm — style theo module Nhân sự */}
                     {e.secondary && e.secondary.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        <span className="text-[10px] text-secondary uppercase tracking-wider">Kiêm nhiệm:</span>
+                        <span className="text-[10px] text-secondary uppercase tracking-wider">{t('Kiêm nhiệm:')}</span>
                         {e.secondary.map((s, idx) => (
                           <div
                             key={idx}
                             className="flex items-center gap-1 bg-surface-container-low border border-outline-variant/50 rounded px-1.5 py-0.5"
                           >
                             <span className="material-symbols-outlined text-[12px] text-primary">badge</span>
-                            <span className="text-[11px] font-medium text-on-surface">{s.department}</span>
-                            <span className="text-[11px] text-secondary">· {s.position}</span>
+                            <span className="text-[11px] font-medium text-on-surface">{t(s.department)}</span>
+                            <span className="text-[11px] text-secondary">· {t(s.position)}</span>
                           </div>
                         ))}
                       </div>
@@ -504,7 +507,7 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
         {/* Footer */}
         <div className="flex items-center justify-between gap-3 p-4 border-t border-outline-variant/30 bg-surface-container-lowest">
           <span className="text-xs text-secondary">
-            Mẹo: người được tích sẽ tham gia bước duyệt này, ghi đè danh sách tự khớp theo vai trò.
+            {t('Mẹo: người được tích sẽ tham gia bước duyệt này, ghi đè danh sách tự khớp theo vai trò.')}
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -512,7 +515,7 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
               onClick={onClose}
               className="text-sm text-secondary hover:text-on-surface border border-outline-variant hover:bg-surface-container-low px-4 py-2 rounded-md transition-colors cursor-pointer"
             >
-              Huỷ
+              {t('Huỷ')}
             </button>
             <button
               type="button"
@@ -520,7 +523,7 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
               className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant text-sm font-medium px-4 py-2 rounded-md flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
               <span className="material-symbols-outlined text-[18px]">check</span>
-              Xác nhận ({selected.size})
+              {t('Xác nhận (')}{selected.size})
             </button>
           </div>
         </div>
@@ -594,6 +597,7 @@ function makeStep(overrides = {}, roles = [], employees = []) {
 }
 
 function CustomGroupedSelect({ categories, documentTypes, value, onChange }) {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState(() => 
     categories.reduce((acc, cat) => ({...acc, [cat.id]: true}), {})
@@ -610,7 +614,7 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange }) {
         className="bg-surface-container-lowest border border-outline-variant hover:border-primary rounded-md px-3 py-2 flex items-center justify-between cursor-pointer transition-all shadow-sm group"
       >
         <span className="text-sm text-on-surface font-medium truncate pr-4">
-          {selectedDoc ? selectedDoc.name : 'Chọn loại đơn...'}
+          {selectedDoc ? selectedDoc.name : t('Chọn loại đơn...')}
         </span>
         <span className={`material-symbols-outlined text-secondary group-hover:text-primary text-[20px] transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}>
           expand_more
@@ -664,6 +668,7 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange }) {
 }
 
 export default function WorkflowTab() {
+  const { t } = useI18n();
   const { employees: EMPLOYEES } = useHr();
 
   // State cho roles từ API
@@ -702,7 +707,7 @@ export default function WorkflowTab() {
         setApprovalRoles(mapped);
       })
       .catch(err => {
-        console.error("Không tải được chức danh:", err);
+        console.error(t('Không tải được chức danh:'), err);
         setApprovalRoles([]);
       });
   }, []);
@@ -730,7 +735,7 @@ export default function WorkflowTab() {
         setFormType(merged[0].id);
       }
     }).catch(err => {
-      console.error("Không tải được loại đơn:", err);
+      console.error(t('Không tải được loại đơn:'), err);
       const keys = Object.keys(formFields);
       const merged = keys.map(t => ({ id: t, name: t }));
       setDocumentTypes(merged);
@@ -746,7 +751,7 @@ export default function WorkflowTab() {
     if (!documentTypes.length) { setCategories([]); return; }
     const byCat = new Map();
     documentTypes.forEach(dt => {
-      const cat = (dt.category && String(dt.category).trim()) || 'Khác';
+      const cat = (dt.category && String(dt.category).trim()) || t('Khác');
       if (!byCat.has(cat)) byCat.set(cat, []);
       byCat.get(cat).push(dt.name);
     });
@@ -794,7 +799,7 @@ export default function WorkflowTab() {
           }));
         })
         .catch(err => {
-      console.error("Không tải được luồng duyệt:", err);
+      console.error(t('Không tải được luồng duyệt:'), err);
           setWorkflows(prev => {
             if (prev[formType]) return prev;
             return {
@@ -891,7 +896,7 @@ export default function WorkflowTab() {
   const save = async () => {
     const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formType);
     if (!isGuid) {
-      console.warn("Chưa thể lưu luồng duyệt cho loại đơn cục bộ.");
+      console.warn(t('Chưa thể lưu luồng duyệt cho loại đơn cục bộ.'));
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       return;
@@ -967,7 +972,7 @@ export default function WorkflowTab() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
-      console.error("Không lưu được luồng duyệt:", err);
+      console.error(t('Không lưu được luồng duyệt:'), err);
     }
   };
 
@@ -978,7 +983,7 @@ export default function WorkflowTab() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="material-symbols-outlined text-primary">tune</span>
-            <span className="font-label-md text-on-surface font-semibold">Cấu hình luồng duyệt cho:</span>
+            <span className="font-label-md text-on-surface font-semibold">{t('Cấu hình luồng duyệt cho:')}</span>
           </div>
 
           <CustomGroupedSelect
@@ -994,7 +999,7 @@ export default function WorkflowTab() {
 
           {/* Chọn khối luồng (HQ / Retail / Dùng chung) */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-3 border-t border-outline-variant/50">
-            <span className="text-xs text-secondary flex-shrink-0">Khối luồng:</span>
+            <span className="text-xs text-secondary flex-shrink-0">{t('Khối luồng:')}</span>
             <div className="flex flex-wrap gap-1 p-0.5 bg-surface-container-lowest border border-outline-variant rounded-md">
             {BLOCK_OPTIONS.map((b) => (
               <button
@@ -1008,7 +1013,7 @@ export default function WorkflowTab() {
                   }`}
               >
                 <span className="material-symbols-outlined text-[16px]">{b.icon}</span>
-                {b.label}
+                {t(b.label)}
               </button>
             ))}
           </div>
@@ -1066,7 +1071,7 @@ export default function WorkflowTab() {
                     <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant/50">
                       <span
                         className="material-symbols-outlined text-outline cursor-grab active:cursor-grabbing"
-                        title="Kéo để sắp xếp bước"
+                        title={t('Kéo để sắp xếp bước')}
                         draggable
                         onDragStart={() => setDraggedStepId(step.id)}
                         onDragEnd={() => setDraggedStepId(null)}
@@ -1078,18 +1083,18 @@ export default function WorkflowTab() {
                         value={step.name}
                         onChange={(e) => updateStep(step.id, { name: e.target.value })}
                       />
-                      <span className="text-xs text-secondary px-2 py-0.5 bg-surface-container rounded">Bước {idx + 1}</span>
+                      <span className="text-xs text-secondary px-2 py-0.5 bg-surface-container rounded">{t('Bước')} {idx + 1}</span>
                       <button
                         onClick={() => toggleStep(step.id)}
                         className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
-                        title="Thu gọn"
+                        title={t('Thu gọn')}
                       >
                         <span className="material-symbols-outlined text-[18px] transition-transform rotate-180">expand_more</span>
                       </button>
                       <button
                         onClick={() => removeStep(step.id)}
                         className="text-secondary hover:text-error hover:bg-error-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
-                        title="Xoá bước"
+                        title={t('Xoá bước')}
                       >
                         <span className="material-symbols-outlined text-[18px]">delete</span>
                       </button>
@@ -1113,7 +1118,7 @@ export default function WorkflowTab() {
                             className="text-primary focus:ring-primary rounded cursor-pointer"
                           />
                           <span className="material-symbols-outlined text-primary text-[16px]">alt_route</span>
-                          <span className="text-sm font-semibold text-on-surface">Áp dụng bước này khi</span>
+                          <span className="text-sm font-semibold text-on-surface">{t('Áp dụng bước này khi')}</span>
                         </label>
                         {step.condition && (
                           <div className="flex flex-wrap items-center gap-2 pl-6">
@@ -1126,7 +1131,7 @@ export default function WorkflowTab() {
                             >
                               {CONDITION_FIELDS.map((f) => (
                                 <option key={f.id} value={f.id}>
-                                  {f.label}
+                                  {t(f.label)}
                                 </option>
                               ))}
                             </select>
@@ -1141,11 +1146,10 @@ export default function WorkflowTab() {
                                 <option key={o.id} value={o.id}>
                                   {o.label}
                                 </option>
-                              ))}
-                            </select>
+                              ))}                            </select>
                             <input
                               type="text"
-                              placeholder="giá trị"
+                              placeholder={t('giá trị')}
                               value={step.condition.value}
                               onChange={(e) =>
                                 updateStep(step.id, { condition: { ...step.condition, value: e.target.value } })
@@ -1160,15 +1164,15 @@ export default function WorkflowTab() {
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-4">
                         {/* Cột trái - Hình thức duyệt */}
                         <div>
-                          <GroupHeader icon="how_to_reg" label="Hình thức duyệt" />
+                          <GroupHeader icon="how_to_reg" label={t('Hình thức duyệt')} />
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {APPROVAL_TYPES.map((t) => (
+                            {APPROVAL_TYPES.map((at) => (
                               <RadioCard
-                                key={t.id}
+                                key={at.id}
                                 name={`approval-${step.id}`}
-                                checked={step.approvalType === t.id}
-                                onClick={() => updateStep(step.id, { approvalType: t.id })}
-                                title={t.label}
+                                checked={step.approvalType === at.id}
+                                onClick={() => updateStep(step.id, { approvalType: at.id })}
+                                title={t(at.label)}
                               />
                             ))}
                           </div>
@@ -1181,10 +1185,10 @@ export default function WorkflowTab() {
                                 onChange={(e) => updateStep(step.id, { hierarchyOption: e.target.value })}
                               >
                                 {HIERARCHY_GROUPS.map((g) => (
-                                  <optgroup key={g} label={g}>
+                                  <optgroup key={g} label={t(g)}>
                                     {HIERARCHY_OPTIONS.filter((o) => o.group === g).map((o) => (
                                       <option key={o.id} value={o.id}>
-                                        {o.label}
+                                        {t(o.label)}
                                       </option>
                                     ))}
                                   </optgroup>
@@ -1195,7 +1199,7 @@ export default function WorkflowTab() {
                               <div className="flex flex-col gap-2 max-w-md">
                                 <div className="flex items-center justify-between gap-2">
                                   <label className="text-[11px] font-medium text-secondary uppercase tracking-wide">
-                                    1. Chọn chức danh cần duyệt
+                                    {t('1. Chọn chức danh cần duyệt')}
                                   </label>
                                 </div>
                                 <select
@@ -1203,10 +1207,10 @@ export default function WorkflowTab() {
                                   value={step.role}
                                   onChange={(e) => changeRole(step.id, e.target.value)}
                                 >
-                                  <option value="">-- Chọn chức danh --</option>
+                                  <option value="">{t('-- Chọn chức danh --')}</option>
                                   {approvalRoles.map((r) => (
                                     <option key={r.id} value={r.name}>
-                                      Duyệt theo chức danh: {r.label || r.name}
+                                      {t('Duyệt theo chức danh:')} {r.label || r.name}
                                     </option>
                                   ))}
                                 </select>
@@ -1219,11 +1223,11 @@ export default function WorkflowTab() {
                                     <span className="material-symbols-outlined text-[20px]">group_add</span>
                                   </span>
                                   <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-semibold text-on-surface">2. Chỉ định người duyệt (không bắt buộc)</div>
+                                    <div className="text-sm font-semibold text-on-surface">{t('2. Chỉ định người duyệt (không bắt buộc)')}</div>
                                     <div className="text-[11px] text-secondary">
                                       {Array.isArray(step.approvers) && step.approvers.length > 0
-                                        ? `${step.approvers.length} người đã chỉ định`
-                                        : `Không chỉ định thì mọi người thuộc chức danh ${roleLabel(step.role) || '...'} đều duyệt được`}
+                                        ? t('{v0} người đã chỉ định', { v0: step.approvers.length })
+                                        : t('Không chỉ định thì mọi người thuộc chức danh {v0} đều duyệt được', { v0: roleLabel(step.role) || '...' })}
                                     </div>
                                   </div>
                                   {Array.isArray(step.approvers) && step.approvers.length > 0 && (
@@ -1246,7 +1250,7 @@ export default function WorkflowTab() {
                                         <span
                                           key={id}
                                           className="flex items-center gap-1.5 bg-surface-container-low border border-outline-variant/60 rounded-full pl-0.5 pr-2 py-0.5"
-                                          title={`${emp.name} · ${emp.id}${emp.department ? ` · ${emp.department}` : ''}`}
+                                          title={`${emp.name} · ${emp.id}${emp.department ? ` · ${t(emp.department)}` : ''}`}
                                         >
                                           <img
                                             src={emp.avatar}
@@ -1258,7 +1262,7 @@ export default function WorkflowTab() {
                                           </span>
                                           {emp.position && (
                                             <span className="text-[9px] text-secondary truncate max-w-[80px]">
-                                              · {emp.position}
+                                              · {t(emp.position)}
                                             </span>
                                           )}
                                         </span>
@@ -1287,25 +1291,25 @@ export default function WorkflowTab() {
                             )}
                             {step.approvalType === 'chain' && (
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm text-secondary whitespace-nowrap">Bắt đầu từ:</span>
+                                <span className="text-sm text-secondary whitespace-nowrap">{t('Bắt đầu từ:')}</span>
                                 <select
                                   className={`${selectCls} min-w-[180px]`}
                                   value={step.chainStart || 'direct_manager'}
                                   onChange={(e) => updateStep(step.id, { chainStart: e.target.value })}
                                 >
                                   {HIERARCHY_OPTIONS.map((o) => (
-                                    <option key={o.id} value={o.id}>{o.label}</option>
+                                    <option key={o.id} value={o.id}>{t(o.label)}</option>
                                   ))}
                                 </select>
                                 <span className="material-symbols-outlined text-outline">arrow_forward</span>
-                                <span className="text-sm text-secondary whitespace-nowrap">Tối đa đến:</span>
+                                <span className="text-sm text-secondary whitespace-nowrap">{t('Tối đa đến:')}</span>
                                 <select
                                   className={`${selectCls} min-w-[180px]`}
                                   value={step.chainEnd || 'department_head'}
                                   onChange={(e) => updateStep(step.id, { chainEnd: e.target.value })}
                                 >
                                   {HIERARCHY_OPTIONS.map((o) => (
-                                    <option key={o.id} value={o.id}>{o.label}</option>
+                                    <option key={o.id} value={o.id}>{t(o.label)}</option>
                                   ))}
                                 </select>
                               </div>
@@ -1315,7 +1319,7 @@ export default function WorkflowTab() {
 
                         {/* Cột phải - Xử lý quá hạn */}
                         <div>
-                          <GroupHeader icon="schedule" label="Xử lý quá hạn" />
+                          <GroupHeader icon="schedule" label={t('Xử lý quá hạn')} />
                           <label className="flex items-center gap-2 cursor-pointer mb-2">
                             <input
                               type="checkbox"
@@ -1330,12 +1334,12 @@ export default function WorkflowTab() {
                               })}
                               className="text-primary focus:ring-primary rounded cursor-pointer"
                             />
-                            <span className="text-sm text-on-surface">Tự động xử lý đơn khi quá thời hạn không duyệt</span>
+                            <span className="text-sm text-on-surface">{t('Tự động xử lý đơn khi quá thời hạn không duyệt')}</span>
                           </label>
                           {step.timeoutEnabled && (
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-6">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-secondary whitespace-nowrap">Số giờ tối đa:</span>
+                                <span className="text-xs text-secondary whitespace-nowrap">{t('Số giờ tối đa:')}</span>
                                 <input
                                   type="number"
                                   min="1"
@@ -1343,31 +1347,31 @@ export default function WorkflowTab() {
                                   onChange={(e) => updateStep(step.id, { maxDurationHours: Number(e.target.value) || 1 })}
                                   className={`${selectCls} max-w-[100px]`}
                                 />
-                                <span className="text-xs text-secondary">giờ</span>
+                                <span className="text-xs text-secondary">{t('giờ')}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-secondary whitespace-nowrap">Chế độ:</span>
+                                <span className="text-xs text-secondary whitespace-nowrap">{t('Chế độ:')}</span>
                                 <select
                                   className={`${selectCls} max-w-[200px]`}
                                   value={step.timeoutMode || 'continuous'}
                                   onChange={(e) => updateStep(step.id, { timeoutMode: e.target.value })}
                                 >
-                                  {TIME_RULES.map((t) => (
-                                    <option key={t.id} value={t.id}>
-                                      {t.label}
+                                  {TIME_RULES.map((tr) => (
+                                    <option key={tr.id} value={tr.id}>
+                                      {t(tr.label)}
                                     </option>
                                   ))}
                                 </select>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-secondary whitespace-nowrap">Hành động:</span>
+                                <span className="text-xs text-secondary whitespace-nowrap">{t('Hành động:')}</span>
                                 <select
                                   className={`${selectCls} max-w-[220px]`}
                                   value={step.timeoutAction || 'return'}
                                   onChange={(e) => updateStep(step.id, { timeoutAction: e.target.value })}
                                 >
-                                  <option value="return">Trả đơn về nơi khởi tạo</option>
-                                  <option value="escalate">Tự động chuyển lên cấp trên</option>
+                                  <option value="return">{t('Trả đơn về nơi khởi tạo')}</option>
+                                  <option value="escalate">{t('Tự động chuyển lên cấp trên')}</option>
                                 </select>
                               </div>
                             </div>
@@ -1380,8 +1384,8 @@ export default function WorkflowTab() {
                         <div className="border-t border-outline-variant/50 pt-4">
                           <GroupHeader
                             icon="group"
-                            label="Quy tắc nhiều người duyệt"
-                            hint={`${activeApproverCount} người duyệt${hasExplicitApprovers ? ' (đã chỉ định)' : ' (theo chức danh)'}`}
+                            label={t('Quy tắc nhiều người duyệt')}
+                            hint={t('{v0} người duyệt{v1}', { v0: activeApproverCount, v1: hasExplicitApprovers ? ' (đã chỉ định)' : ' (theo chức danh)' })}
                           />
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {MULTI_RULES.map((r) => (
@@ -1390,8 +1394,8 @@ export default function WorkflowTab() {
                                 name={`multi-${step.id}`}
                                 checked={step.multiRule === r.id}
                                 onClick={() => updateStep(step.id, { multiRule: r.id })}
-                                title={r.label}
-                                desc={r.desc}
+                                title={t(r.label)}
+                                desc={t(r.desc)}
                                 badge={r.badge}
                               />
                             ))}
@@ -1410,7 +1414,7 @@ export default function WorkflowTab() {
                             <div className="mt-3 flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
                               <span className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
                               <span className="text-secondary">
-                                Không chỉ định ai thì <strong className="text-on-surface">mọi người thuộc chức danh {roleLabel(step.role) || '(chưa chọn)'}</strong> đều thấy và duyệt được đơn này.
+                                {t('Không chỉ định ai thì')} <strong className="text-on-surface">{t('mọi người thuộc chức danh')} {roleLabel(step.role) || t('(chưa chọn)')}</strong> {t('đều thấy và duyệt được đơn này.')}
                               </span>
                             </div>
                           )}
@@ -1418,7 +1422,7 @@ export default function WorkflowTab() {
                             <div className="mt-3 flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
                               <span className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
                               <span className="text-secondary">
-                                Chỉ <strong className="text-on-surface">1 người</strong> được chỉ định — đơn sẽ chỉ tới người này (không áp dụng quy tắc nhiều người).
+                                {t('Chỉ')} <strong className="text-on-surface">{t('1 người')}</strong> {t('được chỉ định — đơn sẽ chỉ tới người này (không áp dụng quy tắc nhiều người).')}
                               </span>
                             </div>
                           )}
@@ -1427,7 +1431,7 @@ export default function WorkflowTab() {
 
                       {/* Hành động từ chối — full width */}
                       <div className="border-t border-outline-variant/50 pt-4">
-                        <GroupHeader icon="block" label="Hành động từ chối" />
+                        <GroupHeader icon="block" label={t('Hành động từ chối')} />
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -1436,7 +1440,7 @@ export default function WorkflowTab() {
                             className="text-primary focus:ring-primary rounded cursor-pointer"
                           />
                           <span className="text-sm text-on-surface">
-                            Bắt buộc nhập lý do khi từ chối đơn
+                            {t('Bắt buộc nhập lý do khi từ chối đơn')}
                           </span>
                         </label>
                       </div>
@@ -1447,11 +1451,11 @@ export default function WorkflowTab() {
                   <button
                     onClick={() => toggleStep(step.id)}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer group"
-                    title="Mở rộng để chỉnh sửa"
+                    title={t('Mở rộng để chỉnh sửa')}
                   >
                     <span
                       className="material-symbols-outlined text-outline cursor-grab active:cursor-grabbing flex-shrink-0"
-                      title="Kéo để sắp xếp bước"
+                      title={t('Kéo để sắp xếp bước')}
                       draggable
                       onDragStart={() => setDraggedStepId(step.id)}
                       onDragEnd={() => setDraggedStepId(null)}
@@ -1466,7 +1470,7 @@ export default function WorkflowTab() {
                       </div>
                     </div>
                     <span className="text-[11px] text-secondary px-2 py-0.5 bg-surface-container rounded flex-shrink-0 hidden sm:inline">
-                      Bước {idx + 1}
+                      {t('Bước')} {idx + 1}
                     </span>
                     <span className="material-symbols-outlined text-outline group-hover:text-primary text-[20px] transition-colors flex-shrink-0">
                       expand_more
@@ -1486,13 +1490,13 @@ export default function WorkflowTab() {
           className="bg-surface text-primary border border-primary/40 hover:bg-primary-container/30 transition-colors text-sm font-medium px-4 py-2.5 rounded-md flex items-center gap-2 cursor-pointer"
         >
           <span className="material-symbols-outlined text-[18px]">add</span>
-          Thêm bước duyệt tiếp theo
+          {t('Thêm bước duyệt tiếp theo')}
         </button>
         <div className="flex items-center gap-3">
           {saved && (
             <span className="text-success text-sm flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[18px]">check_circle</span>
-              Đã lưu cấu hình
+              {t('Đã lưu cấu hình')}
             </span>
           )}
           <button
@@ -1500,7 +1504,7 @@ export default function WorkflowTab() {
             className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-5 py-2.5 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">save</span>
-            Lưu cấu hình luồng duyệt
+            {t('Lưu cấu hình luồng duyệt')}
           </button>
         </div>
       </div>

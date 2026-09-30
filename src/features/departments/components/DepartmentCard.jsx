@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DepartmentMembersModal from './DepartmentMembersModal';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 export default function DepartmentCard({
   id,
@@ -19,12 +20,13 @@ export default function DepartmentCard({
   onToggleStatus,
   onDelete
 }) {
+  const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
 
   const tooltipText = memberNames && memberNames.length > 0 
-    ? `Nhân sự trong phòng:\n${memberNames.join('\n')}${memberCount > memberNames.length ? '\n...' : ''}`
-    : 'Chưa có nhân sự';
+    ? t('Nhân sự trong phòng:\n{v0}{v1}', { v0: memberNames.join('\n'), v1: memberCount > memberNames.length ? '\n...' : '' })
+    : t('Chưa có nhân sự');
 
   return (
     <div className="bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/50 hover:shadow-md hover:border-outline-variant transition-all flex flex-col p-6 group relative">
@@ -39,7 +41,7 @@ export default function DepartmentCard({
         <div className="flex items-center gap-1 relative">
           <div 
             className="flex items-center justify-center w-7 h-7 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors cursor-help"
-            title={status.toLowerCase() === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+            title={status.toLowerCase() === 'active' ? t('Đang hoạt động') : t('Ngừng hoạt động')}
           >
             <span className={`w-2.5 h-2.5 rounded-full ${status.toLowerCase() === 'active' ? 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-error shadow-[0_0_8px_rgba(239,68,68,0.8)]'}`}></span>
           </div>
@@ -64,14 +66,14 @@ export default function DepartmentCard({
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors cursor-pointer font-medium group/btn"
                     >
                       <span className="material-symbols-outlined text-[18px] text-secondary group-hover/btn:text-primary transition-colors">edit</span>
-                      Chỉnh sửa
+                      {t('Chỉnh sửa')}
                     </button>
                     <button 
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onToggleStatus?.(); }}
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors cursor-pointer font-medium group/btn"
                     >
                       <span className="material-symbols-outlined text-[18px] text-warning transition-colors">block</span>
-                      {status.toLowerCase() === 'active' ? 'Ngừng hoạt động' : 'Mở hoạt động'}
+                      {status.toLowerCase() === 'active' ? t('Ngừng hoạt động') : t('Mở hoạt động')}
                     </button>
                     <div className="h-px bg-outline-variant/50 my-1 mx-2" />
                     <button 
@@ -79,7 +81,7 @@ export default function DepartmentCard({
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error-container/40 w-full text-left transition-colors cursor-pointer font-medium"
                     >
                       <span className="material-symbols-outlined text-[18px]">delete</span>
-                      Xóa phòng ban
+                      {t('Xóa phòng ban')}
                     </button>
                   </div>
                 </>
@@ -91,7 +93,7 @@ export default function DepartmentCard({
       
       <div className="mb-4">
         <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-1 group-hover:text-primary transition-colors line-clamp-1">
-          {name}
+          {t(name)}
         </h3>
         <p className="text-sm text-outline font-medium">{code}</p>
       </div>
@@ -100,7 +102,7 @@ export default function DepartmentCard({
         {leaders.map((leader, idx) => (
           <div key={idx} className="flex items-center gap-2 text-sm text-on-surface-variant">
             <span className="material-symbols-outlined text-[16px] text-primary">badge</span>
-            <span className="truncate font-medium">{leader.title}: {leader.name}</span>
+            <span className="truncate font-medium">{t(leader.title)}: {leader.name}</span>
           </div>
         ))}
       </div>
@@ -112,7 +114,7 @@ export default function DepartmentCard({
           e.stopPropagation();
           setShowMembersModal(true);
         }}
-        title="Nhấn để xem danh sách nhân sự"
+        title={t('Nhấn để xem danh sách nhân sự')}
       >
         <div className="flex -space-x-2">
           {members.map((memberAvatar, idx) => (
@@ -129,7 +131,7 @@ export default function DepartmentCard({
             </div>
           )}
         </div>
-        <span className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">{memberCount} nhân sự</span>
+        <span className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">{memberCount} {t('nhân sự')}</span>
       </div>
       
       <Link
@@ -137,7 +139,7 @@ export default function DepartmentCard({
         className="mt-4 w-full bg-transparent border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low hover:border-primary hover:text-primary py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
       >
         <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-        Vào chi tiết phòng
+        {t('Vào chi tiết phòng')}
       </Link>
 
       {showMembersModal && (

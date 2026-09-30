@@ -5,6 +5,7 @@ import FormTemplatesTab from '../components/FormTemplatesTab';
 import WorkflowTab from '../components/WorkflowTab';
 import GeneralTab from '../components/GeneralTab';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const TABS = [
   { id: 'forms', label: 'Cấu hình Mẫu đơn & Form động', icon: 'description' },
@@ -13,7 +14,8 @@ const TABS = [
 ];
 
 export default function SystemConfig({ defaultActive = 'workflow' }) {
-  useDocumentTitle('Cấu hình Hệ thống');
+  const { t } = useI18n();
+  useDocumentTitle(t('Cấu hình Hệ thống'));
   const [active, setActive] = useState(defaultActive);
   const { currentUser } = useApproval();
   const navigate = useNavigate();
@@ -32,7 +34,7 @@ export default function SystemConfig({ defaultActive = 'workflow' }) {
 
   if (!canView) return null;
 
-  const activeTab = TABS.find((t) => t.id === active) || TABS[1];
+  const activeTab = TABS.find((tab) => tab.id === active) || TABS[1];
 
   return (
     <section className="flex-1 flex flex-col h-full overflow-hidden bg-background">
@@ -42,7 +44,7 @@ export default function SystemConfig({ defaultActive = 'workflow' }) {
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <span className="material-symbols-outlined text-primary text-[24px]">{activeTab.icon}</span>
           </div>
-          <h1 className="text-2xl font-bold text-on-surface tracking-tight">{activeTab.label}</h1>
+          <h1 className="text-2xl font-bold text-on-surface tracking-tight">{t(activeTab.label)}</h1>
         </div>
 
       </div>

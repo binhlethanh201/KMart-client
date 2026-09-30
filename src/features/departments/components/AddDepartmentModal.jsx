@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
 
@@ -12,6 +13,7 @@ const cardCls = 'bg-surface border border-outline-variant/60 rounded-lg p-4';
 
 // Searchable single-select for an employee.
 export function EmployeeSelect({ employees, value, onChange, placeholder, exclude = [], allowClear = false }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const ref = useRef(null);
@@ -64,7 +66,7 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="w-full pl-8 pr-2 py-1.5 bg-surface-container-lowest border border-outline-variant rounded text-sm outline-none focus:border-primary"
-              placeholder="Tìm nhân sự..."
+              placeholder={t('Tìm nhân sự...')}
             />
           </div>
           <ul className="overflow-y-auto">
@@ -80,12 +82,12 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
                   className="w-full flex items-center gap-2 px-3 py-2 text-left text-error hover:bg-error/10 transition-colors cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">person_remove</span>
-                  <span className="text-sm">Bỏ chọn {placeholder}</span>
+                  <span className="text-sm">{t('Bỏ chọn')} {placeholder}</span>
                 </button>
               </li>
             )}
             {filtered.length === 0 ? (
-              <li className="px-3 py-2 text-sm text-secondary italic">Không tìm thấy nhân sự.</li>
+              <li className="px-3 py-2 text-sm text-secondary italic">{t('Không tìm thấy nhân sự.')}</li>
             ) : (
               filtered.map((e) => (
                 <li key={e.id}>
@@ -102,7 +104,7 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm text-on-surface truncate">{e.name}</span>
                       <span className="block text-xs text-secondary truncate">
-                        {e.id.substring(0, 8).toUpperCase()} - {e.position} - {e.department}
+                        {e.id.substring(0, 8).toUpperCase()} - {t(e.position)} - {t(e.department)}
                       </span>
                     </span>
                   </button>
@@ -117,6 +119,7 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
 }
 
 export default function AddDepartmentModal({ onClose }) {
+  const { t } = useI18n();
   const { employees, addDepartment } = useApproval();
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -182,7 +185,7 @@ export default function AddDepartmentModal({ onClose }) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Thêm mới Phòng ban / Đơn vị"
+      aria-label={t('Thêm mới Phòng ban / Đơn vị')}
     >
       <form
         onClick={(e) => e.stopPropagation()}
@@ -196,9 +199,9 @@ export default function AddDepartmentModal({ onClose }) {
               <span className="material-symbols-outlined">add_business</span>
             </div>
             <div>
-              <h2 className="font-headline-md text-on-surface">Thêm mới Phòng ban / Đơn vị</h2>
+              <h2 className="font-headline-md text-on-surface">{t('Thêm mới Phòng ban / Đơn vị')}</h2>
               <p className="text-xs text-secondary mt-0.5">
-                Tạo đơn vị mới và phân bổ nhân sự trực thuộc.
+                {t('Tạo đơn vị mới và phân bổ nhân sự trực thuộc.')}
               </p>
             </div>
           </div>
@@ -206,7 +209,7 @@ export default function AddDepartmentModal({ onClose }) {
             type="button"
             onClick={onClose}
             className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-full hover:bg-surface-variant cursor-pointer"
-            aria-label="Đóng"
+            aria-label={t('Đóng')}
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -218,12 +221,12 @@ export default function AddDepartmentModal({ onClose }) {
           <div className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[16px]">badge</span>
-              Thông tin Đơn vị
+              {t('Thông tin Đơn vị')}
             </h3>
 
             <div>
               <label className={labelCls}>
-                Mã đơn vị <span className="text-error">*</span>
+                {t('Mã đơn vị')} <span className="text-error">*</span>
               </label>
               <input
                 value={code}
@@ -231,23 +234,23 @@ export default function AddDepartmentModal({ onClose }) {
                 className={inputCls}
                 placeholder="VD: HR-01, LOG-01"
               />
-              <p className="text-xs text-secondary mt-1">Tự động viết hoa.</p>
+              <p className="text-xs text-secondary mt-1">{t('Tự động viết hoa.')}</p>
             </div>
 
             <div>
               <label className={labelCls}>
-                Tên đơn vị / Phòng ban <span className="text-error">*</span>
+                {t('Tên đơn vị / Phòng ban')} <span className="text-error">*</span>
               </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className={inputCls}
-                placeholder="VD: Phòng Hành chính Nhân sự"
+                placeholder={t('VD: Phòng Hành chính Nhân sự')}
               />
             </div>
 
             <div>
-              <label className={labelCls}>Loại đơn vị</label>
+              <label className={labelCls}>{t('Loại đơn vị')}</label>
               <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
                 {TYPES.map((t) => (
                   <option key={t}>{t}</option>
@@ -256,11 +259,11 @@ export default function AddDepartmentModal({ onClose }) {
             </div>
 
             <div>
-              <label className={labelCls}>Trạng thái</label>
+              <label className={labelCls}>{t('Trạng thái')}</label>
               <div className="flex gap-3">
                 {[
-                  { v: 'active', label: 'Đang hoạt động', icon: 'check_circle' },
-                  { v: 'inactive', label: 'Ngừng hoạt động', icon: 'cancel' },
+                  { v: 'active', label: t('Đang hoạt động'), icon: 'check_circle' },
+                  { v: 'inactive', label: t('Ngừng hoạt động'), icon: 'cancel' },
                 ].map((s) => (
                   <button
                     key={s.v}
@@ -295,36 +298,36 @@ export default function AddDepartmentModal({ onClose }) {
           <div className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[16px]">group_add</span>
-              Phân bổ Nhân sự
+              {t('Phân bổ Nhân sự')}
             </h3>
 
             <div className={`${cardCls} space-y-3`}>
               <div>
                 <label className={labelCls}>
-                  {type === 'Siêu thị / Chi nhánh' ? 'Cửa hàng trưởng' : 'Trưởng phòng'}
+                  {type === 'Siêu thị / Chi nhánh' ? t('Cửa hàng trưởng') : t('Trưởng phòng')}
                 </label>
                 <EmployeeSelect
                   employees={employees}
                   value={head}
                   onChange={setHead}
-                  placeholder="Chọn trưởng phòng / cửa hàng trưởng..."
+                  placeholder={t('Chọn trưởng phòng / cửa hàng trưởng...')}
                   exclude={deputy ? [deputy.id] : []}
                 />
               </div>
               <div>
-                <label className={labelCls}>Phó phòng</label>
+                <label className={labelCls}>{t('Phó phòng')}</label>
                 <EmployeeSelect
                   employees={employees}
                   value={deputy}
                   onChange={setDeputy}
-                  placeholder="Chọn phó phòng (có thể bỏ trống)..."
+                  placeholder={t('Chọn phó phòng (có thể bỏ trống)...')}
                   exclude={head ? [head.id] : []}
                 />
               </div>
             </div>
 
             <div className={`${cardCls} space-y-3`}>
-              <label className={labelCls}>Thêm thành viên vào phòng</label>
+              <label className={labelCls}>{t('Thêm thành viên vào phòng')}</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
                   search
@@ -333,7 +336,7 @@ export default function AddDepartmentModal({ onClose }) {
                   value={memberQuery}
                   onChange={(e) => setMemberQuery(e.target.value)}
                   className={`${inputCls} pl-9`}
-                  placeholder="Tìm nhân sự theo tên, mã NV..."
+                  placeholder={t('Tìm nhân sự theo tên, mã NV...')}
                   type="text"
                 />
               </div>
@@ -342,7 +345,7 @@ export default function AddDepartmentModal({ onClose }) {
               {memberQuery && (
                 <ul className="border border-outline-variant rounded-md max-h-40 overflow-y-auto divide-y divide-outline-variant">
                   {memberResults.length === 0 ? (
-                    <li className="px-3 py-2 text-sm text-secondary italic">Không tìm thấy nhân sự.</li>
+                    <li className="px-3 py-2 text-sm text-secondary italic">{t('Không tìm thấy nhân sự.')}</li>
                   ) : (
                     memberResults.slice(0, 6).map((e) => (
                       <li key={e.id}>
@@ -354,7 +357,7 @@ export default function AddDepartmentModal({ onClose }) {
                           <img className="w-6 h-6 rounded-full object-cover" src={e.avatar} alt={e.name} />
                           <span className="flex-1 min-w-0">
                             <span className="block text-sm text-on-surface truncate">{e.name}</span>
-                            <span className="block text-xs text-secondary truncate">{e.id.substring(0, 8).toUpperCase()} - {e.position}</span>
+                            <span className="block text-xs text-secondary truncate">{e.id.substring(0, 8).toUpperCase()} - {t(e.position)}</span>
                           </span>
                           <span className="material-symbols-outlined text-[18px] text-primary">add_circle</span>
                         </button>
@@ -384,8 +387,8 @@ export default function AddDepartmentModal({ onClose }) {
                       {/* Assignment toggle */}
                       <div className="flex bg-surface-container-highest rounded-md p-0.5 flex-shrink-0">
                         {[
-                          { v: 'primary', label: 'Chính' },
-                          { v: 'secondary', label: 'Kiêm nhiệm' },
+                          { v: 'primary', label: t('Chính') },
+                          { v: 'secondary', label: t('Kiêm nhiệm') },
                         ].map((opt) => {
                           const active = m.assignment === opt.v;
                           return (
@@ -406,7 +409,7 @@ export default function AddDepartmentModal({ onClose }) {
                         type="button"
                         onClick={() => removeMember(m.employee.id)}
                         className="text-on-surface-variant hover:text-error p-1 rounded hover:bg-error-container/40 cursor-pointer flex-shrink-0"
-                        aria-label="Xóa thành viên"
+                        aria-label={t('Xóa thành viên')}
                       >
                         <span className="material-symbols-outlined text-[18px]">remove_circle</span>
                       </button>
@@ -417,7 +420,7 @@ export default function AddDepartmentModal({ onClose }) {
               {members.length === 0 && !memberQuery && (
                 <p className="text-xs text-secondary italic flex items-center gap-1">
                   <span className="material-symbols-outlined text-[14px]">info</span>
-                  Chưa chọn thành viên nào. Tìm và thêm nhân sự ở trên.
+                  {t('Chưa chọn thành viên nào. Tìm và thêm nhân sự ở trên.')}
                 </p>
               )}
             </div>
@@ -427,7 +430,7 @@ export default function AddDepartmentModal({ onClose }) {
         {/* Footer */}
         <div className="p-5 pt-0 border-t border-outline-variant flex items-center justify-between gap-2 flex-shrink-0">
           <p className="text-xs text-secondary">
-            {members.length + (head ? 1 : 0) + (deputy ? 1 : 0)} nhân sự sẽ được phân bổ.
+            {members.length + (head ? 1 : 0) + (deputy ? 1 : 0)} {t('nhân sự sẽ được phân bổ.')}
           </p>
           <div className="flex gap-2">
             <button
@@ -435,7 +438,7 @@ export default function AddDepartmentModal({ onClose }) {
               onClick={onClose}
               className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
             >
-              Hủy
+              {t('Hủy')}
             </button>
             <button
               type="submit"
@@ -443,7 +446,7 @@ export default function AddDepartmentModal({ onClose }) {
               className="font-label-md text-on-primary bg-primary hover:bg-on-primary-fixed-variant px-5 py-2 rounded-md transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-[18px]">check_circle</span>
-              Tạo đơn vị mới
+              {t('Tạo đơn vị mới')}
             </button>
           </div>
         </div>

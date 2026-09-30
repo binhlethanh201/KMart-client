@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { STATUS_META } from '../data/constants';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 // Status-driven request card. Clicking navigates to the detail page.
 export default function RequestCard({ request: r }) {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { canApprove, departments } = useApproval();
   const { employees } = useHr();
@@ -21,11 +23,11 @@ export default function RequestCard({ request: r }) {
       .map((d) => d.code || d.name);
   })();
 
-  const meta = STATUS_META[r.status] || { badge: 'bg-surface-container text-on-surface', dot: 'bg-outline', label: 'Không rõ' };
+  const meta = STATUS_META[r.status] || { badge: 'bg-surface-container text-on-surface', dot: 'bg-outline', label: t('Không rõ') };
 
   // Use creator name directly from API if available, fallback to search in employees
   const creatorEmp = employees.find((u) => u.id === r.creatorId);
-  const creatorName = r.creatorName || creatorEmp?.name || 'Người gửi ẩn danh';
+  const creatorName = r.creatorName || creatorEmp?.name || t('Người gửi ẩn danh');
   const creatorAvatar = creatorEmp?.avatar;
   const isActionable = canApprove(r);
   
@@ -42,7 +44,7 @@ export default function RequestCard({ request: r }) {
 
   // Determine current actor for the right side summary
   let currentActorStep = null;
-  let summaryText = 'Không rõ';
+  let summaryText = t('Không rõ');
   let summaryColor = 'text-secondary';
   let statusIcon = 'horizontal_rule';
 
@@ -51,28 +53,28 @@ export default function RequestCard({ request: r }) {
       ? r.steps.findIndex(s => ['pending', 'submitted', 'pendingapproval'].includes((s.status || '').toLowerCase()))
       : Math.min(Number(r.currentStep) || 0, r.steps.length - 1);
     currentActorStep = r.steps[timeoutIndex] || r.steps[r.steps.length - 1];
-    summaryText = 'Quá hạn 12h';
+    summaryText = t('Quá hạn 12h');
     summaryColor = 'text-error';
     statusIcon = 'close';
   } else if (isPending) {
     currentActorStep = r.steps.find(s => s.status === 'pending' || s.status === 'submitted' || s.status === 'pendingapproval');
-    summaryText = 'Đang chờ duyệt';
+    summaryText = t('Đang chờ duyệt');
     summaryColor = 'text-warning';
     statusIcon = 'schedule';
   } else if (isApproved) {
     currentActorStep = r.steps[r.steps.length - 1];
-    summaryText = 'Đã hoàn thành';
+    summaryText = t('Đã hoàn thành');
     summaryColor = 'text-success';
     statusIcon = 'check';
   } else if (isRejected) {
     currentActorStep = r.steps.find(s => s.status === 'rejected' || s.status === 'canceled') || r.steps[r.steps.length - 1];
-    summaryText = r.status === 'canceled' ? 'Đã hủy' : 'Đã từ chối';
+    summaryText = r.status === 'canceled' ? t('Đã hủy') : t('Đã từ chối');
     summaryColor = 'text-error';
     statusIcon = 'close';
   } else if (isNeedsSupplement) {
     // BE-06: đơn đang chờ NGƯỜI GỬI bổ sung - trước đây hiện "Không rõ"
     currentActorStep = null;
-    summaryText = 'Yêu cầu bổ sung';
+    summaryText = t('Yêu cầu bổ sung');
     summaryColor = 'text-warning';
     statusIcon = 'edit_note';
   }
@@ -88,13 +90,13 @@ export default function RequestCard({ request: r }) {
   const currentActorUser = isNeedsSupplement
     ? { name: creatorName, avatar: creatorAvatar }
     : (currentActorStep ? employees.find(x => x.id === currentActorStep.approverId) : null);
-  const currentActorName = currentActorUser?.name || 'Người duyệt';
+  const currentActorName = currentActorUser?.name || t('Người duyệt');
   const currentActorAvatar = currentActorUser?.avatar;
-  let currentActorRole = isNeedsSupplement ? 'NGƯỜI GỬI' : 'NGƯỜI DUYỆT';
+  let currentActorRole = isNeedsSupplement ? t('NGƯỜI GỬI') : t('NGƯỜI DUYỆT');
   if (!isNeedsSupplement && currentActorUser) {
-     if (currentActorUser.role === 'ADMIN') currentActorRole = 'QUẢN TRỊ VIÊN';
-     else if (currentActorUser.role === 'HR') currentActorRole = 'NHÂN SỰ';
-     else if (currentActorUser.role === 'MANAGER') currentActorRole = 'QUẢN LÝ';
+     if (currentActorUser.role === 'ADMIN') currentActorRole = t('QUẢN TRỊ VIÊN');
+     else if (currentActorUser.role === 'HR') currentActorRole = t('NHÂN SỰ');
+     else if (currentActorUser.role === 'MANAGER') currentActorRole = t('QUẢN LÝ');
      else if (currentActorUser.department) currentActorRole = currentActorUser.department;
      else if (currentActorUser.position) currentActorRole = currentActorUser.position;
   }
@@ -122,10 +124,10 @@ export default function RequestCard({ request: r }) {
   // BE-25: chức vụ/phòng ban của người thực hiện để hiện dưới tên
   const roleLabel = (u) => {
     if (!u) return '';
-    if (u.role === 'ADMIN') return 'QUẢN TRỊ VIÊN';
-    if (u.role === 'HR') return 'NHÂN SỰ';
-    if (u.role === 'MANAGER') return 'QUẢN LÝ';
-    if (u.role === 'TEAM_LEADER') return 'TRƯỞNG NHÓM';
+    if (u.role === 'ADMIN') return t('QUẢN TRỊ VIÊN');
+    if (u.role === 'HR') return t('NHÂN SỰ');
+    if (u.role === 'MANAGER') return t('QUẢN LÝ');
+    if (u.role === 'TEAM_LEADER') return t('TRƯỞNG NHÓM');
     if (u.department) return u.department;
     if (u.position) return u.position;
     return '';
@@ -166,11 +168,11 @@ export default function RequestCard({ request: r }) {
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className={`inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full ${meta.badge}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
-                {meta.label}
+                {t(meta.label)}
               </span>
               {isActionable && (
                 <span className="px-2.5 py-0.5 bg-warning-container text-on-warning-container rounded-full text-[10px] uppercase font-bold flex items-center gap-1 animate-pulse shadow-sm">
-                  <span className="material-symbols-outlined text-[12px]">priority_high</span> Cần bạn duyệt
+                  <span className="material-symbols-outlined text-[12px]">priority_high</span> {t('Cần bạn duyệt')}
                 </span>
               )}
             </div>
@@ -221,7 +223,7 @@ export default function RequestCard({ request: r }) {
                     {rejectedByUser?.name || currentActorName}
                   </span>
                   <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5">
-                    {rejectedByUser ? `${roleLabel(rejectedByUser)}${rejectedStepOrder ? ` · Bước ${rejectedStepOrder}` : ''}` : currentActorRole}
+                    {rejectedByUser ? `${roleLabel(rejectedByUser)}${rejectedStepOrder ? t(' · Bước {v0}', { v0: rejectedStepOrder }) : ''}` : currentActorRole}
                   </span>
                 </div>
               </>
@@ -240,12 +242,12 @@ export default function RequestCard({ request: r }) {
                   </div>
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-supplement">Yêu cầu bổ sung</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-supplement">{t('Yêu cầu bổ sung')}</span>
                   <span className="text-[13px] font-bold text-on-surface truncate w-full" title={suppByUser?.name || creatorName}>
-                    {suppByUser?.name || 'Người duyệt'}
+                    {suppByUser?.name || t('Người duyệt')}
                   </span>
                   <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5">
-                    {suppByUser ? `${roleLabel(suppByUser)}${suppStepOrder ? ` · Bước ${suppStepOrder}` : ''}` : 'Yêu cầu người gửi bổ sung'}
+                    {suppByUser ? `${roleLabel(suppByUser)}${suppStepOrder ? t(' · Bước {v0}', { v0: suppStepOrder }) : ''}` : t('Yêu cầu người gửi bổ sung')}
                   </span>
                 </div>
               </>
@@ -272,7 +274,7 @@ export default function RequestCard({ request: r }) {
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${summaryColor}`}>{summaryText}</span>
                   <span className="text-[13px] font-bold text-on-surface truncate w-full">
-                    {actorApprovers.length} người {isApproved ? 'đồng ý' : 'duyệt'}
+                    {actorApprovers.length} {t('người')} {isApproved ? t('đồng ý') : t('duyệt')}
                   </span>
                   <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5" title={actorApprovers.map(u => u.name).join(', ')}>
                     {actorApprovers[0]?.name}, ...
@@ -312,7 +314,7 @@ export default function RequestCard({ request: r }) {
           onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
           className="flex items-center gap-1 text-[11px] font-medium text-secondary hover:text-primary transition-colors py-1 px-4 rounded-full border border-outline-variant hover:bg-surface-container-low cursor-pointer shadow-sm"
         >
-          {isExpanded ? 'Ẩn chi tiết luồng duyệt' : 'Xem chi tiết luồng duyệt'}
+          {isExpanded ? t('Ẩn chi tiết luồng duyệt') : t('Xem chi tiết luồng duyệt')}
           <span className="material-symbols-outlined text-[16px] transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
             keyboard_arrow_down
           </span>
@@ -323,7 +325,7 @@ export default function RequestCard({ request: r }) {
       {isExpanded && (
         <div className="px-5 py-4 border-t border-outline-variant/50 bg-surface-container-lowest animate-in slide-in-from-top-2 duration-300 ease-out w-full overflow-hidden">
           <span className="text-[12px] text-secondary font-medium mb-3 block">
-            Tiến trình duyệt
+            {t('Tiến trình duyệt')}
           </span>
           
           <div className="flex items-start gap-1 overflow-x-auto w-full pb-2 scrollbar-hide">
@@ -343,7 +345,7 @@ export default function RequestCard({ request: r }) {
                     {creatorName}
                   </span>
                   <span className="text-[9px] text-secondary text-center w-full truncate uppercase font-medium tracking-wide">
-                    NGƯỜI GỬI
+                    {t('NGƯỜI GỬI')}
                   </span>
                 </div>
               </div>
@@ -372,12 +374,12 @@ export default function RequestCard({ request: r }) {
 
               const renderPerson = (aid) => {
                 const u = employees.find((x) => x.id === aid);
-                const nm = u?.name || 'Người duyệt';
-                let role = 'NHÂN SỰ';
+                const nm = u?.name || t('Người duyệt');
+                let role = t('NHÂN SỰ');
                 if (u) {
-                  if (u.role === 'ADMIN') role = 'QUẢN TRỊ VIÊN';
-                  else if (u.role === 'HR') role = 'NHÂN SỰ';
-                  else if (u.role === 'MANAGER') role = 'QUẢN LÝ';
+                  if (u.role === 'ADMIN') role = t('QUẢN TRỊ VIÊN');
+                  else if (u.role === 'HR') role = t('NHÂN SỰ');
+                  else if (u.role === 'MANAGER') role = t('QUẢN LÝ');
                   else if (u.department) role = u.department;
                   else if (u.position) role = u.position;
                 }
@@ -409,7 +411,7 @@ export default function RequestCard({ request: r }) {
                     <div className="relative rounded-lg border border-dashed border-outline-variant bg-surface px-2.5 pb-1.5 pt-4">
                       <span className="absolute -top-2 left-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[8px] font-bold uppercase tracking-wider">
                         <span className="material-symbols-outlined text-[10px]">call_split</span>
-                        Bước {s.stepOrder} · {ids.length} người
+                        {t('Bước')} {s.stepOrder} · {ids.length} {t('người')}
                       </span>
                       <div className="flex items-start gap-2">
                         {ids.map(renderPerson)}

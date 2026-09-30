@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import { authService } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import { useI18n } from '../../../i18n/I18nProvider';
+import LanguageSwitcher from '../../../components/LanguageSwitcher';
 
 const LoginPage = ({ onLoginSuccess }) => {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,13 +30,13 @@ const LoginPage = ({ onLoginSuccess }) => {
           window.location.href = "/";
         }
       } else {
-        setError("Đăng nhập thành công nhưng không nhận được token.");
+        setError(t('Đăng nhập thành công nhưng không nhận được token.'));
       }
     } catch (err) {
       setError(
         err.response?.data?.message ||
           err.response?.data?.error ||
-          "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.",
+          t('Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.'),
       );
     } finally {
       setLoading(false);
@@ -54,6 +57,11 @@ const LoginPage = ({ onLoginSuccess }) => {
         <div className="absolute inset-0 bg-on-primary-fixed/80 backdrop-blur-sm"></div>
       </div>
 
+      {/* Chuyển ngôn ngữ VI | EN | KO */}
+      <div className="absolute top-5 right-5 z-20">
+        <LanguageSwitcher variant="light" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -65,7 +73,7 @@ const LoginPage = ({ onLoginSuccess }) => {
             Kmart
           </h1>
           <p className="text-body-md text-on-surface-variant mt-1">
-            Hệ thống quản trị nội bộ
+            {t('Hệ thống quản trị nội bộ')}
           </p>
         </div>
 
@@ -78,7 +86,7 @@ const LoginPage = ({ onLoginSuccess }) => {
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label className="block text-label-md text-on-surface mb-1.5">
-              Email làm việc
+              {t('Email làm việc')}
             </label>
             <input
               type="email"
@@ -92,7 +100,7 @@ const LoginPage = ({ onLoginSuccess }) => {
 
           <div>
             <label className="block text-label-md text-on-surface mb-1.5">
-              Mật khẩu
+              {t('Mật khẩu')}
             </label>
             <input
               type="password"
@@ -109,7 +117,7 @@ const LoginPage = ({ onLoginSuccess }) => {
             disabled={loading}
             className="w-full bg-primary text-on-primary py-2.5 rounded-md text-label-md hover:bg-on-primary-fixed-variant transition-colors disabled:opacity-70 disabled:cursor-not-allowed mt-2 shadow-sm"
           >
-            {loading ? "Đang xác thực..." : "Đăng nhập"}
+            {loading ? t('Đang xác thực...') : t('Đăng nhập')}
           </button>
         </form>
       </motion.div>
