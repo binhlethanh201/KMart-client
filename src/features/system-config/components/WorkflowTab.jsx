@@ -933,10 +933,16 @@ export default function WorkflowTab() {
               chainEnd: s.chainEnd,
               role: s.role,
               roleName: s.role,
-              // BE-35: chỉ áp dụng quy tắc nhiều người khi thực sự có >1 người được chọn
-              multiRule: (Array.isArray(s.approvers) && s.approvers.length > 1) ? s.multiRule : null,
-              sequentialOrder: (Array.isArray(s.approvers) && s.approvers.length > 1 && s.multiRule === 'sequential')
-                ? s.approvers
+              // Quy tắc nhiều người duyệt: áp dụng cho bước "theo chức danh" (dù chỉ định
+              // hay để tự resolve theo chức danh) — trước đây chỉ gửi khi có ≥2 người được
+              // CHỈ ĐỊNH nên chọn quy tắc ở chế độ theo chức danh bị mất khi lưu.
+              multiRule: s.approvalType === 'role' ? s.multiRule : null,
+              // Thứ tự tuần tự: chỉ có ý nghĩa khi quy tắc là "sequential".
+              // Ưu tiên thứ tự người dùng đã sắp, nếu chưa sắp thì lấy danh sách đã chỉ định.
+              sequentialOrder: (s.approvalType === 'role' && s.multiRule === 'sequential')
+                ? (Array.isArray(s.sequentialOrder) && s.sequentialOrder.length > 0
+                    ? s.sequentialOrder
+                    : (Array.isArray(s.approvers) ? s.approvers : null))
                 : null,
               specificUserId,
               scope: s.scope || 'auto',
@@ -1016,11 +1022,16 @@ export default function WorkflowTab() {
           // BE-35: số người duyệt = số người ĐƯỢC CHỈ ĐỊNH, nếu không chỉ định thì lấy
           // toàn bộ nhân sự thuộc chức danh (vì luồng tự resolve theo chức danh).
           const hasExplicitApprovers = Array.isArray(step.approvers) && step.approvers.length > 0;
+          const roleMembersCount = EMPLOYEES.filter((e) => e.role === step.role || e.position === step.role).length;
           const activeApproverCount = hasExplicitApprovers
             ? step.approvers.length
-            : EMPLOYEES.filter((e) => e.role === step.role || e.position === step.role).length;
-          // BE-35: bước "chỉ định 1 người" (specific) thì không có nhiều người để chọn quy tắc
-          const showMulti = step.approvalType === 'role' && !step.specificUser;
+            : roleMembersCount;
+          // Quy tắc nhiều người duyệt chỉ có nghĩa khi bước là "theo chức danh",
+          // KHÔNG chỉ định 1 người cụ thể, và thực tế có ≥2 người có thể duyệt
+          // (hoặc người dùng đã chỉ định ≥2 người).
+          const showMulti = step.approvalType === 'role'
+            && !step.specificUser
+            && activeApproverCount >= 2;
           return (
             <div
               key={step.id}

@@ -31,10 +31,25 @@ export default function DepartmentDetail() {
   const dept = departments.find((d) => String(d.id) === String(id));
   useDocumentTitle(dept ? dept.name : 'Phòng ban');
 
+  // BE-43: chỉ TRƯỞNG PHÒNG / PHÓ PHÒNG (hoặc ADMIN/HR) mới được xem đơn của
+  // MỌI NGƯỜI trong phòng. Nhân viên chỉ xem được đơn của chính mình.
+  const isDeptManager = useMemo(() => {
+    if (!dept || !currentUser) return false;
+    const role = String(currentUser.role || '').toUpperCase();
+    if (role === 'ADMIN' || role === 'HR') return true;
+    return String(dept.managerId) === String(currentUser.id)
+      || String(dept.deputyManagerId) === String(currentUser.id);
+  }, [dept, currentUser]);
+
   const [tab, setTab] = useState('requests');
   const [q, setQ] = useState('');
   const [typeF, setTypeF] = useState('all');
   const [statusF, setStatusF] = useState('all');
+  // Phân trang bảng đơn từ + bảng nhân sự (trước đây hardcode nên "10 dòng" vô tác dụng)
+  const [reqPage, setReqPage] = useState(1);
+  const [reqPageSize, setReqPageSize] = useState(10);
+  const [memPage, setMemPage] = useState(1);
+  const [memPageSize, setMemPageSize] = useState(10);
   const [documentTypes, setDocumentTypes] = useState([]);
   const [members, setMembers] = useState([]);
   const [showUserInfo, setShowUserInfo] = useState(null);
@@ -61,13 +76,15 @@ export default function DepartmentDetail() {
   // BE-19: đơn thuộc phòng ban nếu phòng ban là ĐÍCH trong đơn (Data.departments)
 // HOẶC là phòng ban chính của người tạo. Trước đây chỉ lọc theo phòng người tạo
 // nên phòng ban được gửi tới (đơn theo chức danh/bộ phận) không nhận được đơn.
+  // BE-43: nhân viên (không phải trưởng/phó phòng) CHỈ thấy đơn của chính mình.
   const deptRequests = useMemo(
     () => requests.filter((r) => {
+      if (!isDeptManager && String(r.creatorId) !== String(currentUser?.id)) return false;
       if (String(r.departmentId) === String(id)) return true;
       const targets = r._rawData?.departments;
       return Array.isArray(targets) && targets.some((d) => String(d) === String(id));
     }),
-    [requests, id]
+    [requests, id, isDeptManager, currentUser?.id]
   );
 
   const filtered = useMemo(() => {
@@ -88,6 +105,17 @@ export default function DepartmentDetail() {
       return matchQ && matchT && matchS;
     });
   }, [deptRequests, q, typeF, statusF]);
+
+  // Phân trang: đổi bộ lọc thì quay về trang 1 (tránh đứng ở trang không còn dữ liệu)
+  useEffect(() => { setReqPage(1); }, [q, typeF, statusF]);
+
+  const reqTotalPages = Math.max(1, Math.ceil(filtered.length / reqPageSize));
+  const reqSafePage = Math.min(Math.max(1, reqPage), reqTotalPages);
+  const pagedRequests = filtered.slice((reqSafePage - 1) * reqPageSize, reqSafePage * reqPageSize);
+
+  const memTotalPages = Math.max(1, Math.ceil(members.length / memPageSize));
+  const memSafePage = Math.min(Math.max(1, memPage), memTotalPages);
+  const pagedMembers = members.slice((memSafePage - 1) * memPageSize, memSafePage * memPageSize);
 
   if (!dept) {
     return (
@@ -226,6 +254,15 @@ export default function DepartmentDetail() {
                 </span>
               </div>
 
+              {/* BE-43: nhân viên chỉ thấy đơn của chính mình trong phòng này */}
+              {!isDeptManager && (
+                <div className="px-4 py-2.5 bg-primary/5 border-b border-outline-variant text-xs text-secondary flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-primary">visibility</span>
+                  Bạn đang xem <strong className="text-on-surface">đơn từ của chính mình</strong> trong phòng ban này.
+                  Chỉ trưởng phòng / phó phòng mới xem được đơn của toàn bộ nhân sự.
+                </div>
+              )}
+
               {/* Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
@@ -251,7 +288,7 @@ export default function DepartmentDetail() {
                         </td>
                       </tr>
                     ) : (
-                      filtered.map((r) => {
+                      pagedRequests.map((r) => {
                         const creatorName = r.creatorName || employees.find((u) => u.id === r.creatorId)?.name;
                         const creatorAvatar = employees.find((u) => u.id === r.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
                         const meta = STATUS_META[r.status];
@@ -331,18 +368,41 @@ export default function DepartmentDetail() {
                   </tbody>
                 </table>
               </div>
-              <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex items-center justify-between">
-                <div>
-                  Hiển thị 
-                  <select className="mx-2 bg-surface border border-outline-variant rounded px-1 py-0.5 outline-none">
-                    <option>10 dòng</option>
-                  </select>
-                  1 - {filtered.length} trong tổng số {deptRequests.length} đơn từ
-                </div>
+              <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-outline cursor-not-allowed">chevron_left</span>
-                  <span>Trang 1 / 1</span>
-                  <span className="material-symbols-outlined text-[16px] text-outline cursor-not-allowed">chevron_right</span>
+                  Hiển thị
+                  <select
+                    value={reqPageSize}
+                    onChange={(e) => { setReqPageSize(Number(e.target.value)); setReqPage(1); }}
+                    className="bg-surface border border-outline-variant rounded px-2 py-1 outline-none cursor-pointer hover:bg-surface-container-low transition-colors"
+                  >
+                    <option value={5}>5 dòng</option>
+                    <option value={10}>10 dòng</option>
+                    <option value={20}>20 dòng</option>
+                    <option value={50}>50 dòng</option>
+                  </select>
+                  <span>
+                    {filtered.length === 0 ? 0 : (reqSafePage - 1) * reqPageSize + 1} - {Math.min(reqSafePage * reqPageSize, filtered.length)} trong tổng số {filtered.length} đơn từ
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setReqPage((p) => Math.max(1, p - 1))}
+                    disabled={reqSafePage <= 1}
+                    className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                  </button>
+                  <div className="px-2 flex items-center justify-center min-w-[4rem]">
+                    <span className="text-xs text-secondary">Trang {reqSafePage} / {reqTotalPages}</span>
+                  </div>
+                  <button
+                    onClick={() => setReqPage((p) => Math.min(reqTotalPages, p + 1))}
+                    disabled={reqSafePage >= reqTotalPages}
+                    className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                  </button>
                 </div>
               </div>
             </section>
@@ -375,7 +435,7 @@ export default function DepartmentDetail() {
                         </td>
                       </tr>
                     ) : (
-                      members.map((s) => {
+                      pagedMembers.map((s) => {
                         const extraPositions = (s.positions || []).length > 1 ? s.positions.length - 1 : 0;
                         const roleInfo = getSystemRoleInfo(s.systemRoles);
                         
@@ -496,18 +556,41 @@ export default function DepartmentDetail() {
                   </tbody>
                 </table>
               </div>
-              <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex items-center justify-between">
-                <div>
-                  Hiển thị 
-                  <select className="mx-2 bg-surface border border-outline-variant rounded px-1 py-0.5 outline-none">
-                    <option>10 dòng</option>
-                  </select>
-                  1 - {members.length} trong tổng số {members.length} nhân sự
-                </div>
+              <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-outline cursor-not-allowed">chevron_left</span>
-                  <span>Trang 1 / 1</span>
-                  <span className="material-symbols-outlined text-[16px] text-outline cursor-not-allowed">chevron_right</span>
+                  Hiển thị
+                  <select
+                    value={memPageSize}
+                    onChange={(e) => { setMemPageSize(Number(e.target.value)); setMemPage(1); }}
+                    className="bg-surface border border-outline-variant rounded px-2 py-1 outline-none cursor-pointer hover:bg-surface-container-low transition-colors"
+                  >
+                    <option value={5}>5 dòng</option>
+                    <option value={10}>10 dòng</option>
+                    <option value={20}>20 dòng</option>
+                    <option value={50}>50 dòng</option>
+                  </select>
+                  <span>
+                    {members.length === 0 ? 0 : (memSafePage - 1) * memPageSize + 1} - {Math.min(memSafePage * memPageSize, members.length)} trong tổng số {members.length} nhân sự
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setMemPage((p) => Math.max(1, p - 1))}
+                    disabled={memSafePage <= 1}
+                    className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                  </button>
+                  <div className="px-2 flex items-center justify-center min-w-[4rem]">
+                    <span className="text-xs text-secondary">Trang {memSafePage} / {memTotalPages}</span>
+                  </div>
+                  <button
+                    onClick={() => setMemPage((p) => Math.min(memTotalPages, p + 1))}
+                    disabled={memSafePage >= memTotalPages}
+                    className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                  </button>
                 </div>
               </div>
             </section>
@@ -516,7 +599,13 @@ export default function DepartmentDetail() {
 
           {/* TAB 3: Report */}
           {tab === 'report' && (
-            <DepartmentReport deptRequests={deptRequests} members={members} employees={employees} />
+            <DepartmentReport
+              deptRequests={deptRequests}
+              members={members}
+              employees={employees}
+              isDeptManager={isDeptManager}
+              currentUserId={currentUser?.id}
+            />
           )}
         </div>
       </div>
