@@ -11,7 +11,7 @@ const inputCls =
 const cardCls = 'bg-surface border border-outline-variant/60 rounded-lg p-4';
 
 // Searchable single-select for an employee.
-function EmployeeSelect({ employees, value, onChange, placeholder, exclude = [] }) {
+export function EmployeeSelect({ employees, value, onChange, placeholder, exclude = [], allowClear = false }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const ref = useRef(null);
@@ -68,6 +68,22 @@ function EmployeeSelect({ employees, value, onChange, placeholder, exclude = [] 
             />
           </div>
           <ul className="overflow-y-auto">
+            {allowClear && value && (
+              <li className="border-b border-outline-variant">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(null);
+                    setOpen(false);
+                    setQ('');
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-error hover:bg-error/10 transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">person_remove</span>
+                  <span className="text-sm">Bỏ chọn {placeholder}</span>
+                </button>
+              </li>
+            )}
             {filtered.length === 0 ? (
               <li className="px-3 py-2 text-sm text-secondary italic">Không tìm thấy nhân sự.</li>
             ) : (

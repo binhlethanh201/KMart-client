@@ -1,24 +1,29 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FORM_TYPES, APPROVAL_TYPES, MULTI_RULES, CONDITION_FIELDS, CONDITION_OPS, TIME_RULES } from '../data/mockData';
+import { APPROVAL_TYPES, MULTI_RULES, CONDITION_FIELDS, CONDITION_OPS, TIME_RULES } from '../data/mockData';
 import { useHr } from '../../hr/context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { workflowService } from '../services/workflowService';
 import { roleService } from '../../hr/services/roleService';
+import { roleLabel } from '../../../utils/roleLabels';
 
 const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
 
+// Cấp bậc duyệt — `group` chỉ dùng để gom nhóm trong dropdown (optgroup)
 const HIERARCHY_OPTIONS = [
-  { id: 'direct_manager', label: 'Quản lý trực tiếp' },
-  { id: 'deputy_head', label: 'Phó phòng' },
-  { id: 'department_head', label: 'Trưởng phòng' },
-  { id: 'store_manager', label: 'Cửa hàng trưởng' },
-  { id: 'branch_manager', label: 'Quản lý chi nhánh' },
-  { id: 'zone_manager', label: 'Quản lý Vùng' },
-  { id: 'division_director', label: 'Giám đốc khối / Ban giám đốc' },
+  { id: 'direct_manager', label: 'Quản lý trực tiếp', group: 'Cấp trực tiếp' },
+  { id: 'deputy_head', label: 'Phó phòng / Phó cửa hàng', group: 'Trong đơn vị' },
+  { id: 'department_head', label: 'Trưởng phòng', group: 'Trong đơn vị' },
+  { id: 'store_manager', label: 'Cửa hàng trưởng', group: 'Trong đơn vị' },
+  { id: 'branch_manager', label: 'Quản lý chi nhánh', group: 'Cấp trên' },
+  { id: 'zone_manager', label: 'Quản lý khu vực', group: 'Cấp trên' },
+  { id: 'division_director', label: 'Giám đốc khối / Ban giám đốc', group: 'Cấp trên' },
 ];
+
+// Nhóm cấp bậc theo khối để hiển thị trong dropdown
+const HIERARCHY_GROUPS = ['Cấp trực tiếp', 'Trong đơn vị', 'Cấp trên'];
 
 // Các khối luồng (track) — tách setup riêng, "common" merge cho cả HQ & Retail
 const BLOCK_OPTIONS = [
@@ -671,23 +676,8 @@ export default function WorkflowTab() {
   const [draggedStepId, setDraggedStepId] = useState(null);
   const [advancedStepId, setAdvancedStepId] = useState(null);
 
-  const [categories, setCategories] = useState(() => {
-    try {
-      const saved = localStorage.getItem('kmart.form.categories');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return [
-      { id: 'cat1', name: 'Hành chính - Nhân sự', items: ['Đơn xin nghỉ phép', 'Đơn xin nghỉ thai sản', 'Đơn xin nghỉ việc'] },
-      { id: 'cat2', name: 'Chấm công - Đi lại', items: ['Đơn làm thêm (OT)', 'Đơn xin ra ngoài'] },
-      { id: 'cat3', name: 'Khác', items: [] }
-    ];
-  });
-  const [expandedCats, setExpandedCats] = useState(() => 
-    categories.reduce((acc, cat) => ({...acc, [cat.id]: true}), {})
-  );
+  const [categories, setCategories] = useState([]);
+  const [expandedCats, setExpandedCats] = useState({});
   const toggleCat = (id) => setExpandedCats(prev => ({...prev, [id]: !prev[id]}));
 
   const [workflows, setWorkflows] = useState({});
@@ -700,14 +690,19 @@ export default function WorkflowTab() {
   useEffect(() => {
     roleService.getAll()
       .then(data => {
-        const mapped = (data || []).map(r => ({
-          id: r.id,
-          name: r.roleName || r.name || r.code || 'UNKNOWN'
-        }));
+        const mapped = (data || []).map(r => {
+          const code = r.roleName || r.name || r.code || 'UNKNOWN';
+          return {
+            id: r.id,
+            name: code,                              // giá trị lưu/duyệt
+            label: roleLabel(code),                  // nhãn tiếng Việt cho người dùng
+            description: r.description || '',
+          };
+        });
         setApprovalRoles(mapped);
       })
       .catch(err => {
-        console.error("Failed to load roles:", err);
+        console.error("Không tải được chức danh:", err);
         setApprovalRoles([]);
       });
   }, []);
@@ -735,7 +730,7 @@ export default function WorkflowTab() {
         setFormType(merged[0].id);
       }
     }).catch(err => {
-      console.error("Failed to load document types:", err);
+      console.error("Không tải được loại đơn:", err);
       const keys = Object.keys(formFields);
       const merged = keys.map(t => ({ id: t, name: t }));
       setDocumentTypes(merged);
@@ -744,6 +739,25 @@ export default function WorkflowTab() {
       }
     });
   }, [formFields]);
+
+  // Dựng danh mục mẫu đơn từ dữ liệu THẬT (cột category) thay vì danh sách cứng.
+  // Trước đây danh mục hardcode nên mẫu đơn không nằm trong danh sách bị ẩn khỏi dropdown.
+  useEffect(() => {
+    if (!documentTypes.length) { setCategories([]); return; }
+    const byCat = new Map();
+    documentTypes.forEach(dt => {
+      const cat = (dt.category && String(dt.category).trim()) || 'Khác';
+      if (!byCat.has(cat)) byCat.set(cat, []);
+      byCat.get(cat).push(dt.name);
+    });
+    const built = [...byCat.entries()].map(([name, items]) => ({
+      id: `cat_${name}`,
+      name,
+      items,
+    }));
+    setCategories(built);
+    setExpandedCats(built.reduce((acc, c) => ({ ...acc, [c.id]: true }), {}));
+  }, [documentTypes]);
 
   useEffect(() => {
     if (!formType) return;
@@ -780,7 +794,7 @@ export default function WorkflowTab() {
           }));
         })
         .catch(err => {
-          console.error("Failed to load workflows:", err);
+      console.error("Không tải được luồng duyệt:", err);
           setWorkflows(prev => {
             if (prev[formType]) return prev;
             return {
@@ -808,6 +822,20 @@ export default function WorkflowTab() {
       [formType]: {
         ...prev[formType],
         [block]: prev[formType][block].map((s) => (s.id === id ? { ...s, ...patch } : s)),
+      },
+    }));
+
+  // BE-35: đổi CHỨC DANH thì phải xoá người duyệt đã chọn trước đó.
+  // Người cũ thuộc chức danh khác nên sẽ không còn trong danh sách ứng viên mới ->
+  // giữ lại sẽ gây "specificUserId" mâu thuẫn, đơn có thể không ai duyệt được.
+  const changeRole = (id, role) =>
+    setWorkflows((prev) => ({
+      ...prev,
+      [formType]: {
+        ...prev[formType],
+        [block]: prev[formType][block].map((s) =>
+          s.id === id ? { ...s, role, roleName: role, specificUser: null, approvers: null, sequentialOrder: null } : s
+        ),
       },
     }));
   const removeStep = (id) => {
@@ -863,7 +891,7 @@ export default function WorkflowTab() {
   const save = async () => {
     const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formType);
     if (!isGuid) {
-      console.warn("Cannot save workflow for local form types yet.");
+      console.warn("Chưa thể lưu luồng duyệt cho loại đơn cục bộ.");
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       return;
@@ -880,27 +908,46 @@ export default function WorkflowTab() {
           documentTypeId: formType,
           scope: scope,
           isDefault: true,
-          steps: scopeData[scope].map((s, idx) => ({
-            name: s.name,
-            stepOrder: idx + 1,
-            isActive: s.isActive !== false,
-            approvalType: s.approvalType || 'role',
-            hierarchyOption: s.hierarchyOption,
-            chainStart: s.chainStart,
-            chainEnd: s.chainEnd,
-            role: s.role,
-            roleName: s.role,
-            multiRule: s.multiRule,
-            sequentialOrder: s.sequentialOrder,
-            specificUserId: s.specificUser ? EMPLOYEES.find(e => e.name === s.specificUser || e.id === s.specificUser)?.id : null,
-            scope: s.scope || 'auto',
-            condition: s.condition,
-            maxDurationHours: s.maxDurationHours,
-            timeoutEnabled: s.timeoutEnabled || false,
-            timeoutMode: s.timeoutMode,
-            timeoutAction: s.timeoutAction,
-            rejectReasonRequired: s.rejectReasonRequired !== false
-          }))
+          steps: scopeData[scope].map((s, idx) => {
+            // BE-35: người được CHỈ ĐỊNH cho bước "theo chức danh".
+            // Trước đây chỉ lấy từ `s.specificUser` (vốn chỉ có ở bước hình thức "Chỉ định"),
+            // nên lựa chọn trong hộp "Chọn người duyệt" của bước chức danh BỊ MẤT khi lưu.
+            const designatedUserId = (() => {
+              if (Array.isArray(s.approvers) && s.approvers.length === 1) return s.approvers[0];
+              if (s.specificUser && EMPLOYEES.some(e => e.id === s.specificUser)) return s.specificUser;
+              if (s.specificUserId && EMPLOYEES.some(e => e.id === s.specificUserId)) return s.specificUserId;
+              return null;
+            })();
+            // chỉ gửi khi thực sự là người trong hệ thống (tránh gửi tên/hiển thị nhầm)
+            const specificUserId = (designatedUserId && EMPLOYEES.some(e => e.id === designatedUserId))
+              ? designatedUserId
+              : null;
+
+            return {
+              name: s.name,
+              stepOrder: idx + 1,
+              isActive: s.isActive !== false,
+              approvalType: s.approvalType || 'role',
+              hierarchyOption: s.hierarchyOption,
+              chainStart: s.chainStart,
+              chainEnd: s.chainEnd,
+              role: s.role,
+              roleName: s.role,
+              // BE-35: chỉ áp dụng quy tắc nhiều người khi thực sự có >1 người được chọn
+              multiRule: (Array.isArray(s.approvers) && s.approvers.length > 1) ? s.multiRule : null,
+              sequentialOrder: (Array.isArray(s.approvers) && s.approvers.length > 1 && s.multiRule === 'sequential')
+                ? s.approvers
+                : null,
+              specificUserId,
+              scope: s.scope || 'auto',
+              condition: s.condition,
+              maxDurationHours: s.maxDurationHours,
+              timeoutEnabled: s.timeoutEnabled || false,
+              timeoutMode: s.timeoutMode,
+              timeoutAction: s.timeoutAction,
+              rejectReasonRequired: s.rejectReasonRequired !== false
+            };
+          })
         };
 
         if (wfId) {
@@ -914,7 +961,7 @@ export default function WorkflowTab() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
-      console.error("Failed to save workflow:", err);
+      console.error("Không lưu được luồng duyệt:", err);
     }
   };
 
@@ -966,10 +1013,14 @@ export default function WorkflowTab() {
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => {
           const isActive = openStepIds.has(step.id);
-          const activeApproverCount = Array.isArray(step.approvers) && step.approvers.length > 0
+          // BE-35: số người duyệt = số người ĐƯỢC CHỈ ĐỊNH, nếu không chỉ định thì lấy
+          // toàn bộ nhân sự thuộc chức danh (vì luồng tự resolve theo chức danh).
+          const hasExplicitApprovers = Array.isArray(step.approvers) && step.approvers.length > 0;
+          const activeApproverCount = hasExplicitApprovers
             ? step.approvers.length
             : EMPLOYEES.filter((e) => e.role === step.role || e.position === step.role).length;
-          const showMulti = step.approvalType === 'role';
+          // BE-35: bước "chỉ định 1 người" (specific) thì không có nhiều người để chọn quy tắc
+          const showMulti = step.approvalType === 'role' && !step.specificUser;
           return (
             <div
               key={step.id}
@@ -1118,24 +1169,33 @@ export default function WorkflowTab() {
                                 value={step.hierarchyOption}
                                 onChange={(e) => updateStep(step.id, { hierarchyOption: e.target.value })}
                               >
-                                {HIERARCHY_OPTIONS.map((o) => (
-                                  <option key={o.id} value={o.id}>
-                                    {o.label}
-                                  </option>
+                                {HIERARCHY_GROUPS.map((g) => (
+                                  <optgroup key={g} label={g}>
+                                    {HIERARCHY_OPTIONS.filter((o) => o.group === g).map((o) => (
+                                      <option key={o.id} value={o.id}>
+                                        {o.label}
+                                      </option>
+                                    ))}
+                                  </optgroup>
                                 ))}
                               </select>
                             )}
                             {step.approvalType === 'role' && (
                               <div className="flex flex-col gap-2 max-w-md">
+                                <div className="flex items-center justify-between gap-2">
+                                  <label className="text-[11px] font-medium text-secondary uppercase tracking-wide">
+                                    1. Chọn chức danh cần duyệt
+                                  </label>
+                                </div>
                                 <select
                                   className={selectCls}
                                   value={step.role}
-                                  onChange={(e) => updateStep(step.id, { role: e.target.value })}
+                                  onChange={(e) => changeRole(step.id, e.target.value)}
                                 >
                                   <option value="">-- Chọn chức danh --</option>
                                   {approvalRoles.map((r) => (
                                     <option key={r.id} value={r.name}>
-                                      Duyệt theo chức danh: {r.name}
+                                      Duyệt theo chức danh: {r.label || r.name}
                                     </option>
                                   ))}
                                 </select>
@@ -1148,11 +1208,11 @@ export default function WorkflowTab() {
                                     <span className="material-symbols-outlined text-[20px]">group_add</span>
                                   </span>
                                   <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-semibold text-on-surface">Chọn người duyệt</div>
+                                    <div className="text-sm font-semibold text-on-surface">2. Chỉ định người duyệt (không bắt buộc)</div>
                                     <div className="text-[11px] text-secondary">
                                       {Array.isArray(step.approvers) && step.approvers.length > 0
-                                        ? `${step.approvers.length} người đã chọn`
-                                        : 'Bấm để mở hộp chọn'}
+                                        ? `${step.approvers.length} người đã chỉ định`
+                                        : `Không chỉ định thì mọi người thuộc chức danh ${roleLabel(step.role) || '...'} đều duyệt được`}
                                     </div>
                                   </div>
                                   {Array.isArray(step.approvers) && step.approvers.length > 0 && (
@@ -1244,18 +1304,36 @@ export default function WorkflowTab() {
 
                         {/* Cột phải - Xử lý quá hạn */}
                         <div>
-                          <GroupHeader icon="schedule" label="Xử lý quá hạn 12 giờ" />
+                          <GroupHeader icon="schedule" label="Xử lý quá hạn" />
                           <label className="flex items-center gap-2 cursor-pointer mb-2">
                             <input
                               type="checkbox"
                               checked={step.timeoutEnabled}
-                              onChange={(e) => updateStep(step.id, { timeoutEnabled: e.target.checked })}
+                              onChange={(e) => updateStep(step.id, {
+                                timeoutEnabled: e.target.checked,
+                                // BE-38: mặc định 12 giờ nếu chưa nhập (UI trước đây ghi "12 giờ" cứng
+                                // nhưng KHÔNG hề gửi maxDurationHours -> BE dùng 48h, sai với nhãn).
+                                maxDurationHours: e.target.checked ? (step.maxDurationHours || 12) : step.maxDurationHours,
+                                timeoutMode: e.target.checked ? (step.timeoutMode || 'continuous') : step.timeoutMode,
+                                timeoutAction: e.target.checked ? (step.timeoutAction || 'return') : step.timeoutAction,
+                              })}
                               className="text-primary focus:ring-primary rounded cursor-pointer"
                             />
-                            <span className="text-sm text-on-surface">Tự động chuyển trả đơn sau 12 giờ không xử lý</span>
+                            <span className="text-sm text-on-surface">Tự động xử lý đơn khi quá thời hạn không duyệt</span>
                           </label>
                           {step.timeoutEnabled && (
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-6">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-secondary whitespace-nowrap">Số giờ tối đa:</span>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={step.maxDurationHours ?? 12}
+                                  onChange={(e) => updateStep(step.id, { maxDurationHours: Number(e.target.value) || 1 })}
+                                  className={`${selectCls} max-w-[100px]`}
+                                />
+                                <span className="text-xs text-secondary">giờ</span>
+                              </div>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-secondary whitespace-nowrap">Chế độ:</span>
                                 <select
@@ -1273,12 +1351,12 @@ export default function WorkflowTab() {
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-secondary whitespace-nowrap">Hành động:</span>
                                 <select
-                                  className={`${selectCls} max-w-[200px]`}
-                                  value={step.timeoutAction}
+                                  className={`${selectCls} max-w-[220px]`}
+                                  value={step.timeoutAction || 'return'}
                                   onChange={(e) => updateStep(step.id, { timeoutAction: e.target.value })}
                                 >
-                                  <option value="return">Chuyển trả về nơi khởi tạo</option>
-                                  <option value="escalate">Tự động chuyển cấp lên trên</option>
+                                  <option value="return">Trả đơn về nơi khởi tạo</option>
+                                  <option value="escalate">Tự động chuyển lên cấp trên</option>
                                 </select>
                               </div>
                             </div>
@@ -1289,7 +1367,11 @@ export default function WorkflowTab() {
                       {/* Hàng dưới full-width - Quy tắc nhiều người duyệt */}
                       {showMulti && (
                         <div className="border-t border-outline-variant/50 pt-4">
-                          <GroupHeader icon="group" label="Quy tắc nhiều người duyệt" hint={`${activeApproverCount} người duyệt`} />
+                          <GroupHeader
+                            icon="group"
+                            label="Quy tắc nhiều người duyệt"
+                            hint={`${activeApproverCount} người duyệt${hasExplicitApprovers ? ' (đã chỉ định)' : ' (theo chức danh)'}`}
+                          />
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {MULTI_RULES.map((r) => (
                               <RadioCard
@@ -1310,6 +1392,24 @@ export default function WorkflowTab() {
                               order={step.sequentialOrder || step.approvers}
                               onChange={(newOrder) => updateStep(step.id, { sequentialOrder: newOrder })}
                             />
+                          )}
+
+                          {/* BE-35: cảnh báo cấu hình chưa rõ ràng để tránh lỗi khi duyệt */}
+                          {(!Array.isArray(step.approvers) || step.approvers.length === 0) && (
+                            <div className="mt-3 flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
+                              <span className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
+                              <span className="text-secondary">
+                                Không chỉ định ai thì <strong className="text-on-surface">mọi người thuộc chức danh {roleLabel(step.role) || '(chưa chọn)'}</strong> đều thấy và duyệt được đơn này.
+                              </span>
+                            </div>
+                          )}
+                          {(Array.isArray(step.approvers) && step.approvers.length === 1) && (
+                            <div className="mt-3 flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
+                              <span className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
+                              <span className="text-secondary">
+                                Chỉ <strong className="text-on-surface">1 người</strong> được chỉ định — đơn sẽ chỉ tới người này (không áp dụng quy tắc nhiều người).
+                              </span>
+                            </div>
                           )}
                         </div>
                       )}
@@ -1389,7 +1489,7 @@ export default function WorkflowTab() {
             className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-5 py-2.5 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">save</span>
-            Lưu cấu hình Workflow
+            Lưu cấu hình luồng duyệt
           </button>
         </div>
       </div>

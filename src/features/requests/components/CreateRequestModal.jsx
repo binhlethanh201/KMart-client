@@ -1,17 +1,21 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { workflowService } from '../../../services/workflowService';
+import ApprovalFlowTree from './ApprovalFlowTree';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
-export default function CreateRequestModal({ onClose }) {
-  const { createRequest, departments, currentUser } = useApproval();
+export default function CreateRequestModal({ onClose, existingRequest = null, onSubmitted }) {
+  const { createRequest, updateRequest, departments, currentUser } = useApproval();
   const { employees } = useHr();
+
+  // Chế độ bổ sung: mở lại đơn đang ở trạng thái "Yêu cầu bổ sung" để sửa rồi gửi lại
+  const isEdit = Boolean(existingRequest);
   
   // Load document types từ BE
   const [documentTypes, setDocumentTypes] = useState([]);
@@ -19,7 +23,8 @@ export default function CreateRequestModal({ onClose }) {
   const [activeWorkflow, setActiveWorkflow] = useState(null);
   
   useEffect(() => {
-    documentTypeService.getAll()
+    // BE-07: chỉ lấy loại đơn đã có luồng duyệt active
+    documentTypeService.getAvailable()
       .then(data => {
         setDocumentTypes(data || []);
         setLoading(false);
@@ -38,6 +43,16 @@ export default function CreateRequestModal({ onClose }) {
     departments: [],
     dynamic: {}
   });
+
+  // BE-04: người duyệt do người tạo chọn (chỉ cần khi bước 1 có nhiều ứng viên)
+  const [selectedApproverId, setSelectedApproverId] = useState('');
+
+  // BE-20: popup xem full luồng phê duyệt
+  const [flowOpen, setFlowOpen] = useState(false);
+
+  // BE-09: File thật của các trường "Tải file", khoá theo nhãn trường.
+  // Trước đây chỉ lưu file.name vào form.dynamic nên file CHƯA BAO GIỜ được upload.
+  const [files, setFiles] = useState({});
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const setDynamic = (name, val) => setForm((f) => ({
@@ -58,9 +73,31 @@ export default function CreateRequestModal({ onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // Chế độ bổ sung: nạp lại dữ liệu đơn cũ vào form.
+  // skipDynamicResetRef chặn effect "reset dynamic khi đổi loại đơn" xoá mất dữ liệu vừa nạp.
+  const skipDynamicResetRef = useRef(false);
+  useEffect(() => {
+    if (!existingRequest || loading) return;
+    const raw = existingRequest._rawData || {};
+    const { departments: deptIds, ...dynamic } = raw;
+    skipDynamicResetRef.current = true;
+    setForm({
+      documentTypeId: existingRequest.documentTypeId || '',
+      reason: existingRequest.fields?.reason || '',
+      departments: Array.isArray(deptIds) ? deptIds : [],
+      dynamic
+    });
+    setSelectedApproverId(existingRequest.selectedApproverId || '');
+    setFiles({});
+  }, [existingRequest, loading]);
+
   // Reset dynamic fields when document type changes
   useEffect(() => {
-    setForm(f => ({ ...f, dynamic: {} }));
+    if (skipDynamicResetRef.current) {
+      skipDynamicResetRef.current = false;
+    } else {
+      setForm(f => ({ ...f, dynamic: {} }));
+    }
     
     if (form.documentTypeId) {
       workflowService.getActiveForDocumentType(form.documentTypeId)
@@ -97,9 +134,72 @@ export default function CreateRequestModal({ onClose }) {
     }
   }, [form.dynamic['Từ ngày'], form.dynamic['Đến ngày']]);
 
+  // BE-04: bước đầu tiên của luồng duyệt
+  const firstStep = useMemo(() => {
+    const steps = activeWorkflow?.steps;
+    if (!Array.isArray(steps) || steps.length === 0) return null;
+    return [...steps].sort((a, b) => a.stepOrder - b.stepOrder)[0];
+  }, [activeWorkflow]);
+
+  // Loại hình duyệt của bước 1 — quyết định phần "Phòng ban liên quan" hiện hay ẩn
+  const firstStepAppType = (firstStep?.approvalType || '').toLowerCase();
+  // BE-17: chỉ luồng "theo chức danh / bộ phận" (role) mới cần chọn phòng ban liên quan.
+  const showDepartmentPicker = firstStepAppType === 'role';
+  // Luồng tự tìm người theo phòng/chức vụ của người tạo: quản lý trực tiếp / chuỗi quản lý
+  const isHierarchyFlow = firstStepAppType === 'hierarchy';
+  const isChainFlow = firstStepAppType === 'chain';
+  const isSpecificFlow = firstStepAppType === 'specific_user' || firstStepAppType === 'specific';
+
+  // BE-04: danh sách người CÓ THỂ duyệt bước 1.
+  const firstStepCandidates = useMemo(() => {
+    if (!firstStep) return [];
+    const appType = (firstStep.approvalType || '').toLowerCase();
+
+    if (appType === 'specific_user' || appType === 'specific') {
+      const emp = employees?.find(e => e.id === (firstStep.specificUserId || firstStep.specificUser));
+      return emp ? [emp] : [];
+    }
+
+    if (appType === 'role' && firstStep.role) {
+      const role = String(firstStep.role).toUpperCase();
+      const matched = (employees || []).filter((e) => {
+        if (String(e.role || '').toUpperCase() === role) return true;
+        if (Array.isArray(e.roles) && e.roles.includes(firstStep.role)) return true;
+        return Array.isArray(e.systemRoles)
+          && e.systemRoles.some(r => String(r?.roleName || r || '').toUpperCase() === role);
+      });
+      return matched.map(e => ({ id: e.id, name: e.name, position: e.position || e.role }));
+    }
+
+    if (appType === 'hierarchy' || appType === 'chain') {
+      // BE-17: người quản lý trực tiếp của CHÍNH người tạo đơn (theo phòng ban & chức vụ
+      // mà người tạo được phân bổ), KHÔNG phải theo phòng ban liên quan.
+      const ownDeptId = currentUser?.departmentId;
+      const ownManager = ownDeptId ? departments.find(d => d.id === ownDeptId)?.managerId : null;
+      if (ownManager) {
+        const emp = employees?.find(e => e.id === ownManager);
+        return emp ? [{ id: emp.id, name: emp.name, position: emp.position }] : [];
+      }
+      return [];
+    }
+
+    return [];
+  }, [firstStep, employees, departments, currentUser]);
+
+  // Bỏ lựa chọn cũ nếu nó không còn trong danh sách ứng viên
+  useEffect(() => {
+    if (selectedApproverId && !firstStepCandidates.some(c => c.id === selectedApproverId)) {
+      setSelectedApproverId('');
+    }
+  }, [firstStepCandidates, selectedApproverId]);
+
+  // BE-17: chỉ bắt chọn khi luồng theo chức danh/bộ phận resolve ra nhiều người.
+  const mustPickApprover = firstStepAppType === 'role' && firstStepCandidates.length > 1;
+
   const submit = (e) => {
     e.preventDefault();
     if (!form.reason.trim() || !form.documentTypeId) return;
+    if (mustPickApprover && !selectedApproverId) return;
     
     // Build payload theo BE DTO
     const payload = {
@@ -107,7 +207,9 @@ export default function CreateRequestModal({ onClose }) {
       reason: form.reason.trim(),
       data: {
         ...form.dynamic,
-        departments: form.departments
+        // BE-17: chỉ luồng "theo chức danh / bộ phận" mới lưu phòng ban liên quan;
+        // các luồng khác tự resolve theo phòng/chức vụ người tạo nên không gửi.
+        departments: showDepartmentPicker ? form.departments : []
       },
     };
     
@@ -121,8 +223,27 @@ export default function CreateRequestModal({ onClose }) {
     if (form.dynamic['Tổng số ngày']) {
       payload.totalDays = parseInt(form.dynamic['Tổng số ngày']);
     }
-    
-    createRequest(payload);
+
+    // BE-04: chỉ gửi khi bước 1 (theo chức danh) có nhiều người và đã chọn 1
+    if (mustPickApprover && selectedApproverId) {
+      payload.selectedApproverId = selectedApproverId;
+    }
+
+    // BE-09: File thật để provider upload sau khi có applicationId
+    // (applicationService.create chỉ đọc các field nó cần nên key này không lọt ra BE)
+    const pendingFiles = Object.values(files);
+    if (pendingFiles.length > 0) {
+      payload.attachments = pendingFiles;
+    }
+
+    if (isEdit) {
+      // BE-15: update + submit là async; báo cho trang chi tiết refresh khi xong
+      Promise.resolve(updateRequest(existingRequest.id, payload)).finally(() => {
+        if (onSubmitted) onSubmitted();
+      });
+    } else {
+      createRequest(payload);
+    }
     onClose();
   };
 
@@ -140,8 +261,14 @@ export default function CreateRequestModal({ onClose }) {
         {/* Header */}
         <div className="flex justify-between items-start p-6 border-b border-outline-variant/30">
           <div>
-            <h2 className="font-headline-sm text-headline-sm text-on-surface">Tạo Đề Xuất Mới</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">Điền đầy đủ thông tin để gửi yêu cầu phê duyệt</p>
+            <h2 className="font-headline-sm text-headline-sm text-on-surface">
+              {isEdit ? 'Bổ Sung Đơn Từ' : 'Tạo Đề Xuất Mới'}
+            </h2>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">
+              {isEdit
+                ? 'Cập nhật thông tin theo yêu cầu của người duyệt rồi gửi lại'
+                : 'Điền đầy đủ thông tin để gửi yêu cầu phê duyệt'}
+            </p>
           </div>
           <button type="button" onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer">
             <span className="material-symbols-outlined">close</span>
@@ -154,8 +281,9 @@ export default function CreateRequestModal({ onClose }) {
           <div className="flex flex-col gap-2">
             <label className={labelCls}>Loại Đề Xuất</label>
             <select 
-              className={fieldCls} 
+              className={`${fieldCls} disabled:opacity-60 disabled:cursor-not-allowed`}
               value={form.documentTypeId} 
+              disabled={isEdit}
               onChange={(e) => setForm(f => ({ ...f, documentTypeId: e.target.value }))}
             >
               <option value="">-- Chọn loại đề xuất --</option>
@@ -165,8 +293,8 @@ export default function CreateRequestModal({ onClose }) {
             </select>
           </div>
 
-          {/* Department Checkboxes */}
-          {departments.length > 0 && (
+          {/* Department Checkboxes — BE-17: chỉ hiện với luồng "theo chức danh / bộ phận" */}
+          {showDepartmentPicker && departments.length > 0 && (
             <div className="flex flex-col gap-2">
               <label className={labelCls}>Phòng ban liên quan</label>
               <div className="flex gap-2.5 flex-wrap mt-0.5">
@@ -198,6 +326,66 @@ export default function CreateRequestModal({ onClose }) {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* BE-17: quản lý trực tiếp / chuỗi quản lý -> người duyệt tự suy ra từ phòng & chức vụ của người tạo */}
+          {(isHierarchyFlow || isChainFlow) && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-on-surface">
+              <span className="material-symbols-outlined text-[18px] text-primary flex-shrink-0">
+                {isHierarchyFlow ? 'supervisor_account' : 'account_tree'}
+              </span>
+              <span>
+                {isHierarchyFlow ? (
+                  <>Người duyệt là <strong>quản lý trực tiếp</strong> theo phòng ban &amp; chức vụ của bạn{firstStepCandidates[0] ? <>: <strong>{firstStepCandidates[0].name}</strong></> : ' (chưa xác định được quản lý)'}.</>
+                ) : (
+                  <>Đơn đi theo <strong>chuỗi quản lý liên tiếp</strong> (tăng dần theo chức danh/bộ phận) của phòng ban bạn thuộc.</>
+                )}
+              </span>
+            </div>
+          )}
+
+          {/* BE-17: chỉ định người -> hiện đúng 1 người duy nhất được chỉ định */}
+          {isSpecificFlow && firstStepCandidates[0] && (
+            <div className="flex flex-col gap-2">
+              <label className={labelCls}>Người duyệt (chỉ định)</label>
+              <div className="flex items-center gap-2.5 rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2.5">
+                {firstStepCandidates[0].avatar ? (
+                  <img src={firstStepCandidates[0].avatar} alt={firstStepCandidates[0].name} className="w-8 h-8 rounded-full object-cover border border-outline-variant" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#29b6f6] text-white text-[12px] flex items-center justify-center">
+                    {(firstStepCandidates[0].name || '?').trim().split(' ').slice(-1)[0].substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-on-surface">{firstStepCandidates[0].name}</span>
+                  <span className="text-xs text-secondary">{firstStepCandidates[0].position || 'Người duyệt'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* BE-17: luồng theo chức danh/bộ phận, nhiều người -> bắt buộc chọn 1 */}
+          {mustPickApprover && (
+            <div className="flex flex-col gap-2">
+              <label className={labelCls}>
+                Chọn người duyệt <span className="text-error">*</span>
+                <span className="ml-1.5 text-xs normal-case font-normal text-secondary">
+                  (bước 1 có {firstStepCandidates.length} người có thể duyệt)
+                </span>
+              </label>
+              <select
+                className={fieldCls}
+                value={selectedApproverId}
+                onChange={(e) => setSelectedApproverId(e.target.value)}
+              >
+                <option value="">-- Chọn người duyệt --</option>
+                {firstStepCandidates.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}{c.position ? ` · ${c.position}` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -327,7 +515,9 @@ export default function CreateRequestModal({ onClose }) {
                     <span className="material-symbols-outlined text-[24px] text-outline group-hover:text-primary transition-colors">cloud_upload</span>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors">
-                        {form.dynamic[labelKey] ? form.dynamic[labelKey] : 'Nhấn để chọn file tải lên'}
+                        {(files[labelKey]?.name || form.dynamic[labelKey])
+                          ? (files[labelKey]?.name || form.dynamic[labelKey])
+                          : 'Nhấn để chọn file tải lên'}
                       </span>
                       <span className="text-xs text-secondary">Hỗ trợ PDF, DOCX, XLSX (Tối đa 10MB)</span>
                     </div>
@@ -338,7 +528,9 @@ export default function CreateRequestModal({ onClose }) {
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
-                          setDynamic(labelKey, file.name); // in a real app, upload it and save URL
+                          setDynamic(labelKey, file.name);
+                          // BE-09: giữ File thật để upload sau khi đơn được tạo
+                          setFiles((prev) => ({ ...prev, [labelKey]: file }));
                         }
                       }}
                     />
@@ -395,124 +587,82 @@ export default function CreateRequestModal({ onClose }) {
           )}
         </div>
 
-        {/* Luồng phê duyệt (Approval Flow) Visualization */}
+        {/* Luồng phê duyệt dự kiến — bản thu gọn (mờ) + nút xem full luồng.
+            BE-20: modal linh động, cây to quá thì thu nhỏ/mờ và có popup xem đầy đủ. */}
         {activeWorkflow && activeWorkflow.steps && activeWorkflow.steps.length > 0 && (
           <div className="px-6 py-4 bg-surface-container-lowest border-t border-outline-variant/30">
-            <label className="block font-label-md text-label-md text-on-surface-variant mb-4">Luồng phê duyệt dự kiến</label>
-            <div className="flex items-center gap-3 overflow-x-auto pb-4 px-1 [&::-webkit-scrollbar]:hidden">
-              
-              {/* SENDER NODE */}
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="flex flex-col items-center gap-1.5 min-w-[80px] max-w-[100px]">
-                  {currentUser?.avatar ? (
-                    <img src={currentUser.avatar} alt="Sender" className="w-10 h-10 rounded-full object-cover shadow-sm border border-outline-variant" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-amber-400 text-amber-950 font-semibold text-sm flex items-center justify-center shadow-sm border border-amber-500/20">
-                      {(() => {
-                        const name = currentUser?.name || 'Tôi';
-                        const parts = name.trim().split(' ');
-                        return parts.length === 1 
-                          ? parts[0].substring(0, 2).toUpperCase() 
-                          : (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-                      })()}
-                    </div>
-                  )}
-                  <span className="text-[12px] font-semibold text-on-surface text-center w-full truncate leading-tight" title={currentUser?.name || 'Tôi'}>
-                    {currentUser?.name || 'Tôi'}
-                  </span>
-                  <span className="text-[10px] text-secondary text-center w-full truncate uppercase tracking-wider font-semibold">
-                    Người gửi
-                  </span>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block font-label-md text-label-md text-on-surface-variant">Luồng phê duyệt dự kiến</label>
+              <button
+                type="button"
+                onClick={() => setFlowOpen(true)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">open_in_full</span>
+                Xem chi tiết luồng
+              </button>
+            </div>
+            <div className="relative">
+              {/* Bản xem trước: thu nhỏ + mờ để bao quát toàn bộ sơ đồ */}
+              <div className="overflow-hidden max-h-[220px] rounded-lg border border-outline-variant/50 bg-surface-container-low/40">
+                <div className="scale-[0.82] origin-top pointer-events-none opacity-70 overflow-x-auto">
+                  <ApprovalFlowTree
+                    steps={activeWorkflow.steps}
+                    departments={departments}
+                    employees={employees}
+                    currentUser={currentUser}
+                    selectedApproverId={selectedApproverId}
+                    variant="inline"
+                  />
                 </div>
-                <span className="material-symbols-outlined text-outline-variant text-[18px]">
-                  arrow_forward
-                </span>
               </div>
+              {/* Lớp phủ mời bấm xem full */}
+              <button
+                type="button"
+                onClick={() => setFlowOpen(true)}
+                className="absolute inset-0 flex items-end justify-center pb-2 bg-gradient-to-t from-surface/90 to-transparent cursor-pointer group"
+              >
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-on-primary text-xs font-semibold shadow-sm group-hover:bg-primary/90 transition-colors">
+                  <span className="material-symbols-outlined text-[16px]">open_in_full</span>
+                  Bấm vào đây để xem chi tiết luồng
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
 
-              {/* WORKFLOW STEPS */}
-              {activeWorkflow.steps.sort((a,b) => a.stepOrder - b.stepOrder).map((step, idx) => {
-                const appType = (step.approvalType || '').toLowerCase();
-                let emp = null;
-
-                if (appType === 'specific_user' || appType === 'specific') {
-                  emp = employees?.find(e => e.id === (step.specificUserId || step.specificUser));
-                } else if (appType === 'hierarchy' || appType === 'chain') {
-                  if (form.departments && form.departments.length > 0) {
-                    const targetDept = departments.find(d => d.id === form.departments[0]);
-                    if (targetDept && targetDept.managerId) {
-                      emp = employees?.find(e => e.id === targetDept.managerId);
-                    }
-                  } else if (currentUser?.departmentId) {
-                    const primaryDept = departments.find(d => d.id === currentUser.departmentId);
-                    if (primaryDept && primaryDept.managerId) {
-                      emp = employees?.find(e => e.id === primaryDept.managerId);
-                    }
-                  }
-                } else if (appType === 'role' && step.role) {
-                  emp = employees?.find(e => {
-                    if (e.role === step.role) return true;
-                    if (e.roles && Array.isArray(e.roles)) return e.roles.includes(step.role);
-                    return false;
-                  });
-                }
-
-                const displayName = emp ? emp.name : (step.name || 'Người duyệt');
-                let displayRole = step.roleName || step.role || 'Người duyệt';
-                
-                if (emp) {
-                  const r = emp.role || (emp.roles && emp.roles[0]) || '';
-                  if (r.toUpperCase() === 'ADMIN') displayRole = 'Quản trị viên';
-                  else if (r.toUpperCase() === 'MANAGER') displayRole = 'Quản lý';
-                  else if (r.toUpperCase() === 'HR') displayRole = 'Nhân sự';
-                  else if (r.toUpperCase() === 'TEAM_LEADER') displayRole = 'Trưởng nhóm';
-                  else displayRole = r || 'Nhân viên';
-                }
-
-                return (
-                  <div key={step.id || idx} className="flex items-center gap-3 shrink-0">
-                    <div className="flex flex-col items-center gap-1.5 min-w-[80px] max-w-[100px]">
-                      <div className="relative">
-                        {emp ? (
-                          emp.avatar ? (
-                            <img src={emp.avatar} alt="Approver" className="w-10 h-10 rounded-full object-cover shadow-sm border border-outline-variant" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm flex items-center justify-center shadow-sm border border-blue-200">
-                              {(() => {
-                                const parts = emp.name.trim().split(' ');
-                                return parts.length === 1 
-                                  ? parts[0].substring(0, 2).toUpperCase() 
-                                  : (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-                              })()}
-                            </div>
-                          )
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-primary-container text-primary flex items-center justify-center shadow-sm border border-primary/20">
-                            <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-center w-full">
-                        <span className="text-[12px] font-semibold text-on-surface text-center w-full truncate leading-tight" title={displayName}>
-                          {displayName}
-                        </span>
-                        <span className="text-[10px] text-primary text-center w-full truncate uppercase tracking-wider font-semibold">
-                          {displayRole}
-                        </span>
-                        {activeWorkflow.steps.length > 1 && (
-                          <span className="text-[10px] text-secondary font-medium mt-0.5">
-                            Bước {step.stepOrder}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {idx < activeWorkflow.steps.length - 1 && (
-                      <span className="material-symbols-outlined text-outline-variant text-[18px]">
-                        arrow_forward
-                      </span>
-                    )}
+        {/* BE-20: popup xem FULL luồng phê duyệt */}
+        {flowOpen && (
+          <div
+            className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-4"
+            onClick={() => setFlowOpen(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-surface rounded-xl shadow-2xl w-full max-w-4xl max-h-[88vh] flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/40">
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-primary text-[22px]">account_tree</span>
+                  <div>
+                    <h3 className="text-base font-bold text-on-surface">Chi tiết luồng phê duyệt</h3>
+                    <p className="text-xs text-secondary">{selectedDocType?.name || 'Đề xuất'} · {activeWorkflow?.name || ''}</p>
                   </div>
-                );
-              })}
+                </div>
+                <button type="button" onClick={() => setFlowOpen(false)} className="p-1.5 rounded-full text-on-surface-variant hover:bg-surface-variant cursor-pointer">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <div className="flex-1 overflow-auto p-6 bg-surface-container-lowest">
+                <ApprovalFlowTree
+                  steps={activeWorkflow.steps}
+                  departments={departments}
+                  employees={employees}
+                  currentUser={currentUser}
+                  selectedApproverId={selectedApproverId}
+                  variant="full"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -529,10 +679,10 @@ export default function CreateRequestModal({ onClose }) {
           <button
             type="button"
             onClick={submit}
-            disabled={!form.documentTypeId || !form.reason.trim()}
+            disabled={!form.documentTypeId || !form.reason.trim() || (mustPickApprover && !selectedApproverId)}
             className="px-5 py-2.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Gửi yêu cầu
+            {isEdit ? 'Bổ sung & gửi lại' : 'Gửi yêu cầu'}
           </button>
         </div>
       </div>

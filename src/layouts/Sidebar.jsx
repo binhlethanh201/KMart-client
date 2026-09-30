@@ -1,24 +1,30 @@
 import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApproval } from '../context/useApproval';
+import { clearSessionStorage } from '../utils/session';
+import NotificationBell from '../components/NotificationBell';
 
 /* ─── Sub-panel: chỉ 2 link điều hướng ──────────────────────── */
 
-function RequestsSubPanel({ pendingCount }) {
+function RequestsSubPanel({ pendingCount, supplementCount, showApprovals }) {
   const location = useLocation();
 
+  // BE-15: "Đơn cần bổ sung" không còn là mục riêng (bị trùng với Đơn từ cá nhân);
+  // các đơn này hiển thị ngay trong Đơn từ cá nhân kèm badge nhắc bổ sung.
+  // BE-18: "Đơn chờ tôi duyệt" CHỈ hiện khi user có quyền duyệt
   const links = [
     {
       to: '/my-requests',
       icon: 'folder_shared',
       label: 'Đơn từ cá nhân',
+      badge: supplementCount,
     },
-    {
+    ...(showApprovals ? [{
       to: '/my-requests/approvals',
       icon: 'pending_actions',
       label: 'Đơn chờ tôi duyệt',
       badge: pendingCount,
-    },
+    }] : []),
   ];
 
   return (
@@ -30,7 +36,7 @@ function RequestsSubPanel({ pendingCount }) {
         </span>
       </div>
 
-      {/* 2 nav links */}
+      {/* nav links */}
       <ul className="flex flex-col py-2 px-2">
         {links.map((item) => {
           const active = location.pathname === item.to;
@@ -139,7 +145,7 @@ const NAV_ITEMS = [
     icon: 'description',
     subPanel: 'requests',
     /* paths that should highlight this rail item */
-    matchPaths: ['/my-requests', '/my-requests/approvals'],
+    matchPaths: ['/my-requests', '/my-requests/approvals', '/my-requests/supplements'],
     badge: null, /* optionally set dynamically */
   },
   {
@@ -162,8 +168,8 @@ export default function UnifiedSidebar({
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('kmart_token');
-    localStorage.removeItem('kmart_user');
+    // BE-14: xoa toan bo trang thai phien (token + formFields + requests cache)
+    clearSessionStorage();
     window.location.href = '/login';
   };
 
@@ -175,6 +181,15 @@ export default function UnifiedSidebar({
         (r) =>
           r.status === 'pending' &&
           r.steps[r.currentStep]?.approverId === currentUserId
+      ).length,
+    [requests, currentUserId]
+  );
+
+  // BE-05: so don cua toi dang bi yeu cau bo sung
+  const supplementCount = useMemo(
+    () =>
+      requests.filter(
+        (r) => r.status === 'needssupplement' && r.creatorId === currentUserId
       ).length,
     [requests, currentUserId]
   );
@@ -219,13 +234,13 @@ export default function UnifiedSidebar({
           id="sidebar"
         >
           <div>
-            {/* User profile */}
-            <Link
-              to="/profile"
-              className={`block ${isCollapsed ? 'px-2' : 'px-4'} py-3 border-b border-white/10 hover:bg-white/5 transition-colors`}
-              title={isCollapsed ? (currentUser?.name || 'Nguyễn Văn A') : undefined}
-            >
-              <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+            {/* User profile — BE-22: chuông tách RIÊNG khỏi Link để không bị điều hướng sang profile */}
+            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-1'} px-4 py-3 border-b border-white/10`}>
+              <Link
+                to="/profile"
+                className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'} hover:opacity-90 transition-opacity`}
+                title={isCollapsed ? (currentUser?.name || 'Nguyễn Văn A') : undefined}
+              >
                 <div className="relative shrink-0">
                   <img
                     alt="User avatar"
@@ -256,16 +271,14 @@ export default function UnifiedSidebar({
                     </div>
                   </div>
                 )}
-                {!isCollapsed && (
-                  <div className="relative cursor-pointer group shrink-0" onClick={(e) => e.preventDefault()}>
-                    <span className="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-white transition-colors">
-                      notifications
-                    </span>
-                    <div className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-[#0F172A]" />
-                  </div>
-                )}
-              </div>
-            </Link>
+              </Link>
+              {!isCollapsed && (
+                <div className="shrink-0">
+                  {/* BE-22: chuông thông báo thật (đếm chưa đọc, xem danh sách) */}
+                  <NotificationBell />
+                </div>
+              )}
+            </div>
 
             {/* Nav items */}
             <ul className="flex flex-col py-2">
@@ -379,7 +392,7 @@ export default function UnifiedSidebar({
             openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
           }`}
         >
-          {openSubPanel === 'requests' && <RequestsSubPanel pendingCount={pendingCount} />}
+          {openSubPanel === 'requests' && <RequestsSubPanel pendingCount={pendingCount} supplementCount={supplementCount} showApprovals={hasPermission('APPLICATION_APPROVE')} />}
           {openSubPanel === 'settings' && <SettingsSubPanel />}
         </div>
       </div>

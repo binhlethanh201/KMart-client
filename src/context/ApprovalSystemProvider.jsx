@@ -124,12 +124,33 @@ export function ApprovalSystemProvider({ children }) {
 
   const dismissToast = useCallback((id) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
+  // BE-09: upload file đính kèm. Backend cần applicationId để gắn file nên bắt buộc
+  // phải chạy SAU khi tạo/cập nhật đơn và TRƯỚC khi submit.
+  // Một file lỗi không được chặn cả đơn -> báo lỗi rồi đi tiếp.
+  const uploadAttachments = useCallback(
+    async (applicationId, files) => {
+      if (!files || files.length === 0) return;
+      for (const file of files) {
+        try {
+          await applicationService.uploadAttachment(applicationId, file);
+        } catch (err) {
+          console.error('Failed to upload attachment', file?.name, err);
+          const msg = err.response?.data?.error || `Không tải lên được "${file?.name || 'file'}"`;
+          pushToast(msg, 'error');
+        }
+      }
+    },
+    [pushToast]
+  );
+
   // Build a fresh request from modal form data.
   const createRequest = useCallback(
     async (data) => {
       try {
         // Create draft
         const req = await applicationService.create(data);
+        // BE-09: đính kèm file thật (trước đây chỉ lưu TÊN file vào form data)
+        await uploadAttachments(req.id, data.attachments);
         // Automatically submit
         const submitted = await applicationService.submit(req.id);
         setRequests((r) => [submitted, ...r]);
@@ -149,7 +170,7 @@ export function ApprovalSystemProvider({ children }) {
         console.error(err);
       }
     },
-    [pushToast]
+    [pushToast, uploadAttachments]
   );
 
   const approveRequest = useCallback(
@@ -165,6 +186,26 @@ export function ApprovalSystemProvider({ children }) {
       }
     },
     [pushToast]
+  );
+
+  // Bổ sung thông tin cho đơn bị trả về (NeedsSupplement) rồi gửi lại cho người duyệt
+  const updateRequest = useCallback(
+    async (reqId, data) => {
+      try {
+        await applicationService.update(reqId, data);
+        // BE-09: bổ sung thêm file đính kèm (nếu có) trước khi gửi lại
+        await uploadAttachments(reqId, data.attachments);
+        const submitted = await applicationService.submit(reqId);
+        setRequests((list) => list.map((r) => (r.id === reqId ? submitted : r)));
+        pushToast('Đã bổ sung và gửi lại đơn', 'success');
+        return submitted.id;
+      } catch (err) {
+        const msg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi cập nhật đơn';
+        pushToast(msg, 'error');
+        console.error(err);
+      }
+    },
+    [pushToast, uploadAttachments]
   );
 
   const rejectRequest = useCallback(
@@ -227,7 +268,7 @@ export function ApprovalSystemProvider({ children }) {
           return { ...r, status: 'returned_timeout', history: [entry, ...r.history] };
         })
       );
-      pushToast('Đã giả lập Timeout 12h - đơn trả về nơi khởi tạo', 'warning');
+      pushToast('Đã giả lập quá hạn 12h - đơn trả về nơi khởi tạo', 'warning');
     },
     [pushToast]
   );
@@ -295,9 +336,29 @@ export function ApprovalSystemProvider({ children }) {
   const canApprove = useCallback(
     (r) => {
       if (!r || !['pending', 'submitted', 'pendingapproval'].includes(r.status)) return false;
-      return r._isPendingReq === true;
+      // BE-08: don cua chinh minh thi khong bao gio "can ban duyet",
+      // ke ca khi BE tra ve trong danh sach pending.
+      if (currentUserId && r.creatorId === currentUserId) return false;
+      if (r._isPendingReq !== true) return false;
+
+      // BE-18: danh sách /pending của backend trả CẢ những đơn người này đã đi qua
+      // (để hiện trong "Đã phê duyệt"/"Từ chối"), không chỉ đơn đang tới lượt.
+      // Vì vậy phải kiểm tra đúng người này có thuộc BƯỚC ĐANG CHỜ hiện tại hay không,
+      // nếu không người đã duyệt xong bước trước vẫn thấy nút Duyệt và bị 403.
+      const steps = r.steps || [];
+      const currentOrder = Number(r.currentStep) || 0;
+      if (steps.length > 0 && currentOrder > 0) {
+        const currentStep = steps.find((s) => Number(s.stepOrder) === currentOrder);
+        if (!currentStep) return false;
+        const ids = currentStep.approverIds?.length
+          ? currentStep.approverIds
+          : (currentStep.approverId ? [currentStep.approverId] : []);
+        if (ids.length > 0 && !ids.includes(currentUserId)) return false;
+      }
+
+      return true;
     },
-    []
+    [currentUserId]
   );
 
   // Kiểm tra user có quyền cụ thể hay không. Wildcard "*" = có mọi quyền.
@@ -319,6 +380,7 @@ export function ApprovalSystemProvider({ children }) {
 
       requests,
       createRequest,
+      updateRequest,
       approveRequest,
       rejectRequest,
       requestSupplement,
@@ -338,7 +400,7 @@ export function ApprovalSystemProvider({ children }) {
       pushToast,
       dismissToast,
     }),
-    [currentUser, currentUserId, requests, createRequest, approveRequest, rejectRequest, addComment, simulateTimeout, canApprove, hasPermission, departments, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, toasts, pushToast, dismissToast]
+    [currentUser, currentUserId, requests, createRequest, updateRequest, approveRequest, rejectRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
   );
 
   return <ApprovalSystemContext.Provider value={value}>{children}</ApprovalSystemContext.Provider>;

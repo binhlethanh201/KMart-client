@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { clearSessionStorage } from '../utils/session';
 
 const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -28,9 +29,8 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token is invalid/expired
-      localStorage.removeItem('kmart_token');
-      localStorage.removeItem('kmart_user');
+      // Token is invalid/expired - BE-14: xoa het trang thai phien, khong chi token
+      clearSessionStorage();
       // Dispatch an event so the UI can redirect
       window.dispatchEvent(new Event('auth:unauthorized'));
     }

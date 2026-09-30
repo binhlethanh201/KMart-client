@@ -42,6 +42,13 @@ export default {
         "error-container": "#fee2e2",     // Red 100
         "on-error-container": "#7f1d1d",
 
+        // Supplement/Request-more-info (Pink) - BE-26/29: màu riêng, khác hẳn
+        // "chờ duyệt" (vàng), "đang duyệt" (cam) và "hoàn thành" (xanh lá).
+        "supplement": "#db2777",             // Pink 600
+        "on-supplement": "#ffffff",
+        "supplement-container": "#fce7f3",   // Pink 100
+        "on-supplement-container": "#831843",// Pink 900
+
         // Surfaces & Backgrounds
         "background": "#f8fafc",          // Slate 50
         "on-background": "#0f172a",       // Slate 900

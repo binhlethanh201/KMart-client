@@ -121,6 +121,8 @@ function App() {
                 {/* Requests pages */}
                 <Route path="my-requests" element={<PersonalRequests mode="sent" />} />
                 <Route path="my-requests/approvals" element={<PersonalRequests mode="received" />} />
+                {/* BE-15: "Đơn cần bổ sung" đã gộp vào "Đơn từ cá nhân" -> chuyển hướng URL cũ */}
+                <Route path="my-requests/supplements" element={<Navigate to="/my-requests" replace />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

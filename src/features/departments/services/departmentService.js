@@ -6,8 +6,14 @@ const mapToFrontendModel = (d) => ({
   code: d.code,
   type: d.type || 'Phòng ban',
   status: d.isActive ? 'Active' : 'Inactive',
-  leaders: d.managerName ? [{ title: 'Trưởng phòng', name: d.managerName }] : [],
+  leaders: [
+    ...(d.managerName ? [{ title: d.type === 'Siêu thị / Chi nhánh' ? 'Cửa hàng trưởng' : 'Trưởng phòng', name: d.managerName }] : []),
+    ...(d.deputyManagerName ? [{ title: 'Phó phòng', name: d.deputyManagerName }] : []),
+  ],
   managerId: d.managerId || null,
+  managerName: d.managerName || null,
+  deputyManagerId: d.deputyManagerId || null,
+  deputyManagerName: d.deputyManagerName || null,
   members: d.memberAvatars || [],
   memberNames: d.memberNames || [],
   memberCount: d.memberCount || 0,
@@ -61,6 +67,7 @@ export const departmentService = {
       code: data.code,
       type: data.type,
       managerId: data.head?.id || null,
+      deputyManagerId: data.deputy?.id || null,
       icon: data.icon || null,
       iconImage: data.iconImage || null,
       members: data.members?.map(m => ({
@@ -96,6 +103,12 @@ export const departmentService = {
     } else if (data.managerId !== undefined) {
       payload.managerId = data.managerId;
     }
+    // Phó phòng: gửi null để xoá khi caller chủ động bỏ chọn
+    if (data.deputy !== undefined) {
+      payload.deputyManagerId = data.deputy ? data.deputy.id : null;
+    } else if (data.deputyManagerId !== undefined) {
+      payload.deputyManagerId = data.deputyManagerId;
+    }
     const response = await apiClient.put(`/departments/${id}`, payload);
     return mapToFrontendModel(response.data);
   },
@@ -108,6 +121,19 @@ export const departmentService = {
   toggleStatus: async (id) => {
     const response = await apiClient.put(`/departments/${id}/toggle-status`);
     return response.data;
+  },
+
+  // BE-03: lấy quản lý của NHIỀU phòng ban trong 1 lần gọi.
+  // GET /api/departments/managers?departmentIds=id1,id2
+  // Trả về [{ departmentId, departmentName, managerId, managerName, managerEmail }]
+  // (phòng ban chưa có quản lý vẫn có trong kết quả với managerId = null).
+  getManagers: async (departmentIds) => {
+    const ids = (departmentIds || []).filter(Boolean);
+    if (ids.length === 0) return [];
+    const response = await apiClient.get('/departments/managers', {
+      params: { departmentIds: ids.join(',') },
+    });
+    return response.data || [];
   },
 
   getMembers: async (id) => {

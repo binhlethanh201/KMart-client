@@ -6,6 +6,14 @@ export const documentTypeService = {
     return response.data;
   },
 
+  // BE-07: chỉ các loại đơn đang bật VÀ đã có workflow active.
+  // Màn tạo đơn phải dùng hàm này thay vì getAll(), nếu không user sẽ tạo được
+  // loại đơn chưa cấu hình luồng duyệt rồi kẹt ở bước submit.
+  getAvailable: async () => {
+    const response = await apiClient.get('/document-types/available');
+    return response.data;
+  },
+
   getById: async (id) => {
     const response = await apiClient.get(`/document-types/${id}`);
     return response.data;

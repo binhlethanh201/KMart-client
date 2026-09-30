@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { FORM_TYPES } from '../data/mockData';
 import { templateFileStore } from '../data/templateFileStore';
 import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
@@ -27,24 +26,7 @@ function Toggle({ checked, onChange, label }) {
 export default function FormTemplatesTab() {
   const { formFields: fields, setFormFields: setFields, pushToast } = useApproval();
 
-  const [categories, setCategories] = useState(() => {
-    try {
-      const saved = localStorage.getItem('kmart.form.categories');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return [
-      { id: 'cat1', name: 'Hành chính - Nhân sự', items: ['Đơn xin nghỉ phép', 'Đơn xin nghỉ thai sản', 'Đơn xin nghỉ việc'] },
-      { id: 'cat2', name: 'Chấm công - Đi lại', items: ['Đơn làm thêm (OT)', 'Đơn xin ra ngoài'] },
-      { id: 'cat3', name: 'Khác', items: [] }
-    ];
-  });
-
-  useEffect(() => {
-    localStorage.setItem('kmart.form.categories', JSON.stringify(categories));
-  }, [categories]);
+  const [categories, setCategories] = useState([]);
 
   const [documentTypes, setDocumentTypes] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,6 +34,7 @@ export default function FormTemplatesTab() {
   useEffect(() => {
     documentTypeService.getAll().then(data => {
       setDocumentTypes(data || []);
+      setCategories(buildCategories(data || []));
       // Sync local fields state with backend data on load
       const newFields = { ...fields };
       data.forEach(dt => {
@@ -71,6 +54,17 @@ export default function FormTemplatesTab() {
       setFields(newFields);
     }).catch(console.error);
   }, []);
+
+  // Gom nhóm mẫu đơn theo cột `category` thật từ API (không dùng danh mục cứng)
+  const buildCategories = (list) => {
+    const byCat = new Map();
+    list.forEach(dt => {
+      const cat = (dt.category && String(dt.category).trim()) || 'Khác';
+      if (!byCat.has(cat)) byCat.set(cat, []);
+      byCat.get(cat).push(dt.name);
+    });
+    return [...byCat.entries()].map(([name, items]) => ({ id: `cat_${name}`, name, items }));
+  };
 
   const handleSaveToServer = async () => {
     let currentDocType = documentTypes.find(d => d.name === selectedForm);
@@ -136,10 +130,23 @@ export default function FormTemplatesTab() {
       setNewTypeName('');
       return;
     }
-    
-    setCategories(prev => prev.map(c => 
-      c.id === selectedCatIdForNewType ? { ...c, items: [...c.items, name] } : c
-    ));
+
+    // Tạo luôn mẫu đơn trên BE kèm nhóm đã chọn (category thật, không chỉ lưu ở FE).
+    const cat = categories.find(c => c.id === selectedCatIdForNewType);
+    documentTypeService.create({
+      name,
+      code: 'AUTO_' + Date.now(),
+      category: cat?.name || 'Khác',
+    }).then(created => {
+      setDocumentTypes(prev => [...prev, created]);
+      setCategories(prev => prev.map(c =>
+        c.id === selectedCatIdForNewType ? { ...c, items: [...c.items, name] } : c
+      ));
+    }).catch(err => {
+      console.error(err);
+      pushToast(`Lỗi khi tạo mẫu đơn "${name}"`, 'error');
+    });
+
     setFields(prev => ({
       ...prev,
       [name]: []

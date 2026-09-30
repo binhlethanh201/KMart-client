@@ -240,7 +240,7 @@ export default function EmployeeDetail() {
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
                  <span className="material-symbols-outlined text-[16px]">badge</span>
-                 <span className="text-[10px] font-bold uppercase tracking-wider">User ID</span>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">Mã nhân sự</span>
               </div>
               <div className="font-bold text-on-surface text-sm truncate" title={employee.id}>{employee.id.substring(0, 8).toUpperCase()}</div>
            </div>
