@@ -6,12 +6,13 @@ import NotificationBell from '../components/NotificationBell';
 
 /* ─── Sub-panel: chỉ 2 link điều hướng ──────────────────────── */
 
-function RequestsSubPanel({ pendingCount, supplementCount, showApprovals }) {
+function RequestsSubPanel({ pendingCount, supplementCount }) {
   const location = useLocation();
 
-  // BE-15: "Đơn cần bổ sung" không còn là mục riêng (bị trùng với Đơn từ cá nhân);
+  // "Đơn cần bổ sung" không còn là mục riêng (bị trùng với Đơn từ cá nhân);
   // các đơn này hiển thị ngay trong Đơn từ cá nhân kèm badge nhắc bổ sung.
-  // BE-18: "Đơn chờ tôi duyệt" CHỈ hiện khi user có quyền duyệt
+  // "Đơn chờ tôi duyệt" LUÔN hiển thị để người dùng thấy được mục này; nếu chưa có
+  // quyền duyệt thì chỉ hiện danh sách trống thay vì ẩn cả menu.
   const links = [
     {
       to: '/my-requests',
@@ -19,12 +20,12 @@ function RequestsSubPanel({ pendingCount, supplementCount, showApprovals }) {
       label: 'Đơn từ cá nhân',
       badge: supplementCount,
     },
-    ...(showApprovals ? [{
+    {
       to: '/my-requests/approvals',
       icon: 'pending_actions',
       label: 'Đơn chờ tôi duyệt',
       badge: pendingCount,
-    }] : []),
+    },
   ];
 
   return (
@@ -392,7 +393,7 @@ export default function UnifiedSidebar({
             openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
           }`}
         >
-          {openSubPanel === 'requests' && <RequestsSubPanel pendingCount={pendingCount} supplementCount={supplementCount} showApprovals={hasPermission('APPLICATION_APPROVE')} />}
+          {openSubPanel === 'requests' && <RequestsSubPanel pendingCount={pendingCount} supplementCount={supplementCount} />}
           {openSubPanel === 'settings' && <SettingsSubPanel />}
         </div>
       </div>
