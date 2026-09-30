@@ -177,12 +177,23 @@ export default function FormTemplatesTab() {
     setCategories(prev => prev.filter(c => c.id !== id));
   };
 
-  const handleDeleteForm = (catId, formName) => {
-    setCategories(prev => prev.map(c => 
-      c.id === catId ? { ...c, items: c.items.filter(item => item !== formName) } : c
-    ));
-    if (selectedForm === formName) {
-      setSelectedForm('');
+  const handleDeleteForm = async (catId, formName) => {
+    if (!window.confirm(t('Bạn có chắc muốn xóa mẫu đơn này không?'))) return;
+    try {
+      const target = documentTypes.find(d => d.name === formName);
+      if (target) {
+        await documentTypeService.delete(target.id);
+      }
+      setCategories(prev => prev.map(c => 
+        c.id === catId ? { ...c, items: c.items.filter(item => item !== formName) } : c
+      ));
+      if (selectedForm === formName) {
+        setSelectedForm('');
+      }
+      pushToast(t('Đã xóa mẫu đơn thành công!'), 'success');
+    } catch (err) {
+      console.error(err);
+      pushToast(t('Lỗi khi xóa mẫu đơn'), 'error');
     }
   };
 

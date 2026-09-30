@@ -856,6 +856,7 @@ export default function WorkflowTab() {
           if (approvalType === 'chain') {
             if (!next.chainStart) next.chainStart = 'direct_manager';
             if (!next.chainEnd) next.chainEnd = 'department_head';
+            next.multiRule = 'sequential';
           }
           if (approvalType === 'role' && !next.role) {
             next.role = approvalRoles.length > 0
@@ -969,6 +970,12 @@ export default function WorkflowTab() {
       if (type === 'chain') {
         if (!step.chainStart) errs.push(t('{v0}: Cần chọn cấp bắt đầu của chuỗi', { v0: where }));
         if (!step.chainEnd) errs.push(t('{v0}: Cần chọn cấp kết thúc của chuỗi', { v0: where }));
+        
+        const startIdx = HIERARCHY_OPTIONS.findIndex(h => h.id === step.chainStart);
+        const endIdx = HIERARCHY_OPTIONS.findIndex(h => h.id === step.chainEnd);
+        if (startIdx > endIdx) {
+          errs.push(t('{v0}: Cấp bắt đầu không được lớn hơn cấp kết thúc của chuỗi', { v0: where }));
+        }
       }
       if (type === 'role' && !step.role) {
         errs.push(t('{v0}: Cần chọn chức danh/bộ phận cho hình thức này', { v0: where }));
@@ -1031,12 +1038,13 @@ export default function WorkflowTab() {
               hierarchyOption: s.hierarchyOption,
               chainStart: s.chainStart,
               chainEnd: s.chainEnd,
+              chainList: s.chainList,
               role: s.role,
               roleName: s.role,
               // Quy tắc nhiều người duyệt: áp dụng cho bước "theo chức danh" (dù chỉ định
               // hay để tự resolve theo chức danh) — trước đây chỉ gửi khi có ≥2 người được
               // CHỈ ĐỊNH nên chọn quy tắc ở chế độ theo chức danh bị mất khi lưu.
-              multiRule: s.approvalType === 'role' ? s.multiRule : null,
+              multiRule: s.approvalType === 'role' ? s.multiRule : (s.approvalType === 'chain' ? 'sequential' : null),
               // Thứ tự tuần tự: chỉ có ý nghĩa khi quy tắc là "sequential".
               // Ưu tiên thứ tự người dùng đã sắp, nếu chưa sắp thì lấy danh sách đã chỉ định.
               sequentialOrder: (s.approvalType === 'role' && s.multiRule === 'sequential')
@@ -1310,7 +1318,7 @@ export default function WorkflowTab() {
                                   <option value="">{t('-- Chọn chức danh --')}</option>
                                   {approvalRoles.map((r) => (
                                     <option key={r.id} value={r.name}>
-                                      {t('Duyệt theo chức danh:')} {r.label || r.name}
+                                      {t('Duyệt theo chức danh:')} {t(r.label || r.name)}
                                     </option>
                                   ))}
                                 </select>
@@ -1390,28 +1398,82 @@ export default function WorkflowTab() {
                               />
                             )}
                             {step.approvalType === 'chain' && (
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm text-secondary whitespace-nowrap">{t('Bắt đầu từ:')}</span>
-                                <select
-                                  className={`${selectCls} min-w-[180px]`}
-                                  value={step.chainStart || 'direct_manager'}
-                                  onChange={(e) => updateStep(step.id, { chainStart: e.target.value })}
-                                >
-                                  {HIERARCHY_OPTIONS.map((o) => (
-                                    <option key={o.id} value={o.id}>{t(o.label)}</option>
+                              <div className="flex flex-col gap-4 mt-2">
+                                <label className="text-[12px] font-semibold text-secondary uppercase tracking-wider flex items-center gap-2">
+                                  <span className="material-symbols-outlined text-[16px]">account_tree</span>
+                                  {t('Danh sách các cấp duyệt nối tiếp')}
+                                </label>
+                                
+                                <div className="flex flex-col relative pl-4 border-l-2 border-primary/20 ml-3">
+                                  {(step.chainList || []).map((levelId, index) => (
+                                    <div key={index} className="flex items-center gap-3 mb-3 relative group">
+                                      {/* Timeline dot */}
+                                      <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-surface border-2 border-primary shadow-sm z-10 flex items-center justify-center">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                                      </div>
+                                      
+                                      <div className="flex-1 bg-surface border border-outline-variant rounded-xl shadow-sm hover:shadow-md transition-shadow p-2 flex items-center gap-3">
+                                        <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-[13px] font-bold text-primary">
+                                          {index + 1}
+                                        </span>
+                                        <select
+                                          className={`${selectCls} flex-1 border-none shadow-none bg-transparent hover:bg-surface-container-lowest focus:ring-0 px-2 py-1.5 font-medium`}
+                                          value={levelId}
+                                          onChange={(e) => {
+                                            const newList = [...(step.chainList || [])];
+                                            newList[index] = e.target.value;
+                                            updateStep(step.id, { chainList: newList });
+                                          }}
+                                        >
+                                          <optgroup label={t('Cấp quản lý (Hierarchy)')}>
+                                            {HIERARCHY_OPTIONS.map((o) => (
+                                              <option key={o.id} value={o.id}>{t(o.label)}</option>
+                                            ))}
+                                          </optgroup>
+                                          <optgroup label={t('Chức danh (Role)')}>
+                                            {approvalRoles.map((r) => (
+                                              <option key={r.id} value={r.name}>{t(r.label || r.name)}</option>
+                                            ))}
+                                          </optgroup>
+                                        </select>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const newList = [...(step.chainList || [])];
+                                            newList.splice(index, 1);
+                                            updateStep(step.id, { chainList: newList });
+                                          }}
+                                          className="p-2 text-outline hover:text-error hover:bg-error/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                          title={t('Xóa cấp duyệt')}
+                                        >
+                                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                                        </button>
+                                      </div>
+                                    </div>
                                   ))}
-                                </select>
-                                <span className="material-symbols-outlined text-outline">arrow_forward</span>
-                                <span className="text-sm text-secondary whitespace-nowrap">{t('Tối đa đến:')}</span>
-                                <select
-                                  className={`${selectCls} min-w-[180px]`}
-                                  value={step.chainEnd || 'department_head'}
-                                  onChange={(e) => updateStep(step.id, { chainEnd: e.target.value })}
-                                >
-                                  {HIERARCHY_OPTIONS.map((o) => (
-                                    <option key={o.id} value={o.id}>{t(o.label)}</option>
-                                  ))}
-                                </select>
+                                  
+                                  <div className="relative mt-2 flex">
+                                      <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-surface border-2 border-outline-variant shadow-sm z-10 flex items-center justify-center"></div>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newList = [...(step.chainList || []), 'direct_manager'];
+                                          updateStep(step.id, { chainList: newList });
+                                        }}
+                                        className="flex items-center gap-2 text-[13px] font-semibold text-primary hover:text-primary-dark hover:bg-primary/5 px-4 py-2 rounded-xl transition-all border border-dashed border-primary/40 hover:border-primary w-full justify-center bg-surface-container-lowest"
+                                      >
+                                        <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                                        {t('Thêm cấp duyệt mới')}
+                                      </button>
+                                  </div>
+                                </div>
+
+                                <div className="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/50 flex gap-3 items-start mt-2">
+                                  <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">info</span>
+                                  <p className="text-[12px] text-secondary leading-relaxed flex-1">
+                                    {t('Hệ thống sẽ duyệt tuần tự qua từng cấp từ trên xuống dưới. Các cấp không tồn tại trong sơ đồ tổ chức thực tế sẽ được tự động bỏ qua mà không làm gián đoạn luồng.')}
+                                  </p>
+                                </div>
                               </div>
                             )}
                           </div>

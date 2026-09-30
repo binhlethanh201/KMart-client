@@ -35,10 +35,13 @@ export default function ApprovalFlowTree({
   const empById = (id) => employees?.find((e) => e.id === id);
   const roleLabel = (emp, fallback) => {
     if (!emp) return fallback || t('Người duyệt');
+    if (emp.department && emp.position) return `${emp.department} - ${emp.position}`;
+    if (emp.department) return emp.department;
+    if (emp.position) return emp.position;
     const r = emp.role || (emp.roles && emp.roles[0]) || '';
     const code = String(typeof r === 'string' ? r : (r?.roleName || '')).toUpperCase();
     if (ROLE_LABELS[code]) return ROLE_LABELS[code];
-    return emp.position || code || t('Nhân viên');
+    return code || fallback || t('Nhân viên');
   };
 
   // Dựng các tầng duyệt theo từng loại luồng
@@ -65,40 +68,156 @@ export default function ApprovalFlowTree({
       }];
     }
 
-    // Chuỗi quản lý liên tiếp: đi từ phòng ban người tạo lên các cấp cha (tăng dần)
+    // Chuỗi quản lý liên tiếp: đi từ danh sách tùy chỉnh (chainList)
     if (appType === 'chain') {
-      const chainDepts = [];
-      const seen = new Set();
-      let cur = departments.find((d) => d.id === ownDeptId);
-      while (cur && !seen.has(cur.id)) {
-        seen.add(cur.id);
-        chainDepts.push(cur);
-        cur = cur.parentDepartmentId ? departments.find((d) => d.id === cur.parentDepartmentId) : null;
+      const HIERARCHY_OPTIONS = [
+        'direct_manager',
+        'deputy_head',
+        'department_head',
+        'store_manager',
+        'branch_manager',
+        'zone_manager',
+        'division_director',
+      ];
+      const labels = {
+        direct_manager: 'Quản lý trực tiếp',
+        deputy_head: 'Phó phòng / Phó cửa hàng',
+        department_head: 'Trưởng phòng',
+        store_manager: 'Cửa hàng trưởng',
+        branch_manager: 'Quản lý chi nhánh',
+        zone_manager: 'Quản lý khu vực',
+        division_director: 'Giám đốc khối',
+      };
+      
+      const guessHierarchyApprover = (lvl, deptId) => {
+        if (!deptId) return null;
+        const dept = departments.find(d => d.id === deptId);
+        if (!dept) return null;
+        
+        // Hàm xóa dấu tiếng Việt
+        const removeAccents = (str) => {
+          if (!str) return '';
+          return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        };
+
+        // Hàm tìm người kiêm nhiệm trong phòng (nếu không gán ManagerId)
+        const findConcurrent = (targetDept, roles) => {
+          if (!targetDept) return null;
+          const searchRoles = roles.map(r => removeAccents(r));
+          return employees?.find(e => {
+            const posMatch = searchRoles.some(r => removeAccents(e.position).includes(r) || removeAccents(e.role) === r);
+            if (e.departmentId === targetDept.id && posMatch) return true;
+            
+            if (Array.isArray(e.allPositions)) {
+              return e.allPositions.some(p => p.departmentId === targetDept.id && searchRoles.some(r => removeAccents(p.positionName).includes(r)));
+            }
+            return false;
+          }) || null;
+        };
+
+        // Hàm tìm global (áp dụng cho Giám đốc theo luật "trừ giám đốc ra")
+        const findGlobal = (roles) => {
+          const searchRoles = roles.map(r => removeAccents(r));
+          return employees?.find(e => {
+            if (searchRoles.some(r => removeAccents(e.position).includes(r) || removeAccents(e.role) === r)) return true;
+            if (Array.isArray(e.allPositions)) {
+              return e.allPositions.some(p => searchRoles.some(r => removeAccents(p.positionName).includes(r)));
+            }
+            return false;
+          }) || null;
+        };
+
+        if (lvl === 'deputy_head') {
+          return dept.deputyManagerId ? empById(dept.deputyManagerId) : findConcurrent(dept, ['phó', 'deputy']);
+        }
+        if (lvl === 'department_head' || lvl === 'store_manager' || lvl === 'direct_manager') {
+          return dept.managerId ? empById(dept.managerId) : findConcurrent(dept, ['trưởng', 'quản lý', 'manager', 'head']);
+        }
+        if (lvl === 'branch_manager' || lvl === 'zone_manager') {
+          const parent = dept.parentDepartmentId ? departments.find(d => d.id === dept.parentDepartmentId) : null;
+          return (parent?.managerId ? empById(parent.managerId) : findConcurrent(parent, ['trưởng', 'quản lý', 'manager', 'director']))
+              || findConcurrent(dept, ['giám đốc', 'director']);
+        }
+        if (lvl === 'division_director') {
+          let top = dept;
+          let guard = 0;
+          while (top.parentDepartmentId && guard++ < 20) {
+            const p = departments.find(d => d.id === top.parentDepartmentId);
+            if (p) top = p; else break;
+          }
+          const directorRoles = ['giám đốc', 'director', 'ceo'];
+          if (top && top.id !== dept.id) {
+            return top.managerId ? empById(top.managerId) : (findConcurrent(top, ['giám đốc', 'director', 'ceo', 'quản lý']) || findGlobal(directorRoles));
+          }
+          return findConcurrent(dept, directorRoles) || findGlobal(directorRoles);
+        }
+        return null;
+      };
+
+      const guessRoleApprover = (roleName, targetDeptId) => {
+        return employees?.find((e) => {
+          const hasRole = e.role === roleName || (e.roles && Array.isArray(e.roles) && e.roles.includes(roleName));
+          if (!hasRole) return false;
+          // BE-48: Nếu đang dự đoán Role trong chuỗi duyệt, bắt buộc người đó phải kiêm nhiệm trong phòng ban đích
+          if (targetDeptId) {
+            if (e.departmentId === targetDeptId) return true;
+            if (Array.isArray(e.allPositions) && e.allPositions.some(p => p.departmentId === targetDeptId)) return true;
+            return false;
+          }
+          return true;
+        }) || null;
+      };
+
+      const getApprover = (lvl) => {
+        if (HIERARCHY_OPTIONS.includes(lvl)) {
+          const predictedUser = guessHierarchyApprover(lvl, ownDeptId);
+          return {
+            predictedUser,
+            badgeTitle: t(labels[lvl]),
+          };
+        } else {
+          const predictedUser = guessRoleApprover(lvl, ownDeptId);
+          const code = String(lvl).toUpperCase();
+          const roleTitle = ROLE_LABELS[code] || lvl;
+          return {
+            predictedUser,
+            badgeTitle: t(roleTitle),
+          };
+        }
+      };
+      
+      const list = Array.isArray(step.chainList) && step.chainList.length > 0
+          ? step.chainList
+          : [];
+
+      // Logic cũ cho fall-back (nếu không dùng chainList mà dùng dữ liệu cũ)
+      if (list.length === 0) {
+        const startIdx = HIERARCHY_OPTIONS.indexOf(step.chainStart || 'direct_manager');
+        const endIdx = HIERARCHY_OPTIONS.indexOf(step.chainEnd || 'department_head');
+        for (let i = Math.max(0, startIdx); i <= Math.max(0, endIdx); i++) {
+          list.push(HIERARCHY_OPTIONS[i]);
+        }
       }
-      if (chainDepts.length === 0) {
-        return [{
-          key: step.id || idx,
-          parallel: false,
-          branches: [{ key: `chain-empty-${idx}`, badge: t('Chuỗi quản lý'), badgeTitle: '', name: t('Chưa xác định'), hasManager: false, avatar: null, role: t('Chưa xác định'), isStep: true }],
-        }];
-      }
-      return chainDepts.map((dept) => {
-        const emp = dept.managerId ? empById(dept.managerId) : null;
-        return {
-          key: `${step.id || idx}-${dept.id}`,
+
+      const chainLevels = [];
+      list.forEach((lvl, index) => {
+        const { predictedUser, badgeTitle } = getApprover(lvl);
+        chainLevels.push({
+          key: `${step.id || idx}-chain-${index}-${lvl}`,
           parallel: false,
           branches: [{
-            key: `chain-${dept.id}`,
-            badge: dept.code || t('Phòng ban'),
-            badgeTitle: dept.name || '',
-            name: emp ? emp.name : t('Chưa có quản lý'),
-            hasManager: Boolean(emp),
-            avatar: emp?.avatar,
-            role: emp ? roleLabel(emp, 'Quản lý') : t('Chưa có quản lý'),
+            key: `chain-${index}-${lvl}`,
+            badge: t('Chuỗi quản lý'),
+            badgeTitle: badgeTitle,
+            name: predictedUser ? predictedUser.name : t('Chưa có quản lý'),
+            hasManager: Boolean(predictedUser),
+            avatar: predictedUser?.avatar,
+            role: predictedUser ? roleLabel(predictedUser, badgeTitle) : badgeTitle,
             isStep: true,
           }],
-        };
+        });
       });
+      return chainLevels;
     }
 
     // Chỉ định người / theo chức danh bộ phận
