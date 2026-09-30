@@ -803,6 +803,22 @@ export default function RequestDetail() {
                     // BE-31: đơn đã dừng (từ chối / hủy / quá hạn) -> người chưa thao tác không còn "chưa đến lượt"
                     const isTerminated = request.status === 'rejected' || request.status === 'canceled' || isTimeoutWorkflow;
 
+                    const isParallel = ['and', 'or'].includes((s.multiRule || '').trim().toLowerCase());
+                    const isSequential = (s.approverIds?.length > 1) && !isParallel;
+                    let isCurrentSequentialPerson = true;
+                    if (isSequential && isCurrent) {
+                      const ids = (s.approverIds?.length ? s.approverIds : [s.approverId]).filter(Boolean);
+                      const firstPendingId = ids.find(id => {
+                        const k = `${s.stepOrder ?? i + 1}:${id}`;
+                        const fbActor = stepActorOf[s.stepOrder ?? i + 1];
+                        const isFb = !stepHasActorHistory[s.stepOrder ?? i + 1] && fbActor?.userId === id;
+                        const raw = actedByOf[k] || (isFb ? fbActor.action : undefined);
+                        const act = (s.status === 'approved' && raw === 'supplement_requested') ? 'approved' : raw;
+                        return act !== 'approved';
+                      });
+                      isCurrentSequentialPerson = (firstPendingId === approverId);
+                    }
+
                     // Trạng thái riêng của người này
                     let personTone;
                     let personLabel;
@@ -826,7 +842,11 @@ export default function RequestDetail() {
                     } else if (s.status === 'rejected') {
                       personTone = stepTone.idle; personLabel = t('Không xử lý');
                     } else if (isCurrent) {
-                      personTone = stepTone.current; personLabel = t('Đang chờ xử lý');
+                      if (isSequential && !isCurrentSequentialPerson) {
+                        personTone = stepTone.idle; personLabel = t('Chưa đến lượt');
+                      } else {
+                        personTone = stepTone.current; personLabel = t('Đang chờ xử lý');
+                      }
                     } else {
                       personTone = stepTone.idle; personLabel = t('Chưa đến lượt');
                     }

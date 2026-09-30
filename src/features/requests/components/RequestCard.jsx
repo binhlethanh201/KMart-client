@@ -360,7 +360,9 @@ export default function RequestCard({ request: r }) {
             {/* Approver Nodes — BE-20: bước nhiều người hiển thị TỪNG người rõ ràng */}
             {r.steps.map((s, idx) => {
               const ids = s.approverIds?.length ? s.approverIds : (s.approverId ? [s.approverId] : []);
-              const isGroupStep = ids.length > 1;
+              const isParallel = ['and', 'or'].includes((s.multiRule || '').trim().toLowerCase());
+              const isSequential = ids.length > 1 && !isParallel;
+              const isGroupStep = ids.length > 1 && isParallel;
               const isTimeoutStep = r.status === 'returned_timeout' && idx === (r.steps.findIndex(x => ['pending', 'submitted', 'pendingapproval'].includes((x.status || '').toLowerCase())) >= 0 ? r.steps.findIndex(x => ['pending', 'submitted', 'pendingapproval'].includes((x.status || '').toLowerCase())) : Math.min(Number(r.currentStep) || 0, r.steps.length - 1));
 
               // Badge trạng thái cho từng người: nếu bước đã duyệt/từ chối thì dùng chung, còn lại theo bước
@@ -416,6 +418,19 @@ export default function RequestCard({ request: r }) {
                       <div className="flex items-start gap-2">
                         {ids.map(renderPerson)}
                       </div>
+                    </div>
+                  ) : isSequential ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      {ids.map((aid, aidx) => (
+                        <div key={aid} className="flex items-center gap-1 shrink-0">
+                          {renderPerson(aid)}
+                          {aidx < ids.length - 1 && (
+                            <span className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
+                              arrow_forward
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     renderPerson(ids[0])

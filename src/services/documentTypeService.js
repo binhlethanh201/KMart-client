@@ -39,5 +39,10 @@ export const documentTypeService = {
       }
       throw err;
     }
+  },
+
+  delete: async (id) => {
+    const response = await apiClient.delete(`/document-types/${id}`);
+    return response.data;
   }
 };
