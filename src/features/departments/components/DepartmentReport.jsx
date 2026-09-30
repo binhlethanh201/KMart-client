@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { STATUS_META } from '../../requests/data/constants';
 
-export default function DepartmentReport({ deptRequests, members, employees }) {
+// BE-43: nhân viên chỉ xem báo cáo của CHÍNH MÌNH; trưởng/phó phòng xem toàn phòng.
+export default function DepartmentReport({ deptRequests, members, employees, isDeptManager = true, currentUserId }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [expanded, setExpanded] = useState({});
@@ -11,6 +12,16 @@ export default function DepartmentReport({ deptRequests, members, employees }) {
   const [memberPage, setMemberPage] = useState(1);
   const [memberSearch, setMemberSearch] = useState('');
   const [isHoveringMembers, setIsHoveringMembers] = useState(false);
+
+  // Nhân viên: chỉ thống kê trên đơn của bản thân, và bảng thành viên chỉ còn chính họ.
+  const scopedRequests = useMemo(
+    () => (isDeptManager ? deptRequests : deptRequests.filter(r => String(r.creatorId) === String(currentUserId))),
+    [deptRequests, isDeptManager, currentUserId]
+  );
+  const scopedMembers = useMemo(
+    () => (isDeptManager ? members : members.filter(m => String(m.id) === String(currentUserId))),
+    [members, isDeptManager, currentUserId]
+  );
 
   const handleMemberSearch = (val) => {
     setMemberSearch(val);
@@ -23,7 +34,7 @@ export default function DepartmentReport({ deptRequests, members, employees }) {
   const stats = useMemo(() => {
     // Collect all unique document types dynamically from requests
     // ONLY include 'approved' requests
-    let filteredRequests = deptRequests.filter(r => r.status === 'approved');
+    let filteredRequests = scopedRequests.filter(r => r.status === 'approved');
     if (startDate) {
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -43,7 +54,7 @@ export default function DepartmentReport({ deptRequests, members, employees }) {
     const types = Array.from(typeSet).sort();
 
     // Map each member to their stats
-    const rows = members.map(member => {
+    const rows = scopedMembers.map(member => {
       // Find employee info for avatar/name if members list misses something
       const emp = employees.find(e => e.id === member.id) || member;
       const userRequests = filteredRequests.filter(r => r.creatorId === member.id);
@@ -75,7 +86,7 @@ export default function DepartmentReport({ deptRequests, members, employees }) {
     })).filter(t => t.count > 0).sort((a, b) => b.count - a.count);
 
     return { types, rows, filteredRequests, typeDistribution };
-  }, [deptRequests, members, employees, startDate, endDate]);
+  }, [scopedRequests, scopedMembers, employees, startDate, endDate]);
 
   const filteredRows = useMemo(() => {
     let result = stats.rows;
@@ -101,7 +112,7 @@ export default function DepartmentReport({ deptRequests, members, employees }) {
     return () => clearInterval(interval);
   }, [totalPages, isHoveringMembers]);
 
-  if (members.length === 0) {
+  if (scopedMembers.length === 0) {
     return (
       <div className="bg-surface rounded-xl shadow-sm border border-outline-variant p-10 text-center">
         <span className="material-symbols-outlined text-[48px] text-outline mb-3">bar_chart</span>
