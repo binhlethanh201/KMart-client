@@ -44,7 +44,7 @@ export default function GeneralTab() {
 
       setLoading(false);
     }).catch(err => {
-      console.error("Failed to load settings:", err);
+      console.error("Không tải được cấu hình:", err);
       setLoading(false);
     });
   }, []);
@@ -74,7 +74,7 @@ export default function GeneralTab() {
         setMessage({ type: 'error', text: testResult.data?.message || 'Kết nối thất bại. Vui lòng kiểm tra lại thông tin.' });
       }
     } catch (err) {
-      console.error("Failed to save Zalo config:", err);
+      console.error("Không lưu được cấu hình Zalo:", err);
       setMessage({ type: 'error', text: 'Lỗi khi lưu cấu hình Zalo.' });
     } finally {
       setSaving(false);
@@ -112,11 +112,11 @@ export default function GeneralTab() {
           ) : (
             <>
               <div>
-                <label className={labelCls}>Zalo App ID</label>
+                <label className={labelCls}>Mã ứng dụng Zalo (App ID)</label>
                 <input className={fieldCls} value={zalo.appId} onChange={(e) => setZalo((z) => ({ ...z, appId: e.target.value }))} />
               </div>
               <div>
-                <label className={labelCls}>Zalo Secret Key</label>
+                <label className={labelCls}>Khoá bảo mật Zalo (Secret Key)</label>
                 <div className="relative">
                   <input
                     className={fieldCls + ' pr-10'}
@@ -135,7 +135,7 @@ export default function GeneralTab() {
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Oa ID</label>
+                <label className={labelCls}>Mã OA (Official Account)</label>
                 <input className={fieldCls} value={zalo.oaId} onChange={(e) => setZalo((z) => ({ ...z, oaId: e.target.value }))} />
               </div>
 
@@ -187,13 +187,13 @@ export default function GeneralTab() {
       <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-outline-variant flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">schedule</span>
-          <h3 className="font-headline-sm text-headline-sm text-on-surface">Quy tắc thời gian &amp; Timeout</h3>
+          <h3 className="font-headline-sm text-headline-sm text-on-surface">Quy tắc thời gian &amp; xử lý quá hạn</h3>
         </div>
         <div className="p-5 flex flex-col gap-4">
           <div className="bg-primary-container/20 border border-primary/20 rounded-md p-4 flex items-start gap-2.5">
             <span className="material-symbols-outlined text-primary text-[20px] flex-shrink-0">timer</span>
             <div>
-              <div className="text-sm font-medium text-on-surface">Quy tắc BR11: Timeout 12 giờ</div>
+              <div className="text-sm font-medium text-on-surface">Quy tắc BR11: quá hạn 12 giờ</div>
               <p className="text-xs text-secondary mt-0.5">
                 Đơn không được xử lý sau 12 giờ sẽ tự động chuyển trả theo cấu hình từng bước duyệt.
               </p>
@@ -201,7 +201,7 @@ export default function GeneralTab() {
           </div>
 
           <div>
-            <label className={labelCls}>Cách tính 12 giờ timeout</label>
+            <label className={labelCls}>Cách tính 12 giờ quá hạn</label>
             <div className="flex flex-col gap-2">
               {TIME_RULES.map((r) => {
                 const active = timeRule === r.id;

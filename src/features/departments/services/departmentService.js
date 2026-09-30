@@ -6,8 +6,14 @@ const mapToFrontendModel = (d) => ({
   code: d.code,
   type: d.type || 'Phòng ban',
   status: d.isActive ? 'Active' : 'Inactive',
-  leaders: d.managerName ? [{ title: 'Trưởng phòng', name: d.managerName }] : [],
+  leaders: [
+    ...(d.managerName ? [{ title: d.type === 'Siêu thị / Chi nhánh' ? 'Cửa hàng trưởng' : 'Trưởng phòng', name: d.managerName }] : []),
+    ...(d.deputyManagerName ? [{ title: 'Phó phòng', name: d.deputyManagerName }] : []),
+  ],
   managerId: d.managerId || null,
+  managerName: d.managerName || null,
+  deputyManagerId: d.deputyManagerId || null,
+  deputyManagerName: d.deputyManagerName || null,
   members: d.memberAvatars || [],
   memberNames: d.memberNames || [],
   memberCount: d.memberCount || 0,
@@ -61,6 +67,7 @@ export const departmentService = {
       code: data.code,
       type: data.type,
       managerId: data.head?.id || null,
+      deputyManagerId: data.deputy?.id || null,
       icon: data.icon || null,
       iconImage: data.iconImage || null,
       members: data.members?.map(m => ({
@@ -95,6 +102,12 @@ export const departmentService = {
       payload.managerId = data.head ? data.head.id : null;
     } else if (data.managerId !== undefined) {
       payload.managerId = data.managerId;
+    }
+    // Phó phòng: gửi null để xoá khi caller chủ động bỏ chọn
+    if (data.deputy !== undefined) {
+      payload.deputyManagerId = data.deputy ? data.deputy.id : null;
+    } else if (data.deputyManagerId !== undefined) {
+      payload.deputyManagerId = data.deputyManagerId;
     }
     const response = await apiClient.put(`/departments/${id}`, payload);
     return mapToFrontendModel(response.data);

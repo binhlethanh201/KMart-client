@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ROLE_STYLES } from '../data/constants';
+import { roleStyle } from '../../../utils/roleLabels';
 import { roleService } from '../services/roleService';
 
 const EMPTY_EMPLOYEE = {
@@ -172,7 +173,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 <select className={fieldCls} value={form.roleId} onChange={handleRoleChange} disabled={currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR'}>
                   <option value="">-- Chọn vai trò --</option>
                   {roles.map((r) => (
-                    <option key={r.id} value={r.id}>{ROLE_STYLES[r.roleName]?.label || r.roleName}</option>
+                    <option key={r.id} value={r.id}>{roleStyle(r.roleName).label}</option>
                   ))}
                 </select>
                 {/* Permission preview */}

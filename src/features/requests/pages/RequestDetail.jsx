@@ -6,7 +6,7 @@ import RejectReasonModal from '../components/RejectReasonModal';
 import SupplementReasonModal from '../components/SupplementReasonModal';
 import CreateRequestModal from '../components/CreateRequestModal';
 import UserInfoModal from '../components/UserInfoModal';
-import { STATUS_META, STEP_ROLE } from '../data/constants';
+import { STATUS_META } from '../data/constants';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { applicationService } from '../services/applicationService';
 
@@ -352,7 +352,7 @@ export default function RequestDetail() {
                     title="Giả lập quá hạn 12h không xử lý (BR11)"
                   >
                     <span className="material-symbols-outlined text-[16px]">bolt</span>
-                    Giả lập Timeout 12h
+                    Giả lập quá hạn 12h
                   </button>
                 )}
                 <div className="w-px h-6 bg-outline-variant mx-1"></div>
@@ -859,7 +859,8 @@ export default function RequestDetail() {
                   /* 6) Một bước duyệt (nhãn + trạng thái) */
                   if (item.kind === 'step') {
                     const { step: s, index: i } = item;
-                    const stepLabel = STEP_ROLE[s.approverId] || `Cấp ${s.stepOrder || i + 1}`;
+                    // Nhãn bước lấy từ tên bước thật của luồng duyệt (không dùng bảng cứng).
+                    const stepLabel = s.name || `Cấp ${s.stepOrder || i + 1}`;
                   const isCurrent = i === activeStepIndex && (isPendingWorkflow || isTimeoutWorkflow);
                   const isTimedOut = isTimeoutWorkflow && i === activeStepIndex;
                   // BE-15: bước đang giữ vì chờ người gửi bổ sung (không phải "đang duyệt")

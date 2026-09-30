@@ -3,6 +3,7 @@ import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import EditProfileModal from './../components/EditProfileModal';
 import { userService } from '../../hr/services/userService';
+import { roleLabel } from '../../../utils/roleLabels';
 
 export default function UserProfile({ userId, onClose }) {
   const { currentUser, pushToast } = useApproval();
@@ -85,7 +86,7 @@ export default function UserProfile({ userId, onClose }) {
           <span className="material-symbols-outlined text-[16px] mx-1 sm:mx-2 text-outline hidden sm:inline">chevron_right</span>
           <span className="font-medium text-on-surface">{user.name}</span>
           <span className="mx-1 sm:mx-2 text-outline-variant">•</span>
-          <span className="text-secondary">{user.role || user.position || 'Nhân viên'}</span>
+          <span className="text-secondary">{roleLabel(user.role)}</span>
         </div>
         <div className="flex items-center gap-3">
           {(!userId || userId === currentUser.id) && (
@@ -118,7 +119,7 @@ export default function UserProfile({ userId, onClose }) {
           </div>
           <div className="flex-1 pt-1 sm:pt-2">
             <h1 className="font-display-sm text-on-surface mb-1">{user.name}</h1>
-            <p className="font-body-md text-secondary mb-4 sm:mb-6">{user.role || user.position || 'Nhân viên'}</p>
+            <p className="font-body-md text-secondary mb-4 sm:mb-6">{roleLabel(user.role)}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 sm:gap-y-4 gap-x-4 text-sm">
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-outline text-[20px]">mail</span>

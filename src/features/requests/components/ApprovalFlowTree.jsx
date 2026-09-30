@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ROLE_LABELS } from '../../../utils/roleLabels';
 
 // BE-20: biểu đồ cây luồng phê duyệt dự kiến, tách riêng để tái sử dụng
 // cho cả bản thu gọn (inline trong modal) và bản đầy đủ (popup toàn màn hình).
@@ -33,11 +34,9 @@ export default function ApprovalFlowTree({
   const roleLabel = (emp, fallback) => {
     if (!emp) return fallback || 'Người duyệt';
     const r = emp.role || (emp.roles && emp.roles[0]) || '';
-    if (r.toUpperCase() === 'ADMIN') return 'Quản trị viên';
-    if (r.toUpperCase() === 'MANAGER') return emp.position || 'Quản lý';
-    if (r.toUpperCase() === 'HR') return 'Nhân sự';
-    if (r.toUpperCase() === 'TEAM_LEADER') return 'Trưởng nhóm';
-    return emp.position || r || 'Nhân viên';
+    const code = String(typeof r === 'string' ? r : (r?.roleName || '')).toUpperCase();
+    if (ROLE_LABELS[code]) return ROLE_LABELS[code];
+    return emp.position || code || 'Nhân viên';
   };
 
   // Dựng các tầng duyệt theo từng loại luồng

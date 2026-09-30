@@ -12,7 +12,8 @@ const HISTORY_META = {
   cancelled: { type: 'timeout', text: 'Đã hủy đơn' },
   supplement_requested: { type: 'supplement', text: 'Yêu cầu bổ sung thông tin' },
   supplement_completed: { type: 'supplement', text: 'Đã bổ sung và gửi lại' },
-  timeout: { type: 'timeout', text: 'Quá hạn xử lý' },
+  // BE-38: hệ thống tự xử lý do quá hạn (trả về nơi khởi tạo)
+  timeout: { type: 'timeout', text: 'Trả về do quá hạn xử lý' },
 };
 
 const mapToFrontendModel = (a) => {

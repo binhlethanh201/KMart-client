@@ -59,7 +59,7 @@ export const APPROVAL_TYPES = [
 
 | Hình thức | Ý nghĩa | Cấu hình thêm |
 |---|---|---|
-| `hierarchy` | Duyệt theo cấp bậc cố định | Chọn 1 cấp: Quản lý trực tiếp / Phó phòng / Trưởng phòng / Cửa hàng trưởng / Quản lý chi nhánh-Vùng / Giám đốc khối |
+| `hierarchy` | Duyệt theo cấp bậc cố định | Chọn 1 cấp: Quản lý trực tiếp / Phó phòng / Trưởng phòng / Cửa hàng trưởng / Quản lý chi nhánh / Quản lý khu vực / Giám đốc khối |
 | `chain` | Duyệt theo chuỗi quản lý (động) | Chọn "Bắt đầu từ" → "Tối đa đến", đơn sẽ đi tuần tự qua các cấp trong khoảng |
 | `role` | Duyệt theo vai trò chức danh | Chọn vai trò (HR Admin, Kế toán trưởng, Pháp chế…) + Quy tắc nhiều người duyệt |
 | `specific` | Chỉ định một người cụ thể | Chọn 1 nhân sự qua ô tìm kiếm |
@@ -121,7 +121,7 @@ Mỗi bước có cấu hình tự động xử lý khi quá 12 giờ không có
 - `field`: `num_days` (Số ngày nghỉ), `leave_type` (Hình thức nghỉ), `ot_hours` (Số giờ OT).
 - `op`: `>`, `>=`, `==`, `<=`, `<`.
 
-Ví dụ: `Số ngày nghỉ > 2` ➔ bước này (chuyển tiếp Quản lý Vùng / HR) chỉ kích hoạt khi đơn có hơn 2 ngày nghỉ; các đơn ≤2 ngày kết thúc ngay sau Cửa hàng trưởng/Trưởng phòng.
+Ví dụ: `Số ngày nghỉ > 2` ➔ bước này (chuyển tiếp Quản lý khu vực / HR) chỉ kích hoạt khi đơn có hơn 2 ngày nghỉ; các đơn ≤2 ngày kết thúc ngay sau Cửa hàng trưởng/Trưởng phòng.
 
 ### 2.7. Phạm vi / Ngữ cảnh (Matrix Scope)
 
@@ -240,7 +240,7 @@ Bố cục `flex flex-col gap-4`, bên trong chia thành 2 khu vực:
 - **Cột trái — Hình thức duyệt** (icon `how_to_reg`)
   - 4 RadioCard chọn hình thức duyệt (xếp ngang trên `md+`), mỗi thẻ kèm dòng mô tả `desc`.
   - Cấu hình tuỳ biến theo hình thức:
-    - `hierarchy`: select cấp bậc (gồm Cửa hàng trưởng / Quản lý chi nhánh-Vùng).
+    - `hierarchy`: select cấp bậc (gồm Cửa hàng trưởng / Quản lý chi nhánh / Quản lý khu vực).
     - `role`: select vai trò.
     - `specific`: ô UserSelect có tìm kiếm (avatar + tên + mã + vai trò).
     - `chain`: cùng dòng — "Bắt đầu từ" → `arrow_forward` → "Tối đa đến", không nền, `flex-wrap` xuống dòng gọn gàng trên màn hẹp.

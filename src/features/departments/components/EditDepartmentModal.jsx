@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
+import { EmployeeSelect } from './AddDepartmentModal';
 
 const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
 
@@ -10,13 +11,20 @@ const inputCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
 
 export default function EditDepartmentModal({ department, onClose }) {
-  const { updateDepartment } = useApproval();
+  const { updateDepartment, employees } = useApproval();
   
   const [code, setCode] = useState(department.code || '');
   const [name, setName] = useState(department.name || '');
   const [type, setType] = useState(department.type || TYPES[0]);
   const [icon, setIcon] = useState(department.icon || 'campaign');
   const [iconImage, setIconImage] = useState(department.iconImage || null);
+  const [head, setHead] = useState(
+    employees.find((e) => e.id === department.managerId) || null
+  );
+  const [deputy, setDeputy] = useState(
+    employees.find((e) => e.id === department.deputyManagerId) || null
+  );
+  const isStore = type === 'Siêu thị / Chi nhánh';
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -35,6 +43,8 @@ export default function EditDepartmentModal({ department, onClose }) {
       type,
       icon,
       iconImage,
+      head,
+      deputy,
     });
     onClose();
   };
@@ -109,6 +119,34 @@ export default function EditDepartmentModal({ department, onClose }) {
                 if (newImg !== undefined) setIconImage(newImg);
               }}
             />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className={labelCls}>{isStore ? 'Cửa hàng trưởng' : 'Trưởng phòng'}</label>
+              <EmployeeSelect
+                employees={employees}
+                value={head}
+                onChange={setHead}
+                placeholder="trưởng phòng"
+                exclude={deputy ? [deputy.id] : []}
+                allowClear
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Phó phòng</label>
+              <EmployeeSelect
+                employees={employees}
+                value={deputy}
+                onChange={setDeputy}
+                placeholder="phó phòng"
+                exclude={head ? [head.id] : []}
+                allowClear
+              />
+              <p className="text-xs text-secondary mt-1">
+                Dùng cho bước duyệt “Phó phòng / Phó cửa hàng”. Để trống nếu không có.
+              </p>
+            </div>
           </div>
         </div>
 

@@ -268,7 +268,7 @@ export function ApprovalSystemProvider({ children }) {
           return { ...r, status: 'returned_timeout', history: [entry, ...r.history] };
         })
       );
-      pushToast('Đã giả lập Timeout 12h - đơn trả về nơi khởi tạo', 'warning');
+      pushToast('Đã giả lập quá hạn 12h - đơn trả về nơi khởi tạo', 'warning');
     },
     [pushToast]
   );

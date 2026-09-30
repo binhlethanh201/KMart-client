@@ -3,10 +3,12 @@ import { useParams, Link } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { departmentService } from '../services/departmentService';
-import { STATUS_META, STEP_ROLE, REQUEST_TYPES } from '../../requests/data/constants';
+import { STATUS_META } from '../../requests/data/constants';
+import { documentTypeService } from '../../../services/documentTypeService';
 import UserInfoModal from '../../requests/components/UserInfoModal';
 import DepartmentReport from '../components/DepartmentReport';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
+import { roleStyle } from '../../../utils/roleLabels';
 
 const TABS = [
   { id: 'requests', label: 'Danh sách Đơn từ', icon: 'description' },
@@ -18,22 +20,8 @@ const selectCls =
   'bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
 
 const getSystemRoleInfo = (roles) => {
-  const role = roles?.[0] || 'Nhân viên';
-  const roleLower = role.toLowerCase();
-  
-  if (roleLower.includes('admin') || roleLower.includes('quản trị')) {
-    return { label: 'Quản trị viên', color: 'bg-error', textColor: 'text-error' };
-  }
-  if (roleLower.includes('manager') || roleLower.includes('quản lý')) {
-    return { label: 'Quản lý', color: 'bg-[#8B5CF6]', textColor: 'text-[#8B5CF6]' };
-  }
-  if (roleLower.includes('leader') || roleLower.includes('trưởng nhóm')) {
-    return { label: 'Trưởng nhóm', color: 'bg-[#F59E0B]', textColor: 'text-[#F59E0B]' };
-  }
-  if (roleLower.includes('hr') || roleLower.includes('nhân sự')) {
-    return { label: 'Nhân sự', color: 'bg-[#3B82F6]', textColor: 'text-[#3B82F6]' };
-  }
-  return { label: 'Nhân viên', color: 'bg-[#10B981]', textColor: 'text-[#10B981]' };
+  const style = roleStyle(roles?.[0]);
+  return { label: style.label, color: style.dot, textColor: style.cls };
 };
 
 export default function DepartmentDetail() {
@@ -47,6 +35,7 @@ export default function DepartmentDetail() {
   const [q, setQ] = useState('');
   const [typeF, setTypeF] = useState('all');
   const [statusF, setStatusF] = useState('all');
+  const [documentTypes, setDocumentTypes] = useState([]);
   const [members, setMembers] = useState([]);
   const [showUserInfo, setShowUserInfo] = useState(null);
   const [popoverId, setPopoverId] = useState(null);
@@ -61,6 +50,13 @@ export default function DepartmentDetail() {
         setMembers([]);
       });
   }, [dept?.id]);
+
+  // Bộ lọc "Loại đơn" lấy từ mẫu đơn THẬT của hệ thống (không dùng danh sách cứng).
+  useEffect(() => {
+    documentTypeService.getAll()
+      .then((data) => setDocumentTypes(Array.isArray(data) ? data : []))
+      .catch(() => setDocumentTypes([]));
+  }, []);
 
   // BE-19: đơn thuộc phòng ban nếu phòng ban là ĐÍCH trong đơn (Data.departments)
 // HOẶC là phòng ban chính của người tạo. Trước đây chỉ lọc theo phòng người tạo
@@ -213,9 +209,9 @@ export default function DepartmentDetail() {
                 </div>
                 <select value={typeF} onChange={(e) => setTypeF(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
                   <option value="all">Loại: Tất cả</option>
-                  {REQUEST_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
+                  {documentTypes.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
                     </option>
                   ))}
                 </select>
@@ -261,7 +257,7 @@ export default function DepartmentDetail() {
                         const meta = STATUS_META[r.status];
                         const stepLabel =
                           r.status === 'pending'
-                            ? STEP_ROLE[r.steps[r.currentStep]?.approverId] || `Cấp ${r.currentStep + 1}`
+                            ? (r.steps[r.currentStep]?.name || `Cấp ${r.currentStep + 1}`)
                             : r.status === 'approved'
                               ? 'Hoàn tất'
                               : 'Đã dừng';
