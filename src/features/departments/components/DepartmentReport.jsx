@@ -1,14 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { STATUS_META } from '../../requests/data/constants';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 // BE-43: nhân viên chỉ xem báo cáo của CHÍNH MÌNH; trưởng/phó phòng xem toàn phòng.
 export default function DepartmentReport({ deptRequests, members, employees, isDeptManager = true, currentUserId }) {
+  const { t } = useI18n();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [expanded, setExpanded] = useState({});
   const [searchQueries, setSearchQueries] = useState({});
-  const [chartFilter, setChartFilter] = useState('Tất cả');
+  // 'all' la hang so trung tinh (KHONG dung chuoi da dich) de doi ngon ngu khong lam sai bo loc.
+  const [chartFilter, setChartFilter] = useState('all');
   const [memberPage, setMemberPage] = useState(1);
   const [memberSearch, setMemberSearch] = useState('');
   const [isHoveringMembers, setIsHoveringMembers] = useState(false);
@@ -116,8 +119,8 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
     return (
       <div className="bg-surface rounded-xl shadow-sm border border-outline-variant p-10 text-center">
         <span className="material-symbols-outlined text-[48px] text-outline mb-3">bar_chart</span>
-        <h3 className="text-lg font-bold text-on-surface mb-1">Chưa có dữ liệu thống kê</h3>
-        <p className="text-secondary text-sm">Cần có nhân sự trong phòng ban để hiển thị báo cáo.</p>
+        <h3 className="text-lg font-bold text-on-surface mb-1">{t('Chưa có dữ liệu thống kê')}</h3>
+        <p className="text-secondary text-sm">{t('Cần có nhân sự trong phòng ban để hiển thị báo cáo.')}</p>
       </div>
     );
   }
@@ -128,11 +131,11 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
       <div className="bg-surface rounded-xl p-4 border border-outline-variant shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h2 className="text-base font-bold text-on-surface flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">analytics</span>
-          Báo cáo & Thống kê Đơn từ
+          {t('Báo cáo & Thống kê Đơn từ')}
         </h2>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-secondary">Từ ngày:</label>
+            <label className="text-sm font-medium text-secondary">{t('Từ ngày:')}</label>
             <input
               type="date"
               value={startDate}
@@ -141,7 +144,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-secondary">Đến ngày:</label>
+            <label className="text-sm font-medium text-secondary">{t('Đến ngày:')}</label>
             <input
               type="date"
               value={endDate}
@@ -154,7 +157,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
               onClick={() => { setStartDate(''); setEndDate(''); }}
               className="text-sm text-secondary hover:text-error transition-colors underline ml-2"
             >
-              Xóa bộ lọc
+              {t('Xóa bộ lọc')}
             </button>
           )}
         </div>
@@ -167,7 +170,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
             <span className="material-symbols-outlined text-[24px]">task_alt</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-secondary mb-0.5">Tổng số đơn đã duyệt</p>
+            <p className="text-sm font-medium text-secondary mb-0.5">{t('Tổng số đơn đã duyệt')}</p>
             <p className="text-2xl font-bold text-on-surface leading-none">{stats.filteredRequests.length}</p>
           </div>
         </div>
@@ -176,9 +179,9 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
             <span className="material-symbols-outlined text-[24px]">group</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-secondary mb-0.5">Số nhân sự có đơn được duyệt</p>
+            <p className="text-sm font-medium text-secondary mb-0.5">{t('Số nhân sự có đơn được duyệt')}</p>
             <p className="text-2xl font-bold text-on-surface leading-none">
-              {stats.rows.filter(r => r.total > 0).length} <span className="text-sm font-normal text-secondary ml-1">/ {stats.rows.length} người</span>
+              {stats.rows.filter(r => r.total > 0).length} <span className="text-sm font-normal text-secondary ml-1">/ {stats.rows.length} {t('người')}</span>
             </p>
           </div>
         </div>
@@ -190,16 +193,16 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">bar_chart</span>
-              Biểu đồ so sánh lượng đơn từ
+              {t('Biểu đồ so sánh lượng đơn từ')}
             </h3>
             <select
               value={chartFilter}
               onChange={(e) => setChartFilter(e.target.value)}
               className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary min-w-[150px]"
             >
-              <option value="Tất cả">Tất cả loại đơn</option>
-              {stats.types.map(t => (
-                <option key={t} value={t}>{t}</option>
+              <option value="all">{t('Tất cả loại đơn')}</option>
+              {stats.types.map((ty) => (
+                <option key={ty} value={ty}>{ty}</option>
               ))}
             </select>
           </div>
@@ -214,10 +217,10 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
              {/* Bars */}
              <div className="relative z-10 flex items-end justify-around w-full h-full gap-2 border-b-2 border-outline-variant/60">
                 {[...stats.rows].sort((a, b) => {
-                  const getCount = (r) => chartFilter === 'Tất cả' ? r.total : (r.typeCounts[chartFilter] || 0);
+                  const getCount = (r) => chartFilter === 'all' ? r.total : (r.typeCounts[chartFilter] || 0);
                   return getCount(b) - getCount(a);
                 }).map((row, index) => {
-                  const getCount = (r) => chartFilter === 'Tất cả' ? r.total : (r.typeCounts[chartFilter] || 0);
+                  const getCount = (r) => chartFilter === 'all' ? r.total : (r.typeCounts[chartFilter] || 0);
                   const count = getCount(row);
                   const maxTotal = Math.max(1, ...stats.rows.map(r => getCount(r)));
                   const percentage = (count / maxTotal) * 100;
@@ -247,8 +250,8 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
                          <span className="text-[10px] font-medium text-secondary mt-1 text-center w-[200%] truncate" title={row.name}>
                             {row.name.split(' ').pop()}
                          </span>
-                         <span className="text-[9px] text-outline mt-0.5 truncate w-[200%] text-center uppercase tracking-wider" title={row.title || 'Nhân sự'}>
-                            {row.title || 'Nhân sự'}
+                         <span className="text-[9px] text-outline mt-0.5 truncate w-[200%] text-center uppercase tracking-wider" title={row.title || t('Nhân sự')}>
+                            {row.title || t('Nhân sự')}
                          </span>
                       </div>
                     </div>
@@ -267,13 +270,13 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
           <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">groups</span>
-            Chi tiết theo nhân sự
+            {t('Chi tiết theo nhân sự')}
           </h3>
           <div className="relative w-full sm:w-64">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">search</span>
             <input
               type="text"
-              placeholder="Tìm nhân viên..."
+              placeholder={t('Tìm nhân viên...')}
               value={memberSearch}
               onChange={(e) => handleMemberSearch(e.target.value)}
               className="w-full bg-surface border border-outline-variant rounded-full pl-9 pr-4 py-1.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
@@ -284,7 +287,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
         {filteredRows.length === 0 ? (
           <div className="text-center py-10 bg-surface rounded-xl border border-outline-variant">
             <span className="material-symbols-outlined text-[48px] text-outline mb-2">person_off</span>
-            <p className="text-secondary font-medium">Không tìm thấy nhân sự phù hợp.</p>
+            <p className="text-secondary font-medium">{t('Không tìm thấy nhân sự phù hợp.')}</p>
           </div>
         ) : (
           <>
@@ -302,13 +305,13 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
               )}
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-base text-on-surface truncate group-hover:text-primary transition-colors">{row.name}</h3>
-                <p className="text-xs text-secondary font-medium uppercase tracking-wider truncate mt-0.5">{row.title || 'Nhân sự'}</p>
+                <p className="text-xs text-secondary font-medium uppercase tracking-wider truncate mt-0.5">{row.title || t('Nhân sự')}</p>
               </div>
               <div className="text-center shrink-0 ml-2">
                 <div className="bg-success/10 text-success w-12 h-12 rounded-xl flex flex-col items-center justify-center border border-success/20">
                   <span className="text-xl font-black leading-none">{row.total}</span>
                 </div>
-                <span className="text-[10px] font-bold text-success/80 uppercase tracking-wider mt-1 block">Đã duyệt</span>
+                <span className="text-[10px] font-bold text-success/80 uppercase tracking-wider mt-1 block">{t('Đã duyệt')}</span>
               </div>
             </div>
 
@@ -316,13 +319,13 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
             <div className="mt-auto pt-4 border-t border-outline-variant/60">
               <p className="text-[11px] font-bold text-secondary uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[14px]">receipt_long</span>
-                Chi tiết các loại đơn
+                {t('Chi tiết các loại đơn')}
               </p>
               
               <div className="space-y-2">
                 {row.total === 0 ? (
                   <div className="text-center py-4 text-sm text-secondary italic bg-surface-container-lowest rounded-lg border border-dashed border-outline-variant">
-                    Chưa phát sinh đơn từ
+                    {t('Chưa phát sinh đơn từ')}
                   </div>
                 ) : (
                   stats.types.map((t, index) => {

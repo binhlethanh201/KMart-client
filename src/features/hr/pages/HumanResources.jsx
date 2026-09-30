@@ -5,6 +5,8 @@ import { useHr } from '../context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
+import { roleStyle } from '../../../utils/roleLabels';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const selectCls =
   'bg-surface border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
@@ -18,7 +20,8 @@ function Badge({ cls, children }) {
 }
 
 export default function HumanResources() {
-  useDocumentTitle('Quản lý Nhân sự');
+  const { t } = useI18n();
+  useDocumentTitle(t('Quản lý Nhân sự'));
   const navigate = useNavigate();
   const { employees, departments, positions, roles, loading, error, saveEmployee, toggleLock: toggleLockHr, resetPassword: resetPasswordHr } = useHr();
   const { pushToast, currentUser, hasPermission } = useApproval();
@@ -40,9 +43,10 @@ export default function HumanResources() {
   const canEdit = canEditEmployee || canAddEmployee;
 
   const [search, setSearch] = useState('');
-  const [dept, setDept] = useState('Tất cả');
-  const [role, setRole] = useState('Tất cả');
-  const [status, setStatus] = useState('Tất cả');
+  // Gia tri loc dung hang so trung tinh 'all' (KHONG dung chuoi da dich) de doi ngon ngu khong lam sai bo loc.
+  const [dept, setDept] = useState('all');
+  const [role, setRole] = useState('all');
+  const [status, setStatus] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [popoverId, setPopoverId] = useState(null);
@@ -68,9 +72,9 @@ export default function HumanResources() {
         e.id.toLowerCase().includes(q) ||
         e.email.toLowerCase().includes(q) ||
         e.phone.includes(q);
-      const matchDept = dept === 'Tất cả' || e.department === dept || (e.secondary && e.secondary.some(s => s.department === dept));
-      const matchRole = role === 'Tất cả' || e.role === role;
-      const matchStatus = status === 'Tất cả' || e.status === status;
+      const matchDept = dept === 'all' || e.department === dept || (e.secondary && e.secondary.some(s => s.department === dept));
+      const matchRole = role === 'all' || e.role === role;
+      const matchStatus = status === 'all' || e.status === status;
       return matchQ && matchDept && matchRole && matchStatus;
     });
   }, [employees, search, dept, role, status]);
@@ -113,10 +117,10 @@ export default function HumanResources() {
   };
   const handleResetPassword = async (emp, e) => {
     if (e) e.stopPropagation();
-    if (!window.confirm(`Đặt lại mật khẩu cho "${emp.name}"? Một mật khẩu tạm sẽ được tạo.`)) return;
+    if (!window.confirm(t('Đặt lại mật khẩu cho "{v0}"? Một mật khẩu tạm sẽ được tạo.', { v0: emp.name }))) return;
     const pwd = await resetPasswordHr(emp.id);
-    if (pwd) pushToast(`Mật khẩu tạm cho ${emp.name}: ${pwd}`, 'success');
-    else pushToast(`Không thể đặt lại mật khẩu cho ${emp.name}.`, 'error');
+    if (pwd) pushToast(t('Mật khẩu tạm cho {v0}: {v1}', { v0: emp.name, v1: pwd }), 'success');
+    else pushToast(t('Không thể đặt lại mật khẩu cho {v0}.', { v0: emp.name }), 'error');
   };
 
   return (
@@ -128,7 +132,7 @@ export default function HumanResources() {
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-[24px]">group</span>
             </div>
-            <h1 className="text-2xl font-bold text-on-surface tracking-tight">Quản lý Nhân sự</h1>
+            <h1 className="text-2xl font-bold text-on-surface tracking-tight">{t('Quản lý Nhân sự')}</h1>
           </div>
           <div className="flex gap-2 flex-shrink-0 w-full md:w-auto">
             {canAddEmployee && (
@@ -137,7 +141,7 @@ export default function HumanResources() {
                 className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">person_add</span>
-                Thêm nhân sự
+                {t('Thêm nhân sự')}
               </button>
             )}
           </div>
@@ -153,27 +157,27 @@ export default function HumanResources() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-md focus:ring-1 focus:ring-primary focus:border-primary text-sm text-on-surface outline-none placeholder:text-secondary"
-              placeholder="Tìm theo mã NV, họ tên, email, sđt..."
+              placeholder={t('Tìm theo mã NV, họ tên, email, sđt...')}
               type="text"
             />
           </div>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             <select className={`${selectCls} w-full sm:w-auto`} value={dept} onChange={(e) => setDept(e.target.value)}>
-              <option value="Tất cả">Tất cả phòng ban</option>
+              <option value="all">{t('Tất cả phòng ban')}</option>
               {departments.map((d) => (
-                <option key={d.id} value={d.name}>{d.name}</option>
+                <option key={d.id} value={d.name}>{t(d.name)}</option>
               ))}
             </select>
             <select className={`${selectCls} w-full sm:w-auto`} value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="Tất cả">Tất cả vai trò</option>
+              <option value="all">{t('Tất cả vai trò')}</option>
               {roles.map((r) => (
-                <option key={r.id} value={r.roleName}>{ROLE_STYLES[r.roleName]?.label || r.roleName}</option>
+                <option key={r.id} value={r.roleName}>{roleStyle(r.roleName).label}</option>
               ))}
             </select>
             <select className={`${selectCls} w-full sm:w-auto`} value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="Tất cả">Tất cả trạng thái</option>
-              <option value="active">Đang hoạt động</option>
-              <option value="inactive">Ngừng hoạt động</option>
+              <option value="all">{t('Tất cả trạng thái')}</option>
+              <option value="active">{t('Đang hoạt động')}</option>
+              <option value="inactive">{t('Ngừng hoạt động')}</option>
             </select>
           </div>
         </div>
@@ -187,13 +191,13 @@ export default function HumanResources() {
               <table className="w-full min-w-[1100px] text-sm">
                 <thead>
                   <tr className="bg-surface-container-low text-left border-b border-outline-variant">
-                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">Mã &amp; Họ tên</th>
-                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">Liên hệ</th>
-                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">Phòng ban &amp; Chức vụ</th>
-                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">Kiêm nhiệm</th>
-                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">Vai trò hệ thống</th>
-                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">Trạng thái</th>
-                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3 text-right">Thao tác</th>
+                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Mã & Họ tên')}</th>
+                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Liên hệ')}</th>
+                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Phòng ban & Chức vụ')}</th>
+                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Kiêm nhiệm')}</th>
+                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Vai trò hệ thống')}</th>
+                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Trạng thái')}</th>
+                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3 text-right">{t('Thao tác')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -201,7 +205,7 @@ export default function HumanResources() {
                     <tr>
                       <td colSpan={7} className="px-4 py-12 text-center text-secondary">
                         <span className="material-symbols-outlined text-[32px] block mb-2 animate-spin">progress_activity</span>
-                        Đang tải danh sách nhân sự...
+                        {t('Đang tải danh sách nhân sự...')}
                       </td>
                     </tr>
                   ) : error ? (
@@ -244,21 +248,21 @@ export default function HumanResources() {
                         </td>
                         {/* Phòng ban & Chức vụ */}
                         <td className="px-4 py-3">
-                          <div className="text-on-surface">{e.department}</div>
-                          <div className="text-xs text-secondary">{e.position}</div>
+                          <div className="text-on-surface">{t(e.department)}</div>
+                          <div className="text-xs text-secondary">{t(e.position)}</div>
                         </td>
                         {/* Kiêm nhiệm */}
                         <td className="px-4 py-3">
                           <div className="relative">
                             {e.secondary.length === 0 ? (
-                              <span className="text-xs text-on-surface-variant italic">Không</span>
+                              <span className="text-xs text-on-surface-variant italic">{t('Không')}</span>
                             ) : (
                               <button
                                 onClick={(ev) => { ev.stopPropagation(); setPopoverId(popoverId === e.id ? null : e.id); }}
                                 className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-container/40 text-primary text-xs font-medium hover:bg-primary-container/70 transition-colors cursor-pointer"
                               >
                                 <span className="material-symbols-outlined text-[14px]">workspaces</span>
-                                +{e.secondary.length} vị trí
+                                +{e.secondary.length} {t('vị trí')}
                               </button>
                             )}
                             {popoverId === e.id && (
@@ -266,15 +270,15 @@ export default function HumanResources() {
                                 <div className="fixed inset-0 z-40" onClick={(ev) => { ev.stopPropagation(); setPopoverId(null); }} />
                                 <div onClick={(ev) => ev.stopPropagation()} className="absolute z-50 left-0 top-full mt-1 w-72 bg-surface border border-outline-variant rounded-lg shadow-lg p-3">
                                   <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-2">
-                                    Vị trí kiêm nhiệm
+                                    {t('Vị trí kiêm nhiệm')}
                                   </div>
                                   <div className="flex flex-col gap-2">
                                     {e.secondary.map((s, i) => (
                                       <div key={i} className="flex items-start gap-2">
                                         <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">badge</span>
                                         <div className="text-sm">
-                                          <div className="text-on-surface font-medium">{s.department}</div>
-                                          <div className="text-xs text-secondary">{s.position}</div>
+                                          <div className="text-on-surface font-medium">{t(s.department)}</div>
+                                          <div className="text-xs text-secondary">{t(s.position)}</div>
                                         </div>
                                       </div>
                                     ))}
@@ -288,14 +292,14 @@ export default function HumanResources() {
                         <td className="px-4 py-3">
                           <Badge cls={ROLE_STYLES[e.role]?.cls || 'text-secondary'}>
                             <span className={`w-1.5 h-1.5 rounded-full ${ROLE_STYLES[e.role]?.dot || 'bg-outline'}`} />
-                            {ROLE_STYLES[e.role]?.label || e.role}
+                            {roleStyle(e.role).label}
                           </Badge>
                         </td>
                         {/* Trạng thái */}
                         <td className="px-4 py-3">
                           <Badge cls={st.cls}>
                             <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
-                            {st.label}
+                            {t(st.label)}
                           </Badge>
                         </td>
                         {/* Thao tác */}
@@ -304,7 +308,7 @@ export default function HumanResources() {
                             <button
                               onClick={(ev) => { ev.stopPropagation(); openView(e); }}
                               className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
-                              title="Xem chi tiết"
+                              title={t('Xem chi tiết')}
                             >
                               <span className="material-symbols-outlined text-[18px]">visibility</span>
                             </button>
@@ -313,14 +317,14 @@ export default function HumanResources() {
                                 <button
                                   onClick={(ev) => openEdit(e, ev)}
                                   className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
-                                  title="Chỉnh sửa"
+                                  title={t('Chỉnh sửa')}
                                 >
                                   <span className="material-symbols-outlined text-[18px]">edit</span>
                                 </button>
                                 <button
                                   onClick={(ev) => handleResetPassword(e, ev)}
                                   className="text-secondary hover:text-warning hover:bg-warning-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
-                                  title="Reset mật khẩu"
+                                  title={t('Reset mật khẩu')}
                                 >
                                   <span className="material-symbols-outlined text-[18px]">lock_reset</span>
                                 </button>
@@ -331,7 +335,7 @@ export default function HumanResources() {
                                       ? 'text-secondary hover:text-error hover:bg-error-container/40'
                                       : 'text-secondary hover:text-success hover:bg-success-container/40'
                                   }`}
-                                  title={e.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                                  title={e.status === 'active' ? t('Khóa tài khoản') : t('Mở khóa tài khoản')}
                                 >
                                   <span className="material-symbols-outlined text-[18px]">
                                     {e.status === 'active' ? 'lock_open' : 'lock'}
@@ -348,7 +352,7 @@ export default function HumanResources() {
                     <tr>
                       <td colSpan={7} className="px-4 py-12 text-center text-secondary">
                         <span className="material-symbols-outlined text-[32px] block mb-2 text-outline">search_off</span>
-                        Không tìm thấy nhân sự phù hợp bộ lọc.
+                        {t('Không tìm thấy nhân sự phù hợp bộ lọc.')}
                       </td>
                     </tr>
                   )}
@@ -359,7 +363,7 @@ export default function HumanResources() {
             <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant gap-4">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
                 <span className="text-xs text-secondary flex items-center gap-2">
-                  Hiển thị
+                  {t('Hiển thị')}
                   <select
                     value={pageSize}
                     onChange={(e) => {
@@ -368,13 +372,13 @@ export default function HumanResources() {
                     }}
                     className="bg-surface border border-outline-variant/50 rounded-md px-2 py-1 text-xs text-on-surface outline-none focus:border-primary cursor-pointer hover:bg-surface-container-low transition-colors"
                   >
-                    <option value={5}>5 dòng</option>
-                    <option value={10}>10 dòng</option>
-                    <option value={20}>20 dòng</option>
-                    <option value={50}>50 dòng</option>
+                    <option value={5}>{t('5 dòng')}</option>
+                    <option value={10}>{t('10 dòng')}</option>
+                    <option value={20}>{t('20 dòng')}</option>
+                    <option value={50}>{t('50 dòng')}</option>
                   </select>
                   <span>
-                    {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)} trong tổng số {filtered.length} nhân sự
+                    {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)} {t('trong tổng số')} {filtered.length} {t('nhân sự')}
                   </span>
                 </span>
               </div>
@@ -388,7 +392,7 @@ export default function HumanResources() {
                   <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                 </button>
                 <div className="px-2 flex items-center justify-center min-w-[4rem]">
-                  <span className="text-xs text-secondary">Trang {safePage} / {totalPages}</span>
+                  <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: safePage, v1: totalPages })}</span>
                 </div>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { templateFileStore } from '../data/templateFileStore';
 import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 function Toggle({ checked, onChange, label }) {
   return (
@@ -24,6 +25,7 @@ function Toggle({ checked, onChange, label }) {
 }
 
 export default function FormTemplatesTab() {
+  const { t } = useI18n();
   const { formFields: fields, setFormFields: setFields, pushToast } = useApproval();
 
   const [categories, setCategories] = useState([]);
@@ -59,7 +61,7 @@ export default function FormTemplatesTab() {
   const buildCategories = (list) => {
     const byCat = new Map();
     list.forEach(dt => {
-      const cat = (dt.category && String(dt.category).trim()) || 'Khác';
+      const cat = (dt.category && String(dt.category).trim()) || t('Khác');
       if (!byCat.has(cat)) byCat.set(cat, []);
       byCat.get(cat).push(dt.name);
     });
@@ -73,7 +75,7 @@ export default function FormTemplatesTab() {
         currentDocType = await documentTypeService.create({ name: selectedForm, code: 'AUTO_' + Date.now() });
         setDocumentTypes(prev => [...prev, currentDocType]);
       } catch (err) {
-        pushToast(`Lỗi khi tạo mẫu đơn "${selectedForm}" trên hệ thống`, 'error');
+        pushToast(t('Lỗi khi tạo mẫu đơn "{v0}" trên hệ thống', { v0: selectedForm }), 'error');
         return;
       }
     }
@@ -91,10 +93,10 @@ export default function FormTemplatesTab() {
     setIsSaving(true);
     try {
       await documentTypeService.updateFields(currentDocType.id, payload);
-      pushToast('Đã lưu cấu hình lên Server thành công!', 'success');
+      pushToast(t('Đã lưu cấu hình lên Server thành công!'), 'success');
     } catch (err) {
       console.error(err);
-      pushToast('Lỗi khi lưu cấu hình lên Server', 'error');
+      pushToast(t('Lỗi khi lưu cấu hình lên Server'), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -114,7 +116,7 @@ export default function FormTemplatesTab() {
 
   const [editingTypeIdx, setEditingTypeIdx] = useState(null);
   const [tempLabel, setTempLabel] = useState('');
-  const [tempType, setTempType] = useState('Văn bản');
+  const [tempType, setTempType] = useState(t('Văn bản'));
   const [tempOptions, setTempOptions] = useState([]);
   const [tempDisplayStyle, setTempDisplayStyle] = useState('dropdown');
   const [tempTemplateFile, setTempTemplateFile] = useState(null); // { name, dataUrl } | null
@@ -136,7 +138,7 @@ export default function FormTemplatesTab() {
     documentTypeService.create({
       name,
       code: 'AUTO_' + Date.now(),
-      category: cat?.name || 'Khác',
+      category: cat?.name || t('Khác'),
     }).then(created => {
       setDocumentTypes(prev => [...prev, created]);
       setCategories(prev => prev.map(c =>
@@ -144,7 +146,7 @@ export default function FormTemplatesTab() {
       ));
     }).catch(err => {
       console.error(err);
-      pushToast(`Lỗi khi tạo mẫu đơn "${name}"`, 'error');
+      pushToast(t('Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
     });
 
     setFields(prev => ({
@@ -201,14 +203,15 @@ export default function FormTemplatesTab() {
       ...prev,
       [selectedForm]: [
         ...prev[selectedForm],
-        { id: `field_${Date.now()}`, label: 'Trường mới', type: 'Văn bản', required: false, dynamic: '', options: [] },
+        { id: `field_${Date.now()}`, label: t('Trường mới'), type: 'Văn bản', required: false, dynamic: '', options: [] },
       ],
     }));
 
   const openTypeModal = (idx) => {
     const f = current[idx];
     setEditingTypeIdx(idx);
-    setTempLabel(f.label || 'Trường mới');
+    setTempLabel(f.label || t('Trường mới'));
+    // type là giá trị DỮ LIỆU (lưu vào backend) nên giữ nguyên tiếng Việt gốc.
     setTempType(f.type || 'Văn bản');
     setTempOptions(f.options ? [...f.options] : []);
 
@@ -245,11 +248,11 @@ export default function FormTemplatesTab() {
         templateFile: keepTemplate ? { name: keepTemplate.name } : null,
       });
       setEditingTypeIdx(null);
-      pushToast('Đã cập nhật cấu hình trường', 'success');
+      pushToast(t('Đã cập nhật cấu hình trường'), 'success');
     }
   };
 
-  const addTempOption = () => setTempOptions([...tempOptions, `Lựa chọn ${tempOptions.length + 1}`]);
+  const addTempOption = () => setTempOptions([...tempOptions, t('Lựa chọn {v0}', { v0: tempOptions.length + 1 })]);
   const updateTempOption = (idx, val) => {
     const newOpts = [...tempOptions];
     newOpts[idx] = val;
@@ -281,11 +284,11 @@ export default function FormTemplatesTab() {
       {/* Form templates list */}
       <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden flex flex-col max-h-[800px]">
         <div className="px-4 py-3 border-b border-outline-variant bg-surface-container-lowest flex-shrink-0 flex items-center justify-between">
-          <h3 className="font-label-md text-on-surface font-semibold uppercase tracking-wide">Mẫu đơn</h3>
+          <h3 className="font-label-md text-on-surface font-semibold uppercase tracking-wide">{t('Mẫu đơn')}</h3>
           <button 
             onClick={() => setIsAddingCat(true)}
             className="text-primary hover:bg-primary-container/30 p-1 rounded-md transition-colors cursor-pointer"
-            title="Thêm danh mục"
+            title={t('Thêm danh mục')}
           >
             <span className="material-symbols-outlined text-[18px]">create_new_folder</span>
           </button>
@@ -332,7 +335,7 @@ export default function FormTemplatesTab() {
                             setEditingCatId(cat.id);
                           }}
                           className="text-secondary hover:text-primary p-1 rounded hover:bg-surface-container-low cursor-pointer"
-                          title="Đổi tên danh mục"
+                          title={t('Đổi tên danh mục')}
                         >
                           <span className="material-symbols-outlined text-[14px]">edit</span>
                         </button>
@@ -348,7 +351,7 @@ export default function FormTemplatesTab() {
                               ? 'text-outline opacity-50 cursor-not-allowed' 
                               : 'text-secondary hover:text-error hover:bg-error-container/30 cursor-pointer'
                           }`}
-                          title={cat.items.length > 0 ? "Phải xóa hết đơn bên trong để xóa danh mục" : "Xóa danh mục"}
+                          title={cat.items.length > 0 ? t('Phải xóa hết đơn bên trong để xóa danh mục') : t('Xóa danh mục')}
                         >
                           <span className="material-symbols-outlined text-[14px]">delete</span>
                         </button>
@@ -358,7 +361,7 @@ export default function FormTemplatesTab() {
                   {isExpanded && (
                     <ul className="flex flex-col gap-0.5">
                       {cat.items.length === 0 && (
-                        <li className="text-xs text-secondary italic pl-8 pr-3 py-1">Chưa có mẫu đơn</li>
+                        <li className="text-xs text-secondary italic pl-8 pr-3 py-1">{t('Chưa có mẫu đơn')}</li>
                       )}
                       {cat.items.map(f => {
                         const active = f === selectedForm;
@@ -379,7 +382,7 @@ export default function FormTemplatesTab() {
                                 handleDeleteForm(cat.id, f);
                               }}
                               className="absolute right-1 opacity-0 group-hover/item:opacity-100 text-secondary hover:text-error transition-all p-1.5 rounded hover:bg-error-container/30 cursor-pointer flex-shrink-0"
-                              title="Xóa mẫu đơn"
+                              title={t('Xóa mẫu đơn')}
                             >
                               <span className="material-symbols-outlined text-[14px]">delete</span>
                             </button>
@@ -399,7 +402,7 @@ export default function FormTemplatesTab() {
             className="w-full text-center px-3 py-2 rounded-md text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-primary hover:bg-primary-container/30 border border-dashed border-primary/50"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
-            Thêm loại đơn
+            {t('Thêm loại đơn')}
           </button>
         </div>
       </div>
@@ -408,8 +411,8 @@ export default function FormTemplatesTab() {
       <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden flex flex-col">
         <div className="px-4 py-3 border-b border-outline-variant flex items-center justify-between">
           <div>
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">Quản lý trường: {selectedForm}</h3>
-            <p className="text-xs text-secondary mt-0.5">Cấu hình trường dữ liệu và điều kiện hiển thị động</p>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('Quản lý trường:')} {selectedForm}</h3>
+            <p className="text-xs text-secondary mt-0.5">{t('Cấu hình trường dữ liệu và điều kiện hiển thị động')}</p>
           </div>
           <div className="flex gap-2">
             <button
@@ -420,14 +423,14 @@ export default function FormTemplatesTab() {
               <span className="material-symbols-outlined text-[18px]">
                 {isSaving ? 'sync' : 'save'}
               </span>
-              {isSaving ? 'Đang lưu...' : 'Lưu đồng bộ DB'}
+              {isSaving ? t('Đang lưu...') : t('Lưu đồng bộ DB')}
             </button>
             <button
               onClick={addField}
               className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5 cursor-pointer flex-shrink-0"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
-              Thêm trường mới
+              {t('Thêm trường mới')}
             </button>
           </div>
         </div>
@@ -435,11 +438,11 @@ export default function FormTemplatesTab() {
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="bg-surface-container-low text-left border-b border-outline-variant">
-                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide">Tên trường</th>
-                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide">Kiểu dữ liệu</th>
-                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide">Bắt buộc</th>
-                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide">Thiết lập nâng cao</th>
-                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide w-24 whitespace-nowrap text-center">Thao tác</th>
+                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide">{t('Tên trường')}</th>
+                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide">{t('Kiểu dữ liệu')}</th>
+                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide">{t('Bắt buộc')}</th>
+                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide">{t('Thiết lập nâng cao')}</th>
+                <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide w-24 whitespace-nowrap text-center">{t('Thao tác')}</th>
               </tr>
             </thead>
             <tbody>
@@ -468,33 +471,33 @@ export default function FormTemplatesTab() {
                     </button>
                     {f.type === 'Lựa chọn' && f.options && f.options.length > 0 && (
                       <div className="text-[10px] text-secondary mt-1 ml-1">
-                        {f.options.length} phương án
+                        {f.options.length} {t('phương án')}
                       </div>
                     )}
                     {f.type === 'Ngày' && f.displayStyle && (
                       <div className="text-[10px] text-secondary mt-1 ml-1">
-                        {f.displayStyle === 'date' ? 'Chỉ ngày' : f.displayStyle === 'time' ? 'Chỉ giờ' : 'Ngày & giờ'}
+                        {f.displayStyle === 'date' ? t('Chỉ ngày') : f.displayStyle === 'time' ? t('Chỉ giờ') : t('Ngày & giờ')}
                       </div>
                     )}
                     {f.type === 'Tải file' && f.templateFile?.name && (
                       <div className="text-[10px] text-secondary mt-1 ml-1 truncate max-w-[180px]">
-                        File mẫu: {f.templateFile.name}
+                        {t('File mẫu:')} {f.templateFile.name}
                       </div>
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <Toggle checked={f.required} onChange={(v) => updateField(idx, { required: v })} label="Bắt buộc" />
+                    <Toggle checked={f.required} onChange={(v) => updateField(idx, { required: v })} label={t('Bắt buộc')} />
                   </td>
                   <td className="px-4 py-3 max-w-[280px]">
                     <div className="flex items-center gap-2">
-                      <Toggle checked={Boolean(f.dynamic)} onChange={(v) => updateField(idx, { dynamic: v ? 'Nhập điều kiện hiển thị...' : '' })} label="Logic tự động" />
+                      <Toggle checked={Boolean(f.dynamic)} onChange={(v) => updateField(idx, { dynamic: v ? 'Nhập điều kiện hiển thị...' : '' })} label={t('Logic tự động')} />
                       {Boolean(f.dynamic) && (
                         <input 
                           type="text"
                           value={f.dynamic}
                           onChange={(e) => updateField(idx, { dynamic: e.target.value })}
                           className="text-xs text-secondary bg-surface-container-lowest border border-outline-variant/50 rounded px-2 py-1 outline-none focus:border-primary focus:ring-1 focus:ring-primary w-full max-w-[200px]"
-                          placeholder="VD: Hiển thị khi..."
+                          placeholder={t('VD: Hiển thị khi...')}
                         />
                       )}
                     </div>
@@ -503,7 +506,7 @@ export default function FormTemplatesTab() {
                     <button
                       onClick={() => removeField(idx)}
                       className="text-secondary hover:text-error hover:bg-error-container/30 p-1.5 rounded-md transition-colors cursor-pointer inline-flex items-center justify-center"
-                      title="Xóa trường"
+                      title={t('Xóa trường')}
                     >
                       <span className="material-symbols-outlined text-[18px]">close</span>
                     </button>
@@ -526,7 +529,7 @@ export default function FormTemplatesTab() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-4 border-b border-outline-variant/30">
-              <h3 className="font-headline-sm text-on-surface">Thêm mẫu đơn mới</h3>
+              <h3 className="font-headline-sm text-on-surface">{t('Thêm mẫu đơn mới')}</h3>
               <button 
                 onClick={() => setIsAddingType(false)}
                 className="text-on-surface-variant hover:text-on-surface transition-colors p-1 rounded-full hover:bg-surface-variant cursor-pointer"
@@ -538,13 +541,13 @@ export default function FormTemplatesTab() {
             <div className="p-4 flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-medium text-on-surface mb-1.5">
-                  Tên loại đơn <span className="text-error">*</span>
+                  {t('Tên loại đơn')} <span className="text-error">*</span>
                 </label>
                 <input 
                   type="text" 
                   autoFocus
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary" 
-                  placeholder="VD: Đơn xin cấp trang thiết bị..."
+                  placeholder={t('VD: Đơn xin cấp trang thiết bị...')}
                   value={newTypeName}
                   onChange={e => setNewTypeName(e.target.value)}
                   onKeyDown={e => {
@@ -555,7 +558,7 @@ export default function FormTemplatesTab() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-on-surface mb-1.5">
-                  Lưu vào danh mục
+                  {t('Lưu vào danh mục')}
                 </label>
                 <select 
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
@@ -574,13 +577,13 @@ export default function FormTemplatesTab() {
                 onClick={() => setIsAddingType(false)}
                 className="text-on-surface-variant text-sm font-medium px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
               >
-                Hủy
+                {t('Hủy')}
               </button>
               <button 
                 onClick={handleAddFormType}
                 className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center shadow-sm cursor-pointer"
               >
-                Thêm mẫu đơn
+                {t('Thêm mẫu đơn')}
               </button>
             </div>
           </div>
@@ -598,7 +601,7 @@ export default function FormTemplatesTab() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-4 border-b border-outline-variant/30">
-              <h3 className="font-headline-sm text-on-surface">Thêm danh mục mới</h3>
+              <h3 className="font-headline-sm text-on-surface">{t('Thêm danh mục mới')}</h3>
               <button 
                 onClick={() => setIsAddingCat(false)}
                 className="text-on-surface-variant hover:text-on-surface transition-colors p-1 rounded-full hover:bg-surface-variant cursor-pointer"
@@ -609,13 +612,13 @@ export default function FormTemplatesTab() {
             
             <div className="p-4">
               <label className="block text-sm font-medium text-on-surface mb-1.5">
-                Tên danh mục <span className="text-error">*</span>
+                {t('Tên danh mục')} <span className="text-error">*</span>
               </label>
               <input 
                 type="text" 
                 autoFocus
                 className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary" 
-                placeholder="VD: Tài chính - Kế toán"
+                placeholder={t('VD: Tài chính - Kế toán')}
                 value={newCatName}
                 onChange={e => setNewCatName(e.target.value)}
                 onKeyDown={e => {
@@ -630,13 +633,13 @@ export default function FormTemplatesTab() {
                 onClick={() => setIsAddingCat(false)}
                 className="text-on-surface-variant text-sm font-medium px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
               >
-                Hủy
+                {t('Hủy')}
               </button>
               <button 
                 onClick={handleAddCategory}
                 className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center shadow-sm cursor-pointer"
               >
-                Lưu danh mục
+                {t('Lưu danh mục')}
               </button>
             </div>
           </div>
@@ -654,7 +657,7 @@ export default function FormTemplatesTab() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-4 border-b border-outline-variant/30 flex-shrink-0">
-              <h3 className="font-headline-sm text-on-surface">Cấu hình Trường dữ liệu</h3>
+              <h3 className="font-headline-sm text-on-surface">{t('Cấu hình Trường dữ liệu')}</h3>
               <button 
                 onClick={() => setEditingTypeIdx(null)}
                 className="text-on-surface-variant hover:text-on-surface transition-colors p-1 rounded-full hover:bg-surface-variant cursor-pointer"
@@ -666,20 +669,20 @@ export default function FormTemplatesTab() {
             <div className="p-4 flex-1 overflow-y-auto flex flex-col gap-6">
               <div>
                 <label className="block text-sm font-medium text-on-surface mb-2 block">
-                  Tên trường / Tiêu đề câu hỏi <span className="text-error">*</span>
+                  {t('Tên trường / Tiêu đề câu hỏi')} <span className="text-error">*</span>
                 </label>
                 <input 
                   type="text"
                   value={tempLabel}
                   onChange={(e) => setTempLabel(e.target.value)}
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                  placeholder="VD: Có ảnh hưởng đến công việc không?"
+                  placeholder={t('VD: Có ảnh hưởng đến công việc không?')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-on-surface mb-3">
-                  Chọn kiểu dữ liệu
+                  {t('Chọn kiểu dữ liệu')}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
@@ -689,22 +692,22 @@ export default function FormTemplatesTab() {
                     { id: 'Ngày', icon: 'calendar_month' },
                     { id: 'Tải file', icon: 'attach_file' },
                     { id: 'Người duyệt thay', icon: 'manage_accounts' }
-                  ].map(t => (
+                  ].map((ft) => (
                     <button
-                      key={t.id}
+                      key={ft.id}
                       onClick={() => {
-                        setTempType(t.id);
-                        if (t.id === 'Ngày') setTempDisplayStyle('datetime');
-                        else if (t.id === 'Lựa chọn') setTempDisplayStyle('dropdown');
+                        setTempType(ft.id);
+                        if (ft.id === 'Ngày') setTempDisplayStyle('datetime');
+                        else if (ft.id === 'Lựa chọn') setTempDisplayStyle('dropdown');
                       }}
                       className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border transition-all cursor-pointer ${
-                        tempType === t.id
+                        tempType === ft.id
                           ? 'border-primary bg-primary-container/20 text-primary'
                           : 'border-outline-variant bg-surface-container-lowest text-secondary hover:border-primary/50'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[24px]">{t.icon}</span>
-                      <span className="text-xs font-medium">{t.id}</span>
+                      <span className="material-symbols-outlined text-[24px]">{ft.icon}</span>
+                      <span className="text-xs font-medium">{t(ft.id)}</span>
                     </button>
                   ))}
                 </div>
@@ -716,13 +719,13 @@ export default function FormTemplatesTab() {
                   {/* Display Style Selection */}
                   <div>
                     <label className="text-sm font-medium text-on-surface mb-2 block">
-                      Kiểu hiển thị <span className="text-error">*</span>
+                      {t('Kiểu hiển thị')} <span className="text-error">*</span>
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
                         { id: 'dropdown', label: 'Dropdown', icon: 'arrow_drop_down_circle' },
-                        { id: 'radio', label: 'Radio (Chọn 1)', icon: 'radio_button_checked' },
-                        { id: 'checkbox', label: 'Checkbox (Chọn nhiều)', icon: 'check_box' }
+                        { id: 'radio', label: t('Radio (Chọn 1)'), icon: 'radio_button_checked' },
+                        { id: 'checkbox', label: t('Checkbox (Chọn nhiều)'), icon: 'check_box' }
                       ].map(style => (
                         <button
                           key={style.id}
@@ -743,17 +746,17 @@ export default function FormTemplatesTab() {
                   <div className="border-t border-outline-variant/30 pt-4">
                     <div className="flex items-center justify-between mb-3">
                       <label className="text-sm font-medium text-on-surface">
-                        Danh sách phương án
+                        {t('Danh sách phương án')}
                       </label>
                       <span className="text-xs text-secondary bg-surface-variant px-2 py-0.5 rounded-full">
-                        {tempOptions.length} phương án
+                        {tempOptions.length} {t('phương án')}
                       </span>
                     </div>
                     
                     <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1">
                       {tempOptions.length === 0 ? (
                         <p className="text-sm text-secondary italic text-center py-4 bg-surface-container-low rounded-md border border-dashed border-outline-variant">
-                          Chưa có phương án nào. Hãy thêm phương án mới.
+                          {t('Chưa có phương án nào. Hãy thêm phương án mới.')}
                         </p>
                       ) : (
                         tempOptions.map((opt, i) => (
@@ -764,12 +767,12 @@ export default function FormTemplatesTab() {
                               value={opt}
                               onChange={(e) => updateTempOption(i, e.target.value)}
                               className="flex-1 bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                              placeholder="Nhập tên phương án..."
+                              placeholder={t('Nhập tên phương án...')}
                             />
                             <button 
                               onClick={() => removeTempOption(i)}
                               className="text-secondary hover:text-error hover:bg-error-container/30 p-1.5 rounded-md transition-colors cursor-pointer flex-shrink-0"
-                              title="Xóa phương án"
+                              title={t('Xóa phương án')}
                             >
                               <span className="material-symbols-outlined text-[18px]">close</span>
                             </button>
@@ -783,7 +786,7 @@ export default function FormTemplatesTab() {
                       className="mt-3 w-full text-center px-3 py-2 rounded-md text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-primary hover:bg-primary-container/30 border border-dashed border-primary/50"
                     >
                       <span className="material-symbols-outlined text-[18px]">add</span>
-                      Thêm phương án
+                      {t('Thêm phương án')}
                     </button>
                   </div>
                 </div>
@@ -793,13 +796,13 @@ export default function FormTemplatesTab() {
                 <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 animate-fade-in flex flex-col gap-4">
                   <div>
                     <label className="text-sm font-medium text-on-surface mb-2 block">
-                      Định dạng thời gian <span className="text-error">*</span>
+                      {t('Định dạng thời gian')} <span className="text-error">*</span>
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { id: 'date', label: 'Chỉ ngày', subtext: 'DD/MM/YYYY', icon: 'calendar_today' },
-                        { id: 'time', label: 'Chỉ giờ', subtext: 'HH:MM', icon: 'schedule' },
-                        { id: 'datetime', label: 'Ngày & Giờ', subtext: 'DD/MM HH:MM', icon: 'event' }
+                        { id: 'date', label: t('Chỉ ngày'), subtext: 'DD/MM/YYYY', icon: 'calendar_today' },
+                        { id: 'time', label: t('Chỉ giờ'), subtext: 'HH:MM', icon: 'schedule' },
+                        { id: 'datetime', label: t('Ngày & Giờ'), subtext: 'DD/MM HH:MM', icon: 'event' }
                       ].map(style => (
                         <button
                           key={style.id}
@@ -823,10 +826,10 @@ export default function FormTemplatesTab() {
               {tempType === 'Tải file' && (
                 <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 animate-fade-in flex flex-col gap-1">
                   <label className="text-sm font-medium text-on-surface mb-1 block">
-                    File mẫu đính kèm
+                    {t('File mẫu đính kèm')}
                   </label>
                   <p className="text-xs text-secondary mb-3">
-                    Tải lên file mẫu để người tạo đơn tải về trước khi điền. Để trống nếu không cần.
+                    {t('Tải lên file mẫu để người tạo đơn tải về trước khi điền. Để trống nếu không cần.')}
                   </p>
                   {tempTemplateFile ? (
                     <div className="flex items-center gap-2 bg-surface border border-outline-variant rounded-md px-3 py-2">
@@ -836,7 +839,7 @@ export default function FormTemplatesTab() {
                         type="button"
                         onClick={removeTemplateFile}
                         className="text-secondary hover:text-error p-1 rounded hover:bg-error-container/30 transition-colors cursor-pointer"
-                        title="Xóa file mẫu"
+                        title={t('Xóa file mẫu')}
                       >
                         <span className="material-symbols-outlined text-[18px]">close</span>
                       </button>
@@ -844,7 +847,7 @@ export default function FormTemplatesTab() {
                   ) : (
                     <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-md border border-dashed border-primary/50 text-primary hover:bg-primary-container/20 transition-colors cursor-pointer text-sm font-medium">
                       <span className="material-symbols-outlined text-[18px]">upload_file</span>
-                      Tải lên file mẫu
+                      {t('Tải lên file mẫu')}
                       <input type="file" className="sr-only" onChange={handleTemplateFileChange} />
                     </label>
                   )}
@@ -857,13 +860,13 @@ export default function FormTemplatesTab() {
                 onClick={() => setEditingTypeIdx(null)}
                 className="text-on-surface-variant text-sm font-medium px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
               >
-                Hủy
+                {t('Hủy')}
               </button>
               <button 
                 onClick={handleSaveTypeModal}
                 className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center shadow-sm cursor-pointer"
               >
-                Lưu cấu hình
+                {t('Lưu cấu hình')}
               </button>
             </div>
           </div>

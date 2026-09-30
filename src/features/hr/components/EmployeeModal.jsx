@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ROLE_STYLES } from '../data/constants';
 import { roleStyle } from '../../../utils/roleLabels';
 import { roleService } from '../services/roleService';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const EMPTY_EMPLOYEE = {
   name: '',
@@ -22,6 +23,7 @@ const fieldCls =
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
 export default function EmployeeModal({ employee, departments = [], positions = [], roles = [], currentUser, onClose, onSave }) {
+  const { t } = useI18n();
   const [form, setForm] = useState(() => {
     if (!employee) return EMPTY_EMPLOYEE;
     // Resolve the existing role to its id so the select is pre-selected on edit.
@@ -95,7 +97,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
         <div className="flex justify-between items-start p-6 border-b border-outline-variant/30">
           <div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface">
-              {isEdit ? 'Chỉnh sửa thông tin nhân sự' : 'Thêm mới nhân sự'}
+              {isEdit ? t('Chỉnh sửa thông tin nhân sự') : t('Thêm mới nhân sự')}
             </h2>
           </div>
           <button
@@ -111,36 +113,36 @@ export default function EmployeeModal({ employee, departments = [], positions = 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
             <div className="flex flex-col gap-4">
               <div className="font-label-md text-label-md text-primary font-semibold uppercase tracking-wide">
-                Tài khoản &amp; Cá nhân
+                {t('Tài khoản & Cá nhân')}
               </div>
               <div>
-                <label className={labelCls}>Họ và tên</label>
-                <input required className={fieldCls} value={form.name} onChange={set('name')} placeholder="Nguyễn Văn A" />
+                <label className={labelCls}>{t('Họ và tên')}</label>
+                <input required className={fieldCls} value={form.name} onChange={set('name')} placeholder={t('Nguyễn Văn A')} />
               </div>
               <div>
-                <label className={labelCls}>Mã nhân viên</label>
+                <label className={labelCls}>{t('Mã nhân viên')}</label>
                 <div className="bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-secondary font-mono h-[38px] flex items-center">
-                  {isEdit && form.id ? form.id.substring(0, 8).toUpperCase() : '(Tự động tạo)'}
+                  {isEdit && form.id ? form.id.substring(0, 8).toUpperCase() : t('(Tự động tạo)')}
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Email công ty</label>
+                <label className={labelCls}>{t('Email công ty')}</label>
                 <input required className={fieldCls} type="email" value={form.email} onChange={set('email')} placeholder="a.nguyenvan@ktm.vn" disabled={isEdit} />
               </div>
               <div>
-                <label className={labelCls}>Email cá nhân</label>
+                <label className={labelCls}>{t('Email cá nhân')}</label>
                 <input className={fieldCls} type="email" value={form.personalEmail} onChange={set('personalEmail')} placeholder="nguyenvana@gmail.com" />
               </div>
               <div>
-                <label className={labelCls}>Số điện thoại</label>
+                <label className={labelCls}>{t('Số điện thoại')}</label>
                 <input className={fieldCls} value={form.phone || ''} onChange={set('phone')} placeholder="0901 234 567" />
               </div>
               {!isEdit && (
                 <div>
-                  <label className={labelCls}>Mật khẩu</label>
+                  <label className={labelCls}>{t('Mật khẩu')}</label>
                   <input required className={fieldCls} type="password" value={form.password} onChange={set('password')} placeholder="••••••••" />
                   <p className="text-xs text-secondary mt-1 leading-relaxed">
-                    Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
+                    {t('Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.')}
                   </p>
                 </div>
               )}
@@ -148,30 +150,30 @@ export default function EmployeeModal({ employee, departments = [], positions = 
 
             <div className="flex flex-col gap-4">
               <div className="font-label-md text-label-md text-primary font-semibold uppercase tracking-wide">
-                Tổ chức &amp; Phân quyền
+                {t('Tổ chức & Phân quyền')}
               </div>
               <div>
-                <label className={labelCls}>Phòng ban chính</label>
+                <label className={labelCls}>{t('Phòng ban chính')}</label>
                 <select className={fieldCls} value={form.departmentId} onChange={set('departmentId')}>
-                  <option value="">-- Chọn phòng ban --</option>
+                  <option value="">{t('-- Chọn phòng ban --')}</option>
                   {departments.map((d) => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
+                    <option key={d.id} value={d.id}>{t(d.name)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Chức vụ chính</label>
+                <label className={labelCls}>{t('Chức vụ chính')}</label>
                 <select className={fieldCls} value={form.positionId} onChange={set('positionId')}>
-                  <option value="">-- Chọn chức vụ --</option>
+                  <option value="">{t('-- Chọn chức vụ --')}</option>
                   {positions.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Vai trò hệ thống</label>
+                <label className={labelCls}>{t('Vai trò hệ thống')}</label>
                 <select className={fieldCls} value={form.roleId} onChange={handleRoleChange} disabled={currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR'}>
-                  <option value="">-- Chọn vai trò --</option>
+                  <option value="">{t('-- Chọn vai trò --')}</option>
                   {roles.map((r) => (
                     <option key={r.id} value={r.id}>{roleStyle(r.roleName).label}</option>
                   ))}
@@ -180,7 +182,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 {form.roleId && rolePermissions.length > 0 && (
                   <div className="mt-2 bg-primary/5 border border-primary/20 rounded-md p-3">
                     <div className="text-xs font-semibold text-primary mb-2 uppercase tracking-wide">
-                      Quyền được gán tự động từ vai trò
+                      {t('Quyền được gán tự động từ vai trò')}
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {rolePermissions.map((p, i) => {
@@ -196,27 +198,27 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 )}
               </div>
               <div>
-                <label className={labelCls}>Trạng thái</label>
+                <label className={labelCls}>{t('Trạng thái')}</label>
                 <select className={fieldCls} value={form.status} onChange={set('status')} disabled={isEdit}>
-                  <option value="active">Đang hoạt động</option>
-                  <option value="inactive">Ngừng hoạt động</option>
+                  <option value="active">{t('Đang hoạt động')}</option>
+                  <option value="inactive">{t('Ngừng hoạt động')}</option>
                 </select>
               </div>
 
               <div className="border-t border-outline-variant pt-4 mt-1">
                 <div className="flex items-center justify-between mb-2">
-                  <span className={labelCls + ' mb-0'}>Vị trí kiêm nhiệm</span>
+                  <span className={labelCls + ' mb-0'}>{t('Vị trí kiêm nhiệm')}</span>
                   <button
                     type="button"
                     onClick={addSecondary}
                     className="text-primary hover:bg-primary-container/40 text-xs font-medium px-2 py-1 rounded-md flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[16px]">add</span>
-                    Thêm vị trí
+                    {t('Thêm vị trí')}
                   </button>
                 </div>
                 {form.secondary.length === 0 && (
-                  <p className="text-xs text-on-surface-variant italic">Chưa có vị trí kiêm nhiệm nào.</p>
+                  <p className="text-xs text-on-surface-variant italic">{t('Chưa có vị trí kiêm nhiệm nào.')}</p>
                 )}
                 <div className="flex flex-col gap-2">
                   {form.secondary.map((s, idx) => (
@@ -226,9 +228,9 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                         value={s.departmentId}
                         onChange={(e) => updateSecondary(idx, 'departmentId', e.target.value)}
                       >
-                        <option value="">- Chọn -</option>
+                        <option value="">{t('- Chọn -')}</option>
                         {departments.map((d) => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
+                          <option key={d.id} value={d.id}>{t(d.name)}</option>
                         ))}
                       </select>
                       <select
@@ -236,7 +238,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                         value={s.positionId}
                         onChange={(e) => updateSecondary(idx, 'positionId', e.target.value)}
                       >
-                        <option value="">- Chọn -</option>
+                        <option value="">{t('- Chọn -')}</option>
                         {positions.map((p) => (
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
@@ -262,14 +264,14 @@ export default function EmployeeModal({ employee, departments = [], positions = 
             onClick={onClose}
             className="font-label-md text-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
           >
-            Hủy
+            {t('Hủy')}
           </button>
           <button
             type="submit"
             className="flex items-center gap-2 font-label-md text-label-md text-on-primary bg-primary px-5 py-2 rounded-md hover:bg-on-primary-fixed-variant transition-colors shadow-sm cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">save</span>
-            Lưu thông tin
+            {t('Lưu thông tin')}
           </button>
         </div>
       </form>

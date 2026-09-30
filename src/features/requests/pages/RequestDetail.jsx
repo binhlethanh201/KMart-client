@@ -9,6 +9,7 @@ import UserInfoModal from '../components/UserInfoModal';
 import { STATUS_META } from '../data/constants';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { applicationService } from '../services/applicationService';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 // BE-09: định dạng dung lượng file đính kèm
 const formatFileSize = (bytes) => {
@@ -30,6 +31,7 @@ const stepTone = {
 };
 
 export default function RequestDetail() {
+  const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
   const { requests, currentUser, currentUserId, canApprove, approveRequest, rejectRequest, requestSupplement, addComment, simulateTimeout, pushToast } = useApproval();
@@ -93,32 +95,32 @@ export default function RequestDetail() {
       );
     } catch (err) {
       console.error('Failed to download attachment', err);
-      pushToast('Không tải được tài liệu này', 'error');
+      pushToast(t('Không tải được tài liệu này'), 'error');
     }
   };
 
-  useDocumentTitle(request ? `Chi tiết yêu cầu ${request.id.substring(0, 8).toUpperCase()}` : 'Chi tiết yêu cầu');
+  useDocumentTitle(request ? t('Chi tiết yêu cầu {v0}', { v0: request.id.substring(0, 8).toUpperCase() }) : t('Chi tiết yêu cầu'));
 
   if (!request) {
     return (
       <div className="flex-1 flex items-center justify-center h-full bg-background p-6">
         <div className="text-center">
           <span className="material-symbols-outlined text-[48px] text-outline block mb-2">search_off</span>
-          <p className="text-on-surface font-medium">Không tìm thấy yêu cầu {id}.</p>
-          <Link to="/my-requests" className="text-primary text-sm hover:underline mt-2 inline-block">Quay lại danh sách</Link>
+          <p className="text-on-surface font-medium">{t('Không tìm thấy yêu cầu')} {id}.</p>
+          <Link to="/my-requests" className="text-primary text-sm hover:underline mt-2 inline-block">{t('Quay lại danh sách')}</Link>
         </div>
       </div>
     );
   }
 
-  const meta = STATUS_META[request.status] || { badge: 'bg-gray-100 text-gray-800', dot: 'bg-gray-500', label: 'Không rõ' };
+  const meta = STATUS_META[request.status] || { badge: 'bg-gray-100 text-gray-800', dot: 'bg-gray-500', label: t('Không rõ') };
   // BE-28: trong trang chi tiết dùng TEAL cho "yêu cầu bổ sung" (đồng bộ các khối bên dưới),
   // còn danh sách vẫn giữ màu tím của STATUS_META.
   const statusBadge = request.status === 'needssupplement'
     ? { badge: 'text-pink-700', dot: 'bg-pink-600' }
     : meta;
   const creatorName = request.creatorName || employees.find((u) => u.id === request.creatorId)?.name;
-  const creatorRole = employees.find((u) => u.id === request.creatorId)?.position || 'Nhân viên';
+  const creatorRole = employees.find((u) => u.id === request.creatorId)?.position || t('Nhân viên');
   const creatorAvatar = employees.find((u) => u.id === request.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
   const actionable = canApprove(request);
   const isPendingWorkflow = ['pending', 'submitted', 'pendingapproval'].includes(request.status);
@@ -216,7 +218,7 @@ export default function RequestDetail() {
   });
   const supplementEvents = histories.filter((h) => h.action === 'supplement_requested');
   const supplementDone = histories.filter((h) => h.action === 'supplement_completed');
-  const nameOf = (uid) => employees.find((x) => x.id === uid)?.name || 'Người dùng';
+  const nameOf = (uid) => employees.find((x) => x.id === uid)?.name || t('Người dùng');
   // BE-31: mốc nào xảy ra TRƯỚC thì hiện trước (so theo thời gian thực)
   const msOf = (v) => (v ? new Date(v).getTime() : Number.MAX_SAFE_INTEGER);
   const stepDoneMs = (n) => {
@@ -307,7 +309,7 @@ export default function RequestDetail() {
             className="inline-flex items-center gap-1 text-sm text-secondary hover:text-primary transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-            Quay lại
+            {t('Quay lại')}
           </button>
         </div>
 
@@ -318,11 +320,11 @@ export default function RequestDetail() {
               <h1 className="font-display-lg text-on-surface">{request.title}</h1>
               <span className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${statusBadge.badge}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot}`} />
-                {meta.label}
+                {t(meta.label)}
               </span>
             </div>
             <p className="font-body-md text-secondary text-sm">
-              Mã hệ thống: <strong>{request.id.substring(0, 8).toUpperCase()}</strong> - Đã nộp: {request.createdAt} - Người tạo: <strong>{creatorName}</strong>
+              {t('Mã hệ thống:')} <strong>{request.id.substring(0, 8).toUpperCase()}</strong> {t('- Đã nộp:')} {request.createdAt} {t('- Người tạo:')} <strong>{creatorName}</strong>
             </p>
           </div>
 
@@ -333,14 +335,14 @@ export default function RequestDetail() {
               <>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 text-pink-800 text-xs font-semibold border border-pink-200">
                   <span className="material-symbols-outlined text-[16px]">edit_note</span>
-                  Người duyệt yêu cầu bạn bổ sung thông tin
+                  {t('Người duyệt yêu cầu bạn bổ sung thông tin')}
                 </span>
                 <button
                   onClick={() => setSupplementEditOpen(true)}
                   className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">edit_note</span>
-                  Bổ sung &amp; gửi lại
+                  {t('Bổ sung & gửi lại')}
                 </button>
               </>
             ) : (
@@ -349,10 +351,10 @@ export default function RequestDetail() {
                   <button
                     onClick={() => simulateTimeout(request.id)}
                     className="px-3 py-1.5 rounded text-sm font-medium border border-warning text-warning hover:bg-warning-container transition-colors flex items-center gap-2 bg-surface cursor-pointer"
-                    title="Giả lập quá hạn 12h không xử lý (BR11)"
+                    title={t('Giả lập quá hạn 12h không xử lý (BR11)')}
                   >
                     <span className="material-symbols-outlined text-[16px]">bolt</span>
-                    Giả lập quá hạn 12h
+                    {t('Giả lập quá hạn 12h')}
                   </button>
                 )}
                 <div className="w-px h-6 bg-outline-variant mx-1"></div>
@@ -360,28 +362,28 @@ export default function RequestDetail() {
                   onClick={() => setSupplementOpen(true)}
                   disabled={!actionable}
                   className="px-3 py-1.5 rounded text-sm font-medium border border-outline-variant text-on-surface hover:bg-surface-container transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  title={actionable ? 'Yêu cầu người gửi bổ sung thông tin' : 'Bạn không phải người duyệt bước này'}
+                  title={actionable ? t('Yêu cầu người gửi bổ sung thông tin') : t('Bạn không phải người duyệt bước này')}
                 >
                   <span className="material-symbols-outlined text-[16px]">edit_note</span>
-                  Yêu cầu bổ sung
+                  {t('Yêu cầu bổ sung')}
                 </button>
                 <button
                   onClick={() => setRejectOpen(true)}
                   disabled={!actionable}
                   className="px-4 py-1.5 rounded text-sm font-medium border border-error text-error hover:bg-error-container transition-colors flex items-center gap-2 bg-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  title={actionable ? 'Từ chối yêu cầu' : 'Bạn không phải người duyệt bước này'}
+                  title={actionable ? t('Từ chối yêu cầu') : t('Bạn không phải người duyệt bước này')}
                 >
                   <span className="material-symbols-outlined text-[16px]">close</span>
-                  Từ chối
+                  {t('Từ chối')}
                 </button>
                 <button
                   onClick={() => setShowApproveConfirm(true)}
                   disabled={!actionable}
                   className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  title={actionable ? 'Phê duyệt yêu cầu' : 'Bạn không phải người duyệt bước này'}
+                  title={actionable ? t('Phê duyệt yêu cầu') : t('Bạn không phải người duyệt bước này')}
                 >
                   <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                  Duyệt yêu cầu
+                  {t('Duyệt yêu cầu')}
                 </button>
               </>
             )}
@@ -396,19 +398,19 @@ export default function RequestDetail() {
                     <span className="material-symbols-outlined text-success text-[24px]">check_circle</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-on-surface">Xác nhận phê duyệt</h3>
-                    <p className="text-sm text-secondary">Hành động này không thể hoàn tác</p>
+                    <h3 className="font-semibold text-on-surface">{t('Xác nhận phê duyệt')}</h3>
+                    <p className="text-sm text-secondary">{t('Hành động này không thể hoàn tác')}</p>
                   </div>
                 </div>
                 <p className="text-sm text-on-surface mb-6">
-                  Bạn có chắc chắn muốn phê duyệt yêu cầu này không?
+                  {t('Bạn có chắc chắn muốn phê duyệt yêu cầu này không?')}
                 </p>
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setShowApproveConfirm(false)}
                     className="px-4 py-2 rounded border border-outline-variant text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
                   >
-                    Hủy
+                    {t('Hủy')}
                   </button>
                   <button
                     onClick={async () => {
@@ -419,7 +421,7 @@ export default function RequestDetail() {
                     }}
                     className="px-4 py-2 rounded bg-primary text-on-primary hover:bg-primary/90 transition-colors cursor-pointer"
                   >
-                    Xác nhận duyệt
+                    {t('Xác nhận duyệt')}
                   </button>
                 </div>
               </div>
@@ -438,17 +440,17 @@ export default function RequestDetail() {
                 <div className="px-4 py-3 flex items-start gap-3">
                   <span className="material-symbols-outlined text-pink-700 text-[20px] flex-shrink-0">edit_note</span>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-sm text-on-surface font-semibold">Đơn đang chờ bổ sung thông tin</h2>
+                    <h2 className="text-sm text-on-surface font-semibold">{t('Đơn đang chờ bổ sung thông tin')}</h2>
                     {lastSupplementReason ? (
                       <p className="text-sm text-on-surface mt-1">
-                        <strong className="font-semibold">Lý do cần bổ sung:</strong> {lastSupplementReason.text}
+                        <strong className="font-semibold">{t('Lý do cần bổ sung:')}</strong> {lastSupplementReason.text}
                         {lastSupplementReason.at && <span className="text-xs text-secondary ml-1">({lastSupplementReason.at})</span>}
                       </p>
                     ) : (
-                      <p className="text-sm text-secondary mt-1 italic">Người duyệt yêu cầu bạn bổ sung thông tin cho đơn này.</p>
+                      <p className="text-sm text-secondary mt-1 italic">{t('Người duyệt yêu cầu bạn bổ sung thông tin cho đơn này.')}</p>
                     )}
                     <p className="text-xs text-pink-700 mt-2 font-medium">
-                      {isSupplementOwner ? 'Bấm "Bổ sung & gửi lại" ở góc trên bên phải để cập nhật và gửi lại đơn.' : 'Đang chờ người gửi cập nhật và gửi lại.'}
+                      {isSupplementOwner ? t('Bấm "Bổ sung & gửi lại" ở góc trên bên phải để cập nhật và gửi lại đơn.') : t('Đang chờ người gửi cập nhật và gửi lại.')}
                     </p>
                   </div>
                 </div>
@@ -461,9 +463,9 @@ export default function RequestDetail() {
                 <div className="px-4 py-3 flex items-start gap-3">
                   <span className="material-symbols-outlined text-error text-[20px] flex-shrink-0">block</span>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-sm text-on-surface font-semibold">Đơn đã bị từ chối</h2>
+                    <h2 className="text-sm text-on-surface font-semibold">{t('Đơn đã bị từ chối')}</h2>
                     <p className="text-sm text-on-surface mt-1">
-                      <strong className="font-semibold">Lý do từ chối:</strong> {lastRejectReason.text}
+                      <strong className="font-semibold">{t('Lý do từ chối:')}</strong> {lastRejectReason.text}
                       {lastRejectReason.at && <span className="text-xs text-secondary ml-1">({lastRejectReason.at})</span>}
                     </p>
                   </div>
@@ -475,25 +477,25 @@ export default function RequestDetail() {
             <section className="bg-surface border border-outline-variant rounded-lg shadow-sm overflow-hidden">
               <div className="px-4 py-3 bg-surface-container-low border-b border-outline-variant flex items-center gap-2">
                 <span className="material-symbols-outlined text-[18px] text-secondary">feed</span>
-                <h2 className="text-sm text-on-surface uppercase tracking-wide font-semibold">Chi tiết Đề xuất</h2>
+                <h2 className="text-sm text-on-surface uppercase tracking-wide font-semibold">{t('Chi tiết Đề xuất')}</h2>
               </div>
               <table className="w-full text-left text-sm">
                 <tbody className="divide-y divide-outline-variant">
                   <tr>
-                    <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest w-1/3 align-top border-r border-outline-variant">Người đề xuất</th>
+                    <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest w-1/3 align-top border-r border-outline-variant">{t('Người đề xuất')}</th>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={creatorAvatar} alt={creatorName} />
                           <div>
                             <p className="font-medium text-on-surface">{creatorName} ({String(request.creatorId).substring(0, 8).toUpperCase()})</p>
-                            <p className="text-xs text-secondary">{creatorRole} - Kmart Siêu thị Cầu Giấy</p>
+                            <p className="text-xs text-secondary">{creatorRole} {t('- Kmart Siêu thị Cầu Giấy')}</p>
                           </div>
                         </div>
                         <button
                           onClick={() => setShowUserInfo(true)}
                           className="p-1.5 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer"
-                          title="Xem thông tin chi tiết"
+                          title={t('Xem thông tin chi tiết')}
                         >
                           <span className="material-symbols-outlined text-[20px]">info</span>
                         </button>
@@ -501,7 +503,7 @@ export default function RequestDetail() {
                     </td>
                   </tr>
                   <tr>
-                    <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">Loại đơn từ</th>
+                    <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{t('Loại đơn từ')}</th>
                     <td className="py-3 px-4 text-on-surface">{request.type}</td>
                   </tr>
                   {Object.entries(request.fields).map(([key, val]) => {
@@ -513,11 +515,11 @@ export default function RequestDetail() {
 
                     // Map legacy keys to nice labels for seed data compatibility
                     let label = key;
-                    if (key === 'startTime') label = 'Thời gian bắt đầu';
-                    else if (key === 'endTime') label = 'Thời gian kết thúc';
-                    else if (key === 'reason') label = 'Lý do cụ thể';
-                    else if (key === 'impact') label = 'Ảnh hưởng công việc';
-                    else if (key === 'totalDays') label = 'Tổng số ngày';
+                    if (key === 'startTime') label = t('Thời gian bắt đầu');
+                    else if (key === 'endTime') label = t('Thời gian kết thúc');
+                    else if (key === 'reason') label = t('Lý do cụ thể');
+                    else if (key === 'impact') label = t('Ảnh hưởng công việc');
+                    else if (key === 'totalDays') label = t('Tổng số ngày');
 
                     return (
                       <tr key={key}>
@@ -530,12 +532,12 @@ export default function RequestDetail() {
                   })}
                   {request.rejectReason && (
                     <tr>
-                      <th className="py-3 px-4 font-medium text-error bg-error-container/10 align-top border-r border-error/20">Lý do từ chối</th>
+                      <th className="py-3 px-4 font-medium text-error bg-error-container/10 align-top border-r border-error/20">{t('Lý do từ chối')}</th>
                       <td className="py-3 px-4 text-on-error-container bg-error-container/10">{request.rejectReason}</td>
                     </tr>
                   )}
                   <tr>
-                    <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">Tài liệu đính kèm</th>
+                    <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{t('Tài liệu đính kèm')}</th>
                     <td className="py-3 px-4">
                       {attachments.length > 0 ? (
                         <div className="flex flex-col gap-1.5 items-start">
@@ -544,7 +546,7 @@ export default function RequestDetail() {
                               key={a.id}
                               type="button"
                               onClick={() => handleDownloadAttachment(a)}
-                              title={a.uploaderName ? `Người tải lên: ${a.uploaderName}` : undefined}
+                              title={a.uploaderName ? t('Người tải lên: {v0}', { v0: a.uploaderName }) : undefined}
                               className="inline-flex items-center gap-2 border border-outline-variant rounded bg-surface px-3 py-1.5 text-sm hover:border-primary transition-colors text-on-surface group cursor-pointer max-w-full"
                             >
                               <span className="material-symbols-outlined text-[16px] text-secondary group-hover:text-primary">attach_file</span>
@@ -555,7 +557,7 @@ export default function RequestDetail() {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-secondary text-xs italic">Không có tài liệu</span>
+                        <span className="text-secondary text-xs italic">{t('Không có tài liệu')}</span>
                       )}
                     </td>
                   </tr>
@@ -567,12 +569,12 @@ export default function RequestDetail() {
             <section className="bg-surface border border-outline-variant rounded-lg shadow-sm overflow-hidden">
               <div className="px-4 py-3 bg-surface-container-low border-b border-outline-variant flex items-center gap-2">
                 <span className="material-symbols-outlined text-[18px] text-secondary">forum</span>
-                <h2 className="text-sm text-on-surface uppercase tracking-wide font-semibold">Lịch sử Thảo luận</h2>
-                <span className="ml-auto text-xs text-secondary">{request.comments?.length || 0} bình luận</span>
+                <h2 className="text-sm text-on-surface uppercase tracking-wide font-semibold">{t('Lịch sử Thảo luận')}</h2>
+                <span className="ml-auto text-xs text-secondary">{request.comments?.length || 0} {t('bình luận')}</span>
               </div>
               <div className="p-4 space-y-3">
                 {request.comments?.length === 0 && (
-                  <p className="text-sm text-secondary italic">Chưa có bình luận nào.</p>
+                  <p className="text-sm text-secondary italic">{t('Chưa có bình luận nào.')}</p>
                 )}
                 {request.comments?.map((c, i) => {
                   const u = employees.find((x) => x.id === c.userId);
@@ -590,11 +592,11 @@ export default function RequestDetail() {
                           <div className="flex justify-between items-start mb-1">
                             <span className="flex items-center gap-1.5 font-semibold text-sm text-pink-700">
                               <span className="material-symbols-outlined text-[16px]">edit_note</span>
-                              Yêu cầu bổ sung
+                              {t('Yêu cầu bổ sung')}
                             </span>
                             <span className="text-xs text-secondary">{c.at}</span>
                           </div>
-                          <p className="text-xs text-secondary mb-1">Người gửi: {authorName}</p>
+                          <p className="text-xs text-secondary mb-1">{t('Người gửi:')} {authorName}</p>
                           <p className="text-sm text-on-surface whitespace-pre-wrap">{reason}</p>
                         </div>
                       </div>
@@ -609,11 +611,11 @@ export default function RequestDetail() {
                           <div className="flex justify-between items-start mb-1">
                             <span className="flex items-center gap-1.5 font-semibold text-sm text-error">
                               <span className="material-symbols-outlined text-[16px]">block</span>
-                              Từ chối
+                              {t('Từ chối')}
                             </span>
                             <span className="text-xs text-secondary">{c.at}</span>
                           </div>
-                          <p className="text-xs text-secondary mb-1">Người duyệt: {authorName}</p>
+                          <p className="text-xs text-secondary mb-1">{t('Người duyệt:')} {authorName}</p>
                           <p className="text-sm text-on-surface whitespace-pre-wrap">{reason}</p>
                         </div>
                       </div>
@@ -644,19 +646,19 @@ export default function RequestDetail() {
                       onChange={(e) => setComment(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) postComment(); }}
                       className="w-full border border-outline-variant rounded-md p-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none bg-surface-container-lowest text-on-surface min-h-[70px] resize-none"
-                      placeholder="Nhập ghi chú hoặc thảo luận (Ctrl+Enter để gửi)..."
+                      placeholder={t('Nhập ghi chú hoặc thảo luận (Ctrl+Enter để gửi)...')}
                     />
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-xs text-secondary flex items-center gap-1">
                         <span className="material-symbols-outlined text-[16px]">alternate_email</span>
-                        @mention người dùng
+                        {t('@mention người dùng')}
                       </span>
                       <button
                         onClick={postComment}
                         disabled={!comment.trim()}
                         className="bg-secondary text-on-secondary hover:bg-secondary/90 hover:text-white px-4 py-1.5 rounded text-sm font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        Gửi phản hồi
+                        {t('Gửi phản hồi')}
                       </button>
                     </div>
                   </div>
@@ -672,14 +674,14 @@ export default function RequestDetail() {
           <div className={`border-b p-4 ${isSupplementOwner ? 'bg-pink-50/60 border-pink-200' : actionable ? 'bg-warning-container/30 border-warning/20' : 'bg-surface-container-low border-outline-variant'}`}>
             <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1 ${isSupplementOwner ? 'text-pink-700' : actionable ? 'text-warning' : 'text-secondary'}`}>
               <span className="material-symbols-outlined text-[14px]">{(actionable || isSupplementOwner) ? 'warning' : 'task_alt'}</span>
-              {(actionable || isSupplementOwner) ? 'Yêu cầu hành động' : 'Trạng thái'}
+              {(actionable || isSupplementOwner) ? t('Yêu cầu hành động') : t('Trạng thái')}
             </h3>
             <p className="text-sm text-on-surface">
               {isSupplementOwner ? (
-                <>Đơn cần <strong>bạn bổ sung thông tin</strong> theo yêu cầu của người duyệt rồi gửi lại.</>
+                <>{t('Đơn cần')} <strong>{t('bạn bổ sung thông tin')}</strong> {t('theo yêu cầu của người duyệt rồi gửi lại.')}</>
               ) : actionable ? (
-                <>Đơn cần <strong>{currentUser?.name || 'bạn'}</strong> phê duyệt ở bước {activeStepIndex + 1}. Hạn chót: <strong>12 giờ</strong>.</>
-              ) : request.status === 'approved' ? 'Đơn đã được phê duyệt hoàn tất.' : request.status === 'rejected' ? 'Đơn đã bị từ chối.' : request.status === 'returned_timeout' ? 'Đơn đã trả về nơi khởi tạo do quá hạn.' : isSupplementWorkflow ? 'Đơn đang chờ người gửi bổ sung thông tin.' : 'Đơn đang chờ người duyệt khác xử lý.'}
+                <>{t('Đơn cần')} <strong>{currentUser?.name || t('bạn')}</strong> {t('phê duyệt ở bước')} {activeStepIndex + 1}{t('. Hạn chót:')} <strong>{t('12 giờ')}</strong>.</>
+              ) : request.status === 'approved' ? t('Đơn đã được phê duyệt hoàn tất.') : request.status === 'rejected' ? t('Đơn đã bị từ chối.') : request.status === 'returned_timeout' ? t('Đơn đã trả về nơi khởi tạo do quá hạn.') : isSupplementWorkflow ? t('Đơn đang chờ người gửi bổ sung thông tin.') : t('Đơn đang chờ người duyệt khác xử lý.')}
             </p>
           </div>
 
@@ -688,7 +690,7 @@ export default function RequestDetail() {
           <div className="p-6">
             <h3 className="text-xs text-secondary uppercase tracking-widest mb-4 flex items-center gap-2 font-semibold">
               <span className="material-symbols-outlined text-[16px]">account_tree</span>
-              Tiến trình xử lý
+              {t('Tiến trình xử lý')}
             </h3>
             <div className="relative">
               <div className="absolute left-[11px] top-3 bottom-3 w-px bg-outline-variant z-0"></div>
@@ -702,9 +704,9 @@ export default function RequestDetail() {
                           <span className="material-symbols-outlined text-[12px] text-secondary">person</span>
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-secondary uppercase tracking-wide">Người nộp đơn</p>
+                          <p className="text-xs font-bold text-secondary uppercase tracking-wide">{t('Người nộp đơn')}</p>
                           <p className="text-sm text-on-surface font-medium mt-0.5">{creatorName}</p>
-                          <p className="text-[11px] text-secondary mt-0.5">Đã nộp: {request.createdAt}</p>
+                          <p className="text-[11px] text-secondary mt-0.5">{t('Đã nộp:')} {request.createdAt}</p>
                         </div>
                       </li>
                     );
@@ -721,10 +723,10 @@ export default function RequestDetail() {
                         </div>
                         <div className="bg-pink-50/70 border border-pink-200 p-2.5 rounded-xl -mt-1 shadow-sm w-full min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-bold uppercase tracking-wide text-pink-700">Yêu cầu bổ sung</p>
+                            <p className="text-xs font-bold uppercase tracking-wide text-pink-700">{t('Yêu cầu bổ sung')}</p>
                             <span className="text-[11px] font-medium text-pink-700 flex-shrink-0">{h.at}</span>
                           </div>
-                          <p className="text-sm text-on-surface font-medium mt-0.5">{nameOf(h.userId)} (Người duyệt)</p>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{nameOf(h.userId)} {t('(Người duyệt)')}</p>
                           {reason && <p className="text-[11px] text-pink-700 mt-1">{reason}</p>}
                         </div>
                       </li>
@@ -740,9 +742,9 @@ export default function RequestDetail() {
                           <span className="material-symbols-outlined text-[12px]">refresh</span>
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-pink-700 uppercase tracking-wide">Bổ sung thông tin</p>
-                          <p className="text-sm text-on-surface font-medium mt-0.5">{nameOf(h.userId)} (Người gửi)</p>
-                          <p className="text-[11px] text-pink-700 mt-0.5">Đã bổ sung và gửi lại · {h.at}</p>
+                          <p className="text-xs font-bold text-pink-700 uppercase tracking-wide">{t('Bổ sung thông tin')}</p>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{nameOf(h.userId)} {t('(Người gửi)')}</p>
+                          <p className="text-[11px] text-pink-700 mt-0.5">{t('Đã bổ sung và gửi lại ·')} {h.at}</p>
                         </div>
                       </li>
                     );
@@ -757,14 +759,14 @@ export default function RequestDetail() {
                         </div>
                         <div className="bg-pink-50/70 border border-pink-200 p-2.5 rounded-xl -mt-1 shadow-sm w-full min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-bold uppercase tracking-wide text-pink-700">Bổ sung thông tin</p>
+                            <p className="text-xs font-bold uppercase tracking-wide text-pink-700">{t('Bổ sung thông tin')}</p>
                             <span className="inline-flex items-center gap-1 rounded-full bg-pink-600 text-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
-                              {isSupplementOwner ? 'Cần bạn xử lý' : 'Chờ người gửi'}
+                              {isSupplementOwner ? t('Cần bạn xử lý') : t('Chờ người gửi')}
                             </span>
                           </div>
-                          <p className="text-sm text-on-surface font-medium mt-0.5">{creatorName} (Người gửi)</p>
-                          <p className="text-[11px] font-medium mt-1 text-pink-700">Người duyệt yêu cầu bổ sung thông tin, đơn quay về người gửi</p>
+                          <p className="text-sm text-on-surface font-medium mt-0.5">{creatorName} {t('(Người gửi)')}</p>
+                          <p className="text-[11px] font-medium mt-1 text-pink-700">{t('Người duyệt yêu cầu bổ sung thông tin, đơn quay về người gửi')}</p>
                         </div>
                       </li>
                     );
@@ -805,28 +807,28 @@ export default function RequestDetail() {
                     let personTone;
                     let personLabel;
                     if (actedBy === 'rejected') {
-                      personTone = stepTone.rejected; personLabel = 'Đã từ chối';
+                      personTone = stepTone.rejected; personLabel = t('Đã từ chối');
                     } else if (actedBy === 'supplement_requested') {
-                      personTone = stepTone.supplement; personLabel = 'Đã yêu cầu bổ sung';
+                      personTone = stepTone.supplement; personLabel = t('Đã yêu cầu bổ sung');
                     } else if (actedBy === 'approved') {
-                      personTone = stepTone.approved; personLabel = 'Đã duyệt';
+                      personTone = stepTone.approved; personLabel = t('Đã duyệt');
                     } else if (isTimedOut) {
-                      personTone = stepTone.timeout; personLabel = 'Quá hạn';
+                      personTone = stepTone.timeout; personLabel = t('Quá hạn');
                     } else if (isSupplementPaused) {
                       // chưa thao tác, chỉ đang bị giữ vì người khác xin bổ sung -> màu trung tính
-                      personTone = stepTone.idle; personLabel = 'Chờ bổ sung';
+                      personTone = stepTone.idle; personLabel = t('Chờ bổ sung');
                     } else if (isTerminated) {
                       // đơn đã dừng -> người này không còn cơ hội xử lý
-                      personTone = stepTone.idle; personLabel = 'Không xử lý';
+                      personTone = stepTone.idle; personLabel = t('Không xử lý');
                     } else if (s.status === 'approved') {
                       // BE-34: bước đã duyệt xong, người không có mốc nhật ký = không tham gia duyệt
-                      personTone = stepTone.idle; personLabel = 'Không duyệt bước này';
+                      personTone = stepTone.idle; personLabel = t('Không duyệt bước này');
                     } else if (s.status === 'rejected') {
-                      personTone = stepTone.idle; personLabel = 'Không xử lý';
+                      personTone = stepTone.idle; personLabel = t('Không xử lý');
                     } else if (isCurrent) {
-                      personTone = stepTone.current; personLabel = 'Đang chờ xử lý';
+                      personTone = stepTone.current; personLabel = t('Đang chờ xử lý');
                     } else {
-                      personTone = stepTone.idle; personLabel = 'Chưa đến lượt';
+                      personTone = stepTone.idle; personLabel = t('Chưa đến lượt');
                     }
 
                     const isMe = pendingStep?.approverId === approverId && actionable;
@@ -845,7 +847,7 @@ export default function RequestDetail() {
                         </div>
                         <div className="flex items-baseline justify-between gap-2 flex-1 min-w-0 py-0.5">
                           <span className={`text-[13px] font-medium truncate ${done ? 'text-on-surface' : 'text-secondary'}`} title={person?.name}>
-                            {person?.name || 'User'}{isMe ? ' (Bạn)' : ''}
+                            {person?.name || 'User'}{isMe ? t(' (Bạn)') : ''}
                           </span>
                           {/* người đã thao tác chỉ hiện giờ (màu đã thể hiện trạng thái); người chưa thao tác hiện trạng thái ngắn */}
                           <span className={`text-[11px] font-medium flex-shrink-0 ${personTone.text}`}>
@@ -860,7 +862,7 @@ export default function RequestDetail() {
                   if (item.kind === 'step') {
                     const { step: s, index: i } = item;
                     // Nhãn bước lấy từ tên bước thật của luồng duyệt (không dùng bảng cứng).
-                    const stepLabel = s.name || `Cấp ${s.stepOrder || i + 1}`;
+                    const stepLabel = s.name || t('Cấp {v0}', { v0: s.stepOrder || i + 1 });
                   const isCurrent = i === activeStepIndex && (isPendingWorkflow || isTimeoutWorkflow);
                   const isTimedOut = isTimeoutWorkflow && i === activeStepIndex;
                   // BE-15: bước đang giữ vì chờ người gửi bổ sung (không phải "đang duyệt")
@@ -888,29 +890,29 @@ export default function RequestDetail() {
                           {(s.status === 'approved' || s.status === 'rejected') && (
                             <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${s.status === 'approved' ? 'bg-success-container text-on-success-container' : 'bg-error-container text-on-error-container'}`}>
                               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
-                              {s.status === 'approved' ? 'Đã duyệt' : 'Từ chối'}
+                              {s.status === 'approved' ? t('Đã duyệt') : t('Từ chối')}
                             </span>
                           )}
                           {isTimedOut && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-error text-on-error px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
-                              Quá hạn
+                              {t('Quá hạn')}
                             </span>
                           )}
                           {isCurrent && !isTimedOut && (
                             <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${isSupplementPaused ? 'bg-pink-600 text-white' : 'bg-orange-500 text-white'}`}>
                               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90"></span>
-                              {isSupplementPaused ? 'Chờ bổ sung' : 'Đang duyệt'}
+                              {isSupplementPaused ? t('Chờ bổ sung') : t('Đang duyệt')}
                             </span>
                           )}
                         </div>
                         <p className={`text-[11px] font-medium mt-0.5 ${tone.text}`}>
-                          {s.status === 'approved' ? 'Đã phê duyệt'
-                            : s.status === 'rejected' ? 'Đã từ chối đơn'
-                              : isTimedOut ? 'Không phản hồi quá 12h, đơn trả về nơi khởi tạo'
-                                : isSupplementPaused ? 'Đã yêu cầu bổ sung - chờ người gửi cập nhật'
-                                  : isTerminated ? 'Không xử lý (đơn đã dừng)'
-                                    : isCurrent ? 'Đang chờ xử lý' : 'Chưa đến lượt'}
+                          {s.status === 'approved' ? t('Đã phê duyệt')
+                            : s.status === 'rejected' ? t('Đã từ chối đơn')
+                              : isTimedOut ? t('Không phản hồi quá 12h, đơn trả về nơi khởi tạo')
+                                : isSupplementPaused ? t('Đã yêu cầu bổ sung - chờ người gửi cập nhật')
+                                  : isTerminated ? t('Không xử lý (đơn đã dừng)')
+                                    : isCurrent ? t('Đang chờ xử lý') : t('Chưa đến lượt')}
                         </p>
                       </div>
                     </li>
@@ -926,17 +928,17 @@ export default function RequestDetail() {
                             <span className="material-symbols-outlined text-[12px]">task_alt</span>
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-success uppercase tracking-wide">Hoàn tất</p>
-                            <p className="text-sm text-on-surface font-medium mt-0.5">Đơn đã được phê duyệt đầy đủ các cấp</p>
+                            <p className="text-xs font-bold text-success uppercase tracking-wide">{t('Hoàn tất')}</p>
+                            <p className="text-sm text-on-surface font-medium mt-0.5">{t('Đơn đã được phê duyệt đầy đủ các cấp')}</p>
                           </div>
                         </li>
                       );
                     }
                     if (request.status === 'rejected' || isTimeoutWorkflow || request.status === 'canceled') {
-                      const label = isTimeoutWorkflow ? 'Trả về nơi khởi tạo' : request.status === 'canceled' ? 'Đã hủy đơn' : 'Đã từ chối';
-                      const desc = isTimeoutWorkflow ? 'Quá hạn xử lý 12h'
-                        : request.status === 'canceled' ? 'Người gửi đã hủy đơn này'
-                          : (lastRejectReason ? `Lý do: ${lastRejectReason.text}` : 'Đơn đã bị từ chối');
+                      const label = isTimeoutWorkflow ? t('Trả về nơi khởi tạo') : request.status === 'canceled' ? t('Đã hủy đơn') : t('Đã từ chối');
+                      const desc = isTimeoutWorkflow ? t('Quá hạn xử lý 12h')
+                        : request.status === 'canceled' ? t('Người gửi đã hủy đơn này')
+                          : (lastRejectReason ? t('Lý do: {v0}', { v0: lastRejectReason.text }) : t('Đơn đã bị từ chối'));
                       return (
                         <li key={item.key} className="flex items-start gap-3">
                           <div className="w-6 h-6 rounded-full bg-error text-on-error flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
@@ -959,8 +961,8 @@ export default function RequestDetail() {
                             <span className="material-symbols-outlined text-[12px]">schedule</span>
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-orange-700 uppercase tracking-wide">Cấp {request.currentStep || 1}</p>
-                            <p className="text-sm text-on-surface font-medium mt-0.5">Đang chờ hệ thống / người duyệt xử lý</p>
+                            <p className="text-xs font-bold text-orange-700 uppercase tracking-wide">{t('Cấp')} {request.currentStep || 1}</p>
+                            <p className="text-sm text-on-surface font-medium mt-0.5">{t('Đang chờ hệ thống / người duyệt xử lý')}</p>
                           </div>
                         </li>
                       );

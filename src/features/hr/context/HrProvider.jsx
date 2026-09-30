@@ -3,6 +3,7 @@ import { userService } from '../services/userService';
 import { departmentService } from '../../departments/services/departmentService';
 import { positionService } from '../services/positionService';
 import { roleService } from '../services/roleService';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const HrContext = createContext(null);
 
@@ -11,6 +12,7 @@ export const useHr = () => useContext(HrContext);
 // Shared HR state so the list page and the detail page stay in sync:
 // edit / lock / reset performed from either page reflects on the other.
 export function HrProvider({ children }) {
+  const { t } = useI18n();
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
@@ -32,7 +34,7 @@ export function HrProvider({ children }) {
       setError(null);
     }).catch((err) => {
       console.error('Failed to load HR data', err);
-      setError(err?.response?.data?.message || err?.message || 'Không thể tải dữ liệu nhân sự.');
+      setError(err?.response?.data?.message || err?.message || t('Không thể tải dữ liệu nhân sự.'));
     }).finally(() => setLoading(false));
   }, []);
 
@@ -56,7 +58,7 @@ export function HrProvider({ children }) {
         body?.message || body?.error ||
         (Array.isArray(body?.errors) ? body.errors.join('; ') : '') ||
         err.message;
-      alert(`Lỗi lưu nhân sự${status ? ` (HTTP ${status})` : ''}: ${detail}`);
+      alert(t('Lỗi lưu nhân sự{v0}: {v1}', { v0: status ? ` (HTTP ${status})` : '', v1: detail }));
       return false;
     }
   }, []);

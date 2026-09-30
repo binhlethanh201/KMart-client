@@ -1,4 +1,5 @@
 import apiClient from '../../../services/apiClient';
+import { translate as t } from '../../../i18n/I18nProvider';
 
 // BE-15: nhãn tiếng Việt + màu cho từng loại hành động trong "Nhật ký hệ thống".
 // Backend trả Action dạng hằng số (APPROVED, SUPPLEMENT_REQUESTED...).
@@ -22,8 +23,8 @@ const mapToFrontendModel = (a) => {
     : (a.data || {});
   return {
     id: a.id,
-    title: a.title || (a.documentTypeName || 'Yêu cầu'),
-    type: a.documentTypeName || 'Yêu cầu',
+    title: a.title || (a.documentTypeName || t('Yêu cầu')),
+    type: a.documentTypeName || t('Yêu cầu'),
     // cần cho BE-04 (chọn người duyệt) và cho luồng bổ sung rồi gửi lại
     documentTypeId: a.documentTypeId,
     selectedApproverId: a.selectedApproverId || null,
@@ -76,9 +77,9 @@ const mapToFrontendModel = (a) => {
     history: (a.histories || []).map(h => {
       // BE-15: dịch Action -> nhãn tiếng Việt, kèm tên người thực hiện và lý do (nếu có)
       const key = (h.action || '').toLowerCase();
-      const meta = HISTORY_META[key] || { type: 'comment', text: h.action || 'Cập nhật' };
+      const meta = HISTORY_META[key] || { type: 'comment', text: h.action || t('Cập nhật') };
       const actor = h.userName ? `${h.userName}` : '';
-      let text = meta.text;
+      let text = t(meta.text);
       if (actor) text += ` - ${actor}`;
       if (h.comment && !['supplement_requested'].includes(key)) text += `: ${h.comment}`;
       return {

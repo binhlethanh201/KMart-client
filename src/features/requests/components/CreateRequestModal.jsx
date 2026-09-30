@@ -5,12 +5,14 @@ import { useHr } from '../../hr/context/HrProvider';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { workflowService } from '../../../services/workflowService';
 import ApprovalFlowTree from './ApprovalFlowTree';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
 export default function CreateRequestModal({ onClose, existingRequest = null, onSubmitted }) {
+  const { t } = useI18n();
   const { createRequest, updateRequest, departments, currentUser } = useApproval();
   const { employees } = useHr();
 
@@ -262,12 +264,12 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
         <div className="flex justify-between items-start p-6 border-b border-outline-variant/30">
           <div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface">
-              {isEdit ? 'Bổ Sung Đơn Từ' : 'Tạo Đề Xuất Mới'}
+              {isEdit ? t('Bổ Sung Đơn Từ') : t('Tạo Đề Xuất Mới')}
             </h2>
             <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">
               {isEdit
-                ? 'Cập nhật thông tin theo yêu cầu của người duyệt rồi gửi lại'
-                : 'Điền đầy đủ thông tin để gửi yêu cầu phê duyệt'}
+                ? t('Cập nhật thông tin theo yêu cầu của người duyệt rồi gửi lại')
+                : t('Điền đầy đủ thông tin để gửi yêu cầu phê duyệt')}
             </p>
           </div>
           <button type="button" onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer">
@@ -279,14 +281,14 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
           {/* Document Type Select */}
           <div className="flex flex-col gap-2">
-            <label className={labelCls}>Loại Đề Xuất</label>
+            <label className={labelCls}>{t('Loại Đề Xuất')}</label>
             <select 
               className={`${fieldCls} disabled:opacity-60 disabled:cursor-not-allowed`}
               value={form.documentTypeId} 
               disabled={isEdit}
               onChange={(e) => setForm(f => ({ ...f, documentTypeId: e.target.value }))}
             >
-              <option value="">-- Chọn loại đề xuất --</option>
+              <option value="">{t('-- Chọn loại đề xuất --')}</option>
               {!loading && documentTypes.map((dt) => (
                 <option key={dt.id} value={dt.id}>{dt.name}</option>
               ))}
@@ -296,7 +298,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           {/* Department Checkboxes — BE-17: chỉ hiện với luồng "theo chức danh / bộ phận" */}
           {showDepartmentPicker && departments.length > 0 && (
             <div className="flex flex-col gap-2">
-              <label className={labelCls}>Phòng ban liên quan</label>
+              <label className={labelCls}>{t('Phòng ban liên quan')}</label>
               <div className="flex gap-2.5 flex-wrap mt-0.5">
                 {departments.map((d) => {
                   const isChecked = form.departments.includes(d.id);
@@ -321,7 +323,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                         }}
                       />
                       {isChecked && <span className="material-symbols-outlined text-[16px] leading-none">check</span>}
-                      <span>{d.name}</span>
+                      <span>{t(d.name)}</span>
                     </label>
                   );
                 })}
@@ -337,9 +339,9 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               </span>
               <span>
                 {isHierarchyFlow ? (
-                  <>Người duyệt là <strong>quản lý trực tiếp</strong> theo phòng ban &amp; chức vụ của bạn{firstStepCandidates[0] ? <>: <strong>{firstStepCandidates[0].name}</strong></> : ' (chưa xác định được quản lý)'}.</>
+                  <>{t('Người duyệt là')} <strong>{t('quản lý trực tiếp')}</strong> {t('theo phòng ban & chức vụ của bạn')}{firstStepCandidates[0] ? <>: <strong>{firstStepCandidates[0].name}</strong></> : t(' (chưa xác định được quản lý)')}.</>
                 ) : (
-                  <>Đơn đi theo <strong>chuỗi quản lý liên tiếp</strong> (tăng dần theo chức danh/bộ phận) của phòng ban bạn thuộc.</>
+                  <>{t('Đơn đi theo')} <strong>{t('chuỗi quản lý liên tiếp')}</strong> {t('(tăng dần theo chức danh/bộ phận) của phòng ban bạn thuộc.')}</>
                 )}
               </span>
             </div>
@@ -348,7 +350,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           {/* BE-17: chỉ định người -> hiện đúng 1 người duy nhất được chỉ định */}
           {isSpecificFlow && firstStepCandidates[0] && (
             <div className="flex flex-col gap-2">
-              <label className={labelCls}>Người duyệt (chỉ định)</label>
+              <label className={labelCls}>{t('Người duyệt (chỉ định)')}</label>
               <div className="flex items-center gap-2.5 rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2.5">
                 {firstStepCandidates[0].avatar ? (
                   <img src={firstStepCandidates[0].avatar} alt={firstStepCandidates[0].name} className="w-8 h-8 rounded-full object-cover border border-outline-variant" />
@@ -359,7 +361,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 )}
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold text-on-surface">{firstStepCandidates[0].name}</span>
-                  <span className="text-xs text-secondary">{firstStepCandidates[0].position || 'Người duyệt'}</span>
+                  <span className="text-xs text-secondary">{firstStepCandidates[0].position || t('Người duyệt')}</span>
                 </div>
               </div>
             </div>
@@ -369,9 +371,9 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           {mustPickApprover && (
             <div className="flex flex-col gap-2">
               <label className={labelCls}>
-                Chọn người duyệt <span className="text-error">*</span>
+                {t('Chọn người duyệt')} <span className="text-error">*</span>
                 <span className="ml-1.5 text-xs normal-case font-normal text-secondary">
-                  (bước 1 có {firstStepCandidates.length} người có thể duyệt)
+                  {t('(bước 1 có')} {firstStepCandidates.length} {t('người có thể duyệt)')}
                 </span>
               </label>
               <select
@@ -379,7 +381,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 value={selectedApproverId}
                 onChange={(e) => setSelectedApproverId(e.target.value)}
               >
-                <option value="">-- Chọn người duyệt --</option>
+                <option value="">{t('-- Chọn người duyệt --')}</option>
                 {firstStepCandidates.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}{c.position ? ` · ${c.position}` : ''}
@@ -391,12 +393,12 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
           {/* Lý do/Yêu cầu */}
           <div className="flex flex-col gap-2">
-            <label className={labelCls}>Lý do / Mô tả <span className="text-error">*</span></label>
+            <label className={labelCls}>{t('Lý do / Mô tả')} <span className="text-error">*</span></label>
             <textarea
               className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
               value={form.reason}
               onChange={set('reason')}
-              placeholder="Nhập lý do hoặc mô tả yêu cầu..."
+              placeholder={t('Nhập lý do hoặc mô tả yêu cầu...')}
               required
             />
           </div>
@@ -408,6 +410,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'NUMBER' || f.type === 'Số') {
               const labelKey = f.label || f.id;
+              // 'tự động' là giá trị dữ liệu của field (BE trả về), KHÔNG dịch.
               const isAuto = f.options?.includes('auto') || f.options?.includes('tự động');
               return (
                 <div key={labelKey} className="flex flex-col gap-2">
@@ -457,7 +460,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                     required={f.required}
                     value={form.dynamic[labelKey] || ''}
                     onChange={(e) => setDynamic(labelKey, e.target.value)}
-                    placeholder={f.placeholder || 'Nhập thông tin...'}
+                    placeholder={f.placeholder || t('Nhập thông tin...')}
                   />
                 </div>
               );
@@ -475,7 +478,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                     value={form.dynamic[labelKey] || ''}
                     onChange={(e) => setDynamic(labelKey, e.target.value)}
                   >
-                    <option value="">-- Chọn --</option>
+                    <option value="">{t('-- Chọn --')}</option>
                     {options.map((opt) => {
                       const optValue = typeof opt === 'string' ? opt : opt.value;
                       const optLabel = typeof opt === 'string' ? opt : opt.label;
@@ -507,7 +510,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                     {templateFile && templateFile.name && (
                       <a href="#" className="flex items-center gap-1 text-xs text-primary font-medium hover:underline bg-primary/5 px-2 py-1 rounded">
                         <span className="material-symbols-outlined text-[14px]">download</span>
-                        Tải biểu mẫu
+                        {t('Tải biểu mẫu')}
                       </a>
                     )}
                   </div>
@@ -517,9 +520,9 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                       <span className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors">
                         {(files[labelKey]?.name || form.dynamic[labelKey])
                           ? (files[labelKey]?.name || form.dynamic[labelKey])
-                          : 'Nhấn để chọn file tải lên'}
+                          : t('Nhấn để chọn file tải lên')}
                       </span>
-                      <span className="text-xs text-secondary">Hỗ trợ PDF, DOCX, XLSX (Tối đa 10MB)</span>
+                      <span className="text-xs text-secondary">{t('Hỗ trợ PDF, DOCX, XLSX (Tối đa 10MB)')}</span>
                     </div>
                     <input
                       className="sr-only"
@@ -550,9 +553,9 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                     value={form.dynamic[labelKey] || ''}
                     onChange={(e) => setDynamic(labelKey, e.target.value)}
                   >
-                    <option value="">-- Chọn người --</option>
+                    <option value="">{t('-- Chọn người --')}</option>
                     {employees?.map((emp) => (
-                      <option key={emp.id} value={emp.id}>{emp.name} ({emp.position || 'Nhân viên'})</option>
+                      <option key={emp.id} value={emp.id}>{emp.name} ({t(emp.position) || t('Nhân viên')})</option>
                     ))}
                   </select>
                 </div>
@@ -578,12 +581,12 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
           {/* No fields available message */}
           {selectedDocType && currentFields.length === 0 && (
-            <p className="text-sm text-on-surface-variant italic">Loại đề xuất này không có trường bổ sung.</p>
+            <p className="text-sm text-on-surface-variant italic">{t('Loại đề xuất này không có trường bổ sung.')}</p>
           )}
 
           {/* Loading state */}
           {loading && (
-            <p className="text-sm text-on-surface-variant">Đang tải loại đề xuất...</p>
+            <p className="text-sm text-on-surface-variant">{t('Đang tải loại đề xuất...')}</p>
           )}
         </div>
 
@@ -592,14 +595,14 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
         {activeWorkflow && activeWorkflow.steps && activeWorkflow.steps.length > 0 && (
           <div className="px-6 py-4 bg-surface-container-lowest border-t border-outline-variant/30">
             <div className="flex items-center justify-between mb-3">
-              <label className="block font-label-md text-label-md text-on-surface-variant">Luồng phê duyệt dự kiến</label>
+              <label className="block font-label-md text-label-md text-on-surface-variant">{t('Luồng phê duyệt dự kiến')}</label>
               <button
                 type="button"
                 onClick={() => setFlowOpen(true)}
                 className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">open_in_full</span>
-                Xem chi tiết luồng
+                {t('Xem chi tiết luồng')}
               </button>
             </div>
             <div className="relative">
@@ -624,7 +627,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               >
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-on-primary text-xs font-semibold shadow-sm group-hover:bg-primary/90 transition-colors">
                   <span className="material-symbols-outlined text-[16px]">open_in_full</span>
-                  Bấm vào đây để xem chi tiết luồng
+                  {t('Bấm vào đây để xem chi tiết luồng')}
                 </span>
               </button>
             </div>
@@ -645,8 +648,8 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 <div className="flex items-center gap-2.5">
                   <span className="material-symbols-outlined text-primary text-[22px]">account_tree</span>
                   <div>
-                    <h3 className="text-base font-bold text-on-surface">Chi tiết luồng phê duyệt</h3>
-                    <p className="text-xs text-secondary">{selectedDocType?.name || 'Đề xuất'} · {activeWorkflow?.name || ''}</p>
+                    <h3 className="text-base font-bold text-on-surface">{t('Chi tiết luồng phê duyệt')}</h3>
+                    <p className="text-xs text-secondary">{selectedDocType?.name || t('Đề xuất')} · {activeWorkflow?.name || ''}</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setFlowOpen(false)} className="p-1.5 rounded-full text-on-surface-variant hover:bg-surface-variant cursor-pointer">
@@ -674,7 +677,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             onClick={onClose}
             className="px-5 py-2.5 rounded-md border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
           >
-            Hủy
+            {t('Hủy')}
           </button>
           <button
             type="button"
@@ -682,7 +685,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             disabled={!form.documentTypeId || !form.reason.trim() || (mustPickApprover && !selectedApproverId)}
             className="px-5 py-2.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isEdit ? 'Bổ sung & gửi lại' : 'Gửi yêu cầu'}
+            {isEdit ? t('Bổ sung & gửi lại') : t('Gửi yêu cầu')}
           </button>
         </div>
       </div>

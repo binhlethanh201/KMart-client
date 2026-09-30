@@ -3,6 +3,7 @@ import RequestCard from '../components/RequestCard';
 import CreateRequestModal from '../components/CreateRequestModal';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 /* ─── Constants ──────────────────────────────────────────────── */
 
@@ -26,7 +27,8 @@ const TITLES = {
 /* ─── Component ──────────────────────────────────────────────── */
 
 export default function PersonalRequests({ mode = 'sent' }) {
-  useDocumentTitle(TITLES[mode] || 'Danh sách Đơn từ');
+  const { t } = useI18n();
+  useDocumentTitle(t(TITLES[mode] || 'Danh sách Đơn từ'));
 
   const { requests, currentUserId, departments } = useApproval();
 
@@ -125,7 +127,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 <span className="material-symbols-outlined text-primary text-[24px]">description</span>
               </div>
               <h1 className="text-2xl font-bold text-on-surface tracking-tight">
-                {TITLES[mode] || 'Danh sách Đơn từ'}
+                {t(TITLES[mode] || 'Danh sách Đơn từ')}
               </h1>
             </div>
             {mode === 'sent' && (
@@ -134,7 +136,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 className="bg-primary w-full md:w-auto justify-center text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">add</span>
-                Tạo đề xuất mới
+                {t('Tạo đề xuất mới')}
               </button>
             )}
           </div>
@@ -150,7 +152,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 type="text"
-                placeholder="Tìm theo mã, tiêu đề..."
+                placeholder={t('Tìm theo mã, tiêu đề...')}
                 className="w-full pl-9 pr-3 py-2 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant transition-colors"
               />
               {search && (
@@ -170,10 +172,10 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 onChange={(e) => setDepartmentFilter(e.target.value || null)}
                 className="w-full pl-3 pr-8 py-2 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none transition-colors cursor-pointer"
               >
-                <option value="">Tất cả phòng ban</option>
+                <option value="">{t('Tất cả phòng ban')}</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.code} - {d.name}
+                    {d.code} - {t(d.name)}
                   </option>
                 ))}
               </select>
@@ -202,7 +204,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                   ) : (
                     <span className="material-symbols-outlined text-[16px]">{f.icon}</span>
                   )}
-                  {f.label}
+                  {t(f.label)}
                   {counts[f.id] > 0 && (
                     <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-semibold leading-none ${
                       active
@@ -225,8 +227,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
             <div className="mb-4 px-4 py-3 rounded-lg bg-warning-container/40 border border-warning/30 flex items-start gap-2.5 text-sm text-on-surface">
               <span className="material-symbols-outlined text-[20px] text-warning flex-shrink-0">info</span>
               <span>
-                Đây là các đơn của bạn bị người duyệt trả lại để bổ sung thông tin.
-                Mở đơn để xem chi tiết, bổ sung rồi gửi lại cho người duyệt.
+                {t('Đây là các đơn của bạn bị người duyệt trả lại để bổ sung thông tin.\n                Mở đơn để xem chi tiết, bổ sung rồi gửi lại cho người duyệt.')}
               </span>
             </div>
           )}
@@ -237,12 +238,12 @@ export default function PersonalRequests({ mode = 'sent' }) {
                   {mode === 'supplement' ? 'task_alt' : 'search_off'}
                 </span>
                 {mode === 'supplement'
-                  ? 'Không có đơn nào cần bổ sung.'
+                  ? t('Không có đơn nào cần bổ sung.')
                   : mode === 'received'
                     ? (requests.some(matchesMode)
-                        ? 'Không có đơn từ phù hợp bộ lọc.'
-                        : 'Hiện không có đơn nào đang chờ bạn duyệt.')
-                    : 'Không có đơn từ phù hợp bộ lọc.'}
+                        ? t('Không có đơn từ phù hợp bộ lọc.')
+                        : t('Hiện không có đơn nào đang chờ bạn duyệt.'))
+                    : t('Không có đơn từ phù hợp bộ lọc.')}
               </div>
             ) : (
               <>
@@ -258,7 +259,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 {page * itemsPerPage < filtered.length && (
                   <div ref={loaderRef} className="w-full py-4 flex justify-center items-center text-secondary">
                     <span className="material-symbols-outlined animate-spin text-[24px]">progress_activity</span>
-                    <span className="ml-2 text-sm font-medium">Đang tải thêm...</span>
+                    <span className="ml-2 text-sm font-medium">{t('Đang tải thêm...')}</span>
                   </div>
                 )}
               </>

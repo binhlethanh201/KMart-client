@@ -5,6 +5,7 @@ import { applicationService } from '../features/requests/services/applicationSer
 import { authService } from '../features/auth/services/authService';
 import { userService, getFullAvatarUrl } from '../features/hr/services/userService';
 import { PERMISSIONS } from '../constants/permissions';
+import { useI18n } from '../i18n/I18nProvider';
 
 const STORAGE_KEY = 'kmart.approval.v3';
 
@@ -32,6 +33,7 @@ function stamp() {
 }
 
 export function ApprovalSystemProvider({ children }) {
+  const { t } = useI18n();
   const init = load();
   const [currentUser, setCurrentUser] = useState(null);
   const [requests, setRequests] = useState([]); // Fetch from API
@@ -99,9 +101,9 @@ export function ApprovalSystemProvider({ children }) {
         personalEmail: u.personalEmail,
         phone: u.phone,
         departmentId: primaryPos?.departmentId,
-        department: primaryPos?.departmentName || 'Chưa phân bổ',
+        department: primaryPos?.departmentName || t('Chưa phân bổ'),
         positionId: primaryPos?.positionId,
-        position: primaryPos?.positionName || 'Nhân viên',
+        position: primaryPos?.positionName || t('Nhân viên'),
         allPositions: positionsList,
         role: u.roles?.[0]?.roleName || 'STAFF',
         profileData: u.profileData ? JSON.parse(u.profileData) : null,
@@ -135,7 +137,7 @@ export function ApprovalSystemProvider({ children }) {
           await applicationService.uploadAttachment(applicationId, file);
         } catch (err) {
           console.error('Failed to upload attachment', file?.name, err);
-          const msg = err.response?.data?.error || `Không tải lên được "${file?.name || 'file'}"`;
+          const msg = err.response?.data?.error || t('Không tải lên được "{v0}"', { v0: file?.name || 'file' });
           pushToast(msg, 'error');
         }
       }
@@ -154,10 +156,10 @@ export function ApprovalSystemProvider({ children }) {
         // Automatically submit
         const submitted = await applicationService.submit(req.id);
         setRequests((r) => [submitted, ...r]);
-        pushToast(`Đã tạo đề xuất ${submitted.id}`, 'success');
+        pushToast(t('Đã tạo đề xuất {v0}', { v0: submitted.id }), 'success');
         return submitted.id;
       } catch (err) {
-        let msg = 'Lỗi tạo đề xuất';
+        let msg = t('Lỗi tạo đề xuất');
         if (err.response?.data?.errors) {
           const errs = err.response.data.errors;
           msg = Array.isArray(errs) ? errs[0] : (Object.values(errs)[0]?.[0] || msg);
@@ -178,9 +180,9 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const updated = await applicationService.approve(reqId);
         setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
-        pushToast('Đã phê duyệt bước này', 'success');
+        pushToast(t('Đã phê duyệt bước này'), 'success');
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi phê duyệt';
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi phê duyệt');
         pushToast(errorMsg, 'error');
         console.error('Approve error:', err);
       }
@@ -197,10 +199,10 @@ export function ApprovalSystemProvider({ children }) {
         await uploadAttachments(reqId, data.attachments);
         const submitted = await applicationService.submit(reqId);
         setRequests((list) => list.map((r) => (r.id === reqId ? submitted : r)));
-        pushToast('Đã bổ sung và gửi lại đơn', 'success');
+        pushToast(t('Đã bổ sung và gửi lại đơn'), 'success');
         return submitted.id;
       } catch (err) {
-        const msg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi cập nhật đơn';
+        const msg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi cập nhật đơn');
         pushToast(msg, 'error');
         console.error(err);
       }
@@ -213,9 +215,9 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const updated = await applicationService.reject(reqId, reason);
         setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
-        pushToast('Đã từ chối yêu cầu', 'success');
+        pushToast(t('Đã từ chối yêu cầu'), 'success');
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi từ chối';
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi từ chối');
         pushToast(errorMsg, 'error');
         console.error('Reject error:', err);
       }
@@ -228,9 +230,9 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const updated = await applicationService.supplement(reqId, reason);
         setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
-        pushToast('Đã gửi yêu cầu bổ sung', 'success');
+        pushToast(t('Đã gửi yêu cầu bổ sung'), 'success');
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi yêu cầu bổ sung';
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi yêu cầu bổ sung');
         pushToast(errorMsg, 'error');
         console.error('Supplement error:', err);
       }
@@ -247,7 +249,7 @@ export function ApprovalSystemProvider({ children }) {
         const updated = await applicationService.getById(reqId);
         setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Lỗi khi thêm bình luận';
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi thêm bình luận');
         pushToast(errorMsg, 'error');
         console.error('Add comment error:', err);
       }
@@ -262,13 +264,13 @@ export function ApprovalSystemProvider({ children }) {
           if (r.id !== reqId) return r;
           const entry = {
             at: stamp(),
-            text: 'Hệ thống tự động trả đơn về nơi khởi tạo do quá hạn 12h không xử lý',
+            text: t('Hệ thống tự động trả đơn về nơi khởi tạo do quá hạn 12h không xử lý'),
             type: 'timeout',
           };
           return { ...r, status: 'returned_timeout', history: [entry, ...r.history] };
         })
       );
-      pushToast('Đã giả lập quá hạn 12h - đơn trả về nơi khởi tạo', 'warning');
+      pushToast(t('Đã giả lập quá hạn 12h - đơn trả về nơi khởi tạo'), 'warning');
     },
     [pushToast]
   );
@@ -280,10 +282,10 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const newDept = await departmentService.create(data);
         setDepartments((d) => [...d, newDept]);
-        pushToast('Thêm mới phòng ban thành công!', 'success');
+        pushToast(t('Thêm mới phòng ban thành công!'), 'success');
         return newDept.id;
       } catch (err) {
-        const backendMessage = err.response?.data?.message || 'Lỗi khi thêm phòng ban';
+        const backendMessage = err.response?.data?.message || t('Lỗi khi thêm phòng ban');
         pushToast(backendMessage, 'error');
         console.error(err);
       }
@@ -296,9 +298,9 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const updated = await departmentService.update(id, updates);
         setDepartments((list) => list.map((d) => (d.id === id ? updated : d)));
-        pushToast('Cập nhật phòng ban thành công!', 'success');
+        pushToast(t('Cập nhật phòng ban thành công!'), 'success');
       } catch (err) {
-        const backendMessage = err.response?.data?.message || 'Lỗi cập nhật phòng ban';
+        const backendMessage = err.response?.data?.message || t('Lỗi cập nhật phòng ban');
         pushToast(backendMessage, 'error');
         console.error(err);
       }
@@ -311,9 +313,9 @@ export function ApprovalSystemProvider({ children }) {
       try {
         await departmentService.delete(id);
         setDepartments((list) => list.filter((d) => d.id !== id));
-        pushToast('Đã xóa phòng ban', 'success');
+        pushToast(t('Đã xóa phòng ban'), 'success');
       } catch (err) {
-        pushToast('Lỗi xóa phòng ban', 'error');
+        pushToast(t('Lỗi xóa phòng ban'), 'error');
       }
     },
     [pushToast]
@@ -324,9 +326,9 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const res = await departmentService.toggleStatus(id);
         setDepartments((list) => list.map((d) => (d.id === id ? { ...d, status: res.department?.isActive ? 'Active' : 'Inactive' } : d)));
-        pushToast(res.message || 'Thay đổi trạng thái thành công', 'success');
+        pushToast(res.message || t('Thay đổi trạng thái thành công'), 'success');
       } catch (err) {
-        pushToast('Lỗi khi đổi trạng thái', 'error');
+        pushToast(t('Lỗi khi đổi trạng thái'), 'error');
       }
     },
     [departments, pushToast]

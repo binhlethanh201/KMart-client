@@ -9,6 +9,7 @@ import UserInfoModal from '../../requests/components/UserInfoModal';
 import DepartmentReport from '../components/DepartmentReport';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { roleStyle } from '../../../utils/roleLabels';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 const TABS = [
   { id: 'requests', label: 'Danh sách Đơn từ', icon: 'description' },
@@ -25,11 +26,12 @@ const getSystemRoleInfo = (roles) => {
 };
 
 export default function DepartmentDetail() {
+  const { t } = useI18n();
   const { id } = useParams();
   const { requests, currentUser, canApprove, approveRequest, pushToast, departments } = useApproval();
   const { employees } = useHr();
   const dept = departments.find((d) => String(d.id) === String(id));
-  useDocumentTitle(dept ? dept.name : 'Phòng ban');
+  useDocumentTitle(dept ? dept.name : t('Phòng ban'));
 
   // BE-43: chỉ TRƯỞNG PHÒNG / PHÓ PHÒNG (hoặc ADMIN/HR) mới được xem đơn của
   // MỌI NGƯỜI trong phòng. Nhân viên chỉ xem được đơn của chính mình.
@@ -122,9 +124,9 @@ export default function DepartmentDetail() {
       <div className="flex-1 flex items-center justify-center h-full bg-background p-6">
         <div className="text-center">
           <span className="material-symbols-outlined text-[48px] text-outline block mb-2">search_off</span>
-          <p className="text-on-surface font-medium">Không tìm thấy phòng ban.</p>
+          <p className="text-on-surface font-medium">{t('Không tìm thấy phòng ban.')}</p>
           <Link to="/" className="text-primary text-sm hover:underline mt-2 inline-block">
-            Quay lại danh sách
+            {t('Quay lại danh sách')}
           </Link>
         </div>
       </div>
@@ -148,20 +150,20 @@ export default function DepartmentDetail() {
               className="inline-flex items-center gap-1 text-sm text-secondary hover:text-primary transition-colors mb-3"
             >
               <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-              Quay lại
+              {t('Quay lại')}
             </Link>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4">
               <div className="flex items-start gap-4">
                 <div className="w-14 h-14 bg-primary/10 text-primary rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {dept.iconImage ? (
-                    <img src={dept.iconImage} alt={dept.name} className="w-full h-full object-cover" />
+                    <img src={dept.iconImage} alt={t(dept.name)} className="w-full h-full object-cover" />
                   ) : (
                     <span className="material-symbols-outlined text-3xl">{dept.icon}</span>
                   )}
                 </div>
                 <div>
                   <div className="flex items-center gap-3 flex-wrap mb-1">
-                    <h1 className="font-display-lg text-on-surface">{dept.name}</h1>
+                    <h1 className="font-display-lg text-on-surface">{t(dept.name)}</h1>
                     <span
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${dept.status === 'Active'
                         ? 'bg-[#E8F8EE] text-[#037847]'
@@ -172,11 +174,11 @@ export default function DepartmentDetail() {
                         className={`w-1.5 h-1.5 rounded-full ${dept.status === 'Active' ? 'bg-[#037847]' : 'bg-[#64748B]'
                           }`}
                       ></span>
-                      {dept.status === 'Active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                      {dept.status === 'Active' ? t('Đang hoạt động') : t('Ngừng hoạt động')}
                     </span>
                   </div>
                   <p className="text-sm text-secondary">
-                    Mã phòng: <strong className="text-on-surface">{dept.code}</strong>
+                    {t('Mã phòng:')} <strong className="text-on-surface">{dept.code}</strong>
                     <span className="mx-2 text-outline">•</span>
                     {dept.leaders.map((l, i) => (
                       <span key={i} className="inline-flex items-center gap-1">
@@ -188,7 +190,7 @@ export default function DepartmentDetail() {
                     <span className="mx-2 text-outline">•</span>
                     <span className="inline-flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px] text-secondary">group</span>
-                      <strong className="text-on-surface">{members.length}</strong> thành viên
+                      <strong className="text-on-surface">{members.length}</strong> {t('thành viên')}
                     </span>
                   </p>
                 </div>
@@ -210,7 +212,7 @@ export default function DepartmentDetail() {
                     }`}
                 >
                   <span className="material-symbols-outlined text-[18px]">{t.icon}</span>
-                  {t.label}
+                  {t(t.label)}
                 </button>
               );
             })}
@@ -231,26 +233,26 @@ export default function DepartmentDetail() {
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     className="w-full pl-9 pr-3 py-1.5 bg-surface border border-outline-variant rounded-md focus:ring-1 focus:ring-primary focus:border-primary text-sm outline-none placeholder:text-secondary"
-                    placeholder="Tìm theo mã đơn, tên nhân viên..."
+                    placeholder={t('Tìm theo mã đơn, tên nhân viên...')}
                     type="text"
                   />
                 </div>
                 <select value={typeF} onChange={(e) => setTypeF(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
-                  <option value="all">Loại: Tất cả</option>
+                  <option value="all">{t('Loại: Tất cả')}</option>
                   {documentTypes.map((d) => (
                     <option key={d.id} value={d.name}>
-                      {d.name}
+                      {t(d.name)}
                     </option>
                   ))}
                 </select>
                 <select value={statusF} onChange={(e) => setStatusF(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
-                  <option value="all">Trạng thái: Tất cả</option>
-                  <option value="pending">Đang chờ duyệt</option>
-                  <option value="approved">Đã phê duyệt</option>
-                  <option value="rejected">Từ chối / Trả về</option>
+                  <option value="all">{t('Trạng thái: Tất cả')}</option>
+                  <option value="pending">{t('Đang chờ duyệt')}</option>
+                  <option value="approved">{t('Đã phê duyệt')}</option>
+                  <option value="rejected">{t('Từ chối / Trả về')}</option>
                 </select>
                 <span className="ml-auto text-xs text-secondary">
-                  {filtered.length} / {deptRequests.length} đơn từ
+                  {filtered.length} / {deptRequests.length} {t('đơn từ')}
                 </span>
               </div>
 
@@ -258,8 +260,7 @@ export default function DepartmentDetail() {
               {!isDeptManager && (
                 <div className="px-4 py-2.5 bg-primary/5 border-b border-outline-variant text-xs text-secondary flex items-center gap-2">
                   <span className="material-symbols-outlined text-[16px] text-primary">visibility</span>
-                  Bạn đang xem <strong className="text-on-surface">đơn từ của chính mình</strong> trong phòng ban này.
-                  Chỉ trưởng phòng / phó phòng mới xem được đơn của toàn bộ nhân sự.
+                  {t('Bạn đang xem')} <strong className="text-on-surface">{t('đơn từ của chính mình')}</strong> {t('trong phòng ban này.\n                  Chỉ trưởng phòng / phó phòng mới xem được đơn của toàn bộ nhân sự.')}
                 </div>
               )}
 
@@ -268,13 +269,13 @@ export default function DepartmentDetail() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-surface-container-lowest text-secondary border-b border-outline-variant uppercase text-xs">
                     <tr>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Mã đơn</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Tiêu đề</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Người tạo</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Ngày nộp</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Bước hiện tại</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Trạng thái</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap text-right">Hành động</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Mã đơn')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Tiêu đề')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Người tạo')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Ngày nộp')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Bước hiện tại')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Trạng thái')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap text-right">{t('Hành động')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant">
@@ -284,7 +285,7 @@ export default function DepartmentDetail() {
                           <span className="material-symbols-outlined text-[36px] block mb-2 text-outline">
                             inbox
                           </span>
-                          Phòng ban chưa có đơn từ phù hợp bộ lọc.
+                          {t('Phòng ban chưa có đơn từ phù hợp bộ lọc.')}
                         </td>
                       </tr>
                     ) : (
@@ -294,10 +295,10 @@ export default function DepartmentDetail() {
                         const meta = STATUS_META[r.status];
                         const stepLabel =
                           r.status === 'pending'
-                            ? (r.steps[r.currentStep]?.name || `Cấp ${r.currentStep + 1}`)
+                            ? (r.steps[r.currentStep]?.name || t('Cấp {v0}', { v0: r.currentStep + 1 }))
                             : r.status === 'approved'
-                              ? 'Hoàn tất'
-                              : 'Đã dừng';
+                              ? t('Hoàn tất')
+                              : t('Đã dừng');
                         const canQuick = canApprove(r);
                         return (
                           <tr key={r.id} className="hover:bg-surface-container-low transition-colors">
@@ -338,7 +339,7 @@ export default function DepartmentDetail() {
                                     ? 'bg-[#037847]'
                                     : 'bg-[#DC2626]'
                                   }`}></span>
-                                {meta?.label}
+                                {t(meta?.label)}
                               </span>
                             </td>
                             <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -346,10 +347,10 @@ export default function DepartmentDetail() {
                                 <button
                                   onClick={() => quickApprove(r)}
                                   className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant px-3 py-1.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
-                                  title={`Duyệt nhanh (bước hiện tại: ${currentUser.name})`}
+                                  title={t('Duyệt nhanh (bước hiện tại: {v0})', { v0: currentUser.name })}
                                 >
                                   <span className="material-symbols-outlined text-[14px]">bolt</span>
-                                  Duyệt nhanh
+                                  {t('Duyệt nhanh')}
                                 </button>
                               ) : (
                                 <Link
@@ -357,7 +358,7 @@ export default function DepartmentDetail() {
                                   className="text-secondary hover:text-primary text-xs inline-flex items-center gap-1 transition-colors"
                                 >
                                   <span className="material-symbols-outlined text-[14px]">visibility</span>
-                                  Xem chi tiết
+                                  {t('Xem chi tiết')}
                                 </Link>
                               )}
                             </td>
@@ -370,19 +371,19 @@ export default function DepartmentDetail() {
               </div>
               <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  Hiển thị
+                  {t('Hiển thị')}
                   <select
                     value={reqPageSize}
                     onChange={(e) => { setReqPageSize(Number(e.target.value)); setReqPage(1); }}
                     className="bg-surface border border-outline-variant rounded px-2 py-1 outline-none cursor-pointer hover:bg-surface-container-low transition-colors"
                   >
-                    <option value={5}>5 dòng</option>
-                    <option value={10}>10 dòng</option>
-                    <option value={20}>20 dòng</option>
-                    <option value={50}>50 dòng</option>
+                    <option value={5}>{t('5 dòng')}</option>
+                    <option value={10}>{t('10 dòng')}</option>
+                    <option value={20}>{t('20 dòng')}</option>
+                    <option value={50}>{t('50 dòng')}</option>
                   </select>
                   <span>
-                    {filtered.length === 0 ? 0 : (reqSafePage - 1) * reqPageSize + 1} - {Math.min(reqSafePage * reqPageSize, filtered.length)} trong tổng số {filtered.length} đơn từ
+                    {filtered.length === 0 ? 0 : (reqSafePage - 1) * reqPageSize + 1} - {Math.min(reqSafePage * reqPageSize, filtered.length)} {t('trong tổng số')} {filtered.length} {t('đơn từ')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -394,7 +395,7 @@ export default function DepartmentDetail() {
                     <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                   </button>
                   <div className="px-2 flex items-center justify-center min-w-[4rem]">
-                    <span className="text-xs text-secondary">Trang {reqSafePage} / {reqTotalPages}</span>
+                    <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: reqSafePage, v1: reqTotalPages })}</span>
                   </div>
                   <button
                     onClick={() => setReqPage((p) => Math.min(reqTotalPages, p + 1))}
@@ -415,13 +416,13 @@ export default function DepartmentDetail() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-surface-container-lowest text-secondary border-b border-outline-variant uppercase text-xs">
                     <tr>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Mã & Họ tên</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Liên hệ</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Phòng ban & Chức vụ</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Kiêm nhiệm</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Vai trò hệ thống</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">Trạng thái</th>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap text-right">Thao tác</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Mã & Họ tên')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Liên hệ')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Phòng ban & Chức vụ')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Kiêm nhiệm')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Vai trò hệ thống')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Trạng thái')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap text-right">{t('Thao tác')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant">
@@ -431,7 +432,7 @@ export default function DepartmentDetail() {
                           <span className="material-symbols-outlined text-[36px] block mb-2 text-outline">
                             group_off
                           </span>
-                          Phòng ban chưa có nhân sự trực thuộc.
+                          {t('Phòng ban chưa có nhân sự trực thuộc.')}
                         </td>
                       </tr>
                     ) : (
@@ -462,7 +463,7 @@ export default function DepartmentDetail() {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <span className="material-symbols-outlined text-[14px]">call</span>
-                                  {s.phone || 'Chưa cập nhật'}
+                                  {s.phone || t('Chưa cập nhật')}
                                 </div>
                               </div>
                             </td>
@@ -475,14 +476,14 @@ export default function DepartmentDetail() {
                             <td className="py-3 px-4 whitespace-nowrap">
                               <div className="relative">
                                 {extraPositions === 0 ? (
-                                  <span className="text-secondary text-[13px]">Không</span>
+                                  <span className="text-secondary text-[13px]">{t('Không')}</span>
                                 ) : (
                                   <button
                                     onClick={(ev) => { ev.stopPropagation(); setPopoverId(popoverId === s.id ? null : s.id); }}
                                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-container/40 text-primary text-xs font-medium hover:bg-primary-container/70 transition-colors cursor-pointer"
                                   >
                                     <span className="material-symbols-outlined text-[14px]">workspaces</span>
-                                    +{extraPositions} vị trí
+                                    +{extraPositions} {t('vị trí')}
                                   </button>
                                 )}
                                 {popoverId === s.id && (
@@ -490,15 +491,15 @@ export default function DepartmentDetail() {
                                     <div className="fixed inset-0 z-40" onClick={(ev) => { ev.stopPropagation(); setPopoverId(null); }} />
                                     <div onClick={(ev) => ev.stopPropagation()} className="absolute z-50 left-0 top-full mt-1 w-72 bg-surface border border-outline-variant rounded-lg shadow-lg p-3">
                                       <div className="font-label-md text-on-surface-variant uppercase text-xs font-semibold mb-2">
-                                        Vị trí kiêm nhiệm
+                                        {t('Vị trí kiêm nhiệm')}
                                       </div>
                                       <div className="flex flex-col gap-2 whitespace-normal">
                                         {(s.positions || []).filter(p => String(p.departmentId) !== String(dept.id)).map((p, i) => (
                                           <div key={i} className="flex items-start gap-2">
                                             <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">badge</span>
                                             <div className="text-sm">
-                                              <div className="text-on-surface font-medium">{p.departmentName || `Phòng ban ${p.departmentId}`}</div>
-                                              <div className="text-xs text-secondary">{p.positionName || 'Nhân sự'}</div>
+                                              <div className="text-on-surface font-medium">{p.departmentName || t('Phòng ban {v0}', { v0: p.departmentId })}</div>
+                                              <div className="text-xs text-secondary">{p.positionName || t('Nhân sự')}</div>
                                             </div>
                                           </div>
                                         ))}
@@ -524,7 +525,7 @@ export default function DepartmentDetail() {
                                 <span
                                   className={`w-1.5 h-1.5 rounded-full ${s.status === 'active' ? 'bg-[#037847]' : 'bg-[#64748B]'}`}
                                 ></span>
-                                {s.status === 'active' ? 'Đang hoạt động' : 'Nghỉ'}
+                                {s.status === 'active' ? t('Đang hoạt động') : t('Nghỉ')}
                               </span>
                             </td>
                             <td className="py-3 px-4 whitespace-nowrap text-right">
@@ -544,7 +545,7 @@ export default function DepartmentDetail() {
                                   systemRole: s.systemRoles?.[0]
                                 })}
                                 className="p-1.5 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer inline-flex"
-                                title="Xem thông tin chi tiết"
+                                title={t('Xem thông tin chi tiết')}
                               >
                                 <span className="material-symbols-outlined text-[18px]">visibility</span>
                               </button>
@@ -558,19 +559,19 @@ export default function DepartmentDetail() {
               </div>
               <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  Hiển thị
+                  {t('Hiển thị')}
                   <select
                     value={memPageSize}
                     onChange={(e) => { setMemPageSize(Number(e.target.value)); setMemPage(1); }}
                     className="bg-surface border border-outline-variant rounded px-2 py-1 outline-none cursor-pointer hover:bg-surface-container-low transition-colors"
                   >
-                    <option value={5}>5 dòng</option>
-                    <option value={10}>10 dòng</option>
-                    <option value={20}>20 dòng</option>
-                    <option value={50}>50 dòng</option>
+                    <option value={5}>{t('5 dòng')}</option>
+                    <option value={10}>{t('10 dòng')}</option>
+                    <option value={20}>{t('20 dòng')}</option>
+                    <option value={50}>{t('50 dòng')}</option>
                   </select>
                   <span>
-                    {members.length === 0 ? 0 : (memSafePage - 1) * memPageSize + 1} - {Math.min(memSafePage * memPageSize, members.length)} trong tổng số {members.length} nhân sự
+                    {members.length === 0 ? 0 : (memSafePage - 1) * memPageSize + 1} - {Math.min(memSafePage * memPageSize, members.length)} {t('trong tổng số')} {members.length} {t('nhân sự')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -582,7 +583,7 @@ export default function DepartmentDetail() {
                     <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                   </button>
                   <div className="px-2 flex items-center justify-center min-w-[4rem]">
-                    <span className="text-xs text-secondary">Trang {memSafePage} / {memTotalPages}</span>
+                    <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: memSafePage, v1: memTotalPages })}</span>
                   </div>
                   <button
                     onClick={() => setMemPage((p) => Math.min(memTotalPages, p + 1))}

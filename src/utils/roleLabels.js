@@ -1,4 +1,5 @@
 import { ROLE_STYLES } from '../features/hr/data/constants';
+import { translate as t } from '../i18n/I18nProvider';
 
 /**
  * Nhãn tiếng Việt cho vai trò hệ thống.
@@ -25,14 +26,14 @@ export function normalizeRole(role) {
 /** Dịch tên vai trò sang tiếng Việt; giữ nguyên nếu không phải vai trò hệ thống. */
 export function roleLabel(role) {
   const code = normalizeRole(role);
-  return ROLE_LABELS[code] || ROLE_STYLES[code]?.label || (code || 'Nhân viên');
+  return t(ROLE_LABELS[code] || ROLE_STYLES[code]?.label || code || 'Nhân viên');
 }
 
 /** Lấy nhãn + màu hiển thị cho vai trò hệ thống (dùng cho badge). */
 export function roleStyle(role) {
   const code = normalizeRole(role);
   return {
-    label: ROLE_LABELS[code] || ROLE_STYLES[code]?.label || code || 'Nhân viên',
+    label: t(ROLE_LABELS[code] || ROLE_STYLES[code]?.label || code || 'Nhân viên'),
     cls: ROLE_STYLES[code]?.cls || 'text-secondary',
     dot: ROLE_STYLES[code]?.dot || 'bg-outline',
   };

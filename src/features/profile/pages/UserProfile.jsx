@@ -4,8 +4,10 @@ import { useHr } from '../../hr/context/HrProvider';
 import EditProfileModal from './../components/EditProfileModal';
 import { userService } from '../../hr/services/userService';
 import { roleLabel } from '../../../utils/roleLabels';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 export default function UserProfile({ userId, onClose }) {
+  const { t } = useI18n();
   const { currentUser, pushToast } = useApproval();
   const { employees, getEmployee } = useHr();
   const [showEditModal, setShowEditModal] = useState(false);
@@ -21,7 +23,7 @@ export default function UserProfile({ userId, onClose }) {
   const sections = [
     { 
       id: 'group', 
-      title: 'Nhóm (Đơn vị nghiệp vụ)', 
+      title: t('Nhóm (Đơn vị nghiệp vụ)'), 
       icon: 'group_off', 
       value: user?.allPositions && user.allPositions.length > 0
         ? <div className="flex flex-col gap-3 w-full max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
@@ -34,34 +36,33 @@ export default function UserProfile({ userId, onClose }) {
                     </span>
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-medium text-on-surface truncate">{pos.departmentName || 'Chưa phân bổ'}</span>
-                    <span className="text-secondary text-sm truncate">{pos.positionName || 'Nhân viên'}</span>
+                    <span className="font-medium text-on-surface truncate">{t(pos.departmentName) || t('Chưa phân bổ')}</span>
+                    <span className="text-secondary text-sm truncate">{t(pos.positionName) || t('Nhân viên')}</span>
                   </div>
                 </div>
                 {pos.isPrimary ? (
-                  <span className="px-3 py-1 text-[11px] font-medium bg-primary text-white rounded-full shadow-sm flex-shrink-0">Chính</span>
+                  <span className="px-3 py-1 text-[11px] font-medium bg-primary text-white rounded-full shadow-sm flex-shrink-0">{t('Chính')}</span>
                 ) : (
-                  <span className="px-3 py-1 text-[11px] font-medium bg-surface-variant text-on-surface-variant rounded-full flex-shrink-0">Kiêm nhiệm</span>
+                  <span className="px-3 py-1 text-[11px] font-medium bg-surface-variant text-on-surface-variant rounded-full flex-shrink-0">{t('Kiêm nhiệm')}</span>
                 )}
               </div>
             ))}
           </div>
-        : (user?.department !== 'Chưa phân bổ' ? `${user?.department} - ${user?.position}` : null)
-    },
-    { id: 'education', title: 'Học vấn', icon: 'school', value: user?.profileData?.education },
-    { id: 'experience', title: 'Kinh nghiệm làm việc', icon: 'work_history', value: user?.profileData?.experience },
-    { id: 'awards', title: 'Giải thưởng & Thành tích', icon: 'emoji_events', value: user?.profileData?.awards },
+        : (user?.department !== 'Chưa phân bổ' ? `${user?.department} - ${user?.position}` : null)    },
+    { id: 'education', title: t('Học vấn'), icon: 'school', value: user?.profileData?.education },
+    { id: 'experience', title: t('Kinh nghiệm làm việc'), icon: 'work_history', value: user?.profileData?.experience },
+    { id: 'awards', title: t('Giải thưởng & Thành tích'), icon: 'emoji_events', value: user?.profileData?.awards },
   ];
 
   const handleSaveProfile = async (updatedData) => {
     try {
       await userService.updateProfile(updatedData);
-      pushToast('Cập nhật thông tin cá nhân thành công!', 'success');
+      pushToast(t('Cập nhật thông tin cá nhân thành công!'), 'success');
       setTimeout(() => {
         window.location.reload();
       }, 1000);
     } catch (err) {
-      pushToast(err.response?.data?.error || 'Có lỗi xảy ra khi lưu', 'error');
+      pushToast(err.response?.data?.error || t('Có lỗi xảy ra khi lưu'), 'error');
       throw err;
     }
   };
@@ -71,7 +72,7 @@ export default function UserProfile({ userId, onClose }) {
       <div className="flex-1 flex items-center justify-center bg-surface w-full h-full">
         <div className="text-secondary flex flex-col items-center">
           <span className="material-symbols-outlined text-[48px] mb-2 opacity-50">person_off</span>
-          <p>Không tìm thấy thông tin người dùng</p>
+          <p>{t('Không tìm thấy thông tin người dùng')}</p>
         </div>
       </div>
     );
@@ -82,7 +83,7 @@ export default function UserProfile({ userId, onClose }) {
       {/* Header / Breadcrumbs */}
       <header className="h-[56px] bg-white border-b border-outline-variant flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
         <div className="flex items-center text-on-surface-variant font-body-sm flex-wrap">
-          <span className="uppercase tracking-wider font-semibold text-xs text-secondary hidden sm:inline">Tài khoản</span>
+          <span className="uppercase tracking-wider font-semibold text-xs text-secondary hidden sm:inline">{t('Tài khoản')}</span>
           <span className="material-symbols-outlined text-[16px] mx-1 sm:mx-2 text-outline hidden sm:inline">chevron_right</span>
           <span className="font-medium text-on-surface">{user.name}</span>
           <span className="mx-1 sm:mx-2 text-outline-variant">•</span>
@@ -95,7 +96,7 @@ export default function UserProfile({ userId, onClose }) {
               className="text-white px-3 sm:px-4 py-1.5 rounded text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-1 bg-[#2563eb] cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">edit</span>
-              <span className="hidden sm:inline">Chỉnh sửa</span>
+              <span className="hidden sm:inline">{t('Chỉnh sửa')}</span>
             </button>
           )}
           {onClose && (
@@ -123,15 +124,15 @@ export default function UserProfile({ userId, onClose }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 sm:gap-y-4 gap-x-4 text-sm">
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-outline text-[20px]">mail</span>
-                <span className="text-on-surface break-all">{user.personalEmail || user.email || 'Chưa cập nhật'}</span>
+                <span className="text-on-surface break-all">{user.personalEmail || user.email || t('Chưa cập nhật')}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-outline text-[20px]">call</span>
-                <span className="text-on-surface">{user.phone || <span className="text-secondary italic">Chưa cập nhật số điện thoại</span>}</span>
+                <span className="text-on-surface">{user.phone || <span className="text-secondary italic">{t('Chưa cập nhật số điện thoại')}</span>}</span>
               </div>
               <div className="flex items-center gap-3 sm:col-span-2">
                 <span className="material-symbols-outlined text-outline text-[20px]">location_on</span>
-                <span className="text-on-surface">{user.profileData?.address || <span className="text-secondary italic">Chưa cập nhật địa chỉ</span>}</span>
+                <span className="text-on-surface">{user.profileData?.address || <span className="text-secondary italic">{t('Chưa cập nhật địa chỉ')}</span>}</span>
               </div>
             </div>
           </div>
@@ -157,7 +158,7 @@ export default function UserProfile({ userId, onClose }) {
                     <span className="material-symbols-outlined text-outline-variant text-3xl sm:text-4xl mb-2">
                       {section.icon}
                     </span>
-                    <p className="text-secondary font-body-sm">Không có thông tin</p>
+                    <p className="text-secondary font-body-sm">{t('Không có thông tin')}</p>
                   </>
                 )}
               </div>

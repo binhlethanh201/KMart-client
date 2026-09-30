@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ApprovalSystemProvider } from "./context/ApprovalSystemProvider";
 import { HrProvider } from "./features/hr/context/HrProvider";
+import { I18nProvider } from "./i18n/I18nProvider";
 import MainLayout from "./layouts/MainLayout";
 import DepartmentDashboard from "./features/departments/pages/DepartmentDashboard";
 import DepartmentDetail from "./features/departments/pages/DepartmentDetail";
@@ -17,9 +18,11 @@ import LandingPage from "./features/landing/pages/LandingPage";
 import { useState, useEffect } from "react";
 import { useApproval } from "./context/useApproval";
 import { PERMISSIONS } from "./constants/permissions";
+import { useI18n } from "./i18n/I18nProvider";
 
 /** Route guard: kiểm tra permission. Wildcard "*" bypasses all. */
 function ProtectedRoute({ requiredPermissions = [], children }) {
+  const { t } = useI18n();
   const { currentUser, hasPermission } = useApproval();
   if (!currentUser) return null;
   const perms = currentUser.permissions || [];
@@ -31,12 +34,12 @@ function ProtectedRoute({ requiredPermissions = [], children }) {
         <div className="w-16 h-16 rounded-full bg-error-container flex items-center justify-center">
           <span className="material-symbols-outlined text-error text-3xl">lock</span>
         </div>
-        <h2 className="text-xl font-bold text-on-surface">Không có quyền truy cập</h2>
+        <h2 className="text-xl font-bold text-on-surface">{t('Không có quyền truy cập')}</h2>
         <p className="text-secondary text-center max-w-sm">
-          Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên.
+          {t('Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên.')}
         </p>
         <a href="/" className="px-5 py-2 rounded-md bg-primary text-on-primary font-medium hover:bg-primary/90 transition-colors">
-          Quay về trang chủ
+          {t('Quay về trang chủ')}
         </a>
       </div>
     );
@@ -70,12 +73,13 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      {isAuthenticated ? (
-        <ApprovalSystemProvider>
-          <HrProvider>
-            <Routes>
-              <Route path="/login" element={<Navigate to="/" replace />} />
+    <I18nProvider>
+      <BrowserRouter>
+        {isAuthenticated ? (
+          <ApprovalSystemProvider>
+            <HrProvider>
+              <Routes>
+                <Route path="/login" element={<Navigate to="/" replace />} />
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<DepartmentDashboard />} />
                 <Route path="departments" element={<DepartmentDashboard />} />
@@ -127,16 +131,17 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             <ToastHost />
-          </HrProvider>
-        </ApprovalSystemProvider>
-      ) : (
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage onLoginSuccess={() => { window.location.href = "/"; }} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      )}
-    </BrowserRouter>
+            </HrProvider>
+          </ApprovalSystemProvider>
+        ) : (
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage onLoginSuccess={() => { window.location.href = "/"; }} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        )}
+      </BrowserRouter>
+    </I18nProvider>
   );
 }
 
