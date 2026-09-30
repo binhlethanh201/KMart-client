@@ -24,7 +24,7 @@ const mapToFrontendModel = (d) => ({
   staff: []
 });
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.API_URL || 'http://localhost:5000';
 const getFullAvatarUrl = (url) => {
   if (!url || url.includes('ui-avatars.com')) return null;
   if (url.startsWith('/')) return `${API_URL}${url}`;

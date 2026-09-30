@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { clearSessionStorage } from '../utils/session';
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.API_URL || 'http://localhost:5000';
 
 const apiClient = axios.create({
   baseURL: `${API_URL}/api`,
