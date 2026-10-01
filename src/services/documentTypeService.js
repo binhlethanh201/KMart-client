@@ -31,7 +31,12 @@ export const documentTypeService = {
 
   updateFields: async (id, fields) => {
     try {
-      const response = await apiClient.put(`/document-types/${id}/fields`, { fields });
+      const response = await apiClient.put(`/document-types/${id}/fields`, { 
+        fields: fields.map(f => ({
+          ...f,
+          isPersisted: f.isPersisted !== undefined ? f.isPersisted : true,
+        }))
+      });
       return response.data;
     } catch (err) {
       if (err.response) {

@@ -4,12 +4,13 @@ import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { useI18n } from '../../../i18n/I18nProvider';
 
-function Toggle({ checked, onChange, label }) {
+function Toggle({ checked, onChange, label, disabled }) {
   return (
     <button
       type="button"
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer flex-shrink-0 ${
+      onClick={() => { if (!disabled) onChange(!checked); }}
+      disabled={disabled}
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${
         checked ? 'bg-primary' : 'bg-surface-container-highest'
       }`}
       aria-pressed={checked}
@@ -49,7 +50,8 @@ export default function FormTemplatesTab() {
             required: f.required,
             sortOrder: f.sortOrder,
             options: f.options || [],
-            dynamic: '' // Not fully mapped to backend yet
+            dynamic: '', // Not fully mapped to backend yet
+            isPersisted: f.isPersisted !== undefined ? f.isPersisted : true
           }));
         }
       });
@@ -87,7 +89,8 @@ export default function FormTemplatesTab() {
       type: f.type,
       required: f.required,
       sortOrder: i,
-      options: f.options || []
+      options: f.options || [],
+      isPersisted: f.isPersisted !== undefined ? f.isPersisted : true
     }));
 
     setIsSaving(true);
@@ -214,7 +217,7 @@ export default function FormTemplatesTab() {
       ...prev,
       [selectedForm]: [
         ...prev[selectedForm],
-        { id: `field_${Date.now()}`, label: t('Trường mới'), type: 'Văn bản', required: false, dynamic: '', options: [] },
+        { id: `field_${Date.now()}`, label: t('Trường mới'), type: 'Văn bản', required: false, dynamic: '', options: [], isPersisted: true },
       ],
     }));
 
@@ -257,6 +260,7 @@ export default function FormTemplatesTab() {
         options: tempOptions,
         displayStyle: tempDisplayStyle,
         templateFile: keepTemplate ? { name: keepTemplate.name } : null,
+        isPersisted: tempType === 'Tải file' ? false : (f.isPersisted !== undefined ? f.isPersisted : true),
       });
       setEditingTypeIdx(null);
       pushToast(t('Đã cập nhật cấu hình trường'), 'success');
@@ -499,9 +503,11 @@ export default function FormTemplatesTab() {
                   <td className="px-4 py-3">
                     <Toggle checked={f.required} onChange={(v) => updateField(idx, { required: v })} label={t('Bắt buộc')} />
                   </td>
-                  <td className="px-4 py-3 max-w-[280px]">
-                    <div className="flex items-center gap-2">
-                      <Toggle checked={Boolean(f.dynamic)} onChange={(v) => updateField(idx, { dynamic: v ? 'Nhập điều kiện hiển thị...' : '' })} label={t('Logic tự động')} />
+                  <td className="px-4 py-3 max-w-[320px] flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <Toggle checked={Boolean(f.dynamic)} onChange={(v) => updateField(idx, { dynamic: v ? 'Nhập điều kiện hiển thị...' : '' })} label={t('Logic tự động')} />
+                      </div>
                       {Boolean(f.dynamic) && (
                         <input 
                           type="text"
@@ -510,6 +516,28 @@ export default function FormTemplatesTab() {
                           className="text-xs text-secondary bg-surface-container-lowest border border-outline-variant/50 rounded px-2 py-1 outline-none focus:border-primary focus:ring-1 focus:ring-primary w-full max-w-[200px]"
                           placeholder={t('VD: Hiển thị khi...')}
                         />
+                      )}
+                    </div>
+                    
+                    <div className="pt-2 border-t border-outline-variant/30">
+                      {f.type === 'Tải file' ? (
+                        <div className="flex items-center gap-2 text-xs text-secondary">
+                          <span className="material-symbols-outlined text-[16px] text-outline">attach_file</span>
+                          <span className="italic">{t('File đính kèm — tách riêng, không xuất Excel')}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Toggle
+                            checked={f.isPersisted !== false}
+                            onChange={(v) => updateField(idx, { isPersisted: v })}
+                            label={t('Sao lưu & Xuất báo cáo')}
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-xs text-secondary whitespace-nowrap">
+                              {f.isPersisted !== false ? t('Sao lưu & Xuất') : t('Không xuất')}
+                            </span>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </td>

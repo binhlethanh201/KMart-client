@@ -154,6 +154,12 @@ const NAV_ITEMS = [
     badge: null, /* optionally set dynamically */
   },
   {
+    name: 'Báo Cáo',
+    icon: 'analytics',
+    path: '/reports',
+    permission: 'APPLICATION_VIEW',
+  },
+  {
     name: 'Cấu hình',
     icon: 'settings',
     subPanel: 'settings',
