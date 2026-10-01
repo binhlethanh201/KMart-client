@@ -11,6 +11,7 @@ import EmployeeDetail from "./features/hr/pages/EmployeeDetail";
 import SystemConfig from "./features/system-config/pages/SystemConfig";
 import PersonalRequests from "./features/requests/pages/PersonalRequests";
 import RequestDetail from "./features/requests/pages/RequestDetail";
+import ReportsPage from "./features/reports/pages/ReportsPage";
 
 import ToastHost from "./components/ToastHost";
 import LoginPage from "./features/auth/pages/LoginPage";
@@ -121,6 +122,13 @@ function App() {
                 } />
 
                 <Route path="requests/:id" element={<RequestDetail />} />
+
+                {/* Reports page */}
+                <Route path="reports" element={
+                  <ProtectedRoute requiredPermissions={[PERMISSIONS.APPLICATION_VIEW]}>
+                    <ReportsPage />
+                  </ProtectedRoute>
+                } />
 
                 {/* Requests pages */}
                 <Route path="my-requests" element={<PersonalRequests mode="sent" />} />
