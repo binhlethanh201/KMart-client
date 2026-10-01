@@ -121,20 +121,26 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
   // Auto-calculate days when dates change
   useEffect(() => {
-    const from = form.dynamic['Từ ngày'];
-    const to = form.dynamic['Đến ngày'];
-    if (from && to) {
-      const d1 = new Date(from);
-      const d2 = new Date(to);
-      if (!isNaN(d1) && !isNaN(d2) && d2 >= d1) {
-        const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
-        setForm(f => {
-          if (f.dynamic['Tổng số ngày'] == diffDays) return f;
-          return { ...f, dynamic: { ...f.dynamic, 'Tổng số ngày': diffDays } };
-        });
+    const fromField = currentFields.find(f => f.label === 'Từ ngày' || (f.name || f.fieldName || f.id) === 'Từ ngày');
+    const toField = currentFields.find(f => f.label === 'Đến ngày' || (f.name || f.fieldName || f.id) === 'Đến ngày');
+    const totalField = currentFields.find(f => f.label === 'Tổng số ngày' || (f.name || f.fieldName || f.id) === 'Tổng số ngày');
+    
+    if (fromField && toField && totalField) {
+      const from = form.dynamic[fromField.name || fromField.fieldName || fromField.id];
+      const to = form.dynamic[toField.name || toField.fieldName || toField.id];
+      if (from && to) {
+        const d1 = new Date(from);
+        const d2 = new Date(to);
+        if (!isNaN(d1) && !isNaN(d2) && d2 >= d1) {
+          const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+          setForm(f => {
+            if (f.dynamic[totalField.name || totalField.fieldName || totalField.id] == diffDays) return f;
+            return { ...f, dynamic: { ...f.dynamic, [totalField.name || totalField.fieldName || totalField.id]: diffDays } };
+          });
+        }
       }
     }
-  }, [form.dynamic['Từ ngày'], form.dynamic['Đến ngày']]);
+  }, [form.dynamic, currentFields]);
 
   // BE-04: bước đầu tiên của luồng duyệt
   const firstStep = useMemo(() => {
@@ -235,14 +241,18 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     };
     
     // Auto extract dates if present
-    if (form.dynamic['Từ ngày']) {
-      payload.startDate = form.dynamic['Từ ngày'];
+    const fromField = currentFields.find(f => f.label === 'Từ ngày' || (f.name || f.fieldName || f.id) === 'Từ ngày');
+    const toField = currentFields.find(f => f.label === 'Đến ngày' || (f.name || f.fieldName || f.id) === 'Đến ngày');
+    const totalField = currentFields.find(f => f.label === 'Tổng số ngày' || (f.name || f.fieldName || f.id) === 'Tổng số ngày');
+
+    if (fromField && form.dynamic[fromField.name || fromField.fieldName || fromField.id]) {
+      payload.startDate = form.dynamic[fromField.name || fromField.fieldName || fromField.id];
     }
-    if (form.dynamic['Đến ngày']) {
-      payload.endDate = form.dynamic['Đến ngày'];
+    if (toField && form.dynamic[toField.name || toField.fieldName || toField.id]) {
+      payload.endDate = form.dynamic[toField.name || toField.fieldName || toField.id];
     }
-    if (form.dynamic['Tổng số ngày']) {
-      payload.totalDays = parseInt(form.dynamic['Tổng số ngày']);
+    if (totalField && form.dynamic[totalField.name || totalField.fieldName || totalField.id]) {
+      payload.totalDays = parseInt(form.dynamic[totalField.name || totalField.fieldName || totalField.id]);
     }
 
     // BE-04: chỉ gửi khi bước 1 (theo chức danh) có nhiều người và đã chọn 1
@@ -440,16 +450,17 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             if (f.type === 'NUMBER' || f.type === 'Số') {
               const labelKey = f.label || f.id;
               // 'tự động' là giá trị dữ liệu của field (BE trả về), KHÔNG dịch.
+              const fieldId = f.name || f.fieldName || f.id;
               const isAuto = f.options?.includes('auto') || f.options?.includes('tự động');
               return (
-                <div key={labelKey} className="flex flex-col gap-2">
+                <div key={fieldId} className="flex flex-col gap-2">
                   <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
                   <input
                     className={fieldCls}
                     type="number"
                     required={f.required}
-                    value={form.dynamic[labelKey] || ''}
-                    onChange={(e) => setDynamic(labelKey, e.target.value)}
+                    value={form.dynamic[fieldId] || ''}
+                    onChange={(e) => setDynamic(fieldId, e.target.value)}
                     placeholder={f.placeholder || ''}
                     readOnly={isAuto}
                     disabled={isAuto}
@@ -460,20 +471,21 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'DATE' || f.type === 'Ngày') {
               const labelKey = f.label || f.id;
+              const fieldId = f.name || f.fieldName || f.id;
               let inputType = 'date';
               const l = (labelKey || '').toLowerCase();
               if (l.includes('giờ') || l.includes('time')) inputType = 'time';
               if (l.includes('ngày và giờ') || l.includes('datetime')) inputType = 'datetime-local';
 
               return (
-                <div key={labelKey} className="flex flex-col gap-2">
+                <div key={fieldId} className="flex flex-col gap-2">
                   <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
                   <input 
                     className={fieldCls} 
                     type={inputType} 
                     required={f.required} 
-                    value={form.dynamic[labelKey] || ''} 
-                    onChange={(e) => setDynamic(labelKey, e.target.value)} 
+                    value={form.dynamic[fieldId] || ''} 
+                    onChange={(e) => setDynamic(fieldId, e.target.value)} 
                   />
                 </div>
               );
@@ -481,14 +493,15 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'TEXTAREA' || f.type === 'Văn bản') {
               const labelKey = f.label || f.id;
+              const fieldId = f.name || f.fieldName || f.id;
               return (
-                <div key={labelKey} className="flex flex-col gap-2">
+                <div key={fieldId} className="flex flex-col gap-2">
                   <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
                   <textarea
                     className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
                     required={f.required}
-                    value={form.dynamic[labelKey] || ''}
-                    onChange={(e) => setDynamic(labelKey, e.target.value)}
+                    value={form.dynamic[fieldId] || ''}
+                    onChange={(e) => setDynamic(fieldId, e.target.value)}
                     placeholder={f.placeholder || t('Nhập thông tin...')}
                   />
                 </div>
@@ -497,15 +510,16 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'SELECT' || f.type === 'Lựa chọn') {
               const labelKey = f.label || f.id;
+              const fieldId = f.name || f.fieldName || f.id;
               const options = f.options || [];
               return (
-                <div key={labelKey} className="flex flex-col gap-2">
+                <div key={fieldId} className="flex flex-col gap-2">
                   <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
                   <select
                     className={fieldCls}
                     required={f.required}
-                    value={form.dynamic[labelKey] || ''}
-                    onChange={(e) => setDynamic(labelKey, e.target.value)}
+                    value={form.dynamic[fieldId] || ''}
+                    onChange={(e) => setDynamic(fieldId, e.target.value)}
                   >
                     <option value="">{t('-- Chọn --')}</option>
                     {options.map((opt) => {
@@ -520,6 +534,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'FILE' || f.type === 'Tải file') {
               const labelKey = f.label || f.id;
+              const fieldId = f.name || f.fieldName || f.id;
               
               // Recover templateFile from localStorage since backend doesn't save it
               let templateFile = f.templateFile;
@@ -533,7 +548,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               }
 
               return (
-                <div key={labelKey} className="flex flex-col gap-2">
+                <div key={fieldId} className="flex flex-col gap-2">
                   <div className="flex justify-between items-end">
                     <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
                     {templateFile && templateFile.name && (
@@ -547,8 +562,8 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                     <span className="material-symbols-outlined text-[24px] text-outline group-hover:text-primary transition-colors">cloud_upload</span>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors">
-                        {(files[labelKey]?.name || form.dynamic[labelKey])
-                          ? (files[labelKey]?.name || form.dynamic[labelKey])
+                        {(files[fieldId]?.name || form.dynamic[fieldId])
+                          ? (files[fieldId]?.name || form.dynamic[fieldId])
                           : t('Nhấn để chọn file tải lên')}
                       </span>
                       <span className="text-xs text-secondary">{t('Hỗ trợ PDF, DOCX, XLSX (Tối đa 10MB)')}</span>
@@ -560,9 +575,9 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
-                          setDynamic(labelKey, file.name);
+                          setDynamic(fieldId, file.name);
                           // BE-09: giữ File thật để upload sau khi đơn được tạo
-                          setFiles((prev) => ({ ...prev, [labelKey]: file }));
+                          setFiles((prev) => ({ ...prev, [fieldId]: file }));
                         }
                       }}
                     />
@@ -573,14 +588,15 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'USER' || f.type === 'Người duyệt thay') {
               const labelKey = f.label || f.id;
+              const fieldId = f.name || f.fieldName || f.id;
               return (
-                <div key={labelKey} className="flex flex-col gap-2">
+                <div key={fieldId} className="flex flex-col gap-2">
                   <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
                   <select
                     className={fieldCls}
                     required={f.required}
-                    value={form.dynamic[labelKey] || ''}
-                    onChange={(e) => setDynamic(labelKey, e.target.value)}
+                    value={form.dynamic[fieldId] || ''}
+                    onChange={(e) => setDynamic(fieldId, e.target.value)}
                   >
                     <option value="">{t('-- Chọn người --')}</option>
                     {employees?.map((emp) => (
@@ -593,15 +609,16 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             // Default: render as text input
             const labelKey = f.label || f.id;
+            const fieldId = f.name || f.fieldName || f.id;
             return (
-              <div key={labelKey} className="flex flex-col gap-2">
+              <div key={fieldId} className="flex flex-col gap-2">
                 <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
                 <input
                   className={fieldCls}
                   type="text"
                   required={f.required}
-                  value={form.dynamic[labelKey] || ''}
-                  onChange={(e) => setDynamic(labelKey, e.target.value)}
+                  value={form.dynamic[fieldId] || ''}
+                  onChange={(e) => setDynamic(fieldId, e.target.value)}
                   placeholder={f.placeholder || ''}
                 />
               </div>
