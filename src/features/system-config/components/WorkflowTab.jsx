@@ -1009,7 +1009,7 @@ export default function WorkflowTab() {
       [formType]: {
         ...prev[formType],
         [block]: prev[formType][block].map((s) =>
-          s.id === id ? { ...s, role, roleName: role, specificUser: null, approvers: null, sequentialOrder: null } : s
+          s.id === id ? { ...s, role, roleName: role, specificUser: null, specificUserId: null, approvers: null, sequentialOrder: null, arrangementMode: 'role' } : s
         ),
       },
     }));
@@ -1155,6 +1155,7 @@ export default function WorkflowTab() {
             // BE-35: người được CHỈ ĐỊNH cho bước "theo chức danh".
             // BE-46: resolve được cả khi giá trị là TÊN (UserSelect) hoặc ID.
             const designatedUserId = (() => {
+              if (s.approvalType === 'role' && s.arrangementMode === 'role') return null;
               if (Array.isArray(s.approvers) && s.approvers.length === 1) return resolveEmployeeId(s.approvers[0]);
               if (s.specificUser) return resolveEmployeeId(s.specificUser);
               if (s.specificUserId) return resolveEmployeeId(s.specificUserId);
@@ -1480,7 +1481,9 @@ export default function WorkflowTab() {
                                         arrangementMode: data.arrangementMode,
                                         role: data.role,
                                         approvers: data.approvers, 
-                                        sequentialOrder: data.approvers 
+                                        sequentialOrder: data.approvers,
+                                        specificUser: null,
+                                        specificUserId: null
                                       });
                                       setAdvancedStepId(null);
                                     }}

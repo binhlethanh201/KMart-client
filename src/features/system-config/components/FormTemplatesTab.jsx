@@ -53,9 +53,14 @@ export default function FormTemplatesTab() {
             dynamic: '', // Not fully mapped to backend yet
             isPersisted: f.isPersisted !== undefined ? f.isPersisted : true
           }));
+        } else if (!newFields[dt.name]) {
+          newFields[dt.name] = [];
         }
       });
       setFields(newFields);
+      if (!selectedForm && data.length > 0) {
+        setSelectedForm(data[0].name);
+      }
     }).catch(console.error);
   }, []);
 
@@ -203,20 +208,20 @@ export default function FormTemplatesTab() {
   const updateField = (idx, patch) =>
     setFields((prev) => ({
       ...prev,
-      [selectedForm]: prev[selectedForm].map((f, i) => (i === idx ? { ...f, ...patch } : f)),
+      [selectedForm]: (Array.isArray(prev[selectedForm]) ? prev[selectedForm] : []).map((f, i) => (i === idx ? { ...f, ...patch } : f)),
     }));
 
   const removeField = (idx) =>
     setFields((prev) => ({
       ...prev,
-      [selectedForm]: prev[selectedForm].filter((_, i) => i !== idx),
+      [selectedForm]: (Array.isArray(prev[selectedForm]) ? prev[selectedForm] : []).filter((_, i) => i !== idx),
     }));
 
   const addField = () =>
     setFields((prev) => ({
       ...prev,
       [selectedForm]: [
-        ...prev[selectedForm],
+        ...(Array.isArray(prev[selectedForm]) ? prev[selectedForm] : []),
         { id: `field_${Date.now()}`, label: t('Trường mới'), type: 'Văn bản', required: false, dynamic: '', options: [], isPersisted: true },
       ],
     }));
