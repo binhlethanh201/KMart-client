@@ -12,8 +12,8 @@
 export const APPROVAL_TYPES = [
   { id: 'hierarchy', label: 'Cấp quản lý trực tiếp', desc: 'Quản lý trực tiếp của người tạo đơn (TP/Phó phòng/CHT)' },
   { id: 'chain', label: 'Chuỗi quản lý liên tiếp', desc: 'Duyệt lần lượt từ cấp thấp ➔ cấp cao' },
-  { id: 'role', label: 'Theo chức danh / Bộ phận', desc: 'Chọn bộ phận xử lý (VD: HR Admin, Kế toán)' },
-  { id: 'specific', label: 'Chọn 1 người cụ thể', desc: 'Chọn chính xác tên nhân sự' },
+  { id: 'arrangement', label: 'Duyệt theo sắp xếp', desc: 'Chọn quy tắc duyệt và chức danh/người cụ thể' },
+  { id: 'specific', label: 'Chỉ định 1 người cụ thể', desc: 'Đơn chỉ được gửi đến duy nhất người này' },
 ];
 
 // Quy tắc nhiều người duyệt
