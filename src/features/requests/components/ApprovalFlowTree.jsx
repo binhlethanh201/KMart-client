@@ -155,8 +155,15 @@ export default function ApprovalFlowTree({
       };
 
       const guessRoleApprover = (roleName, targetDeptId) => {
+        const roleCode = String(roleName).toUpperCase();
         return employees?.find((e) => {
-          const hasRole = e.role === roleName || (e.roles && Array.isArray(e.roles) && e.roles.includes(roleName));
+          const hasRole = 
+            String(e.role || '').toUpperCase() === roleCode ||
+            String(e.position || '').toUpperCase() === roleCode ||
+            (e.roles && Array.isArray(e.roles) && e.roles.some(r => String(r).toUpperCase() === roleCode)) ||
+            (Array.isArray(e.secondary) && e.secondary.some(s => String(s.position || '').toUpperCase() === roleCode)) ||
+            (Array.isArray(e.allPositions) && e.allPositions.some(p => String(p.position || p.name || '').toUpperCase() === roleCode)) ||
+            (Array.isArray(e.systemRoles) && e.systemRoles.some(r => String(r?.roleName || r || '').toUpperCase() === roleCode));
           if (!hasRole) return false;
           // BE-48: Nếu đang dự đoán Role trong chuỗi duyệt, bắt buộc người đó phải kiêm nhiệm trong phòng ban đích
           if (targetDeptId) {
@@ -225,15 +232,135 @@ export default function ApprovalFlowTree({
     if (idx === 0 && selectedApproverId) {
       emp = empById(selectedApproverId);
     }
-    if (appType === 'specific_user' || appType === 'specific') {
-      emp = empById(step.specificUserId || step.specificUser);
-    } else if (appType === 'role' && step.role && !emp) {
-      emp = employees?.find((e) => {
-        if (e.role === step.role) return true;
-        if (e.roles && Array.isArray(e.roles)) return e.roles.includes(step.role);
-        return false;
-      });
+    
+    // Tìm danh sách người được chỉ định trước (mảng ID)
+    const designatedIds = Array.isArray(step.approverIds) && step.approverIds.length > 0 
+      ? step.approverIds 
+      : (Array.isArray(step.sequentialOrder) ? step.sequentialOrder : []);
+
+    if (!emp && designatedIds.length > 0) {
+      let users = designatedIds.map(id => empById(id)).filter(Boolean);
+
+      // BE-48: Lọc và sắp xếp những người được chỉ định theo các phòng ban đích (nếu có)
+      if (departmentsSelected && departmentsSelected.length > 0) {
+        const orderedUsers = [];
+        departmentsSelected.forEach(deptId => {
+          const userInDept = users.find(u => 
+            u.departmentId === deptId || 
+            (Array.isArray(u.allPositions) && u.allPositions.some(p => p.departmentId === deptId)) ||
+            (Array.isArray(u.secondary) && u.secondary.some(p => p.departmentId === deptId))
+          );
+          if (userInDept && !orderedUsers.includes(userInDept)) {
+            orderedUsers.push(userInDept);
+          }
+        });
+        users = orderedUsers;
+      }
+
+      if (users.length > 0) {
+        if (step.multiRule === 'sequential') {
+          // Trả về nhiều chặng nối tiếp nhau
+          return users.map((u, ui) => ({
+            key: `${step.id || idx}-seq-${ui}`,
+            parallel: false,
+            branches: [{
+              key: `step-${step.id || idx}-seq-${ui}`,
+              badge: t('Cấp {v0}.{v1}', { v0: step.stepOrder, v1: ui + 1 }),
+              badgeTitle: t('Bước {v0} - Người thứ {v1}', { v0: step.stepOrder, v1: ui + 1 }),
+              name: u.name,
+              hasManager: true,
+              avatar: u.avatar,
+              role: roleLabel(u, step.roleName || step.role),
+              isStep: true,
+            }],
+          }));
+        } else {
+          // Trả về 1 chặng song song với nhiều nhánh
+          return [{
+            key: step.id || idx,
+            parallel: true,
+            branches: users.map((u, ui) => ({
+              key: `step-${step.id || idx}-par-${ui}`,
+              badge: t('Cấp {v0}', { v0: step.stepOrder }),
+              badgeTitle: t('Bước {v0} - Song song', { v0: step.stepOrder }),
+              name: u.name,
+              hasManager: true,
+              avatar: u.avatar,
+              role: roleLabel(u, step.roleName || step.role),
+              isStep: true,
+            })),
+          }];
+        }
+      }
     }
+
+    if (appType === 'specific_user' || appType === 'specific') {
+      emp = empById(step.specificUserId || step.specificUser) || emp;
+    } 
+
+    if (appType === 'role' && step.role && !emp) {
+      const roleCode = String(step.role).toUpperCase();
+      
+      const getRoleApproverInDept = (deptId) => {
+        return employees?.find((e) => {
+          const hasRole = 
+            String(e.role || '').toUpperCase() === roleCode ||
+            String(e.position || '').toUpperCase() === roleCode ||
+            (e.roles && Array.isArray(e.roles) && e.roles.some(r => String(r).toUpperCase() === roleCode)) ||
+            (Array.isArray(e.secondary) && e.secondary.some(s => String(s.position || '').toUpperCase() === roleCode)) ||
+            (Array.isArray(e.allPositions) && e.allPositions.some(p => String(p.position || p.name || '').toUpperCase() === roleCode)) ||
+            (Array.isArray(e.systemRoles) && e.systemRoles.some(r => String(r?.roleName || r || '').toUpperCase() === roleCode));
+          if (!hasRole) return false;
+          
+          if (!deptId) return true;
+          if (e.departmentId === deptId) return true;
+          if (Array.isArray(e.allPositions) && e.allPositions.some(p => p.departmentId === deptId)) return true;
+          if (Array.isArray(e.secondary) && e.secondary.some(p => p.departmentId === deptId)) return true;
+          return false;
+        });
+      };
+
+      if (departmentsSelected && departmentsSelected.length > 0) {
+        const resolvedUsers = departmentsSelected.map(deptId => getRoleApproverInDept(deptId)).filter(Boolean);
+        
+        if (resolvedUsers.length > 0) {
+          if (step.multiRule === 'sequential') {
+            return resolvedUsers.map((u, ui) => ({
+              key: `${step.id || idx}-seq-${ui}`,
+              parallel: false,
+              branches: [{
+                key: `step-${step.id || idx}-seq-${ui}`,
+                badge: t('Cấp {v0}.{v1}', { v0: step.stepOrder, v1: ui + 1 }),
+                badgeTitle: t('Bước {v0} - Người thứ {v1}', { v0: step.stepOrder, v1: ui + 1 }),
+                name: u.name,
+                hasManager: true,
+                avatar: u.avatar,
+                role: roleLabel(u, step.roleName || step.role),
+                isStep: true,
+              }],
+            }));
+          } else {
+            return [{
+              key: step.id || idx,
+              parallel: true,
+              branches: resolvedUsers.map((u, ui) => ({
+                key: `step-${step.id || idx}-par-${ui}`,
+                badge: t('Cấp {v0}', { v0: step.stepOrder }),
+                badgeTitle: t('Bước {v0} - Song song', { v0: step.stepOrder }),
+                name: u.name,
+                hasManager: true,
+                avatar: u.avatar,
+                role: roleLabel(u, step.roleName || step.role),
+                isStep: true,
+              })),
+            }];
+          }
+        }
+      }
+      // Fallback
+      emp = getRoleApproverInDept(null) || emp;
+    }
+
     return [{
       key: step.id || idx,
       parallel: false,

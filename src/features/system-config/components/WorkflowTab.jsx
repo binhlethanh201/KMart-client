@@ -1135,12 +1135,11 @@ export default function WorkflowTab() {
               // hay để tự resolve theo chức danh) — trước đây chỉ gửi khi có ≥2 người được
               // CHỈ ĐỊNH nên chọn quy tắc ở chế độ theo chức danh bị mất khi lưu.
               multiRule: s.approvalType === 'role' ? s.multiRule : (s.approvalType === 'chain' ? 'sequential' : null),
-              // Thứ tự tuần tự: chỉ có ý nghĩa khi quy tắc là "sequential".
-              // Ưu tiên thứ tự người dùng đã sắp, nếu chưa sắp thì lấy danh sách đã chỉ định.
-              sequentialOrder: (s.approvalType === 'role' && s.multiRule === 'sequential')
-                ? (Array.isArray(s.sequentialOrder) && s.sequentialOrder.length > 0
+              // Đẩy danh sách người duyệt cụ thể vào sequentialOrder (backend dùng trường này để nhận danh sách IDs)
+              sequentialOrder: s.approvalType === 'role'
+                ? (s.arrangementMode === 'role' ? null : (Array.isArray(s.sequentialOrder) && s.sequentialOrder.length > 0
                     ? s.sequentialOrder
-                    : (Array.isArray(s.approvers) ? s.approvers : null))
+                    : (Array.isArray(s.approvers) ? s.approvers : null)))
                 : null,
               specificUserId,
               scope: s.scope || 'auto',
@@ -1222,7 +1221,7 @@ export default function WorkflowTab() {
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => {
           const isActive = openStepIds.has(step.id);
-          const hasExplicitApprovers = Array.isArray(step.approvers) && step.approvers.length > 0;
+          const hasExplicitApprovers = step.arrangementMode !== 'role' && Array.isArray(step.approvers) && step.approvers.length > 0;
           const activeApproverCount = step.approvers?.length || 0;
           const showMulti = step.approvalType === 'role' && hasExplicitApprovers;
           return (
@@ -1433,10 +1432,12 @@ export default function WorkflowTab() {
                                     step={step}
                                     approvalRoles={approvalRoles}
                                     onClose={() => setAdvancedStepId(null)}
-                                    onConfirm={(ids) => {
+                                    onConfirm={(data) => {
                                       updateStep(step.id, { 
-                                        approvers: ids, 
-                                        sequentialOrder: ids 
+                                        arrangementMode: data.arrangementMode,
+                                        role: data.role,
+                                        approvers: data.approvers, 
+                                        sequentialOrder: data.approvers 
                                       });
                                       setAdvancedStepId(null);
                                     }}
