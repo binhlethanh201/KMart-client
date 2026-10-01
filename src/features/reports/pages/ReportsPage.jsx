@@ -48,112 +48,128 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="py-16 px-8 md:px-16 lg:px-24 space-y-12 h-full overflow-y-auto bg-[#f6f6f4] font-sans">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Báo Cáo & Thống Kê</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Số liệu thống kê cho từng hạng mục đơn theo phòng ban
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#d94a38] mb-4">
+            Báo cáo & Thống kê
           </p>
+          <h1 className="text-4xl md:text-5xl font-black text-[#1d1d1f] tracking-tight max-w-2xl leading-tight">
+            Hiệu suất xử lý đơn từ.
+            <br />
+            Hiểu rõ qua từng con số.
+          </h1>
         </div>
         <button
           onClick={() => setExportModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+          className="flex items-center gap-2 px-8 py-4 bg-[#1d1d1f] text-white rounded-full hover:bg-black transition-colors font-semibold tracking-wide w-fit"
         >
-          <span className="material-symbols-outlined">download</span>
-          Xuất Excel
+          Xuất Báo Cáo
         </button>
       </div>
 
       {/* Bộ lọc */}
-      <FilterBar
-        filters={filters}
-        departments={departments}
-        documentTypes={documentTypes}
-        onChange={handleFilterChange}
-      />
-
-      {/* KPI Cards */}
-      {loading ? (
-        <div className="grid grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="h-24 bg-white rounded-lg shadow animate-pulse" />
-          ))}
-        </div>
-      ) : stats && (
-        <div className="grid grid-cols-4 gap-4">
-          <StatCard title="Tổng Đơn" value={stats.totalApplications} icon="description" color="blue" />
-          <StatCard title="Đang Chờ Duyệt" value={stats.pendingApplications} icon="pending_actions" color="yellow" />
-          <StatCard title="Đã Duyệt" value={stats.approvedApplications} icon="check_circle" color="green" />
-          <StatCard title="Từ Chối" value={stats.rejectedApplications} icon="cancel" color="red" />
-        </div>
-      )}
-
-      {/* Biểu đồ hàng 1 */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Theo loại đơn - Pie Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="font-semibold text-lg mb-4">Thống kê theo loại đơn</h3>
-          <PieChart data={stats?.byType || []} />
-        </div>
-
-        {/* Theo trạng thái - Bar Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="font-semibold text-lg mb-4">Phân bố trạng thái</h3>
-          <BarChart
-            data={(stats?.byStatus || []).map(s => ({
-              name: translateStatus(s.status),
-              value: s.count,
-            }))}
-          />
-        </div>
-      </div>
-
-      {/* Theo phòng ban */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="font-semibold text-lg mb-4">Thống kê theo phòng ban</h3>
-        <BarChart
-          data={(stats?.byDepartment || []).map(d => ({
-            name: d.departmentName,
-            value: d.totalApplications,
-          }))}
+      <div className="bg-white rounded-[24px] p-2 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+        <FilterBar
+          filters={filters}
+          departments={departments}
+          documentTypes={documentTypes}
+          onChange={handleFilterChange}
         />
       </div>
 
-      {/* Xu hướng theo tháng */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="font-semibold text-lg mb-4">Xu hướng xử lý đơn theo tháng</h3>
-        <LineChart data={stats?.approvalTimeStats?.monthlyTrend || []} />
+      {/* KPI Cards */}
+      {loading ? (
+        <div className="grid grid-cols-2 gap-8">
+          {[1, 2].map(i => (
+            <div key={i} className="h-40 bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] animate-pulse" />
+          ))}
+        </div>
+      ) : stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <StatCard title="Tổng Đơn Đã Duyệt" value={stats.approvedApplications} icon="verified" color="green" />
+          <StatCard
+            title="Thời Gian Duyệt TB (Giờ)"
+            value={stats.averageApprovalTimeHours?.toFixed(1) || '0'}
+            icon="schedule"
+            color="blue"
+          />
+        </div>
+      )}
+
+      {/* Biểu đồ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Theo loại đơn - Bar Chart */}
+        <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-8 flex flex-col h-[450px]">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38] mb-8">
+            Thống kê theo loại đơn
+          </h3>
+          <div className="flex-1 min-h-0 overflow-y-auto pr-4 custom-scrollbar">
+            <BarChart
+              data={(stats?.byType || []).map(t => ({
+                name: t.documentType || 'Không rõ',
+                value: t.count || 0
+              }))}
+            />
+          </div>
+        </div>
+
+        {/* Xu hướng theo tháng */}
+        <div className="bg-[#1d1d1f] rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-8 h-[450px] flex flex-col">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-[#f6f6f4] mb-8 opacity-70">
+            Xu hướng duyệt đơn theo tháng
+          </h3>
+          <div className="flex-1 min-h-0">
+            <LineChart data={stats?.approvalTimeStats?.monthlyTrend || []} isDark />
+          </div>
+        </div>
       </div>
 
-      {/* Bảng chi tiết phòng ban */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="font-semibold text-lg mb-4">Chi tiết theo phòng ban</h3>
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left text-sm text-gray-500 py-2">Phòng ban</th>
-              <th className="text-right text-sm text-gray-500 py-2">Tổng</th>
-              <th className="text-right text-sm text-gray-500 py-2">Chờ duyệt</th>
-              <th className="text-right text-sm text-gray-500 py-2">Đã duyệt</th>
-              <th className="text-right text-sm text-gray-500 py-2">Từ chối</th>
-              <th className="text-right text-sm text-gray-500 py-2">TG TB (h)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(stats?.byDepartment || []).map(d => (
-              <tr key={d.departmentId} className="border-b hover:bg-gray-50">
-                <td className="py-3 font-medium">{d.departmentName}</td>
-                <td className="text-right">{d.totalApplications}</td>
-                <td className="text-right text-yellow-600">{d.pending}</td>
-                <td className="text-right text-green-600">{d.approved}</td>
-                <td className="text-right text-red-600">{d.rejected}</td>
-                <td className="text-right">{d.averageApprovalTimeHours?.toFixed(1) || '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Bảng chi tiết phòng ban dạng Cards */}
+      <div>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38] mb-6 ml-2">
+          Chi tiết theo phòng ban
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {(stats?.byDepartment || []).map((d, index) => {
+            const maxApproved = Math.max(...(stats?.byDepartment || []).map(x => x.approved), 1);
+            const volumePercent = (d.approved / maxApproved) * 100;
+
+            return (
+              <div key={d.departmentId || index} className="bg-white rounded-[24px] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.02)] flex flex-col gap-6 hover:-translate-y-1 transition-transform">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#f6f6f4] text-[#1d1d1f] flex items-center justify-center text-lg font-bold">
+                    {d.departmentName?.charAt(0) || '?'}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-[#1d1d1f] text-lg leading-tight">{d.departmentName}</h4>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 bg-[#f6f6f4] rounded-2xl p-4">
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Đã duyệt</p>
+                    <p className="text-2xl font-black text-[#1d1d1f]">{d.approved}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Thời gian TB</p>
+                    <p className="text-xl font-bold text-[#1d1d1f] mt-1">{d.averageApprovalTimeHours?.toFixed(1) || '-'}h</p>
+                  </div>
+                </div>
+
+                <div className="h-2 bg-[#f6f6f4] rounded-full overflow-hidden w-full">
+                  <div className="h-full bg-[#d94a38] rounded-full" style={{ width: `${volumePercent}%` }} />
+                </div>
+              </div>
+            );
+          })}
+          {(!stats?.byDepartment || stats.byDepartment.length === 0) && (
+            <div className="col-span-full py-12 text-center text-gray-500 font-medium bg-white rounded-[24px]">
+              Không có dữ liệu phòng ban
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal xuất Excel */}

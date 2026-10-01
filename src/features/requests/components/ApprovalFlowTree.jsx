@@ -303,19 +303,37 @@ export default function ApprovalFlowTree({
       
       const getRoleApproverInDept = (deptId) => {
         return employees?.find((e) => {
-          const hasRole = 
+          if (!deptId) {
+            const hasRole = 
+              String(e.role || '').toUpperCase() === roleCode ||
+              String(e.position || '').toUpperCase() === roleCode ||
+              (e.roles && Array.isArray(e.roles) && e.roles.some(r => String(r).toUpperCase() === roleCode)) ||
+              (Array.isArray(e.secondary) && e.secondary.some(s => String(s.position || '').toUpperCase() === roleCode)) ||
+              (Array.isArray(e.allPositions) && e.allPositions.some(p => String(p.position || p.positionName || p.name || '').toUpperCase() === roleCode)) ||
+              (Array.isArray(e.systemRoles) && e.systemRoles.some(r => String(r?.roleName || r || '').toUpperCase() === roleCode));
+            return hasRole;
+          }
+
+          // Kiểm tra xem nhân sự có đúng vai trò/chức vụ tại chính phòng ban deptId này không
+          const isPrimaryInDept = e.departmentId === deptId;
+          const primaryRoleMatches = isPrimaryInDept && (
             String(e.role || '').toUpperCase() === roleCode ||
             String(e.position || '').toUpperCase() === roleCode ||
             (e.roles && Array.isArray(e.roles) && e.roles.some(r => String(r).toUpperCase() === roleCode)) ||
-            (Array.isArray(e.secondary) && e.secondary.some(s => String(s.position || '').toUpperCase() === roleCode)) ||
-            (Array.isArray(e.allPositions) && e.allPositions.some(p => String(p.position || p.name || '').toUpperCase() === roleCode)) ||
-            (Array.isArray(e.systemRoles) && e.systemRoles.some(r => String(r?.roleName || r || '').toUpperCase() === roleCode));
-          if (!hasRole) return false;
-          
-          if (!deptId) return true;
-          if (e.departmentId === deptId) return true;
-          if (Array.isArray(e.allPositions) && e.allPositions.some(p => p.departmentId === deptId)) return true;
-          if (Array.isArray(e.secondary) && e.secondary.some(p => p.departmentId === deptId)) return true;
+            (Array.isArray(e.systemRoles) && e.systemRoles.some(r => String(r?.roleName || r || '').toUpperCase() === roleCode))
+          );
+          if (primaryRoleMatches) return true;
+
+          const hasPosInDept = Array.isArray(e.allPositions) && e.allPositions.some(p => 
+            p.departmentId === deptId && String(p.position || p.positionName || p.name || '').toUpperCase() === roleCode
+          );
+          if (hasPosInDept) return true;
+
+          const hasSecInDept = Array.isArray(e.secondary) && e.secondary.some(s => 
+            s.departmentId === deptId && String(s.position || s.positionName || '').toUpperCase() === roleCode
+          );
+          if (hasSecInDept) return true;
+
           return false;
         });
       };
