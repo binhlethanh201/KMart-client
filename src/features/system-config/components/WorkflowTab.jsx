@@ -45,8 +45,11 @@ function approvalSummary(step, employees = []) {
     case 'chain':
       return translate(APPROVAL_LABELS.chain);
     case 'role': {
+      if (step.arrangementMode === 'role') {
+        return translate('Duyệt theo chức danh{v0}', { v0: step.role ? ` · ${translate(step.role)}` : '' });
+      }
       const n = Array.isArray(step.approvers) ? step.approvers.length : 0;
-      return translate('Theo chức danh / Bộ phận{v0}', { v0: n ? ` · ${n} người` : '' });
+      return translate('Duyệt theo sắp xếp{v0}', { v0: n ? ` · ${n} người` : '' });
     }
     case 'specific':
     case 'specific_user': {
@@ -59,7 +62,7 @@ function approvalSummary(step, employees = []) {
   }
 }
 
-function SequentialOrderList({ role, order, onChange }) {
+function SequentialOrderList({ role, order, onChange, isSequential = true }) {
   const { t } = useI18n();
   const { employees: EMPLOYEES } = useHr();
   const currentIds = useMemo(() => {
@@ -112,7 +115,7 @@ function SequentialOrderList({ role, order, onChange }) {
   return (
     <div className="mt-3 bg-surface-container-lowest border border-outline-variant rounded-md p-3">
       <div className="text-xs font-semibold text-on-surface mb-3 flex items-center justify-between">
-        <span>{t('Danh sách người duyệt tuần tự')}</span>
+        <span>{isSequential ? t('Danh sách người duyệt tuần tự') : t('Danh sách người duyệt')}</span>
         <span className="text-[10px] text-secondary font-normal px-2 py-0.5 bg-surface-container rounded-full">
           {displayList.length} {t('nhân sự')}
         </span>
@@ -124,17 +127,20 @@ function SequentialOrderList({ role, order, onChange }) {
         {displayList.map((emp, idx) => (
           <div
             key={emp.id}
-            draggable
-            onDragStart={(e) => handleDragStart(e, idx)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => handleDrop(e, idx)}
-            className={`flex items-center justify-between bg-surface border rounded p-2 shadow-sm transition-all ${draggedIdx === idx
+            draggable={isSequential}
+            onDragStart={(e) => isSequential && handleDragStart(e, idx)}
+            onDragOver={(e) => isSequential && e.preventDefault()}
+            onDrop={(e) => isSequential && handleDrop(e, idx)}
+            className={`flex items-center justify-between bg-surface border rounded p-2 shadow-sm transition-all ${
+                draggedIdx === idx
                 ? 'opacity-50 border-primary border-dashed'
-                : 'border-outline-variant hover:border-outline cursor-grab active:cursor-grabbing'
+                : isSequential 
+                  ? 'border-outline-variant hover:border-outline cursor-grab active:cursor-grabbing'
+                  : 'border-outline-variant'
               }`}
           >
             <div className="flex items-center gap-2 pointer-events-none min-w-0">
-              <span className="material-symbols-outlined text-outline text-[18px] flex-shrink-0">drag_indicator</span>
+              {isSequential && <span className="material-symbols-outlined text-outline text-[18px] flex-shrink-0">drag_indicator</span>}
               <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[11px] font-bold flex-shrink-0">
                 {idx + 1}
               </div>
@@ -322,15 +328,25 @@ function UserSelect({ value, onChange }) {
 }
 
 // Popup cấu hình nâng cao — tích chọn người tham gia bước duyệt
-function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
+function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
   const { t } = useI18n();
   const { employees: EMPLOYEES } = useHr();
-  const [selected, setSelected] = useState(() => new Set(Array.isArray(approvers) ? approvers : []));
+  
+  const [selected, setSelected] = useState(() => new Set(Array.isArray(step.approvers) ? step.approvers : []));
+  const [arrangementMode, setArrangementMode] = useState(step.arrangementMode || (step.role ? 'role' : 'specific'));
+  const [role, setRole] = useState(step.role || '');
+  
   const [search, setSearch] = useState('');
   const [dept, setDept] = useState('all');
+  const [pos, setPos] = useState('all');
 
   const departments = useMemo(
     () => Array.from(new Set(EMPLOYEES.map((e) => e.department).filter(Boolean))).sort(),
+    []
+  );
+  
+  const positions = useMemo(
+    () => Array.from(new Set(EMPLOYEES.map((e) => e.position).filter(Boolean))).sort(),
     []
   );
 
@@ -344,9 +360,10 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
           e.id.toLowerCase().includes(q) ||
           (e.position || '').toLowerCase().includes(q);
         const matchDept = dept === 'all' || e.department === dept;
-        return matchSearch && matchDept;
+        const matchPos = pos === 'all' || e.position === pos;
+        return matchSearch && matchDept && matchPos;
       }),
-    [search, dept]
+    [search, dept, pos]
   );
 
   useEffect(() => {
@@ -384,9 +401,11 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
             <span className="material-symbols-outlined text-primary">tune</span>
             <div>
               <h2 className="font-label-md text-on-surface font-semibold">{t('Cấu hình nâng cao — chọn người duyệt')}</h2>
-              <p className="text-xs text-secondary">
-                {t('Đã chọn')} <span className="font-medium text-primary">{selected.size}</span> {t('người tham gia duyệt')}
-              </p>
+              {arrangementMode === 'specific' && (
+                <p className="text-xs text-secondary">
+                  {t('Đã chọn')} <span className="font-medium text-primary">{selected.size}</span> {t('người tham gia duyệt')}
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -398,48 +417,115 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
           </button>
         </div>
 
-        {/* Bộ lọc */}
-        <div className="flex flex-wrap items-center gap-2 p-3 border-b border-outline-variant/30 bg-surface-container-lowest">
-          <div className="flex items-center gap-1.5 flex-1 min-w-[200px] bg-surface border border-outline-variant rounded-md px-2.5 py-1.5">
-            <span className="material-symbols-outlined text-secondary text-[18px]">search</span>
+        <div className="flex flex-col gap-3 p-4 bg-surface-container-low border-b border-outline-variant/50">
+          <label className="flex items-start gap-2 cursor-pointer group">
             <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t('Tìm theo tên / mã / chức vụ...')}
-              className="flex-1 bg-transparent text-sm text-on-surface outline-none"
+              type="radio"
+              checked={arrangementMode === 'role'}
+              onChange={() => setArrangementMode('role')}
+              className="mt-0.5 text-primary focus:ring-primary cursor-pointer"
             />
-          </div>
-          <select
-            className={`${selectCls} max-w-[200px]`}
-            value={dept}
-            onChange={(e) => setDept(e.target.value)}
-          >
-            <option value="all">{t('Tất cả phòng ban')}</option>
-            {departments.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={selectAllVisible}
-            className="text-xs text-primary hover:bg-primary-container/30 px-2.5 py-1.5 rounded transition-colors cursor-pointer"
-          >
-            {t('Chọn tất cả')}
-          </button>
-          <button
-            type="button"
-            onClick={clearAll}
-            className="text-xs text-secondary hover:text-error hover:bg-error-container/30 px-2.5 py-1.5 rounded transition-colors cursor-pointer"
-          >
-            {t('Bỏ chọn')}
-          </button>
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-on-surface group-hover:text-primary transition-colors">
+                {t('Để người tạo đơn quyết định')} <span className="font-normal text-secondary">({t('theo chức danh / phòng ban')})</span>
+              </div>
+              <div className="text-[11px] text-secondary mt-0.5">
+                {t('Ví dụ: Chọn Trưởng phòng, khi tạo đơn người dùng sẽ chọn Phòng ban để luồng gửi tới Trưởng phòng của phòng đó.')}
+              </div>
+              {arrangementMode === 'role' && (
+                <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className={`${selectCls} bg-surface w-full max-w-sm`}
+                  >
+                    <option value="" disabled>-- {t('Chọn chức vụ')} --</option>
+                    {positions.map((p) => (
+                      <option key={p} value={p}>
+                        {t(p)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </label>
+
+          <label className="flex items-start gap-2 cursor-pointer group">
+            <input
+              type="radio"
+              checked={arrangementMode === 'specific'}
+              onChange={() => setArrangementMode('specific')}
+              className="mt-0.5 text-primary focus:ring-primary cursor-pointer"
+            />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-on-surface group-hover:text-primary transition-colors">
+                {t('Chỉ định cụ thể người duyệt')}
+              </div>
+              <div className="text-[11px] text-secondary mt-0.5">
+                {t('Cố định sẵn những người sẽ duyệt bước này.')}
+              </div>
+            </div>
+          </label>
         </div>
 
-        {/* Danh sách nhân sự */}
-        <div className="overflow-y-auto max-h-[55vh] p-3 flex flex-col gap-1.5">
+        {/* Bộ lọc và Danh sách chỉ hiện khi chọn specific */}
+        {arrangementMode === 'specific' && (
+          <>
+            {/* Bộ lọc */}
+            <div className="flex flex-wrap items-center gap-2 p-3 border-b border-outline-variant/30 bg-surface-container-lowest">
+              <div className="flex items-center gap-1.5 flex-1 min-w-[200px] bg-surface border border-outline-variant rounded-md px-2.5 py-1.5">
+                <span className="material-symbols-outlined text-secondary text-[18px]">search</span>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('Tìm theo tên / mã / chức vụ...')}
+                  className="flex-1 bg-transparent text-sm text-on-surface outline-none"
+                />
+              </div>
+              <select
+                className={`${selectCls} max-w-[150px]`}
+                value={dept}
+                onChange={(e) => setDept(e.target.value)}
+              >
+                <option value="all">{t('Phòng ban')}</option>
+                {departments.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+              <select
+                className={`${selectCls} max-w-[150px]`}
+                value={pos}
+                onChange={(e) => setPos(e.target.value)}
+              >
+                <option value="all">{t('Chức vụ')}</option>
+                {positions.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={selectAllVisible}
+                className="text-xs text-primary hover:bg-primary-container/30 px-2.5 py-1.5 rounded transition-colors cursor-pointer"
+              >
+                {t('Chọn tất cả')}
+              </button>
+              <button
+                type="button"
+                onClick={clearAll}
+                className="text-xs text-secondary hover:text-error hover:bg-error-container/30 px-2.5 py-1.5 rounded transition-colors cursor-pointer"
+              >
+                {t('Bỏ chọn')}
+              </button>
+            </div>
+
+            {/* Danh sách nhân sự */}
+            <div className="overflow-y-auto max-h-[55vh] p-3 flex flex-col gap-1.5">
           {filtered.length === 0 ? (
             <div className="text-sm text-secondary text-center py-8 italic">{t('Không tìm thấy nhân sự nào.')}</div>
           ) : (
@@ -503,11 +589,14 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
             })
           )}
         </div>
-
+        {/* Đóng thẻ if specific */}
+          </>
+        )}
+        
         {/* Footer */}
-        <div className="flex items-center justify-between gap-3 p-4 border-t border-outline-variant/30 bg-surface-container-lowest">
+        <div className="flex items-center justify-between gap-3 p-4 border-t border-outline-variant/30 bg-surface-container-lowest mt-auto">
           <span className="text-xs text-secondary">
-            {t('Mẹo: người được tích sẽ tham gia bước duyệt này, ghi đè danh sách tự khớp theo vai trò.')}
+            {arrangementMode === 'specific' ? t('Mẹo: người được tích sẽ tham gia bước duyệt này, ghi đè danh sách tự khớp theo vai trò.') : ''}
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -519,11 +608,15 @@ function AdvancedApproverModal({ approvers, onConfirm, onClose }) {
             </button>
             <button
               type="button"
-              onClick={() => onConfirm(Array.from(selected))}
+              onClick={() => onConfirm({
+                arrangementMode,
+                role: arrangementMode === 'role' ? role : '',
+                approvers: arrangementMode === 'specific' ? Array.from(selected) : [],
+              })}
               className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant text-sm font-medium px-4 py-2 rounded-md flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
               <span className="material-symbols-outlined text-[18px]">check</span>
-              {t('Xác nhận (')}{selected.size})
+              {t('Xác nhận')} {arrangementMode === 'specific' && `(${selected.size})`}
             </button>
           </div>
         </div>
@@ -584,7 +677,7 @@ function makeStep(overrides = {}, roles = [], employees = []) {
     chainEnd: 'department_head',
     role: defaultRole,
     specificUser: defaultSpecificUser,
-    multiRule: 'sequential',
+    multiRule: null,
     scope: 'auto',
     condition: null,
     approvers: null,
@@ -849,19 +942,16 @@ export default function WorkflowTab() {
         ...prev[formType],
         [block]: prev[formType][block].map((s) => {
           if (s.id !== id) return s;
-          const next = { ...s, approvalType };
-          if (approvalType === 'hierarchy' && !next.hierarchyOption) {
+          let nextType = approvalType;
+          if (approvalType === 'arrangement') nextType = 'role';
+          const next = { ...s, approvalType: nextType };
+          if (nextType === 'hierarchy' && !next.hierarchyOption) {
             next.hierarchyOption = 'department_head';
           }
-          if (approvalType === 'chain') {
+          if (nextType === 'chain') {
             if (!next.chainStart) next.chainStart = 'direct_manager';
             if (!next.chainEnd) next.chainEnd = 'department_head';
             next.multiRule = 'sequential';
-          }
-          if (approvalType === 'role' && !next.role) {
-            next.role = approvalRoles.length > 0
-              ? (typeof approvalRoles[0] === 'string' ? approvalRoles[0] : approvalRoles[0]?.name || '')
-              : '';
           }
           return next;
         }),
@@ -977,7 +1067,7 @@ export default function WorkflowTab() {
           errs.push(t('{v0}: Cấp bắt đầu không được lớn hơn cấp kết thúc của chuỗi', { v0: where }));
         }
       }
-      if (type === 'role' && !step.role) {
+      if (type === 'role' && (!Array.isArray(step.approvers) || step.approvers.length === 0) && !step.role) {
         errs.push(t('{v0}: Cần chọn chức danh/bộ phận cho hình thức này', { v0: where }));
       }
       if (type === 'specific') {
@@ -1132,19 +1222,9 @@ export default function WorkflowTab() {
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => {
           const isActive = openStepIds.has(step.id);
-          // BE-35: số người duyệt = số người ĐƯỢC CHỈ ĐỊNH, nếu không chỉ định thì lấy
-          // toàn bộ nhân sự thuộc chức danh (vì luồng tự resolve theo chức danh).
           const hasExplicitApprovers = Array.isArray(step.approvers) && step.approvers.length > 0;
-          const roleMembersCount = EMPLOYEES.filter((e) => e.role === step.role || e.position === step.role).length;
-          const activeApproverCount = hasExplicitApprovers
-            ? step.approvers.length
-            : roleMembersCount;
-          // Quy tắc nhiều người duyệt chỉ có nghĩa khi bước là "theo chức danh",
-          // KHÔNG chỉ định 1 người cụ thể, và thực tế có ≥2 người có thể duyệt
-          // (hoặc người dùng đã chỉ định ≥2 người).
-          const showMulti = step.approvalType === 'role'
-            && !step.specificUser
-            && activeApproverCount >= 2;
+          const activeApproverCount = step.approvers?.length || 0;
+          const showMulti = step.approvalType === 'role' && hasExplicitApprovers;
           return (
             <div
               key={step.id}
@@ -1268,9 +1348,8 @@ export default function WorkflowTab() {
                         )}
                       </div>
 
-                      {/* Hàng trên: 2 cột cân bằng (đều ngắn) */}
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-4">
-                        {/* Cột trái - Hình thức duyệt */}
+                      {/* Hàng trên - Hình thức duyệt (Full width) */}
+                      <div className="w-full">
                         <div>
                           <GroupHeader icon="how_to_reg" label={t('Hình thức duyệt')} />
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1278,7 +1357,7 @@ export default function WorkflowTab() {
                               <RadioCard
                                 key={at.id}
                                 name={`approval-${step.id}`}
-                                checked={step.approvalType === at.id}
+                                checked={at.id === 'arrangement' ? step.approvalType === 'role' : step.approvalType === at.id}
                                 onClick={() => changeApprovalType(step.id, at.id)}
                                 title={t(at.label)}
                               />
@@ -1304,87 +1383,61 @@ export default function WorkflowTab() {
                               </select>
                             )}
                             {step.approvalType === 'role' && (
-                              <div className="flex flex-col gap-2 max-w-md">
-                                <div className="flex items-center justify-between gap-2">
-                                  <label className="text-[11px] font-medium text-secondary uppercase tracking-wide">
-                                    {t('1. Chọn chức danh cần duyệt')}
-                                  </label>
-                                </div>
-                                <select
-                                  className={selectCls}
-                                  value={step.role}
-                                  onChange={(e) => changeRole(step.id, e.target.value)}
-                                >
-                                  <option value="">{t('-- Chọn chức danh --')}</option>
-                                  {approvalRoles.map((r) => (
-                                    <option key={r.id} value={r.name}>
-                                      {t('Duyệt theo chức danh:')} {t(r.label || r.name)}
-                                    </option>
+                              <div className="flex flex-col gap-2 w-full">
+                                <GroupHeader icon="rule" label={t('Chọn quy tắc duyệt')} />
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                  {MULTI_RULES.map((r) => (
+                                    <RadioCard
+                                      key={r.id}
+                                      name={`multi-${step.id}`}
+                                      checked={step.multiRule === r.id}
+                                      onClick={() => {
+                                        updateStep(step.id, { multiRule: r.id });
+                                        setAdvancedStepId(step.id);
+                                      }}
+                                      title={t(r.label)}
+                                      desc={t(r.desc)}
+                                      badge={r.badge}
+                                    />
                                   ))}
-                                </select>
-                                <button
-                                  type="button"
-                                  onClick={() => setAdvancedStepId(step.id)}
-                                  className="group flex items-center gap-3 w-full text-left bg-surface-container-lowest border border-outline-variant hover:border-primary hover:bg-primary-container/20 px-3 py-2.5 rounded-md transition-colors cursor-pointer mt-1"
-                                >
-                                  <span className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                                    <span className="material-symbols-outlined text-[20px]">group_add</span>
-                                  </span>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-semibold text-on-surface">{t('2. Chỉ định người duyệt (không bắt buộc)')}</div>
-                                    <div className="text-[11px] text-secondary">
-                                      {Array.isArray(step.approvers) && step.approvers.length > 0
-                                        ? t('{v0} người đã chỉ định', { v0: step.approvers.length })
-                                        : t('Không chỉ định thì mọi người thuộc chức danh {v0} đều duyệt được', { v0: roleLabel(step.role) || '...' })}
-                                    </div>
-                                  </div>
-                                  {Array.isArray(step.approvers) && step.approvers.length > 0 && (
-                                    <span className="text-[11px] font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full flex-shrink-0">
-                                      {step.approvers.length}
-                                    </span>
-                                  )}
-                                  <span className="material-symbols-outlined text-outline group-hover:text-primary text-[20px] transition-colors flex-shrink-0">
-                                    chevron_right
-                                  </span>
-                                </button>
+                                </div>
 
-                                {/* Preview các người duyệt đã chọn */}
-                                {Array.isArray(step.approvers) && step.approvers.length > 0 && (
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {step.approvers.map((id) => {
-                                      const emp = EMPLOYEES.find((e) => e.id === id);
-                                      if (!emp) return null;
-                                      return (
-                                        <span
-                                          key={id}
-                                          className="flex items-center gap-1.5 bg-surface-container-low border border-outline-variant/60 rounded-full pl-0.5 pr-2 py-0.5"
-                                          title={`${emp.name} · ${emp.id}${emp.department ? ` · ${t(emp.department)}` : ''}`}
-                                        >
-                                          <img
-                                            src={emp.avatar}
-                                            alt={emp.name}
-                                            className="w-6 h-6 rounded-full object-cover border border-surface"
-                                          />
-                                          <span className="text-[11px] font-medium text-on-surface truncate max-w-[110px]">
-                                            {emp.name}
-                                          </span>
-                                          {emp.position && (
-                                            <span className="text-[9px] text-secondary truncate max-w-[80px]">
-                                              · {t(emp.position)}
-                                            </span>
-                                          )}
-                                        </span>
-                                      );
-                                    })}
+                                {step.multiRule && (
+                                  <div className="mt-4 border border-outline-variant/60 rounded-lg p-3.5 bg-surface-container-lowest flex items-center justify-between gap-4">
+                                    <div className="flex-1">
+                                      <div className="text-sm font-semibold text-on-surface">
+                                        {step.arrangementMode === 'role' ? t('Chức danh / Phòng ban cần duyệt') : t('Danh sách người duyệt')}
+                                      </div>
+                                      <div className="text-[12px] text-secondary mt-1">
+                                        {step.arrangementMode === 'role'
+                                          ? t('Để người tạo đơn quyết định · Chức danh: {v0}', { v0: step.role ? t(step.role) : t('Chưa chọn') })
+                                          : step.arrangementMode === 'specific' && step.approvers && step.approvers.length > 0
+                                          ? t(`Đã chỉ định ${step.approvers.length} người`)
+                                          : t('Chưa cấu hình người duyệt')}
+                                      </div>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => setAdvancedStepId(step.id)}
+                                      className="bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors text-sm font-medium px-4 py-2 rounded-md flex-shrink-0 cursor-pointer"
+                                    >
+                                      {(step.arrangementMode === 'role' && step.role) || (step.arrangementMode === 'specific' && step.approvers && step.approvers.length > 0)
+                                        ? t('Thay đổi')
+                                        : t('Cấu hình')}
+                                    </button>
                                   </div>
                                 )}
 
                                 {advancedStepId === step.id && (
                                   <AdvancedApproverModal
-                                    approvers={step.approvers}
+                                    step={step}
+                                    approvalRoles={approvalRoles}
                                     onClose={() => setAdvancedStepId(null)}
                                     onConfirm={(ids) => {
-                                      updateStep(step.id, { approvers: ids });
+                                      updateStep(step.id, { 
+                                        approvers: ids, 
+                                        sequentialOrder: ids 
+                                      });
                                       setAdvancedStepId(null);
                                     }}
                                   />
@@ -1479,7 +1532,37 @@ export default function WorkflowTab() {
                           </div>
                         </div>
 
-                        {/* Cột phải - Xử lý quá hạn */}
+                      </div>
+
+                      {/* Hàng dưới full-width - Thứ tự / Danh sách người duyệt */}
+                      {showMulti && (
+                        <div className="border-t border-outline-variant/50 pt-4">
+                          <GroupHeader
+                            icon={step.multiRule === 'sequential' ? "format_list_numbered" : "group"}
+                            label={step.multiRule === 'sequential' ? t('Thứ tự duyệt') : t('Danh sách người duyệt')}
+                            hint={t('{v0} người duyệt đã chỉ định', { v0: activeApproverCount })}
+                          />
+
+                          <SequentialOrderList
+                            role={step.role}
+                            isSequential={step.multiRule === 'sequential'}
+                            order={step.sequentialOrder || step.approvers}
+                            onChange={(newOrder) => updateStep(step.id, { sequentialOrder: newOrder })}
+                          />
+                          {(Array.isArray(step.approvers) && step.approvers.length === 1) && (
+                            <div className="mt-3 flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
+                              <span className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
+                              <span className="text-secondary">
+                                {t('Chỉ')} <strong className="text-on-surface">{t('1 người')}</strong> {t('được chỉ định — đơn sẽ chỉ tới người này (không áp dụng quy tắc nhiều người).')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Hàng dưới cùng - Cấu hình nâng cao */}
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-4 border-t border-outline-variant/50 pt-4">
+                        {/* Cột trái - Xử lý quá hạn */}
                         <div>
                           <GroupHeader icon="schedule" label={t('Xử lý quá hạn')} />
                           <label className="flex items-center gap-2 cursor-pointer mb-2">
@@ -1488,8 +1571,6 @@ export default function WorkflowTab() {
                               checked={step.timeoutEnabled}
                               onChange={(e) => updateStep(step.id, {
                                 timeoutEnabled: e.target.checked,
-                                // BE-38: mặc định 12 giờ nếu chưa nhập (UI trước đây ghi "12 giờ" cứng
-                                // nhưng KHÔNG hề gửi maxDurationHours -> BE dùng 48h, sai với nhãn).
                                 maxDurationHours: e.target.checked ? (step.maxDurationHours || 12) : step.maxDurationHours,
                                 timeoutMode: e.target.checked ? (step.timeoutMode || 'continuous') : step.timeoutMode,
                                 timeoutAction: e.target.checked ? (step.timeoutAction || 'return') : step.timeoutAction,
@@ -1499,20 +1580,20 @@ export default function WorkflowTab() {
                             <span className="text-sm text-on-surface">{t('Tự động xử lý đơn khi quá thời hạn không duyệt')}</span>
                           </label>
                           {step.timeoutEnabled && (
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pl-6">
+                            <div className="flex flex-col gap-2 pl-6">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-secondary whitespace-nowrap">{t('Số giờ tối đa:')}</span>
+                                <span className="text-xs text-secondary whitespace-nowrap w-[70px]">{t('Thời gian:')}</span>
                                 <input
                                   type="number"
                                   min="1"
                                   value={step.maxDurationHours ?? 12}
                                   onChange={(e) => updateStep(step.id, { maxDurationHours: Number(e.target.value) || 1 })}
-                                  className={`${selectCls} max-w-[100px]`}
+                                  className={`${selectCls} max-w-[80px]`}
                                 />
                                 <span className="text-xs text-secondary">{t('giờ')}</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-secondary whitespace-nowrap">{t('Chế độ:')}</span>
+                                <span className="text-xs text-secondary whitespace-nowrap w-[70px]">{t('Chế độ:')}</span>
                                 <select
                                   className={`${selectCls} max-w-[200px]`}
                                   value={step.timeoutMode || 'continuous'}
@@ -1526,9 +1607,9 @@ export default function WorkflowTab() {
                                 </select>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-secondary whitespace-nowrap">{t('Hành động:')}</span>
+                                <span className="text-xs text-secondary whitespace-nowrap w-[70px]">{t('Hành động:')}</span>
                                 <select
-                                  className={`${selectCls} max-w-[220px]`}
+                                  className={`${selectCls} max-w-[200px]`}
                                   value={step.timeoutAction || 'return'}
                                   onChange={(e) => updateStep(step.id, { timeoutAction: e.target.value })}
                                 >
@@ -1539,72 +1620,22 @@ export default function WorkflowTab() {
                             </div>
                           )}
                         </div>
-                      </div>
 
-                      {/* Hàng dưới full-width - Quy tắc nhiều người duyệt */}
-                      {showMulti && (
-                        <div className="border-t border-outline-variant/50 pt-4">
-                          <GroupHeader
-                            icon="group"
-                            label={t('Quy tắc nhiều người duyệt')}
-                            hint={t('{v0} người duyệt{v1}', { v0: activeApproverCount, v1: hasExplicitApprovers ? ' (đã chỉ định)' : ' (theo chức danh)' })}
-                          />
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {MULTI_RULES.map((r) => (
-                              <RadioCard
-                                key={r.id}
-                                name={`multi-${step.id}`}
-                                checked={step.multiRule === r.id}
-                                onClick={() => updateStep(step.id, { multiRule: r.id })}
-                                title={t(r.label)}
-                                desc={t(r.desc)}
-                                badge={r.badge}
-                              />
-                            ))}
-                          </div>
-
-                          {step.multiRule === 'sequential' && (
-                            <SequentialOrderList
-                              role={step.role}
-                              order={step.sequentialOrder || step.approvers}
-                              onChange={(newOrder) => updateStep(step.id, { sequentialOrder: newOrder })}
+                        {/* Cột phải - Hành động từ chối */}
+                        <div>
+                          <GroupHeader icon="block" label={t('Hành động từ chối')} />
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={step.rejectReasonRequired !== false}
+                              onChange={(e) => updateStep(step.id, { rejectReasonRequired: e.target.checked })}
+                              className="text-primary focus:ring-primary rounded cursor-pointer"
                             />
-                          )}
-
-                          {/* BE-35: cảnh báo cấu hình chưa rõ ràng để tránh lỗi khi duyệt */}
-                          {(!Array.isArray(step.approvers) || step.approvers.length === 0) && (
-                            <div className="mt-3 flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
-                              <span className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
-                              <span className="text-secondary">
-                                {t('Không chỉ định ai thì')} <strong className="text-on-surface">{t('mọi người thuộc chức danh')} {roleLabel(step.role) || t('(chưa chọn)')}</strong> {t('đều thấy và duyệt được đơn này.')}
-                              </span>
-                            </div>
-                          )}
-                          {(Array.isArray(step.approvers) && step.approvers.length === 1) && (
-                            <div className="mt-3 flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
-                              <span className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
-                              <span className="text-secondary">
-                                {t('Chỉ')} <strong className="text-on-surface">{t('1 người')}</strong> {t('được chỉ định — đơn sẽ chỉ tới người này (không áp dụng quy tắc nhiều người).')}
-                              </span>
-                            </div>
-                          )}
+                            <span className="text-sm text-on-surface">
+                              {t('Bắt buộc nhập lý do khi từ chối đơn')}
+                            </span>
+                          </label>
                         </div>
-                      )}
-
-                      {/* Hành động từ chối — full width */}
-                      <div className="border-t border-outline-variant/50 pt-4">
-                        <GroupHeader icon="block" label={t('Hành động từ chối')} />
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={step.rejectReasonRequired !== false}
-                            onChange={(e) => updateStep(step.id, { rejectReasonRequired: e.target.checked })}
-                            className="text-primary focus:ring-primary rounded cursor-pointer"
-                          />
-                          <span className="text-sm text-on-surface">
-                            {t('Bắt buộc nhập lý do khi từ chối đơn')}
-                          </span>
-                        </label>
                       </div>
                     </div>
                   </>

@@ -145,8 +145,14 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
   // Loại hình duyệt của bước 1 — quyết định phần "Phòng ban liên quan" hiện hay ẩn
   const firstStepAppType = (firstStep?.approvalType || '').toLowerCase();
-  // BE-17: chỉ luồng "theo chức danh / bộ phận" (role) mới cần chọn phòng ban liên quan.
-  const showDepartmentPicker = firstStepAppType === 'role';
+  const firstStepDesignatedIds = Array.isArray(firstStep?.approverIds) && firstStep.approverIds.length > 0
+    ? firstStep.approverIds
+    : (Array.isArray(firstStep?.sequentialOrder) ? firstStep.sequentialOrder : []);
+  const firstStepHasDesignatedApprovers = firstStepAppType === 'role'
+    && firstStepDesignatedIds.length > 0;
+  const firstStepMultiRule = (firstStep?.multiRule || '').toLowerCase();
+  // BE-17: chỉ luồng theo chức danh chưa chỉ định người mới cần chọn phòng ban liên quan.
+  const showDepartmentPicker = firstStepAppType === 'role' && !firstStepHasDesignatedApprovers;
   // Luồng tự tìm người theo phòng/chức vụ của người tạo: quản lý trực tiếp / chuỗi quản lý
   const isHierarchyFlow = firstStepAppType === 'hierarchy';
   const isChainFlow = firstStepAppType === 'chain';
@@ -160,6 +166,16 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     if (appType === 'specific_user' || appType === 'specific') {
       const emp = employees?.find(e => e.id === (firstStep.specificUserId || firstStep.specificUser));
       return emp ? [emp] : [];
+    }
+
+    const designatedIds = Array.isArray(firstStep.approverIds) && firstStep.approverIds.length > 0
+      ? firstStep.approverIds
+      : (Array.isArray(firstStep.sequentialOrder) ? firstStep.sequentialOrder : []);
+    if (appType === 'role' && designatedIds.length > 0) {
+      return designatedIds
+        .map((id) => employees?.find(e => e.id === id))
+        .filter(Boolean)
+        .map(e => ({ id: e.id, name: e.name, position: e.position || e.role }));
     }
 
     if (appType === 'role' && firstStep.role) {
@@ -195,8 +211,8 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     }
   }, [firstStepCandidates, selectedApproverId]);
 
-  // BE-17: chỉ bắt chọn khi luồng theo chức danh/bộ phận resolve ra nhiều người.
-  const mustPickApprover = firstStepAppType === 'role' && firstStepCandidates.length > 1;
+  // BE-17: không bắt chọn người riêng lẻ với luồng sắp xếp; backend chốt theo phòng ban hoặc danh sách cấu hình.
+  const mustPickApprover = false;
 
   const submit = (e) => {
     e.preventDefault();
@@ -295,7 +311,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             </select>
           </div>
 
-          {/* Department Checkboxes — BE-17: chỉ hiện với luồng "theo chức danh / bộ phận" */}
+          {/* Department Checkboxes — chỉ hiện với luồng duyệt theo chức danh */}
           {showDepartmentPicker && departments.length > 0 && (
             <div className="flex flex-col gap-2">
               <label className={labelCls}>{t('Phòng ban liên quan')}</label>
@@ -327,6 +343,32 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                     </label>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {firstStepHasDesignatedApprovers && firstStepCandidates.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <label className={labelCls}>{t('Người duyệt đã chỉ định')}</label>
+              <div className="rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2.5">
+                <div className="flex flex-col gap-2">
+                  {firstStepCandidates.map((c, index) => (
+                    <div key={c.id} className="flex items-center gap-2.5 text-sm text-on-surface">
+                      <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center flex-shrink-0">
+                        {index + 1}
+                      </span>
+                      <span className="font-medium">{c.name}</span>
+                      {c.position && <span className="text-xs text-secondary">· {c.position}</span>}
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-secondary">
+                  {firstStepMultiRule === 'sequential'
+                    ? t('Đơn sẽ gửi lần lượt theo thứ tự đã cấu hình.')
+                    : firstStepMultiRule === 'and'
+                      ? t('Đơn sẽ gửi đồng thời và cần tất cả người được chỉ định duyệt.')
+                      : t('Đơn sẽ gửi đồng thời và chỉ cần 1 người được chỉ định duyệt.')}
+                </p>
               </div>
             </div>
           )}
