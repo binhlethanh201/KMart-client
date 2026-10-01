@@ -299,6 +299,7 @@ export default function UnifiedSidebar({
                 // KHÔNG bọc t() ở đây vì t() sẽ đổi theo ngôn ngữ và làm sai điều kiện.
                 if (item.name === 'Nhân sự' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
                 if (item.name === 'Cấu hình' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
+                if (item.name === 'Báo Cáo' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
                 
                 return true;
               }).map((item) => {

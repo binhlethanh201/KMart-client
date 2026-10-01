@@ -689,7 +689,7 @@ function makeStep(overrides = {}, roles = [], employees = []) {
   };
 }
 
-function CustomGroupedSelect({ categories, documentTypes, value, onChange }) {
+function CustomGroupedSelect({ categories, documentTypes, value, onChange, configuredTypes = new Set() }) {
   const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState(() => 
@@ -701,14 +701,19 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange }) {
   const selectedDoc = documentTypes.find(d => d.id === value);
 
   return (
-    <div className="relative w-full max-w-[280px] z-[50]">
+    <div className="relative w-full min-w-[280px] max-w-[320px] z-[50]">
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-surface-container-lowest border border-outline-variant hover:border-primary rounded-md px-3 py-2 flex items-center justify-between cursor-pointer transition-all shadow-sm group"
+        className="bg-surface-container-lowest border border-outline-variant hover:border-primary rounded-md px-3 py-2.5 flex items-center justify-between cursor-pointer transition-all shadow-sm group"
       >
-        <span className="text-sm text-on-surface font-medium truncate pr-4">
-          {selectedDoc ? selectedDoc.name : t('Chọn loại đơn...')}
-        </span>
+        <div className="flex items-center gap-2 overflow-hidden pr-2">
+          <span className="text-sm text-on-surface font-semibold truncate">
+            {selectedDoc ? selectedDoc.name : t('Chọn loại đơn...')}
+          </span>
+          {selectedDoc && configuredTypes.has(selectedDoc.id) && (
+            <span className="material-symbols-outlined text-[16px] text-success flex-shrink-0" title={t('Đã cấu hình luồng cho khối này')}>check_circle</span>
+          )}
+        </div>
         <span className={`material-symbols-outlined text-secondary group-hover:text-primary text-[20px] transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}>
           expand_more
         </span>
@@ -717,42 +722,52 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange }) {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-[calc(100%+4px)] left-0 w-[320px] bg-surface rounded-lg shadow-xl border border-outline-variant py-1 z-50 max-h-[250px] overflow-y-auto animate-fade-in origin-top custom-scrollbar">
-            {categories.map(cat => {
-              const catDocs = documentTypes.filter(dt => cat.items.includes(dt.name));
-              if (catDocs.length === 0) return null;
-              
-              const isExpanded = expandedGroups[cat.id] !== false;
-              
-              return (
-                <div key={cat.id} className="mb-2 last:mb-0">
-                  <div 
-                    onClick={(e) => { e.stopPropagation(); toggleGroup(cat.id); }}
-                    className="px-3 py-1.5 bg-surface-container-low/90 text-[11px] font-bold text-primary uppercase tracking-wider sticky top-0 backdrop-blur-md flex items-center justify-between z-10 border-b border-outline-variant/30 shadow-[0_2px_4px_rgba(0,0,0,0.02)] cursor-pointer hover:bg-surface-container-low"
-                  >
-                    <span>{cat.name}</span>
-                    <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
-                      expand_more
-                    </span>
-                  </div>
-                  {isExpanded && (
-                    <div className="py-1">
-                      {catDocs.map(f => (
-                        <button
-                          key={f.id}
-                          onClick={() => { onChange(f.id); setIsOpen(false); }}
-                          className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between transition-colors cursor-pointer ${
-                            value === f.id ? 'bg-primary/10 text-primary font-semibold relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-3/4 before:w-1 before:bg-primary before:rounded-r' : 'text-on-surface hover:bg-surface-container hover:text-primary'
-                          }`}
-                        >
-                          <span className="break-words whitespace-normal">{f.name}</span>
-                        </button>
-                      ))}
+          <div className="absolute top-[calc(100%+6px)] left-0 min-w-full w-max max-w-[400px] bg-surface rounded-lg shadow-xl border border-outline-variant z-50 overflow-hidden animate-fade-in origin-top flex flex-col">
+            <div className="max-h-[300px] overflow-y-auto custom-scrollbar w-full pb-1">
+              {categories.map((cat, idx) => {
+                const catDocs = documentTypes.filter(dt => cat.items.includes(dt.name));
+                if (catDocs.length === 0) return null;
+                
+                const isExpanded = expandedGroups[cat.id] !== false;
+                
+                return (
+                  <div key={cat.id} className="mb-1 last:mb-0">
+                    <div 
+                      onClick={(e) => { e.stopPropagation(); toggleGroup(cat.id); }}
+                      className={`px-3 py-2 bg-surface-container-low/90 text-[11px] font-bold text-primary uppercase tracking-wider sticky top-0 backdrop-blur-md flex items-center justify-between z-10 border-b border-outline-variant/30 cursor-pointer hover:bg-surface-container-low ${idx === 0 ? '' : 'mt-1'}`}
+                    >
+                      <span>{cat.name}</span>
+                      <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                        expand_more
+                      </span>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                    {isExpanded && (
+                      <div className="py-1">
+                        {catDocs.map(f => {
+                          const isConfigured = configuredTypes.has(f.id);
+                          return (
+                            <button
+                              key={f.id}
+                              onClick={() => { onChange(f.id); setIsOpen(false); }}
+                              className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between gap-3 transition-colors cursor-pointer ${
+                                value === f.id ? 'bg-primary/10 text-primary font-semibold relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-3/4 before:w-1 before:bg-primary before:rounded-r' : 'text-on-surface hover:bg-surface-container hover:text-primary'
+                              }`}
+                            >
+                              <span className="break-words whitespace-normal leading-tight">{f.name}</span>
+                              {isConfigured && (
+                                <span className="material-symbols-outlined text-[16px] text-success flex-shrink-0" title={t('Đã cấu hình luồng cho khối này')}>
+                                  check_circle
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </>
       )}
@@ -781,8 +796,35 @@ export default function WorkflowTab() {
   const [workflows, setWorkflows] = useState({});
   const [workflowIds, setWorkflowIds] = useState({});
   const [saved, setSaved] = useState(false);
+  
+  const [allWorkflows, setAllWorkflows] = useState([]);
 
   const { formFields, pushToast } = useApproval();
+
+  useEffect(() => {
+    workflowService.getAll().then(data => {
+      setAllWorkflows(data || []);
+    }).catch(err => console.error('Failed to load all workflows', err));
+  }, []);
+
+  const configuredTypes = useMemo(() => {
+    const set = new Set();
+    
+    allWorkflows.forEach(wf => {
+      if (wf.scope === block && wf.steps && wf.steps.length > 0 && wf.isActive !== false) {
+        set.add(wf.documentTypeId);
+      }
+    });
+
+    Object.keys(workflows).forEach(docId => {
+      const wfs = workflows[docId];
+      if (wfs && wfs[block] && wfs[block].length > 0) {
+        set.add(docId);
+      }
+    });
+    
+    return set;
+  }, [allWorkflows, workflows, block]);
 
   // Fetch roles từ API
   useEffect(() => {
@@ -1187,6 +1229,7 @@ export default function WorkflowTab() {
             categories={categories}
             documentTypes={documentTypes}
             value={formType}
+            configuredTypes={configuredTypes}
             onChange={(val) => {
               setFormType(val);
               setOpenStepIds(new Set());

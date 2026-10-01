@@ -504,22 +504,7 @@ export default function FormTemplatesTab() {
                     <Toggle checked={f.required} onChange={(v) => updateField(idx, { required: v })} label={t('Bắt buộc')} />
                   </td>
                   <td className="px-4 py-3 max-w-[320px] flex flex-col gap-3">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2">
-                        <Toggle checked={Boolean(f.dynamic)} onChange={(v) => updateField(idx, { dynamic: v ? 'Nhập điều kiện hiển thị...' : '' })} label={t('Logic tự động')} />
-                      </div>
-                      {Boolean(f.dynamic) && (
-                        <input 
-                          type="text"
-                          value={f.dynamic}
-                          onChange={(e) => updateField(idx, { dynamic: e.target.value })}
-                          className="text-xs text-secondary bg-surface-container-lowest border border-outline-variant/50 rounded px-2 py-1 outline-none focus:border-primary focus:ring-1 focus:ring-primary w-full max-w-[200px]"
-                          placeholder={t('VD: Hiển thị khi...')}
-                        />
-                      )}
-                    </div>
-                    
-                    <div className="pt-2 border-t border-outline-variant/30">
+                    <div>
                       {f.type === 'Tải file' ? (
                         <div className="flex items-center gap-2 text-xs text-secondary">
                           <span className="material-symbols-outlined text-[16px] text-outline">attach_file</span>
