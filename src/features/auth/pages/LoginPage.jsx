@@ -13,6 +13,10 @@ const LoginPage = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -41,6 +45,16 @@ const LoginPage = ({ onLoginSuccess }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResetPassword = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    // Giả lập gọi API reset mật khẩu
+    setTimeout(() => {
+      setLoading(false);
+      setResetSuccess(true);
+    }, 1000);
   };
 
   return (
@@ -83,43 +97,116 @@ const LoginPage = ({ onLoginSuccess }) => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block text-label-md text-on-surface mb-1.5">
-              {t('Email làm việc')}
-            </label>
-            <input
-              type="email"
-              required
-              className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all"
-              placeholder="nhanvien@kmart.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+        {!isForgotPassword ? (
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-label-md text-on-surface mb-1.5">
+                {t('Email làm việc')}
+              </label>
+              <input
+                type="email"
+                required
+                className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all"
+                placeholder="nhanvien@kmart.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-          <div>
-            <label className="block text-label-md text-on-surface mb-1.5">
-              {t('Mật khẩu')}
-            </label>
-            <input
-              type="password"
-              required
-              className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-label-md text-on-surface">
+                  {t('Mật khẩu')}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(true);
+                    setResetSuccess(false);
+                    setError("");
+                  }}
+                  className="text-label-sm text-primary hover:underline focus:outline-none"
+                >
+                  {t('Quên mật khẩu?')}
+                </button>
+              </div>
+              <input
+                type="password"
+                required
+                className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary text-on-primary py-2.5 rounded-md text-label-md hover:bg-on-primary-fixed-variant transition-colors disabled:opacity-70 disabled:cursor-not-allowed mt-2 shadow-sm"
-          >
-            {loading ? t('Đang xác thực...') : t('Đăng nhập')}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-on-primary py-2.5 rounded-md text-label-md hover:bg-on-primary-fixed-variant transition-colors disabled:opacity-70 disabled:cursor-not-allowed mt-2 shadow-sm cursor-pointer"
+            >
+              {loading ? t('Đang xác thực...') : t('Đăng nhập')}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleResetPassword} className="space-y-5">
+            {!resetSuccess ? (
+              <>
+                <div>
+                  <label className="block text-label-md text-on-surface mb-1.5">
+                    {t('Email làm việc')}
+                  </label>
+                  <p className="text-xs text-secondary mb-3">
+                    {t('Nhập email của bạn để nhận liên kết đặt lại mật khẩu.')}
+                  </p>
+                  <input
+                    type="email"
+                    required
+                    className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all"
+                    placeholder="nhanvien@kmart.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2 mt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-primary text-on-primary py-2.5 rounded-md text-label-md hover:bg-on-primary-fixed-variant transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-sm cursor-pointer"
+                  >
+                    {loading ? t('Đang gửi...') : t('Gửi yêu cầu')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPassword(false)}
+                    className="w-full bg-surface-container-low text-on-surface py-2.5 rounded-md text-label-md hover:bg-surface-container transition-colors cursor-pointer"
+                  >
+                    {t('Quay lại đăng nhập')}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto text-success">
+                  <span className="material-symbols-outlined text-[32px]">check_circle</span>
+                </div>
+                <div>
+                  <h3 className="text-title-md font-semibold text-on-surface mb-1">{t('Đã gửi liên kết')}</h3>
+                  <p className="text-body-sm text-secondary">
+                    {t('Vui lòng kiểm tra email của bạn để lấy liên kết đặt lại mật khẩu.')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(false)}
+                  className="w-full bg-primary text-on-primary py-2.5 rounded-md text-label-md hover:bg-on-primary-fixed-variant transition-colors mt-2 cursor-pointer"
+                >
+                  {t('Quay lại đăng nhập')}
+                </button>
+              </div>
+            )}
+          </form>
+        )}
       </motion.div>
     </div>
   );

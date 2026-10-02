@@ -675,6 +675,7 @@ function makeStep(overrides = {}, roles = [], employees = []) {
     hierarchyOption: 'department_head',
     chainStart: 'direct_manager',
     chainEnd: 'department_head',
+    chainList: ['direct_manager', 'department_head'],
     role: defaultRole,
     specificUser: defaultSpecificUser,
     multiRule: null,
@@ -911,11 +912,56 @@ export default function WorkflowTab() {
           const nextRetail = res.find(w => w.scope === 'retail');
           const nextCommon = res.find(w => w.scope === 'common');
           
-          const formatSteps = (wf) => wf && wf.steps ? wf.steps.map(s => ({
-            ...s, 
-            id: s.id || `s${Date.now()}-${Math.random()}`,
-            specificUser: s.specificUserName || s.specificUserId || null
-          })) : [];
+          const formatSteps = (wf) => wf && wf.steps ? wf.steps.map(s => {
+            const stepData = {
+              ...s, 
+              id: s.id || `s${Date.now()}-${Math.random()}`,
+              specificUser: s.specificUserName || s.specificUserId || null
+            };
+            
+            if (stepData.sequentialOrder && typeof stepData.sequentialOrder === 'string') {
+              try {
+                stepData.sequentialOrder = JSON.parse(stepData.sequentialOrder);
+                stepData.approvers = stepData.sequentialOrder;
+              } catch(e) {
+                stepData.sequentialOrder = null;
+                stepData.approvers = [];
+              }
+            } else if (Array.isArray(stepData.sequentialOrder)) {
+              stepData.approvers = stepData.sequentialOrder;
+            } else {
+              stepData.sequentialOrder = null;
+              stepData.approvers = [];
+            }
+            
+            if (stepData.approvalType === 'role') {
+              if (stepData.sequentialOrder !== null) {
+                stepData.arrangementMode = 'specific';
+              } else {
+                stepData.arrangementMode = 'role';
+              }
+            }
+
+            if (stepData.approvalType === 'chain') {
+              let list = stepData.chainList;
+              if (typeof list === 'string') {
+                 try { list = JSON.parse(list); } catch (e) { list = []; }
+              }
+              if (!Array.isArray(list)) list = [];
+              if (list.length === 0) {
+                const allIds = HIERARCHY_OPTIONS.map(o => o.id);
+                const startIdx = allIds.indexOf(stepData.chainStart || 'direct_manager');
+                const endIdx = allIds.indexOf(stepData.chainEnd || 'department_head');
+                if (startIdx >= 0 && endIdx >= 0) {
+                   list = allIds.slice(Math.min(startIdx, endIdx), Math.max(startIdx, endIdx) + 1);
+                } else {
+                   list = ['direct_manager'];
+                }
+              }
+              stepData.chainList = list;
+            }
+            return stepData;
+          }) : [];
 
           setWorkflows(prev => ({
             ...prev,
@@ -993,6 +1039,16 @@ export default function WorkflowTab() {
           if (nextType === 'chain') {
             if (!next.chainStart) next.chainStart = 'direct_manager';
             if (!next.chainEnd) next.chainEnd = 'department_head';
+            if (!next.chainList || next.chainList.length === 0) {
+               const allIds = HIERARCHY_OPTIONS.map(o => o.id);
+               const startIdx = allIds.indexOf(next.chainStart);
+               const endIdx = allIds.indexOf(next.chainEnd);
+               if (startIdx >= 0 && endIdx >= 0) {
+                  next.chainList = allIds.slice(Math.min(startIdx, endIdx), Math.max(startIdx, endIdx) + 1);
+               } else {
+                  next.chainList = ['direct_manager', 'department_head'];
+               }
+            }
             next.multiRule = 'sequential';
           }
           return next;
@@ -1100,13 +1156,14 @@ export default function WorkflowTab() {
         errs.push(t('{v0}: Cần chọn cấp bậc cho hình thức quản lý trực tiếp', { v0: where }));
       }
       if (type === 'chain') {
-        if (!step.chainStart) errs.push(t('{v0}: Cần chọn cấp bắt đầu của chuỗi', { v0: where }));
-        if (!step.chainEnd) errs.push(t('{v0}: Cần chọn cấp kết thúc của chuỗi', { v0: where }));
+        const list = step.chainList || [];
+        if (list.length === 0) {
+          errs.push(t('{v0}: Cần có ít nhất một cấp duyệt cho chuỗi liên tiếp', { v0: where }));
+        }
         
-        const startIdx = HIERARCHY_OPTIONS.findIndex(h => h.id === step.chainStart);
-        const endIdx = HIERARCHY_OPTIONS.findIndex(h => h.id === step.chainEnd);
-        if (startIdx > endIdx) {
-          errs.push(t('{v0}: Cấp bắt đầu không được lớn hơn cấp kết thúc của chuỗi', { v0: where }));
+        const uniqueList = new Set(list);
+        if (uniqueList.size !== list.length) {
+          errs.push(t('{v0}: Có cấp duyệt bị trùng lặp trong chuỗi', { v0: where }));
         }
       }
       if (type === 'role' && (!Array.isArray(step.approvers) || step.approvers.length === 0) && !step.role) {
@@ -1527,12 +1584,12 @@ export default function WorkflowTab() {
                                         >
                                           <optgroup label={t('Cấp quản lý (Hierarchy)')}>
                                             {HIERARCHY_OPTIONS.map((o) => (
-                                              <option key={o.id} value={o.id}>{t(o.label)}</option>
+                                              <option key={o.id} value={o.id} disabled={step.chainList?.includes(o.id) && o.id !== levelId}>{t(o.label)}</option>
                                             ))}
                                           </optgroup>
                                           <optgroup label={t('Chức danh (Role)')}>
                                             {approvalRoles.map((r) => (
-                                              <option key={r.id} value={r.name}>{t(r.label || r.name)}</option>
+                                              <option key={r.id} value={r.name} disabled={step.chainList?.includes(r.name) && r.name !== levelId}>{t(r.label || r.name)}</option>
                                             ))}
                                           </optgroup>
                                         </select>

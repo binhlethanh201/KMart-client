@@ -107,9 +107,24 @@ export const applicationService = {
     return response.data.items.map(mapToFrontendModel);
   },
 
-  getPendingApprovals: async () => {
+  getPendingApprovals: async (currentUserId) => {
     const response = await apiClient.get('/applications/pending?limit=1000');
-    return response.data.items.map(a => ({ ...mapToFrontendModel(a), _isPendingReq: true }));
+    return response.data.items.map(a => {
+      const mapped = mapToFrontendModel(a);
+      let isTrulyPending = false;
+      if (['pending', 'submitted', 'pendingapproval'].includes(mapped.status)) {
+        const currentOrder = Number(mapped.currentStep) || 0;
+        const hasActed = mapped.histories?.some(h => 
+          Number(h.stepOrder) === currentOrder && 
+          String(h.userId) === String(currentUserId) && 
+          ['approved', 'rejected'].includes(h.action)
+        );
+        if (!hasActed) {
+          isTrulyPending = true;
+        }
+      }
+      return { ...mapped, _isPendingReq: isTrulyPending };
+    });
   },
 
   getById: async (id) => {

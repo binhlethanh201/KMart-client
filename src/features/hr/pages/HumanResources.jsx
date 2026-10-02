@@ -141,7 +141,7 @@ export default function HumanResources() {
                 className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px]">person_add</span>
-                {t('Thêm nhân sự')}
+                {t('Tạo tài khoản nhân viên')}
               </button>
             )}
           </div>
