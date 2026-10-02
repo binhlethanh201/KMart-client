@@ -30,8 +30,12 @@ const getFullAvatarUrl = (url) => {
   return url;
 };
 
-const mapMemberToFrontend = (u) => {
-  const primaryPos = u.positions?.find(p => p.isPrimary) || u.positions?.[0];
+const mapMemberToFrontend = (u, targetDeptId = null) => {
+  let targetPos = null;
+  if (targetDeptId) {
+    targetPos = u.positions?.find(p => p.departmentId === targetDeptId);
+  }
+  const primaryPos = targetPos || u.positions?.find(p => p.isPrimary) || u.positions?.[0];
   const actualAvatar = getFullAvatarUrl(u.avatarUrl);
   return {
     id: u.id,
@@ -137,6 +141,6 @@ export const departmentService = {
 
   getMembers: async (id) => {
     const response = await apiClient.get(`/departments/${id}/members`);
-    return response.data.map(mapMemberToFrontend);
+    return response.data.map(u => mapMemberToFrontend(u, id));
   }
 };

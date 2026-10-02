@@ -71,7 +71,7 @@ export function ApprovalSystemProvider({ children }) {
       const [allReqs, myReqs, pendingReqs] = await Promise.all([
         applicationService.getAll(),
         applicationService.getMyRequests(),
-        applicationService.getPendingApprovals()
+        applicationService.getPendingApprovals(currentUser?.id || currentUserId)
       ]);
       // Merge unique: order is important. pendingReqs comes last so its _isPendingReq overwrites others if same ID
       const all = [...allReqs, ...myReqs, ...pendingReqs];
@@ -179,7 +179,7 @@ export function ApprovalSystemProvider({ children }) {
     async (reqId) => {
       try {
         const updated = await applicationService.approve(reqId);
-        setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r)));
+        setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: false } : r)));
         pushToast(t('Đã phê duyệt bước này'), 'success');
       } catch (err) {
         const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi phê duyệt');
@@ -214,7 +214,7 @@ export function ApprovalSystemProvider({ children }) {
     async (reqId, reason) => {
       try {
         const updated = await applicationService.reject(reqId, reason);
-        setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r)));
+        setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: false } : r)));
         pushToast(t('Đã từ chối yêu cầu'), 'success');
       } catch (err) {
         const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi từ chối');
@@ -339,8 +339,7 @@ export function ApprovalSystemProvider({ children }) {
     (r) => {
       if (!r || !['pending', 'submitted', 'pendingapproval'].includes(r.status)) return false;
       // BE-08: don cua chinh minh thi khong bao gio "can ban duyet",
-      // ke ca khi BE tra ve trong danh sach pending.
-      if (currentUserId && r.creatorId === currentUserId) return false;
+      // ke ca khi BE tra ve trong danh sach pending. (Removed filter)
       if (r._isPendingReq !== true) return false;
 
       // BE-18: danh sách /pending của backend trả CẢ những đơn người này đã đi qua
@@ -356,6 +355,13 @@ export function ApprovalSystemProvider({ children }) {
           ? currentStep.approverIds
           : (currentStep.approverId ? [currentStep.approverId] : []);
         if (ids.length > 0 && !ids.includes(currentUserId)) return false;
+        
+        if (r.histories && r.histories.length > 0) {
+          const hasApproved = r.histories.some(
+            (h) => Number(h.stepOrder) === currentOrder && String(h.userId) === String(currentUserId) && ['approved', 'rejected'].includes(h.action)
+          );
+          if (hasApproved) return false;
+        }
       }
 
       return true;

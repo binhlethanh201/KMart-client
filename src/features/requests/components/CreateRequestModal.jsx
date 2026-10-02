@@ -332,7 +332,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 {t('Nhấn chọn theo đúng thứ tự mà bạn muốn luồng duyệt diễn ra (Ví dụ: Số 1 sẽ duyệt trước, Số 2 duyệt sau)')}
               </span>
               <div className="flex gap-2.5 flex-wrap mt-1">
-                {departments.map((d) => {
+                {departments.filter(d => d.status === 'Active' || d.status === 'active').map((d) => {
                   const idx = form.departments.indexOf(d.id);
                   const isChecked = idx > -1;
                   return (

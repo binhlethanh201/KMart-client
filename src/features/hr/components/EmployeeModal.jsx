@@ -97,7 +97,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
         <div className="flex justify-between items-start p-6 border-b border-outline-variant/30">
           <div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface">
-              {isEdit ? t('Chỉnh sửa thông tin nhân sự') : t('Thêm mới nhân sự')}
+              {isEdit ? t('Chỉnh sửa thông tin nhân sự') : t('Tạo tài khoản nhân viên')}
             </h2>
           </div>
           <button

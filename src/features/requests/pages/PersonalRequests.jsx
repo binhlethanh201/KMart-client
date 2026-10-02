@@ -48,7 +48,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
   const matchesMode = useCallback((r) => {
     if (mode === 'sent') return r.creatorId === currentUserId;
     if (mode === 'supplement') return r.creatorId === currentUserId && r.status === 'needssupplement';
-    return r._isPendingReq === true && r.creatorId !== currentUserId;
+    return r._isPendingReq === true;
   }, [mode, currentUserId]);
 
   /* counts per filter tab */
