@@ -50,7 +50,9 @@ export default {
         "on-supplement-container": "#831843",// Pink 900
 
         // Surfaces & Backgrounds
-        "background": "#f8fafc",          // Slate 50
+        // BE-57: nền chung của MỌI trang dùng đúng tông trắng ngà của trang Báo cáo & Thống kê
+        // (trước đây là Slate 50 #f8fafc, hơi ngả xanh nên nhìn lệch tông với trang Báo cáo).
+        "background": "#f6f6f4",          // Warm off-white
         "on-background": "#0f172a",       // Slate 900
         "surface": "#ffffff",             // Pure White
         "on-surface": "#0f172a",          // Slate 900

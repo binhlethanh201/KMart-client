@@ -69,7 +69,7 @@ export default function UserProfile({ userId, onClose }) {
 
   if (!user) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-surface w-full h-full">
+      <div className="flex-1 flex items-center justify-center bg-background w-full h-full">
         <div className="text-secondary flex flex-col items-center">
           <span className="material-symbols-outlined text-[48px] mb-2 opacity-50">person_off</span>
           <p>{t('Không tìm thấy thông tin người dùng')}</p>
@@ -79,7 +79,7 @@ export default function UserProfile({ userId, onClose }) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-surface flex flex-col relative z-10 w-full h-full">
+    <div className="flex-1 overflow-y-auto bg-background flex flex-col relative z-10 w-full h-full">
       {/* Header / Breadcrumbs */}
       <header className="h-[56px] bg-white border-b border-outline-variant flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
         <div className="flex items-center text-on-surface-variant font-body-sm flex-wrap">

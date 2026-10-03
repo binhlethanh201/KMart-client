@@ -140,7 +140,7 @@ export default function DepartmentDetail() {
 
 
   return (
-    <div className="flex-1 overflow-y-auto min-h-0 bg-surface">
+    <div className="flex-1 overflow-y-auto min-h-0 bg-background">
       <div className="w-full">
         {/* Header */}
         <header className="bg-surface border-b border-outline-variant sticky top-0 z-20">
