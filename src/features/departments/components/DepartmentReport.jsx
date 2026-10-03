@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { STATUS_META } from '../../requests/data/constants';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
+import { FILTER_CONTROL_CLS, FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
 
 // BE-43: nhân viên chỉ xem báo cáo của CHÍNH MÌNH; trưởng/phó phòng xem toàn phòng.
 export default function DepartmentReport({ deptRequests, members, employees, isDeptManager = true, currentUserId }) {
@@ -156,7 +156,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
           {(startDate || endDate) && (
             <button
               onClick={() => { setStartDate(''); setEndDate(''); }}
-              className="text-sm text-secondary hover:text-error transition-colors underline ml-2"
+              className={`${FILTER_GHOST_BUTTON_CLS} h-[38px] text-[13px]`}
             >
               {t('Xóa bộ lọc')}
             </button>
@@ -199,7 +199,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
             <select
               value={chartFilter}
               onChange={(e) => setChartFilter(e.target.value)}
-              className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary min-w-[150px]"
+              className={`${FILTER_SELECT_CLS} h-[38px] min-w-[150px] px-3 text-[13px]`}
             >
               <option value="all">{t('Tất cả loại đơn')}</option>
               {stats.types.map((ty) => (

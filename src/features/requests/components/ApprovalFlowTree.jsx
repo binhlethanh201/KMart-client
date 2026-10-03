@@ -499,10 +499,14 @@ export default function ApprovalFlowTree({
   };
 
   return (
-    <div className="flex flex-col items-center min-w-fit">
+    /* BE-83/85: bản `full` (popup) không được để cây rộng hơn khung chứa làm nó tràn ra ngoài.
+       Hàng người duyệt cùng cấp giữ nguyên MỘT DÒNG (không xuống dòng) để thấy rõ họ ngang cấp nhau;
+       khi hàng đó rộng hơn khung thì khung tự cuộn ngang, và cả cây được căn giữa trong vùng cuộn.
+       Bản `inline` (chip nhỏ trong form) vẫn giữ `min-w-fit` vì đã nằm trong khung tự cuộn ngang. */
+    <div className={`flex flex-col items-center ${isFull ? 'w-max min-w-full' : 'min-w-fit'}`}>
       {/* BE-50: chuỗi "từ ai ➔ đến ai" — đọc nhanh toàn bộ luồng duyệt */}
       {isFull && chainPath.length > 0 && (
-        <div className="mb-5 max-w-[900px] flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-4 py-2.5 rounded-lg border border-primary/20 bg-primary/5">
+        <div className="mb-5 w-full max-w-[900px] flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-4 py-2.5 rounded-lg border border-primary/20 bg-primary/5">
           <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-primary">
             <span className="material-symbols-outlined text-[15px]">route</span>
             {t('Đường đi của đơn')}
@@ -553,7 +557,10 @@ export default function ApprovalFlowTree({
                 {t('Bước')} {stage.stepNo ?? si + 1} {t('(Cấp')} {stage.stepNo ?? si + 1}) · song song
               </span>
               <div className="w-px h-3 bg-outline-variant" />
-              <div className="flex items-start">
+              {/* BE-85: những người duyệt CÙNG CẤP phải nằm CÙNG MỘT DÒNG.
+                  Nếu cho xuống dòng thì 2 người dòng trên + 1 người dòng dưới trông như khác cấp.
+                  Cả hàng rộng hơn khung thì để khung cuộn ngang (xem CreateRequestModal) chứ không cắt. */}
+              <div className="flex items-start justify-center">
                 {stage.branches.map((node, bi) => (
                   <div key={node.key} className="flex flex-col items-center px-3">
                     <div className="flex w-full">

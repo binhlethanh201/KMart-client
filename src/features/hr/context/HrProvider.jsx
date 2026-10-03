@@ -85,8 +85,23 @@ export function HrProvider({ children }) {
     }
   }, []);
 
+  /**
+   * BE-87: xoá nhân sự. Trước đây API đã có sẵn nhưng giao diện không có chỗ nào gọi tới nên
+   * không thể xoá nhân sự trong app.
+   */
+  const deleteEmployee = useCallback(async (id) => {
+    try {
+      await userService.delete(id);
+      setEmployees(list => list.filter(e => e.id !== id));
+      return { ok: true };
+    } catch (err) {
+      console.error('Failed to delete employee', err);
+      return { ok: false, message: describeApiError(err, t, 'Không xóa được nhân sự') };
+    }
+  }, [t]);
+
   return (
-    <HrContext.Provider value={{ employees, departments, positions, roles, loading, error, getEmployee, saveEmployee, toggleLock, resetPassword }}>
+    <HrContext.Provider value={{ employees, departments, positions, roles, loading, error, getEmployee, saveEmployee, toggleLock, resetPassword, deleteEmployee }}>
       {children}
     </HrContext.Provider>
   );

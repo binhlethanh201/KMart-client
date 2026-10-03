@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { authService } from "../services/authService";
-import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { useI18n } from '../../../i18n/I18nProvider';
 import LanguageSwitcher from '../../../components/LanguageSwitcher';
 import BrandLogo from '../../../components/BrandLogo';
+import { createLoginErrorTranslator } from '../loginErrors';
 
 /**
  * BE-77: bố cục 2 cột — cột trái giới thiệu thương hiệu, cột phải là biểu mẫu.
@@ -70,7 +70,6 @@ const LoginPage = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   // State cho phần đặt lại mật khẩu
   const [isResetPassword, setIsResetPassword] = useState(false);
@@ -100,9 +99,11 @@ const LoginPage = ({ onLoginSuccess }) => {
         setError(t('Đăng nhập thành công nhưng không nhận được token.'));
       }
     } catch (err) {
+      // BE-87: quy câu lỗi của máy chủ về khoá dịch để EN/KO cũng hiện đúng ngôn ngữ
+      // (trước đây máy chủ trả tiếng Anh nên giao diện tiếng Việt vẫn thấy câu tiếng Anh).
+      const translateLoginError = createLoginErrorTranslator(t);
       setError(
-        err.response?.data?.message ||
-          err.response?.data?.error ||
+        translateLoginError(err.response?.data?.message || err.response?.data?.error) ||
           t('Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.'),
       );
     } finally {

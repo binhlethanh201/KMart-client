@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { templateFileStore } from '../data/templateFileStore';
 import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
@@ -34,12 +34,29 @@ export default function FormTemplatesTab() {
   const [documentTypes, setDocumentTypes] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
+  /**
+   * BE-84: bản sao mới nhất của `documentTypes` để dùng trong callback bất đồng bộ (sau khi tạo mẫu
+   * đơn) mà không phụ thuộc vào giá trị đã đóng gói lúc gọi API.
+   */
+  const documentTypesRef = useRef(documentTypes);
+  useEffect(() => { documentTypesRef.current = documentTypes; }, [documentTypes]);
+
   useEffect(() => {
     documentTypeService.getAll().then(data => {
       setDocumentTypes(data || []);
       setCategories(buildCategories(data || []));
-      // Sync local fields state with backend data on load
-      const newFields = { ...fields };
+      /*
+       * BE-86: chỉ giữ field cho những mẫu đơn CÒN tồn tại trên server.
+       * Trước đây hàm này bắt đầu từ `{ ...fields }` (bản lưu trong phiên) rồi chỉ THÊM dữ liệu mới,
+       * nên khoá của mẫu đơn đã xoá vẫn nằm lại trong cache. Khi tạo mẫu đơn mới TRÙNG TÊN với mẫu đơn
+       * đã xoá, khoá cũ đó được dùng lại -> mẫu đơn mới hiện luôn field của mẫu đơn cũ (nhìn như tự
+       * nhảy sang mẫu đơn khác). Nay dựng lại từ danh sách server, khoá mồ côi bị loại.
+       */
+      const liveNames = new Set((data || []).map(dt => dt.name));
+      const newFields = {};
+      Object.keys(fields).forEach((key) => {
+        if (liveNames.has(key)) newFields[key] = fields[key];
+      });
       data.forEach(dt => {
         if (dt.fields && dt.fields.length > 0) {
           // transform from backend format (id, name, type, label, etc) to local format
@@ -73,6 +90,18 @@ export default function FormTemplatesTab() {
       byCat.get(cat).push(dt.name);
     });
     return [...byCat.entries()].map(([name, items]) => ({ id: `cat_${name}`, name, items }));
+  };
+
+  /**
+   * BE-84: gộp danh mục dựng từ server với các danh mục người dùng vừa thêm tay trong phiên
+   * (những danh mục còn rỗng, chưa có mẫu đơn nào nên server không trả về).
+   * Nếu không gộp, danh mục vừa tạo sẽ biến mất ngay sau khi tạo mẫu đơn.
+   */
+  const mergeServerCategories = (serverCats, prevCats) => {
+    const manual = (prevCats || []).filter(
+      (c) => c.items.length === 0 && !serverCats.some((s) => s.name.toLowerCase() === c.name.toLowerCase())
+    );
+    return [...serverCats, ...manual];
   };
 
   const handleSaveToServer = async () => {
@@ -131,52 +160,82 @@ export default function FormTemplatesTab() {
 
   const current = fields[selectedForm] || [];
 
+  /**
+   * BE-84: danh mục đang chọn trong popup "Thêm mẫu đơn mới".
+   * `selectedCatIdForNewType` khởi tạo là 'cat1' — một id cứng không khớp danh mục thật nào (id thật là
+   * `cat_<tên>`). Vì thẻ <select> không có option nào mang giá trị đó nên trình duyệt hiển thị option
+   * đầu tiên, còn giá trị gửi lên BE lại là 'cat1' -> không tìm thấy danh mục và mẫu đơn rơi vào "Khác"
+   * dù màn hình đang hiện danh mục khác. Đây chính là lỗi "tạo xong nó tự nhảy sang danh mục khác".
+   * Nay luôn suy ra một id danh mục HỢP LỆ để vừa hiển thị vừa gửi lên.
+   */
+  const newTypeCatId = categories.some((c) => c.id === selectedCatIdForNewType)
+    ? selectedCatIdForNewType
+    : (categories[0]?.id ?? '');
+
   const handleAddFormType = () => {
     const name = newTypeName.trim();
-    // Check if name already exists in any category
-    const exists = categories.some(c => c.items.includes(name));
-    if (!name || exists) {
-      setIsAddingType(false);
-      setNewTypeName('');
+    if (!name) return;
+
+    // BE-84: chặn trùng tên trên TOÀN BỘ danh mục. Trước đây trùng thì popup tự đóng im lặng, người
+    // dùng không biết vì sao không tạo được; còn nếu lọt qua thì mẫu đơn bị nhân đôi ở nhiều danh mục.
+    const existedCat = categories.find((c) => c.items.some((it) => it.trim().toLowerCase() === name.toLowerCase()));
+    if (existedCat) {
+      pushToast(t('Mẫu đơn "{v0}" đã tồn tại trong danh mục "{v1}". Vui lòng dùng tên khác.', {
+        v0: name,
+        v1: existedCat.name,
+      }), 'error');
       return;
     }
 
     // Tạo luôn mẫu đơn trên BE kèm nhóm đã chọn (category thật, không chỉ lưu ở FE).
-    const cat = categories.find(c => c.id === selectedCatIdForNewType);
+    const cat = categories.find((c) => c.id === newTypeCatId);
     documentTypeService.create({
       name,
       code: 'AUTO_' + Date.now(),
       category: cat?.name || t('Khác'),
     }).then(created => {
-      setDocumentTypes(prev => [...prev, created]);
-      setCategories(prev => prev.map(c =>
-        c.id === selectedCatIdForNewType ? { ...c, items: [...c.items, name] } : c
-      ));
+      // Nhóm lại theo dữ liệu server trả về thay vì tự chèn tay vào một nhóm — tự chèn tay là nguồn gốc
+      // của việc mẫu đơn hiện sai/nhảy sang danh mục khác.
+      const nextTypes = [...documentTypesRef.current, created];
+      documentTypesRef.current = nextTypes;
+      setDocumentTypes(nextTypes);
+      setCategories((prev) => mergeServerCategories(buildCategories(nextTypes), prev));
+      setFields(prev => ({ ...prev, [name]: [] }));
+      setSelectedForm(name);
+      setIsAddingType(false);
+      setNewTypeName('');
+      pushToast(t('Đã thêm mẫu đơn "{v0}".', { v0: name }), 'success');
     }).catch(err => {
       console.error(err);
-      pushToast(t('Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
+      // BE-84: ưu tiên thông báo cụ thể từ server (VD "Mẫu đơn ... đã tồn tại") thay vì câu chung chung.
+      const serverMessage = err?.response?.data?.message;
+      pushToast(serverMessage || t('Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
     });
-
-    setFields(prev => ({
-      ...prev,
-      [name]: []
-    }));
-    setSelectedForm(name);
-    setIsAddingType(false);
-    setNewTypeName('');
   };
 
   const handleAddCategory = () => {
     const name = newCatName.trim();
     if (!name) return;
-    setCategories(prev => [...prev, { id: `cat_${Date.now()}`, name, items: [] }]);
+    // BE-84: chặn danh mục trùng tên — trước đây thêm được nhiều danh mục cùng tên.
+    if (categories.some((c) => c.name.trim().toLowerCase() === name.toLowerCase())) {
+      pushToast(t('Danh mục "{v0}" đã tồn tại.', { v0: name }), 'error');
+      return;
+    }
+    setCategories(prev => [...prev, { id: `cat_${name}`, name, items: [] }]);
+    setSelectedCatIdForNewType(`cat_${name}`);
     setIsAddingCat(false);
     setNewCatName('');
+    pushToast(t('Đã thêm danh mục "{v0}".', { v0: name }), 'success');
   };
 
   const handleEditCategory = (id) => {
     const name = editCatName.trim();
     if (!name) return;
+    // BE-84: đổi tên danh mục cũng không được trùng với danh mục khác.
+    if (categories.some((c) => c.id !== id && c.name.trim().toLowerCase() === name.toLowerCase())) {
+      pushToast(t('Danh mục "{v0}" đã tồn tại.', { v0: name }), 'error');
+      return;
+    }
     setCategories(prev => prev.map(c => c.id === id ? { ...c, name } : c));
     setEditingCatId(null);
   };
@@ -192,9 +251,24 @@ export default function FormTemplatesTab() {
       if (target) {
         await documentTypeService.delete(target.id);
       }
-      setCategories(prev => prev.map(c => 
-        c.id === catId ? { ...c, items: c.items.filter(item => item !== formName) } : c
-      ));
+      /*
+       * BE-86: xoá mẫu đơn phải cập nhật CẢ danh sách gốc `documentTypes`, không chỉ `categories`.
+       * Trước đây chỉ lọc `categories`, nên `documentTypes` còn giữ bản ghi đã xoá; tạo lại mẫu đơn
+       * cùng tên sẽ thành 2 bản trùng tên (React báo trùng key, sidebar hiện 2 dòng giống nhau).
+       * Nhóm lại từ danh sách gốc để `categories` luôn khớp với dữ liệu thật.
+       */
+      const nextTypes = documentTypesRef.current.filter(d => d.name !== formName);
+      documentTypesRef.current = nextTypes;
+      setDocumentTypes(nextTypes);
+      setCategories(prev => mergeServerCategories(buildCategories(nextTypes), prev));
+      // BE-86: xoá luôn field đã lưu trong phiên của mẫu đơn vừa xoá. Nếu để lại, lần sau tạo mẫu đơn
+      // trùng tên sẽ dùng lại field cũ và trông như mẫu đơn mới bị "nhảy" sang mẫu đơn khác.
+      setFields(prev => {
+        if (!(formName in prev)) return prev;
+        const next = { ...prev };
+        delete next[formName];
+        return next;
+      });
       if (selectedForm === formName) {
         setSelectedForm('');
       }
@@ -324,7 +398,11 @@ export default function FormTemplatesTab() {
                   <div className="flex items-center group pr-2">
                     <button 
                       onClick={() => toggleCat(cat.id)}
-                      className="flex-1 flex items-center gap-2 px-2 py-1 text-xs font-semibold text-secondary hover:text-primary transition-colors cursor-pointer text-left uppercase tracking-wider"
+                      /* BE-86: KHÔNG dùng `uppercase` cho tên danh mục.
+                         Trước đây CSS viết hoa toàn bộ nên sidebar hiện "DDD"/"KHÁC" trong khi dữ
+                         liệu là "ddd"/"Khác" — cùng một danh mục mà chỗ này một kiểu, ô "Lưu vào danh
+                         mục" lại một kiểu, nhìn như hai danh mục khác nhau. Nay hiện đúng tên đã lưu. */
+                      className="flex-1 flex items-center gap-2 px-2 py-1 text-xs font-semibold text-secondary hover:text-primary transition-colors cursor-pointer text-left tracking-wider"
                     >
                       <span className="material-symbols-outlined text-[16px]">
                         {isExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}
@@ -591,7 +669,7 @@ export default function FormTemplatesTab() {
                 </label>
                 <select 
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
-                  value={selectedCatIdForNewType}
+                  value={newTypeCatId}
                   onChange={e => setSelectedCatIdForNewType(e.target.value)}
                 >
                   {categories.map(c => (

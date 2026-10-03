@@ -84,6 +84,9 @@ export const userService = {
       // BE-74: ngày sinh để phân biệt nhân sự trùng họ tên.
       dateOfBirth: data.dateOfBirth || null,
       password: data.password || 'Kmart@123',
+      // BE-87: gửi kèm trạng thái — trước đây bỏ quên nên chọn "Ngừng hoạt động" vẫn tạo ra tài khoản
+      // đang hoạt động.
+      status: data.status === 'inactive' ? 'INACTIVE' : 'ACTIVE',
       positions,
       roleIds: data.roleIds || []
     };

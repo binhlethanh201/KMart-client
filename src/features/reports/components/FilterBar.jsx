@@ -1,10 +1,11 @@
 import { useI18n } from '../../../i18n/I18nProvider';
-import { FILTER_CONTROL_CLS, FILTER_LABEL_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
+import { FILTER_CONTROL_CLS, FILTER_SELECT_CLS, FILTER_LABEL_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
 
 export default function FilterBar({ filters, departments, documentTypes = [], positions = [], onChange }) {
   const { t } = useI18n();
-  // BE-77: style lấy từ bộ dùng chung để mọi trang lọc giống nhau.
-  const inputClass = `${FILTER_CONTROL_CLS} min-w-[180px]`;
+  // BE-77/79: style lấy từ bộ dùng chung để mọi trang lọc giống nhau.
+  const dateClass = `${FILTER_CONTROL_CLS} min-w-[180px]`;
+  const selectClass = `${FILTER_SELECT_CLS} min-w-[180px]`;
   const labelClass = FILTER_LABEL_CLS;
 
   const filteredDepartments = (departments || []).filter(d => {
@@ -23,7 +24,7 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
           <label className={labelClass}>{t('Từ ngày')}</label>
           <input
             type="date"
-            className={inputClass}
+            className={dateClass}
             value={filters.from || ''}
             onChange={(e) => onChange({ from: e.target.value || null })}
           />
@@ -34,7 +35,7 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
           <label className={labelClass}>{t('Đến ngày')}</label>
           <input
             type="date"
-            className={inputClass}
+            className={dateClass}
             value={filters.to || ''}
             onChange={(e) => onChange({ to: e.target.value || null })}
           />
@@ -44,7 +45,7 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
         <div className="flex flex-col gap-2">
           <label className={labelClass}>{t('Khối')}</label>
           <select
-            className={inputClass}
+            className={selectClass}
             value={filters.block || ''}
             onChange={(e) => onChange({ block: e.target.value || null, departmentId: null })}
           >
@@ -58,7 +59,7 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
         <div className="flex flex-col gap-2">
           <label className={labelClass}>{t('Phòng ban')}</label>
           <select
-            className={inputClass}
+            className={selectClass}
             value={filters.departmentId || ''}
             onChange={(e) => onChange({ departmentId: e.target.value || null })}
           >
@@ -73,7 +74,7 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
         <div className="flex flex-col gap-2">
           <label className={labelClass}>{t('Loại đơn')}</label>
           <select
-            className={inputClass}
+            className={selectClass}
             value={filters.documentTypeId || ''}
             onChange={(e) => onChange({ documentTypeId: e.target.value || null })}
           >
@@ -88,7 +89,7 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
         <div className="flex flex-col gap-2">
           <label className={labelClass}>{t('Chức vụ')}</label>
           <select
-            className={inputClass}
+            className={selectClass}
             value={filters.positionId || ''}
             onChange={(e) => onChange({ positionId: e.target.value || null })}
           >

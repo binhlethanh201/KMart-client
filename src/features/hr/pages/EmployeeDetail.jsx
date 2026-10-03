@@ -56,7 +56,7 @@ export default function EmployeeDetail() {
   useDocumentTitle(t('Chi tiết Nhân sự'));
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getEmployee, saveEmployee, toggleLock, resetPassword, departments, positions, roles } = useHr();
+  const { getEmployee, saveEmployee, toggleLock, resetPassword, deleteEmployee, departments, positions, roles } = useHr();
   const { pushToast, currentUser, hasPermission } = useApproval();
   const canEditEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_UPDATE) : true;
   const canDeleteEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_DELETE) : true;
@@ -161,6 +161,18 @@ export default function EmployeeDetail() {
     pushToast(isActive ? t('Đã khóa tài khoản {v0}', { v0: employee.name }) : t('Đã mở khóa tài khoản {v0}', { v0: employee.name }), isActive ? 'warning' : 'success');
   };
 
+  /** BE-87: xoá nhân sự rồi quay về danh sách. */
+  const handleDelete = async () => {
+    if (!window.confirm(t('Bạn có chắc muốn xóa nhân sự "{v0}"? Thao tác này không thể hoàn tác.', { v0: employee.name }))) return;
+    const result = await deleteEmployee(employee.id);
+    if (result?.ok) {
+      pushToast(t('Đã xóa nhân sự "{v0}".', { v0: employee.name }), 'success');
+      navigate('/personnel');
+    } else {
+      pushToast(result?.message || t('Không xóa được nhân sự'), 'error');
+    }
+  };
+
   return (
     <section className="flex-1 overflow-y-auto bg-background h-full relative">
       <div className="w-full px-4 md:px-6 lg:px-8 py-6 space-y-6">
@@ -233,6 +245,12 @@ export default function EmployeeDetail() {
                 <button onClick={() => { handleToggleLock(); setDropdownOpen(false); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 cursor-pointer ${isActive ? 'text-error hover:bg-error-container/30' : 'text-success hover:bg-success-container/30'}`}>
                    <span className="material-symbols-outlined text-[18px]">{isActive ? 'lock' : 'lock_open'}</span>
                    {isActive ? t('Khóa tài khoản') : t('Mở khóa')}
+                </button>
+                {/* BE-87: xoá nhân sự */}
+                <div className="h-px bg-outline-variant/50 my-1 w-full" />
+                <button onClick={() => { handleDelete(); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error-container/30 flex items-center gap-2 cursor-pointer">
+                   <span className="material-symbols-outlined text-[18px]">delete</span>
+                   {t('Xóa nhân sự')}
                 </button>
              </div>
           </div>

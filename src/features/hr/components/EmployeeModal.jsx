@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ROLE_STYLES } from '../data/constants';
 import { roleStyle } from '../../../utils/roleLabels';
-import { roleService } from '../services/roleService';
 import { useI18n } from '../../../i18n/I18nProvider';
 
 const EMPTY_EMPLOYEE = {
@@ -113,27 +111,16 @@ export default function EmployeeModal({ employee, departments = [], positions = 
     return { ...EMPTY_EMPLOYEE, ...employee, roleId };
   });
 
-  // Permission preview state
-  const [rolePermissions, setRolePermissions] = useState([]);
   // BE-68: lỗi kiểm tra dữ liệu + lỗi từ máy chủ, hiển thị ngay trong form.
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Load permissions when role changes
-  const handleRoleChange = async (e) => {
+  // BE-86: chỉ cập nhật vai trò đã chọn. Trước đây còn gọi thêm API lấy quyền của vai trò chỉ để
+  // hiển thị khối "Quyền được gán tự động" — khối đó đã bỏ nên không cần gọi mạng nữa.
+  const handleRoleChange = (e) => {
     const val = e.target.value;
     setForm((f) => ({ ...f, roleId: val }));
-    if (val) {
-      try {
-        const role = await roleService.getById(val);
-        setRolePermissions(role.permissions || []);
-      } catch {
-        setRolePermissions([]);
-      }
-    } else {
-      setRolePermissions([]);
-    }
   };
 
   useEffect(() => {
@@ -360,24 +347,8 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                     <option key={r.id} value={r.id}>{roleStyle(r.roleName).label}</option>
                   ))}
                 </select>
-                {/* Permission preview */}
-                {form.roleId && rolePermissions.length > 0 && (
-                  <div className="mt-2 bg-primary/5 border border-primary/20 rounded-md p-3">
-                    <div className="text-xs font-semibold text-primary mb-2 uppercase tracking-wide">
-                      {t('Quyền được gán tự động từ vai trò')}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {rolePermissions.map((p, i) => {
-                        const code = typeof p === 'string' ? p : p.permissionName || p.name || '';
-                        return (
-                          <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                            {code}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {/* BE-86: bỏ khối "Quyền được gán tự động từ vai trò" — chỉ liệt kê lại mã quyền,
+                    không thao tác được gì, làm form tạo nhân sự thừa và rối. */}
               </div>
               <div>
                 <label className={labelCls}>{t('Trạng thái')}</label>

@@ -9,6 +9,8 @@ import { useI18n } from '../../../i18n/I18nProvider';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
+/* BE-88: ô tìm kiếm loại đề xuất — chừa chỗ bên trái cho icon kính lúp (icon đặt tuyệt đối trong JSX). */
+const searchCls = `${fieldCls} pl-9`;
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
 /**
@@ -79,6 +81,31 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
   // BE-20: popup xem full luồng phê duyệt
   const [flowOpen, setFlowOpen] = useState(false);
+
+  /*
+   * BE-88: từ khoá tìm loại đề xuất + danh sách đã nhóm theo danh mục.
+   * Danh mục lấy từ chính `category` của mẫu đơn (cùng nguồn với trang "Mẫu đơn & Form động") nên
+   * hai nơi luôn khớp nhau; mẫu đơn chưa gán danh mục gom vào nhóm "Khác".
+   */
+  const [docTypeSearch, setDocTypeSearch] = useState('');
+
+  const groupedDocumentTypes = useMemo(() => {
+    // BE-88: tìm không phân biệt hoa/thường VÀ không phân biệt dấu — người dùng thường gõ nhanh
+    // không dấu ("don nghi phep"), nếu so khớp nguyên văn thì không ra kết quả nào.
+    const normalize = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
+    const keyword = normalize(docTypeSearch).trim();
+    const matched = keyword
+      ? documentTypes.filter((dt) => normalize(dt.name).includes(keyword))
+      : documentTypes;
+
+    const byCategory = new Map();
+    matched.forEach((dt) => {
+      const category = (dt.category && String(dt.category).trim()) || t('Khác');
+      if (!byCategory.has(category)) byCategory.set(category, []);
+      byCategory.get(category).push(dt);
+    });
+    return [...byCategory.entries()];
+  }, [documentTypes, docTypeSearch, t]);
 
   // BE-09: File thật của các trường "Tải file", khoá theo nhãn trường.
   // Trước đây chỉ lưu file.name vào form.dynamic nên file CHƯA BAO GIỜ được upload.
@@ -265,6 +292,22 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
   // BE-17: không bắt chọn người riêng lẻ với luồng sắp xếp; backend chốt theo phòng ban hoặc danh sách cấu hình.
   const mustPickApprover = false;
 
+  /**
+   * BE-85: khi mở popup luồng duyệt, đặt thanh cuộn ngang vào CHÍNH GIỮA nội dung.
+   * Hàng người duyệt cùng cấp được giữ trên một dòng nên có lúc rộng hơn khung; căn giữa lúc mở giúp
+   * nhìn thấy ngay phần giữa (thường là tên các bước), người dùng tự kéo sang hai bên để xem nốt.
+   */
+  const flowScrollRef = useRef(null);
+  useEffect(() => {
+    if (!flowOpen) return;
+    const el = flowScrollRef.current;
+    if (!el) return;
+    const centre = () => { el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2); };
+    // Chờ nội dung (chip nhân sự, tên bước) dựng xong mới biết bề rộng thật.
+    const raf = requestAnimationFrame(centre);
+    return () => cancelAnimationFrame(raf);
+  }, [flowOpen]);
+
   const submit = (e) => {
     e.preventDefault();
     if (!form.reason.trim() || !form.documentTypeId) return;
@@ -353,17 +396,41 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           {/* Document Type Select */}
           <div className="flex flex-col gap-2">
             <label className={labelCls}>{t('Loại Đề Xuất')}</label>
-            <select 
+            {/*
+              BE-88: danh sách loại đơn trước đây là một dãy phẳng rất dài. Nay nhóm theo danh mục
+              (cùng cách gom với trang "Mẫu đơn & Form động") và có ô tìm kiếm để lọc nhanh theo tên.
+            */}
+            <div className="relative">
+              <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-[#8a867c]">
+                search
+              </span>
+              <input
+                type="text"
+                className={searchCls}
+                placeholder={t('Tìm loại đề xuất...')}
+                value={docTypeSearch}
+                onChange={(e) => setDocTypeSearch(e.target.value)}
+                disabled={isEdit}
+              />
+            </div>
+            <select
               className={`${fieldCls} disabled:opacity-60 disabled:cursor-not-allowed`}
               value={form.documentTypeId} 
               disabled={isEdit}
               onChange={(e) => setForm(f => ({ ...f, documentTypeId: e.target.value }))}
             >
               <option value="">{t('-- Chọn loại đề xuất --')}</option>
-              {!loading && documentTypes.map((dt) => (
-                <option key={dt.id} value={dt.id}>{dt.name}</option>
+              {!loading && groupedDocumentTypes.map(([category, items]) => (
+                <optgroup key={category} label={category}>
+                  {items.map((dt) => (
+                    <option key={dt.id} value={dt.id}>{dt.name}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
+            {!loading && documentTypes.length > 0 && groupedDocumentTypes.length === 0 && (
+              <span className="text-xs text-secondary">{t('Không có loại đề xuất nào khớp từ khóa.')}</span>
+            )}
           </div>
 
           {/* Department Checkboxes — chỉ hiện với luồng duyệt theo chức danh */}
@@ -753,17 +820,21 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-              <div className="flex-1 overflow-auto p-6 bg-surface-container-lowest">
-                <ApprovalFlowTree
-                  steps={activeWorkflow.steps}
-                  resolvedSteps={flowPreview?.steps}
-                  departments={departments}
-                  employees={employees}
-                  currentUser={currentUser}
-                  selectedApproverId={selectedApproverId}
-                  departmentsSelected={form.departments}
-                  variant="full"
-                />
+              <div ref={flowScrollRef} className="flex-1 overflow-auto p-6 bg-surface-container-lowest">
+                {/* BE-85: khi hàng người duyệt cùng cấp rộng hơn khung, người dùng kéo ngang để xem
+                    nốt; `min-w-max` giữ cho nội dung luôn được căn giữa cả khi phải cuộn. */}
+                <div className="min-w-max flex justify-center">
+                  <ApprovalFlowTree
+                    steps={activeWorkflow.steps}
+                    resolvedSteps={flowPreview?.steps}
+                    departments={departments}
+                    employees={employees}
+                    currentUser={currentUser}
+                    selectedApproverId={selectedApproverId}
+                    departmentsSelected={form.departments}
+                    variant="full"
+                  />
+                </div>
               </div>
             </div>
           </div>

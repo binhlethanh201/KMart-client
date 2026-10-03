@@ -10,7 +10,7 @@ import DepartmentReport from '../components/DepartmentReport';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { roleStyle } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
+import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
 const TABS = [
   { id: 'requests', label: 'Danh sách Đơn từ', icon: 'description' },
@@ -18,7 +18,7 @@ const TABS = [
   { id: 'report', label: 'Thống kê Đơn từ', icon: 'analytics' },
 ];
 
-const selectCls = `${FILTER_CONTROL_CLS} cursor-pointer`;
+const selectCls = FILTER_SELECT_CLS;
 
 const getSystemRoleInfo = (roles) => {
   const style = roleStyle(roles?.[0]);
@@ -393,7 +393,7 @@ export default function DepartmentDetail() {
                   <select
                     value={reqPageSize}
                     onChange={(e) => { setReqPageSize(Number(e.target.value)); setReqPage(1); }}
-                    className="border border-[#D9D5CC] rounded-[3px] px-2 py-1 text-[#111315] bg-[#FFFEFA] outline-none cursor-pointer transition-colors"
+                    className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
                   >
                     <option value={5}>{t('5 dòng')}</option>
                     <option value={10}>{t('10 dòng')}</option>
@@ -581,7 +581,7 @@ export default function DepartmentDetail() {
                   <select
                     value={memPageSize}
                     onChange={(e) => { setMemPageSize(Number(e.target.value)); setMemPage(1); }}
-                    className="border border-[#D9D5CC] rounded-[3px] px-2 py-1 text-[#111315] bg-[#FFFEFA] outline-none cursor-pointer transition-colors"
+                    className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
                   >
                     <option value={5}>{t('5 dòng')}</option>
                     <option value={10}>{t('10 dòng')}</option>

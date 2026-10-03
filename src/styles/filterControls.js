@@ -1,29 +1,34 @@
 /**
- * BE-77: bộ style dùng chung cho các ô lọc / ô nhập trên thanh công cụ.
+ * BE-77 / BE-79: bộ class dùng chung cho các ô lọc trên thanh công cụ.
  *
- * Trước đây mỗi trang tự khai báo một kiểu: trang Báo cáo dùng nền trắng ngà #FFFEFA với viền
- * mảnh, còn các trang khác dùng `bg-surface` (trắng tinh #ffffff) nên nhìn chênh tông — ô lọc
- * nổi thành từng khối trắng trên nền ấm của trang.
+ * BE-77 giữ mọi thanh lọc cùng tông trắng ngà #FFFEFA của trang Báo cáo & Thống kê (trước đây mỗi
+ * trang một kiểu, có trang dùng `bg-surface` trắng tinh nên ô lọc nổi thành từng khối lệch tông).
  *
- * Nay mọi thanh lọc lấy đúng style của trang Báo cáo & Thống kê. Sửa ở MỘT chỗ này là tất cả
- * các trang đổi theo, tránh lệch lại về sau.
+ * BE-79 dồn toàn bộ phần "nhìn cho ra dáng" vào `src/index.css` (`@layer components`) để sửa một
+ * chỗ là mọi trang đổi theo:
+ *   * `.filter-control` — ô nhập/ô chọn: bo 8px cho khớp phần còn lại của app, có hover + focus ring;
+ *   * `.filter-select`  — ô chọn: tự vẽ mũi tên, chừa chỗ bên phải (mũi tên gốc của trình duyệt bị
+ *     dính sát mép và mỗi trình duyệt một kiểu);
+ *   * `.filter-search` / `.filter-search-icon` — ô tìm kiếm có icon kính lúp.
+ *
+ * Ở đây chỉ còn việc ghép class, để trang nào cũng gọi cùng một tên.
  */
 
-/** Ô nhập / ô chọn trên thanh lọc. */
-export const FILTER_CONTROL_CLS =
-  'h-[44px] border border-[#D9D5CC] rounded-[3px] px-[16px] text-[14px] text-[#111315] bg-[#FFFEFA] focus:border-[#111315] focus:outline-none transition-colors';
+/** Ô nhập thường (kể cả `type="date"`), KHÔNG dùng cho `<select>`. */
+export const FILTER_CONTROL_CLS = 'filter-control';
+
+/** Ô chọn `<select>` — đã bao gồm style của ô nhập và mũi tên tự vẽ. */
+export const FILTER_SELECT_CLS = 'filter-control filter-select';
 
 /** Nhãn nhỏ in hoa phía trên ô lọc. */
 export const FILTER_LABEL_CLS =
   'text-[12px] font-bold uppercase tracking-[1.68px] text-[#66655F]';
 
-/** Ô tìm kiếm có icon kính lúp bên trái (thêm padding trái cho icon). */
-export const FILTER_SEARCH_CLS = `${FILTER_CONTROL_CLS} pl-[42px] w-full`;
+/** Ô tìm kiếm có icon kính lúp bên trái. */
+export const FILTER_SEARCH_CLS = 'filter-control filter-search w-full';
 
-/** Icon kính lúp đặt tuyệt đối trong ô tìm kiếm. */
-export const FILTER_SEARCH_ICON_CLS =
-  'material-symbols-outlined absolute left-[14px] top-1/2 -translate-y-1/2 text-[#66655F] text-[18px] pointer-events-none';
+/** Icon kính lúp đặt tuyệt đối trong ô tìm kiếm (ô cha cần `relative`). */
+export const FILTER_SEARCH_ICON_CLS = 'material-symbols-outlined filter-search-icon';
 
 /** Nút hành động phụ trên thanh lọc (VD "Đặt lại"). */
-export const FILTER_GHOST_BUTTON_CLS =
-  'flex items-center justify-center px-[16px] h-[44px] text-[14px] font-semibold text-[#66655F] bg-transparent border border-transparent hover:border-[#D9D5CC] rounded-[8px] transition-colors';
+export const FILTER_GHOST_BUTTON_CLS = 'filter-ghost-btn';

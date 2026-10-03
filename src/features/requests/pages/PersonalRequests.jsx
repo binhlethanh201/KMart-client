@@ -4,7 +4,8 @@ import CreateRequestModal from '../components/CreateRequestModal';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
+import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
+import { scopeDepartmentsForUser } from '../../../utils/departmentScope';
 
 /* ─── Constants ──────────────────────────────────────────────── */
 
@@ -31,7 +32,16 @@ export default function PersonalRequests({ mode = 'sent' }) {
   const { t } = useI18n();
   useDocumentTitle(t(TITLES[mode] || 'Danh sách Đơn từ'));
 
-  const { requests, currentUserId, departments } = useApproval();
+  const { requests, currentUserId, departments, currentUser } = useApproval();
+
+  /*
+   * BE-88: chỉ hiện những phòng ban người dùng thực sự thuộc về. Trước đây ô lọc đổ ra toàn bộ phòng
+   * ban nên người chỉ ở 1 phòng ban vẫn thấy danh sách của cả tổ chức, chọn phòng khác thì trống trơn.
+   */
+  const scopedDepartments = useMemo(
+    () => scopeDepartmentsForUser(departments, currentUser),
+    [departments, currentUser]
+  );
 
   const [isCreateOpen, setIsCreateOpen]        = useState(false);
   const [statusFilter, setStatusFilter]        = useState('all');
@@ -171,18 +181,15 @@ export default function PersonalRequests({ mode = 'sent' }) {
               <select
                 value={departmentFilter || ''}
                 onChange={(e) => setDepartmentFilter(e.target.value || null)}
-                className={`${FILTER_CONTROL_CLS} w-full pr-8 appearance-none cursor-pointer`}
+                className={`${FILTER_SELECT_CLS} w-full`}
               >
                 <option value="">{t('Tất cả phòng ban')}</option>
-                {departments.map((d) => (
+                {scopedDepartments.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.code} - {t(d.name)}
                   </option>
                 ))}
               </select>
-              <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant pointer-events-none">
-                expand_more
-              </span>
             </div>
           </div>
 

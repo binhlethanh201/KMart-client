@@ -6,7 +6,7 @@ import Pagination from '../../../components/Pagination';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useApproval } from '../../../context/useApproval';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
+import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
 export default function DepartmentDashboard() {
   const { t } = useI18n();
@@ -78,8 +78,9 @@ export default function DepartmentDashboard() {
     <>
       <div className="p-4 md:p-6 flex-1 overflow-y-auto min-h-0 bg-background">
         <div className="w-full space-y-4">
-          {/* Compact Action Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-low p-4 rounded-lg border border-outline-variant shadow-sm">
+          {/* Compact Action Header — BE-81: trước đây dùng `bg-surface-container-low` (#f8fafc, ngả
+              xanh) nên thẻ tiêu đề lệch tông với nền ấm #f6f6f4 của trang; nay dùng đúng tông ấm. */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#f6f6f4] p-4 rounded-lg border border-outline-variant shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-[24px]">account_tree</span>
@@ -115,7 +116,7 @@ export default function DepartmentDashboard() {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className={`${FILTER_CONTROL_CLS} cursor-pointer`}
+                className={FILTER_SELECT_CLS}
               >
                 <option value="all">{t('Loại đơn vị: Tất cả')}</option>
                 <option value="Phòng ban">{t('Phòng ban')}</option>
@@ -125,7 +126,7 @@ export default function DepartmentDashboard() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className={`${FILTER_CONTROL_CLS} cursor-pointer`}
+                className={FILTER_SELECT_CLS}
               >
                 <option value="all">{t('Trạng thái: Tất cả')}</option>
                 <option value="active">{t('Đang hoạt động')}</option>

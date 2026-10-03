@@ -168,6 +168,10 @@ const NAV_ITEMS = [
   },
 ];
 
+/** BE-82: thời gian trễ trước khi bảng con bắt đầu thu, và thời gian chạy hiệu ứng thu. */
+const SIDEBAR_PANEL_CLOSE_DELAY_MS = 420; // trước đây 180ms -> cảm giác bị đẩy về ngay
+const SIDEBAR_PANEL_COLLAPSE_MS = 380; // phải khớp `duration-[380ms]` của khung bảng con
+
 export default function UnifiedSidebar({
   isOpen,
   onClose,
@@ -177,32 +181,49 @@ export default function UnifiedSidebar({
   const location = useLocation();
   const { t } = useI18n();
   const [openSubPanel, setOpenSubPanel] = useState(null); // 'requests' | 'settings' | null
+  /** BE-82: bảng con vẫn được giữ trong DOM trong lúc thu để chạy hết hiệu ứng trượt ra. */
+  const [renderedSubPanel, setRenderedSubPanel] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   /**
    * BE-61: bảng con (Đơn từ / Cấu hình) THÒI RA khi rê chuột vào, không cần bấm.
    * - Rê vào mục có bảng con -> mở ngay.
-   * - Rê ra khỏi cả thanh điều hướng + bảng con -> đóng, nhưng trễ 180ms để không bị
-   *   đóng oan khi chuột đang đi từ mục cha sang bảng con.
+   * - Rê ra khỏi cả thanh điều hướng + bảng con -> đóng, nhưng trễ để không bị đóng oan khi chuột
+   *   đang đi từ mục cha sang bảng con.
    * - Bấm vẫn mở/đóng được như trước (cần cho màn hình cảm ứng).
+   *
+   * BE-82: trước đây hễ hết thời gian trễ là `openSubPanel = null` làm nội dung bị gỡ khỏi DOM ngay,
+   * nên bảng con biến mất tức thì dù khung còn đang thu bề rộng — cảm giác "vừa bỏ tay ra là bị đẩy
+   * về". Nay tách làm hai bước: khung bắt đầu thu (chạy transition), nội dung vẫn nằm trong DOM cho
+   * tới khi thu xong mới gỡ. Đồng thời nới thời gian trễ và giảm tốc độ thu cho có cảm giác trượt.
    */
   const closeTimer = useRef(null);
+  const unmountTimer = useRef(null);
 
   const cancelClose = useCallback(() => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current);
       closeTimer.current = null;
     }
+    if (unmountTimer.current) {
+      clearTimeout(unmountTimer.current);
+      unmountTimer.current = null;
+    }
   }, []);
 
   const openPanel = useCallback((key) => {
     cancelClose();
+    // Giữ nội dung trong DOM ngay khi mở, tránh 1 nhịp khung rỗng rồi mới có chữ.
+    setRenderedSubPanel((prev) => (prev === key ? prev : key));
     setOpenSubPanel((prev) => (prev === key ? prev : key));
   }, [cancelClose]);
 
   const scheduleClose = useCallback(() => {
     cancelClose();
-    closeTimer.current = setTimeout(() => setOpenSubPanel(null), 180);
+    closeTimer.current = setTimeout(() => {
+      setOpenSubPanel(null); // khung bắt đầu thu
+      unmountTimer.current = setTimeout(() => setRenderedSubPanel(null), SIDEBAR_PANEL_COLLAPSE_MS);
+    }, SIDEBAR_PANEL_CLOSE_DELAY_MS);
   }, [cancelClose]);
 
   useEffect(() => cancelClose, [cancelClose]);
@@ -240,7 +261,16 @@ export default function UnifiedSidebar({
   );
 
   const toggleSubPanel = (key) => {
-    setOpenSubPanel((prev) => (prev === key ? null : key));
+    if (openSubPanel === key) {
+      // Đóng: giữ nội dung lại cho tới khi khung thu xong rồi mới gỡ (BE-82)
+      setOpenSubPanel(null);
+      clearTimeout(unmountTimer.current);
+      unmountTimer.current = setTimeout(() => setRenderedSubPanel(null), SIDEBAR_PANEL_COLLAPSE_MS);
+      return;
+    }
+    cancelClose();
+    setRenderedSubPanel(key); // mở: dựng nội dung ngay
+    setOpenSubPanel(key);
   };
 
   return (
@@ -259,22 +289,26 @@ export default function UnifiedSidebar({
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 transition-transform duration-300 relative`}
       >
-        {/* Collapse Toggle Button - Premium Design */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden md:flex absolute top-1/2 -right-3.5 -translate-y-1/2 w-7 h-7 bg-white text-slate-600 border border-slate-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-50 cursor-pointer hover:text-primary hover:bg-slate-50 hover:border-primary/20 transition-all group"
-          title={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
-        >
-          <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
-            {isCollapsed ? 'chevron_right' : 'chevron_left'}
-          </span>
-        </button>
-
         {/* ── Rail ── */}
         <nav
-          className={`bg-[#0F172A] ${isCollapsed ? 'w-[72px]' : 'w-[240px]'} h-full flex-shrink-0 flex flex-col justify-between shadow-sm transition-all duration-300`}
+          className={`relative bg-[#0F172A] ${isCollapsed ? 'w-[72px]' : 'w-[240px]'} h-full flex-shrink-0 flex flex-col justify-between shadow-sm transition-all duration-300`}
           id="sidebar"
         >
+          {/* BE-85: nút thu gọn / mở rộng nằm TRONG rail.
+              Trước đây nó là con của khung bao (rail + bảng con) và neo vào mép phải của khung đó, nên
+              vừa rê chuột vào "Đơn từ"/"Cấu hình" cho bảng con thòi ra là nút nhảy sang phải 200px —
+              bấm đúng chỗ cũ thì trúng bảng con, phải dò lại vị trí mới. Neo vào rail thì nút đứng yên. */}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden md:flex absolute top-1/2 -right-4 -translate-y-1/2 w-8 h-8 bg-white text-slate-600 border border-slate-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-[60] cursor-pointer hover:text-primary hover:bg-slate-50 hover:border-primary/20 transition-colors group"
+            title={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
+            aria-label={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
+          >
+            <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
+              {isCollapsed ? 'chevron_right' : 'chevron_left'}
+            </span>
+          </button>
+
           <div>
             {/* User profile — BE-22: chuông tách RIÊNG khỏi Link để không bị điều hướng sang profile */}
             <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-1'} px-4 py-3 border-b border-white/10`}>
@@ -434,15 +468,25 @@ export default function UnifiedSidebar({
           </div>
         </nav>
 
-        {/* Sub-panel side-by-side pushing content — mở ra khi rê chuột vào mục cha */}
+        {/* Sub-panel side-by-side pushing content — mở ra khi rê chuột vào mục cha.
+            BE-82: dùng `renderedSubPanel` (trễ hơn `openSubPanel`) để nội dung vẫn còn trong lúc
+            khung thu, nhờ đó thấy được hiệu ứng trượt ra thay vì biến mất tức thì. */}
         <div
           onMouseEnter={cancelClose}
-          className={`h-full overflow-hidden transition-all duration-300 ease-in-out flex ${
+          className={`h-full overflow-hidden flex transition-[width,opacity] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
             openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
           }`}
         >
-          {openSubPanel === 'requests' && <RequestsSubPanel pendingCount={pendingCount} supplementCount={supplementCount} />}
-          {openSubPanel === 'settings' && <SettingsSubPanel />}
+          {renderedSubPanel === 'requests' && (
+            <div className={`h-full flex-shrink-0 transition-transform duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${openSubPanel === 'requests' ? 'translate-x-0' : '-translate-x-4'}`}>
+              <RequestsSubPanel pendingCount={pendingCount} supplementCount={supplementCount} />
+            </div>
+          )}
+          {renderedSubPanel === 'settings' && (
+            <div className={`h-full flex-shrink-0 transition-transform duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${openSubPanel === 'settings' ? 'translate-x-0' : '-translate-x-4'}`}>
+              <SettingsSubPanel />
+            </div>
+          )}
         </div>
       </div>
     </>

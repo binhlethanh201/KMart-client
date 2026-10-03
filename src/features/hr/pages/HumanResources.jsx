@@ -9,10 +9,10 @@ import { roleStyle } from '../../../utils/roleLabels';
 import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
+import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
-// BE-77: dùng đúng style ô lọc của trang Báo cáo để các trang nhìn đồng bộ.
-const selectCls = `${FILTER_CONTROL_CLS} cursor-pointer`;
+// BE-77/79: dùng đúng style ô lọc của trang Báo cáo để các trang nhìn đồng bộ.
+const selectCls = FILTER_SELECT_CLS;
 
 function Badge({ cls, children }) {
   return (
@@ -26,7 +26,7 @@ export default function HumanResources() {
   const { t } = useI18n();
   useDocumentTitle(t('Quản lý Nhân sự'));
   const navigate = useNavigate();
-  const { employees, departments, positions, roles, loading, error, saveEmployee, toggleLock: toggleLockHr, resetPassword: resetPasswordHr } = useHr();
+  const { employees, departments, positions, roles, loading, error, saveEmployee, toggleLock: toggleLockHr, resetPassword: resetPasswordHr, deleteEmployee } = useHr();
   const { pushToast, currentUser, hasPermission } = useApproval();
 
   const isStaff = currentUser?.role === 'STAFF';
@@ -131,6 +131,14 @@ export default function HumanResources() {
     const pwd = await resetPasswordHr(emp.id);
     if (pwd) pushToast(t('Mật khẩu tạm cho {v0}: {v1}', { v0: emp.name, v1: pwd }), 'success');
     else pushToast(t('Không thể đặt lại mật khẩu cho {v0}.', { v0: emp.name }), 'error');
+  };
+  /** BE-87: xoá nhân sự — hỏi xác nhận rồi mới gọi API. */
+  const handleDeleteEmployee = async (emp, e) => {
+    if (e) e.stopPropagation();
+    if (!window.confirm(t('Bạn có chắc muốn xóa nhân sự "{v0}"? Thao tác này không thể hoàn tác.', { v0: emp.name }))) return;
+    const result = await deleteEmployee(emp.id);
+    if (result?.ok) pushToast(t('Đã xóa nhân sự "{v0}".', { v0: emp.name }), 'success');
+    else pushToast(result?.message || t('Không xóa được nhân sự'), 'error');
   };
 
   return (
@@ -357,6 +365,14 @@ export default function HumanResources() {
                                     {e.status === 'active' ? 'lock_open' : 'lock'}
                                   </span>
                                 </button>
+                                {/* BE-87: xoá nhân sự (API đã có sẵn nhưng trước đây UI không gọi tới) */}
+                                <button
+                                  onClick={(ev) => handleDeleteEmployee(e, ev)}
+                                  className="text-secondary hover:text-error hover:bg-error-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
+                                  title={t('Xóa nhân sự')}
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
                               </>
                             )}
                           </div>
@@ -386,7 +402,7 @@ export default function HumanResources() {
                       setPageSize(Number(e.target.value));
                       setPage(1); // Reset page on page size change
                     }}
-                    className="border border-[#D9D5CC] rounded-[3px] px-2 py-1 text-xs text-[#111315] bg-[#FFFEFA] outline-none focus:border-[#111315] cursor-pointer transition-colors"
+                    className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
                   >
                     <option value={5}>{t('5 dòng')}</option>
                     <option value={10}>{t('10 dòng')}</option>
