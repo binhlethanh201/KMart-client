@@ -1,4 +1,4 @@
-import apiClient from '../../../services/apiClient';
+import apiClient, { API_URL } from '../../../services/apiClient';
 
 const mapToFrontendModel = (d) => ({
   id: d.id,
@@ -24,7 +24,6 @@ const mapToFrontendModel = (d) => ({
   staff: []
 });
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:5151';
 const getFullAvatarUrl = (url) => {
   if (!url || url.includes('ui-avatars.com')) return null;
   if (url.startsWith('/')) return `${API_URL}${url}`;

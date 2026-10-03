@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { clearSessionStorage } from '../utils/session';
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:5151';
+// Sau khi hợp nhất: chỉ khai báo địa chỉ API ở MỘT nơi rồi export cho các service khác dùng.
+// .env không còn được commit (đã nằm trong .gitignore) nên phải giữ giá trị dự phòng cho máy dev.
+export const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:5151';
 
 const apiClient = axios.create({
   baseURL: `${API_URL}/api`,

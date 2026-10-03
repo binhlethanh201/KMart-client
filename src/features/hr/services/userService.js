@@ -1,6 +1,4 @@
-import apiClient from '../../../services/apiClient';
-
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:5151';
+import apiClient, { API_URL } from '../../../services/apiClient';
 
 export const getFullAvatarUrl = (url) => {
   if (!url || url.includes('ui-avatars.com')) return null;

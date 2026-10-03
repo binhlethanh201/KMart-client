@@ -15,7 +15,8 @@
  * không nằm trong t() nên không bao giờ bị gửi.
  */
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:5151';
+import { API_URL } from '../services/apiClient';
+
 const STORAGE_PREFIX = 'kmart.i18n.auto.';
 const FLUSH_DELAY_MS = 150;
 const MAX_TEXT_LENGTH = 400;
