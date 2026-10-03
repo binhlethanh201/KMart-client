@@ -11,9 +11,33 @@ const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
+/**
+ * BE-75: danh sách định dạng tệp đính kèm được phép — PHẢI KHỚP backend
+ * (Services/Implementations/FileService.cs) để lỗi hiện ngay trên form.
+ */
+const ALLOWED_ATTACHMENT_EXT = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv'];
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+
+/** Trả về câu lỗi nếu tệp không hợp lệ, ngược lại null. */
+function validateAttachment(file, t) {
+  const name = String(file.name || '');
+  const dot = name.lastIndexOf('.');
+  const ext = dot >= 0 ? name.slice(dot).toLowerCase() : '';
+  if (!ext) {
+    return t('Tệp không có phần mở rộng. Cho phép: {v0}', { v0: ALLOWED_ATTACHMENT_EXT.join(', ') });
+  }
+  if (!ALLOWED_ATTACHMENT_EXT.includes(ext)) {
+    return t('Định dạng "{v0}" không được phép. Cho phép: {v1}', { v0: ext, v1: ALLOWED_ATTACHMENT_EXT.join(', ') });
+  }
+  if (file.size > MAX_ATTACHMENT_BYTES) {
+    return t('Kích thước tệp vượt quá giới hạn {v0}MB', { v0: MAX_ATTACHMENT_BYTES / (1024 * 1024) });
+  }
+  return null;
+}
+
 export default function CreateRequestModal({ onClose, existingRequest = null, onSubmitted }) {
   const { t } = useI18n();
-  const { createRequest, updateRequest, departments, currentUser } = useApproval();
+  const { createRequest, updateRequest, departments, currentUser, pushToast } = useApproval();
   const { employees } = useHr();
 
   // Chế độ bổ sung: mở lại đơn đang ở trạng thái "Yêu cầu bổ sung" để sửa rồi gửi lại
@@ -590,13 +614,20 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                       className="sr-only"
                       type="file"
                       required={f.required}
+                      accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv"
                       onChange={(e) => {
                         const file = e.target.files[0];
-                        if (file) {
-                          setDynamic(fieldId, file.name);
-                          // BE-09: giữ File thật để upload sau khi đơn được tạo
-                          setFiles((prev) => ({ ...prev, [fieldId]: file }));
+                        if (!file) return;
+                        // BE-75: báo ngay trên form thay vì để máy chủ từ chối rồi hiện lỗi khó hiểu.
+                        const problem = validateAttachment(file, t);
+                        if (problem) {
+                          pushToast(problem, 'error');
+                          e.target.value = '';
+                          return;
                         }
+                        setDynamic(fieldId, file.name);
+                        // BE-09: giữ File thật để upload sau khi đơn được tạo
+                        setFiles((prev) => ({ ...prev, [fieldId]: file }));
                       }}
                     />
                   </label>

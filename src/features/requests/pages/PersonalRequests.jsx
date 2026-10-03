@@ -4,6 +4,7 @@ import CreateRequestModal from '../components/CreateRequestModal';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
 /* ─── Constants ──────────────────────────────────────────────── */
 
@@ -145,7 +146,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
           <div className="flex items-center gap-3 mb-3 flex-wrap">
             {/* Search */}
             <div className="relative flex-1 min-w-[200px] max-w-sm">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant pointer-events-none">
+              <span className={FILTER_SEARCH_ICON_CLS}>
                 search
               </span>
               <input
@@ -153,7 +154,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 onChange={(e) => setSearch(e.target.value)}
                 type="text"
                 placeholder={t('Tìm theo mã, tiêu đề...')}
-                className="w-full pl-9 pr-3 py-2 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant transition-colors"
+                className={FILTER_SEARCH_CLS}
               />
               {search && (
                 <button
@@ -170,7 +171,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
               <select
                 value={departmentFilter || ''}
                 onChange={(e) => setDepartmentFilter(e.target.value || null)}
-                className="w-full pl-3 pr-8 py-2 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none transition-colors cursor-pointer"
+                className={`${FILTER_CONTROL_CLS} w-full pr-8 appearance-none cursor-pointer`}
               >
                 <option value="">{t('Tất cả phòng ban')}</option>
                 {departments.map((d) => (

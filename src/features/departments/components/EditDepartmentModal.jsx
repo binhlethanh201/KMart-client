@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
 import { EmployeeSelect } from './AddDepartmentModal';
+import { departmentService } from '../services/departmentService';
+import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { useI18n } from '../../../i18n/I18nProvider';
 
 const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
@@ -33,9 +35,37 @@ export default function EditDepartmentModal({ department, onClose }) {
     employees.find((e) => e.id === department.deputyManagerId) || null
   );
   const isStore = type === 'Siêu thị / Chi nhánh';
+  // BE-73: nạp danh sách nhân sự trực thuộc để có thể thêm/bớt ngay trong màn Chỉnh sửa.
+  const [members, setMembers] = useState([]); // [{ employee, assignment }]
+  const [memberQuery, setMemberQuery] = useState('');
+  // Chỉ gửi danh sách thành viên lên máy chủ khi đã đọc thành công, tránh gỡ hết
+  // nhân sự của phòng khi việc tải danh sách thất bại.
+  const [membersLoaded, setMembersLoaded] = useState(false);
   // BE-70: lỗi kiểm tra dữ liệu hiện ngay dưới ô nhập thay vì đóng form rồi báo "Validation failed".
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    departmentService
+      .getMembers(department.id)
+      .then((list) => {
+        if (!alive) return;
+        setMembers(
+          list.map((u) => {
+            const pos = (u.positions || []).find((p) => p.departmentId === department.id);
+            return { employee: u, assignment: pos?.isPrimary ? 'primary' : 'secondary' };
+          })
+        );
+        setMembersLoaded(true);
+      })
+      .catch(() => {
+        if (alive) setMembersLoaded(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [department.id]);
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -71,6 +101,46 @@ export default function EditDepartmentModal({ department, onClose }) {
     return next;
   };
 
+  const headId = head?.id;
+  const deputyId = deputy?.id;
+  const excludeIds = [
+    ...(headId ? [headId] : []),
+    ...(deputyId ? [deputyId] : []),
+    ...members.map((m) => m.employee.id),
+  ];
+
+  const memberResults = employees.filter(
+    (e) =>
+      !excludeIds.includes(e.id) &&
+      (!memberQuery ||
+        e.name.toLowerCase().includes(memberQuery.toLowerCase()) ||
+        e.id.toLowerCase().includes(memberQuery.toLowerCase()))
+  );
+
+  const addMember = (emp) => {
+    setMembers((m) => [
+      ...m,
+      { employee: emp, assignment: m.some((x) => x.assignment === 'primary') ? 'secondary' : 'primary' },
+    ]);
+    setMemberQuery('');
+  };
+  const removeMember = (id) => {
+    setMembers((m) => m.filter((x) => x.employee.id !== id));
+    // Bỏ một người khỏi phòng thì đồng thời bỏ luôn chức danh trưởng/phó phòng của họ,
+    // nếu không form vẫn gửi họ là trưởng phòng và máy chủ giữ nguyên trong phòng.
+    if (headId === id) setHead(null);
+    if (deputyId === id) setDeputy(null);
+  };
+  const setAssignment = (id, assignment) =>
+    setMembers((m) =>
+      m.map((x) => {
+        if (x.employee.id === id) return { ...x, assignment };
+        // Chọn "Chính" cho người này thì người đang giữ "Chính" trước đó chuyển sang "Kiêm nhiệm".
+        if (assignment === 'primary' && x.assignment === 'primary') return { ...x, assignment: 'secondary' };
+        return x;
+      })
+    );
+
   const submit = async (e) => {
     e.preventDefault();
     const found = validate();
@@ -92,6 +162,8 @@ export default function EditDepartmentModal({ department, onClose }) {
       iconImage,
       head,
       deputy,
+      // BE-73: chỉ gửi khi đã tải được danh sách, nếu không máy chủ sẽ hiểu là "gỡ hết nhân sự".
+      ...(membersLoaded ? { members } : {}),
     });
     setSaving(false);
     if (updatedId) onClose();
@@ -107,7 +179,7 @@ export default function EditDepartmentModal({ department, onClose }) {
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        className="bg-surface rounded-lg shadow-xl w-full max-w-md flex flex-col overflow-hidden"
+        className="bg-surface rounded-lg shadow-xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden"
       >
         <div className="flex justify-between items-center p-5 border-b border-outline-variant">
           <div className="flex items-center gap-3">
@@ -128,7 +200,7 @@ export default function EditDepartmentModal({ department, onClose }) {
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto">
           <div>
             <label className={labelCls}>{t('Mã đơn vị')} <span className="text-error">*</span></label>
             <input
@@ -199,6 +271,106 @@ export default function EditDepartmentModal({ department, onClose }) {
                 {t('Dùng cho bước duyệt “Phó phòng / Phó cửa hàng”. Để trống nếu không có.')}
               </p>
             </div>
+          </div>
+
+          <div className="border-t border-outline-variant pt-4 space-y-3">
+            <label className={labelCls}>{t('Thành viên phòng ban')}</label>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
+                search
+              </span>
+              <input
+                value={memberQuery}
+                onChange={(e) => setMemberQuery(e.target.value)}
+                className={`${inputCls} pl-9`}
+                placeholder={t('Tìm nhân sự theo tên, mã NV...')}
+                type="text"
+              />
+            </div>
+
+            {memberQuery && (
+              <ul className="border border-outline-variant rounded-md max-h-40 overflow-y-auto divide-y divide-outline-variant">
+                {memberResults.length === 0 ? (
+                  <li className="px-3 py-2 text-sm text-secondary italic">{t('Không tìm thấy nhân sự.')}</li>
+                ) : (
+                  memberResults.slice(0, 6).map((e) => (
+                    <li key={e.id}>
+                      <button
+                        type="button"
+                        onClick={() => addMember(e)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-container-low transition-colors cursor-pointer"
+                      >
+                        <img className="w-6 h-6 rounded-full object-cover" src={e.avatar} alt={e.name} />
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm text-on-surface truncate">{e.name}</span>
+                          <span className="block text-xs text-secondary truncate">
+                            {e.id.substring(0, 8).toUpperCase()} - {t(e.position)}
+                            {e.dateOfBirth ? ` - ${formatDateOfBirth(e.dateOfBirth)}` : ''}
+                          </span>
+                        </span>
+                        <span className="material-symbols-outlined text-[18px] text-primary">add_circle</span>
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+
+            {members.length > 0 && (
+              <ul className="space-y-2">
+                {members.map((m) => (
+                  <li
+                    key={m.employee.id}
+                    className="flex items-center gap-2 p-2 rounded-md bg-surface-container-low border border-outline-variant/60"
+                  >
+                    <img
+                      className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                      src={m.employee.avatar}
+                      alt={m.employee.name}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-on-surface truncate">{m.employee.name}</p>
+                      <p className="text-xs text-secondary truncate">{m.employee.id.substring(0, 8).toUpperCase()}</p>
+                    </div>
+                    <div className="flex bg-surface-container-highest rounded-md p-0.5 flex-shrink-0">
+                      {[
+                        { v: 'primary', label: t('Chính') },
+                        { v: 'secondary', label: t('Kiêm nhiệm') },
+                      ].map((opt) => {
+                        const active = m.assignment === opt.v;
+                        return (
+                          <button
+                            key={opt.v}
+                            type="button"
+                            onClick={() => setAssignment(m.employee.id, opt.v)}
+                            className={`px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
+                              active ? 'bg-primary text-on-primary' : 'text-secondary hover:text-on-surface'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeMember(m.employee.id)}
+                      className="text-on-surface-variant hover:text-error p-1 rounded hover:bg-error-container/40 cursor-pointer flex-shrink-0"
+                      aria-label={t('Xóa thành viên')}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">remove_circle</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {membersLoaded && members.length === 0 && !memberQuery && (
+              <p className="text-xs text-secondary italic flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">info</span>
+                {t('Phòng ban chưa có nhân sự trực thuộc.')}
+              </p>
+            )}
           </div>
         </div>
 

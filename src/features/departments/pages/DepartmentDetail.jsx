@@ -10,6 +10,7 @@ import DepartmentReport from '../components/DepartmentReport';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { roleStyle } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
 const TABS = [
   { id: 'requests', label: 'Danh sách Đơn từ', icon: 'description' },
@@ -17,8 +18,7 @@ const TABS = [
   { id: 'report', label: 'Thống kê Đơn từ', icon: 'analytics' },
 ];
 
-const selectCls =
-  'bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
+const selectCls = `${FILTER_CONTROL_CLS} cursor-pointer`;
 
 const getSystemRoleInfo = (roles) => {
   const style = roleStyle(roles?.[0]);
@@ -44,6 +44,8 @@ export default function DepartmentDetail() {
   }, [dept, currentUser]);
 
   const [tab, setTab] = useState('requests');
+  // BE-75: khoá nút "Duyệt nhanh" trong lúc gửi để không bấm trùng.
+  const [quickApprovingId, setQuickApprovingId] = useState(null);
   const [q, setQ] = useState('');
   const [typeF, setTypeF] = useState('all');
   const [statusF, setStatusF] = useState('all');
@@ -133,8 +135,18 @@ export default function DepartmentDetail() {
     );
   }
 
-  const quickApprove = (r) => {
-    approveRequest(r.id);
+  // BE-75: duyệt nhanh trước đây gọi thẳng API, không hỏi lại và không khoá nút. Nếu đơn đã bị
+  // người khác duyệt / quá hạn thì người dùng chỉ thấy "Lỗi khi phê duyệt" mà không hiểu vì sao.
+  // Nay: hỏi xác nhận, khoá nút trong lúc gửi, và provider tự tải lại danh sách sau đó.
+  const quickApprove = async (r) => {
+    const code = r.id.substring(0, 8).toUpperCase();
+    if (!window.confirm(t('Phê duyệt đơn {v0} ở bước hiện tại?', { v0: code }))) return;
+    setQuickApprovingId(r.id);
+    try {
+      await approveRequest(r.id);
+    } finally {
+      setQuickApprovingId(null);
+    }
   };
 
 
@@ -226,13 +238,13 @@ export default function DepartmentDetail() {
               {/* Filter bar */}
               <div className="p-4 border-b border-outline-variant flex flex-wrap items-center gap-3 bg-surface-container-low">
                 <div className="relative flex-1 min-w-[220px] max-w-md">
-                  <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
+                  <span className={FILTER_SEARCH_ICON_CLS}>
                     search
                   </span>
                   <input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 bg-surface border border-outline-variant rounded-md focus:ring-1 focus:ring-primary focus:border-primary text-sm outline-none placeholder:text-secondary"
+                    className={FILTER_SEARCH_CLS}
                     placeholder={t('Tìm theo mã đơn, tên nhân viên...')}
                     type="text"
                   />
@@ -293,8 +305,11 @@ export default function DepartmentDetail() {
                         const creatorName = r.creatorName || employees.find((u) => u.id === r.creatorId)?.name;
                         const creatorAvatar = employees.find((u) => u.id === r.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
                         const meta = STATUS_META[r.status];
+                        // BE-75: trạng thái đơn từ máy chủ là 'pendingapproval' (không phải 'pending'),
+                        // trước đây chỉ so 'pending' nên mọi đơn đang chờ đều hiện nhầm "Đã dừng".
+                        const isWaiting = ['pending', 'submitted', 'pendingapproval'].includes(r.status);
                         const stepLabel =
-                          r.status === 'pending'
+                          isWaiting
                             ? (r.steps[r.currentStep]?.name || t('Cấp {v0}', { v0: r.currentStep + 1 }))
                             : r.status === 'approved'
                               ? t('Hoàn tất')
@@ -346,11 +361,14 @@ export default function DepartmentDetail() {
                               {canQuick ? (
                                 <button
                                   onClick={() => quickApprove(r)}
-                                  className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant px-3 py-1.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                  disabled={quickApprovingId === r.id}
+                                  className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant px-3 py-1.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                   title={t('Duyệt nhanh (bước hiện tại: {v0})', { v0: currentUser.name })}
                                 >
-                                  <span className="material-symbols-outlined text-[14px]">bolt</span>
-                                  {t('Duyệt nhanh')}
+                                  <span className="material-symbols-outlined text-[14px]">
+                                    {quickApprovingId === r.id ? 'hourglass_top' : 'bolt'}
+                                  </span>
+                                  {quickApprovingId === r.id ? t('Đang duyệt...') : t('Duyệt nhanh')}
                                 </button>
                               ) : (
                                 <Link
@@ -375,7 +393,7 @@ export default function DepartmentDetail() {
                   <select
                     value={reqPageSize}
                     onChange={(e) => { setReqPageSize(Number(e.target.value)); setReqPage(1); }}
-                    className="bg-surface border border-outline-variant rounded px-2 py-1 outline-none cursor-pointer hover:bg-surface-container-low transition-colors"
+                    className="border border-[#D9D5CC] rounded-[3px] px-2 py-1 text-[#111315] bg-[#FFFEFA] outline-none cursor-pointer transition-colors"
                   >
                     <option value={5}>{t('5 dòng')}</option>
                     <option value={10}>{t('10 dòng')}</option>
@@ -563,7 +581,7 @@ export default function DepartmentDetail() {
                   <select
                     value={memPageSize}
                     onChange={(e) => { setMemPageSize(Number(e.target.value)); setMemPage(1); }}
-                    className="bg-surface border border-outline-variant rounded px-2 py-1 outline-none cursor-pointer hover:bg-surface-container-low transition-colors"
+                    className="border border-[#D9D5CC] rounded-[3px] px-2 py-1 text-[#111315] bg-[#FFFEFA] outline-none cursor-pointer transition-colors"
                   >
                     <option value={5}>{t('5 dòng')}</option>
                     <option value={10}>{t('10 dòng')}</option>

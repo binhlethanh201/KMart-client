@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
+import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { useI18n } from '../../../i18n/I18nProvider';
 
 const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
@@ -116,6 +117,8 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
                       <span className="block text-sm text-on-surface truncate">{e.name}</span>
                       <span className="block text-xs text-secondary truncate">
                         {e.id.substring(0, 8).toUpperCase()} - {t(e.position)} - {t(e.department)}
+                        {/* BE-74: hai người trùng tên trông giống hệt nhau — kèm ngày sinh để chọn đúng. */}
+                        {e.dateOfBirth ? ` - ${formatDateOfBirth(e.dateOfBirth)}` : ''}
                       </span>
                     </span>
                   </button>
@@ -167,12 +170,24 @@ export default function AddDepartmentModal({ onClose }) {
   );
 
   const addMember = (emp) => {
-    setMembers((m) => [...m, { employee: emp, assignment: 'primary' }]);
+    // BE-72: chỉ một thành viên giữ phòng ban công tác "Chính"; những người thêm sau
+    // mặc định là "Kiêm nhiệm" để dữ liệu gửi lên khớp với ràng buộc của máy chủ.
+    setMembers((m) => [
+      ...m,
+      { employee: emp, assignment: m.some((x) => x.assignment === 'primary') ? 'secondary' : 'primary' },
+    ]);
     setMemberQuery('');
   };
   const removeMember = (id) => setMembers((m) => m.filter((x) => x.employee.id !== id));
   const setAssignment = (id, assignment) =>
-    setMembers((m) => m.map((x) => (x.employee.id === id ? { ...x, assignment } : x)));
+    setMembers((m) =>
+      m.map((x) => {
+        if (x.employee.id === id) return { ...x, assignment };
+        // Chọn "Chính" cho người này thì người đang giữ "Chính" trước đó chuyển sang "Kiêm nhiệm".
+        if (assignment === 'primary' && x.assignment === 'primary') return { ...x, assignment: 'secondary' };
+        return x;
+      })
+    );
 
   // BE-70: kiểm tra ngay trên form, dùng ĐÚNG câu chữ mà backend trả về để thông báo
   // được dịch đồng nhất ở cả 3 ngôn ngữ.
@@ -418,7 +433,10 @@ export default function AddDepartmentModal({ onClose }) {
                           <img className="w-6 h-6 rounded-full object-cover" src={e.avatar} alt={e.name} />
                           <span className="flex-1 min-w-0">
                             <span className="block text-sm text-on-surface truncate">{e.name}</span>
-                            <span className="block text-xs text-secondary truncate">{e.id.substring(0, 8).toUpperCase()} - {t(e.position)}</span>
+                            <span className="block text-xs text-secondary truncate">
+                              {e.id.substring(0, 8).toUpperCase()} - {t(e.position)}
+                              {e.dateOfBirth ? ` - ${formatDateOfBirth(e.dateOfBirth)}` : ''}
+                            </span>
                           </span>
                           <span className="material-symbols-outlined text-[18px] text-primary">add_circle</span>
                         </button>
@@ -443,7 +461,10 @@ export default function AddDepartmentModal({ onClose }) {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-on-surface truncate">{m.employee.name}</p>
-                        <p className="text-xs text-secondary truncate">{m.employee.id.substring(0, 8).toUpperCase()}</p>
+                        <p className="text-xs text-secondary truncate">
+                          {m.employee.id.substring(0, 8).toUpperCase()}
+                          {m.employee.dateOfBirth ? ` · ${formatDateOfBirth(m.employee.dateOfBirth)}` : ''}
+                        </p>
                       </div>
                       {/* Assignment toggle */}
                       <div className="flex bg-surface-container-highest rounded-md p-0.5 flex-shrink-0">

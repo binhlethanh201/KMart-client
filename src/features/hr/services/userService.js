@@ -29,6 +29,8 @@ const mapToFrontendModel = (u) => {
     email: u.email,
     personalEmail: u.personalEmail || '',
     phone: u.phone || '',
+    // BE-74: ngày sinh (YYYY-MM-DD) — phân biệt nhân sự trùng họ tên.
+    dateOfBirth: u.dateOfBirth || '',
     profileData: u.profileData ? JSON.parse(u.profileData) : null,
     createdAt: u.createdAt,
     secondary: secondaryPos.map(p => ({
@@ -79,6 +81,8 @@ export const userService = {
       fullName: data.name,
       // BE-68: gửi kèm số điện thoại — trước đây bị bỏ quên nên nhập xong là mất.
       phone: data.phone || null,
+      // BE-74: ngày sinh để phân biệt nhân sự trùng họ tên.
+      dateOfBirth: data.dateOfBirth || null,
       password: data.password || 'Kmart@123',
       positions,
       roleIds: data.roleIds || []
@@ -113,6 +117,8 @@ export const userService = {
       personalEmail: data.personalEmail || null,
       // BE-68: cập nhật được số điện thoại
       phone: data.phone || null,
+      // BE-74: ngày sinh — gửi null để xoá được khi người dùng bỏ trống.
+      dateOfBirth: data.dateOfBirth || null,
       positions,
       roleIds: data.roleIds || []
     };

@@ -7,6 +7,7 @@ import { userService, getFullAvatarUrl } from '../features/hr/services/userServi
 import { PERMISSIONS } from '../constants/permissions';
 import { useI18n } from '../i18n/I18nProvider';
 import { describeApiError } from '../utils/apiError';
+import { canUserApprove } from '../features/requests/approvalEligibility';
 
 const STORAGE_KEY = 'kmart.approval.v3';
 
@@ -66,7 +67,7 @@ export function ApprovalSystemProvider({ children }) {
       const [allReqs, myReqs, pendingReqs] = await Promise.all([
         applicationService.getAll(),
         applicationService.getMyRequests(),
-        applicationService.getPendingApprovals(currentUser?.id || currentUserId)
+        applicationService.getPendingApprovals()
       ]);
       // Merge unique: order is important. pendingReqs comes last so its _isPendingReq overwrites others if same ID
       const all = [...allReqs, ...myReqs, ...pendingReqs];
@@ -174,15 +175,24 @@ export function ApprovalSystemProvider({ children }) {
     async (reqId) => {
       try {
         const updated = await applicationService.approve(reqId);
+        // BE-75: ghi lại kết quả tức thì để UI đổi ngay, KHÔNG dựa vào cờ cũ trong danh sách.
         setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: false } : r)));
         pushToast(t('Đã phê duyệt bước này'), 'success');
+        // BE-75: tải lại danh sách từ máy chủ. Trước đây chỉ sửa cục bộ nên số liệu bước duyệt,
+        // trạng thái và nhãn "Cần bạn duyệt" của các đơn liên quan bị cũ.
+        loadRequests();
+        return true;
       } catch (err) {
         const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi phê duyệt');
         pushToast(errorMsg, 'error');
         console.error('Approve error:', err);
+        // BE-75: đơn có thể đã bị người khác duyệt / quá hạn. Tải lại để nút "Duyệt nhanh"
+        // biến mất thay vì để người dùng bấm lại rồi nhận lỗi lần nữa.
+        loadRequests();
+        return false;
       }
     },
-    [pushToast]
+    [pushToast, t, loadRequests]
   );
 
   // Bổ sung thông tin cho đơn bị trả về (NeedsSupplement) rồi gửi lại cho người duyệt
@@ -218,6 +228,33 @@ export function ApprovalSystemProvider({ children }) {
       }
     },
     [pushToast]
+  );
+
+  /**
+   * BE-76: người tạo hủy đơn của mình khi chưa ai duyệt.
+   *
+   * Trả về true/false để nơi gọi biết có nên đóng hộp thoại hay không. Nếu hai người cùng
+   * thao tác, máy chủ trả 409 kèm lý do cụ thể (đơn đã bị duyệt / đã bị hủy...) — ta hiển thị
+   * nguyên văn câu đó và tải lại danh sách để giao diện khớp trạng thái thật.
+   */
+  const cancelRequest = useCallback(
+    async (reqId, reason) => {
+      try {
+        const updated = await applicationService.cancel(reqId, reason);
+        setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: false } : r)));
+        pushToast(t('Đã hủy đơn'), 'success');
+        loadRequests();
+        return true;
+      } catch (err) {
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi hủy đơn');
+        pushToast(errorMsg, 'error');
+        console.error('Cancel error:', err);
+        // Trạng thái trên máy chủ đã đổi -> đồng bộ lại để nút Hủy biến mất.
+        loadRequests();
+        return false;
+      }
+    },
+    [pushToast, t, loadRequests]
   );
 
   const requestSupplement = useCallback(
@@ -348,37 +385,9 @@ export function ApprovalSystemProvider({ children }) {
   );
 
   // Does the current user hold the pending step for this request?
+  // BE-75: dùng chung một hàm với danh sách/nút bấm để không lệch kết quả.
   const canApprove = useCallback(
-    (r) => {
-      if (!r || !['pending', 'submitted', 'pendingapproval'].includes(r.status)) return false;
-      // BE-08: don cua chinh minh thi khong bao gio "can ban duyet",
-      // ke ca khi BE tra ve trong danh sach pending. (Removed filter)
-      if (r._isPendingReq !== true) return false;
-
-      // BE-18: danh sách /pending của backend trả CẢ những đơn người này đã đi qua
-      // (để hiện trong "Đã phê duyệt"/"Từ chối"), không chỉ đơn đang tới lượt.
-      // Vì vậy phải kiểm tra đúng người này có thuộc BƯỚC ĐANG CHỜ hiện tại hay không,
-      // nếu không người đã duyệt xong bước trước vẫn thấy nút Duyệt và bị 403.
-      const steps = r.steps || [];
-      const currentOrder = Number(r.currentStep) || 0;
-      if (steps.length > 0 && currentOrder > 0) {
-        const currentStep = steps.find((s) => Number(s.stepOrder) === currentOrder);
-        if (!currentStep) return false;
-        const ids = currentStep.approverIds?.length
-          ? currentStep.approverIds
-          : (currentStep.approverId ? [currentStep.approverId] : []);
-        if (ids.length > 0 && !ids.includes(currentUserId)) return false;
-        
-        if (r.histories && r.histories.length > 0) {
-          const hasApproved = r.histories.some(
-            (h) => Number(h.stepOrder) === currentOrder && String(h.userId) === String(currentUserId) && ['approved', 'rejected'].includes(h.action)
-          );
-          if (hasApproved) return false;
-        }
-      }
-
-      return true;
-    },
+    (r) => canUserApprove(r, currentUserId),
     [currentUserId]
   );
 
@@ -404,6 +413,7 @@ export function ApprovalSystemProvider({ children }) {
       updateRequest,
       approveRequest,
       rejectRequest,
+      cancelRequest,
       requestSupplement,
       addComment,
       simulateTimeout,
@@ -421,7 +431,7 @@ export function ApprovalSystemProvider({ children }) {
       pushToast,
       dismissToast,
     }),
-    [currentUser, currentUserId, requests, createRequest, updateRequest, approveRequest, rejectRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
+    [currentUser, currentUserId, requests, createRequest, updateRequest, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
   );
 
   return <ApprovalSystemContext.Provider value={value}>{children}</ApprovalSystemContext.Provider>;

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from '../../../i18n/I18nProvider';
 import LanguageSwitcher from '../../../components/LanguageSwitcher';
+import BrandLogo from '../../../components/BrandLogo';
 
 const LandingPage = () => {
   const { t } = useI18n();
@@ -57,16 +58,8 @@ const LandingPage = () => {
         <div className="flex h-full w-screen shrink-0 flex-col overflow-y-auto overflow-x-hidden">
           {/* HEADER */}
           <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b border-outline-variant bg-surface/90 px-6 shadow-sm backdrop-blur-md md:px-12">
-            <div
-              className="cursor-pointer transition-transform active:scale-95 flex items-center gap-2"
-              onClick={() => handleSmoothNavigate("/")}
-            >
-              <div className="w-8 h-8 rounded bg-primary text-on-primary flex items-center justify-center font-bold text-headline-sm">
-                K
-              </div>
-              <span className="text-headline-md text-primary font-bold tracking-tight">
-                Kmart
-              </span>
+            <div className="cursor-pointer transition-transform active:scale-95" onClick={() => handleSmoothNavigate("/")}>
+              <BrandLogo size="sm" />
             </div>
 
             <div className="flex items-center gap-3">
@@ -74,7 +67,7 @@ const LandingPage = () => {
               <button
                 type="button"
                 onClick={() => handleSmoothNavigate("/login")}
-                className="rounded-md bg-primary px-5 py-2 text-label-md text-on-primary shadow-sm transition-all hover:bg-on-primary-fixed-variant active:scale-95 hidden sm:block"
+                className="hidden rounded-lg bg-primary px-5 py-2 text-label-md text-on-primary shadow-sm transition-all hover:bg-on-primary-fixed-variant active:scale-95 sm:block"
               >
                 {t('Đăng nhập ngay')}
               </button>
@@ -83,8 +76,11 @@ const LandingPage = () => {
 
           {/* HERO SECTION */}
           <section className="relative shrink-0 overflow-hidden border-b border-outline-variant bg-surface px-6 py-16 md:px-12 lg:py-24">
+            {/* BE-77: nền chuyển sắc nhẹ giúp khối hero có chiều sâu thay vì nền trắng phẳng */}
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_55%,#f4f6fb_100%)]" />
             <div className="absolute top-0 right-0 -mr-20 -mt-20 h-96 w-96 rounded-full bg-primary-container blur-3xl opacity-50 mix-blend-multiply" />
             <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-72 w-72 rounded-full bg-success-container blur-3xl opacity-30 mix-blend-multiply" />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.4] bg-[linear-gradient(to_right,#eef1f7_1px,transparent_1px),linear-gradient(to_bottom,#eef1f7_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_at_60%_0%,black,transparent_70%)]" />
 
             <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-12">
               <div className="space-y-6 text-left lg:col-span-6">
@@ -115,7 +111,7 @@ const LandingPage = () => {
                   <button
                     type="button"
                     onClick={() => handleSmoothNavigate("/login")}
-                    className="group flex items-center justify-center gap-2 rounded-md bg-primary px-8 py-3 text-on-primary shadow-sm transition-all hover:bg-on-primary-fixed-variant active:scale-95"
+                    className="group flex items-center justify-center gap-2 rounded-lg bg-primary px-8 py-3 text-on-primary shadow-lg shadow-primary/25 transition-all hover:bg-on-primary-fixed-variant hover:shadow-xl hover:shadow-primary/30 active:scale-95"
                   >
                     <span>{t('Truy cập hệ thống')}</span>
                     <span className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">
@@ -123,6 +119,32 @@ const LandingPage = () => {
                     </span>
                   </button>
                 </div>
+
+                {/* BE-77: vài con số tạo điểm neo thị giác cho khối hero.
+                    BE-78: mỗi nhãn phải là một lời gọi t('...') với CHUỖI HẰNG để
+                    scripts/i18n-sync.mjs quét được và tự sinh bản dịch. Trước đây truyền
+                    biến `t(stat.label)` nên tool không thấy khoá -> nhãn đứng nguyên tiếng Việt
+                    khi chuyển sang EN/KO. */}
+                <dl className="grid grid-cols-3 gap-4 border-t border-outline-variant pt-6">
+                  <div>
+                    <dt className="text-[22px] font-bold leading-tight text-primary">100%</dt>
+                    <dd className="mt-0.5 text-[12px] uppercase tracking-wide text-secondary">
+                      {t('Số hóa hồ sơ')}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[22px] font-bold leading-tight text-primary">{t('3 cấp')}</dt>
+                    <dd className="mt-0.5 text-[12px] uppercase tracking-wide text-secondary">
+                      {t('Luồng duyệt')}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[22px] font-bold leading-tight text-primary">{t('12 giờ')}</dt>
+                    <dd className="mt-0.5 text-[12px] uppercase tracking-wide text-secondary">
+                      {t('Hạn xử lý')}
+                    </dd>
+                  </div>
+                </dl>
               </div>
 
               {/* HERO VISUAL (Mockup Dashboard Đơn từ) */}
@@ -194,9 +216,14 @@ const LandingPage = () => {
                 {HR_SOLUTIONS.map((feature, idx) => (
                   <div
                     key={idx}
-                    className="group rounded-lg border border-outline-variant bg-surface p-6 shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md"
+                    className="group relative overflow-hidden rounded-xl border border-outline-variant bg-surface p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-lg"
                   >
-                    <div className="mb-5 inline-flex rounded-lg bg-primary-container p-3 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-on-primary">
+                    {/* BE-77: số thứ tự mờ ở góc tạo nhịp thị giác, không gây rối */}
+                    <span className="pointer-events-none absolute -top-2 right-3 text-[56px] font-bold leading-none text-primary/5">
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+
+                    <div className="mb-5 inline-flex rounded-xl bg-primary-container p-3 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-on-primary">
                       <span className="material-symbols-outlined text-[24px]">
                         {feature.icon}
                       </span>
@@ -213,16 +240,38 @@ const LandingPage = () => {
             </div>
           </section>
 
+          {/* BE-77: KHỐI KÊU GỌI HÀNH ĐỘNG trước chân trang */}
+          <section className="shrink-0 px-6 pb-20 md:px-12">
+            <div className="relative mx-auto max-w-7xl overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#122a6b_0%,#1d4ed8_60%,#3b82f6_100%)] px-8 py-12 text-white md:px-14">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_20%,rgba(255,255,255,0.22),transparent_45%)]" />
+              <div className="pointer-events-none absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+
+              <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+                <div className="max-w-xl">
+                  <h2 className="text-headline-md">{t('Sẵn sàng số hóa quy trình duyệt đơn?')}</h2>
+                  <p className="mt-2 text-body-md text-white/80">
+                    {t('Đăng nhập để theo dõi đơn từ, phê duyệt theo cấp bậc và xuất báo cáo nhân sự ngay hôm nay.')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleSmoothNavigate("/login")}
+                  className="group flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-7 py-3 text-label-md font-semibold text-primary shadow-lg transition-all hover:bg-white/90 active:scale-95"
+                >
+                  <span>{t('Đăng nhập ngay')}</span>
+                  <span className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">
+                    arrow_forward
+                  </span>
+                </button>
+              </div>
+            </div>
+          </section>
+
           {/* FOOTER */}
           <footer className="shrink-0 border-t border-outline-variant bg-surface py-8">
             <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-4 md:flex-row md:justify-between md:px-12">
-              <div className="flex items-center gap-2 opacity-80">
-                <div className="w-6 h-6 rounded bg-on-surface-variant text-surface flex items-center justify-center text-xs font-bold">
-                  K
-                </div>
-                <span className="text-label-md text-on-surface-variant font-bold">
-                  Kmart
-                </span>
+              <div className="flex items-center gap-2">
+                <BrandLogo size="sm" />
               </div>
               <span className="text-[11px] uppercase tracking-widest text-outline">
                 {t('© 2026 Kmart Internal Systems. Bảo lưu mọi quyền lợi.')}

@@ -6,11 +6,13 @@ import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
 import { roleStyle } from '../../../utils/roleLabels';
+import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
-const selectCls =
-  'bg-surface border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
+// BE-77: dùng đúng style ô lọc của trang Báo cáo để các trang nhìn đồng bộ.
+const selectCls = `${FILTER_CONTROL_CLS} cursor-pointer`;
 
 function Badge({ cls, children }) {
   return (
@@ -74,7 +76,9 @@ export default function HumanResources() {
         e.name.toLowerCase().includes(q) ||
         e.id.toLowerCase().includes(q) ||
         e.email.toLowerCase().includes(q) ||
-        e.phone.includes(q);
+        e.phone.includes(q) ||
+        // BE-74: tìm được theo ngày sinh (gõ "1990" hoặc "1990-05-20").
+        (e.dateOfBirth || '').includes(q);
       const matchDept = dept === 'all' || e.department === dept || (e.secondary && e.secondary.some(s => s.department === dept));
       const matchRole = role === 'all' || e.role === role;
       const matchStatus = status === 'all' || e.status === status;
@@ -158,11 +162,11 @@ export default function HumanResources() {
       <div className="bg-surface border-b border-outline-variant p-4 flex-shrink-0 z-10">
         <div className="w-full flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1 lg:max-w-sm">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">search</span>
+            <span className={FILTER_SEARCH_ICON_CLS}>search</span>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-md focus:ring-1 focus:ring-primary focus:border-primary text-sm text-on-surface outline-none placeholder:text-secondary"
+              className={FILTER_SEARCH_CLS}
               placeholder={t('Tìm theo mã NV, họ tên, email, sđt...')}
               type="text"
             />
@@ -237,7 +241,11 @@ export default function HumanResources() {
                             <img className="w-9 h-9 rounded-full object-cover flex-shrink-0" src={e.avatar} alt={e.name} />
                             <div className="min-w-0">
                               <div className="font-semibold text-on-surface truncate">{e.name}</div>
-                              <div className="text-xs text-secondary" title={e.id}>{e.id.substring(0, 8).toUpperCase()}</div>
+                              <div className="text-xs text-secondary" title={e.id}>
+                                {e.id.substring(0, 8).toUpperCase()}
+                                {/* BE-74: hiện ngày sinh để phân biệt hai nhân sự trùng họ tên. */}
+                                {e.dateOfBirth && ` · ${t('Sinh')} ${formatDateOfBirth(e.dateOfBirth)}`}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -378,7 +386,7 @@ export default function HumanResources() {
                       setPageSize(Number(e.target.value));
                       setPage(1); // Reset page on page size change
                     }}
-                    className="bg-surface border border-outline-variant/50 rounded-md px-2 py-1 text-xs text-on-surface outline-none focus:border-primary cursor-pointer hover:bg-surface-container-low transition-colors"
+                    className="border border-[#D9D5CC] rounded-[3px] px-2 py-1 text-xs text-[#111315] bg-[#FFFEFA] outline-none focus:border-[#111315] cursor-pointer transition-colors"
                   >
                     <option value={5}>{t('5 dòng')}</option>
                     <option value={10}>{t('10 dòng')}</option>

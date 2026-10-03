@@ -47,6 +47,8 @@ const mapMemberToFrontend = (u, targetDeptId = null) => {
     email: u.email,
     personalEmail: u.personalEmail,
     phone: u.phone || '',
+    // BE-74: ngày sinh — phân biệt nhân sự trùng họ tên trong ô chọn nhân sự.
+    dateOfBirth: u.dateOfBirth || '',
     status: u.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
     positions: u.positions || [],
     systemRoles: u.roles || []
@@ -114,6 +116,22 @@ export const departmentService = {
       payload.deputyManagerId = data.deputy ? data.deputy.id : null;
     } else if (data.deputyManagerId !== undefined) {
       payload.deputyManagerId = data.deputyManagerId;
+    }
+    // BE-73: màn Chỉnh sửa quản lý được thành viên — gửi danh sách đầy đủ để máy chủ
+    // thêm người mới và gỡ người đã bỏ. Chỉ gửi khi caller thực sự có dữ liệu thành viên,
+    // tránh vô tình gỡ hết nhân sự khi form chưa tải xong.
+    if (Array.isArray(data.members)) {
+      payload.members = data.members.map(m => ({
+        userId: m.employee.id,
+        isPrimary: m.assignment === 'primary'
+      }));
+      // Trưởng/phó phòng phải nằm trong danh sách để không bị gỡ khỏi phòng.
+      if (data.head && !payload.members.some(m => m.userId === data.head.id)) {
+        payload.members.push({ userId: data.head.id, isPrimary: false });
+      }
+      if (data.deputy && !payload.members.some(m => m.userId === data.deputy.id)) {
+        payload.members.push({ userId: data.deputy.id, isPrimary: false });
+      }
     }
     const response = await apiClient.put(`/departments/${id}`, payload);
     return mapToFrontendModel(response.data);

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { reportService } from '../services/reportService';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { FILTER_CONTROL_CLS, FILTER_LABEL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
 import ExportTableButton from './ExportTableButton';
 import TablePager from './TablePager';
 
@@ -86,9 +87,9 @@ export default function DrillTable({ query }) {
       {/* Tìm kiếm nhanh + khoảng ngày ngay trong bảng để khỏi phải cuộn lên bộ lọc chung */}
       <div className="flex items-end gap-3 flex-wrap mb-5 pb-5 border-b border-[#f0eee9]">
         <div className="flex flex-col gap-1.5 flex-1 min-w-[240px]">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[#66655F]">{t('Tìm kiếm đơn')}</label>
+          <label className={FILTER_LABEL_CLS}>{t('Tìm kiếm đơn')}</label>
           <div className="relative">
-            <span className="material-symbols-outlined text-[18px] text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <span className={FILTER_SEARCH_ICON_CLS}>
               search
             </span>
             <input
@@ -96,7 +97,7 @@ export default function DrillTable({ query }) {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t('Mã đơn, người tạo, phòng ban, loại đơn...')}
-              className="w-full h-[38px] pl-10 pr-9 border border-[#e5e2db] rounded-lg text-[13px] text-[#1d1d1f] bg-white outline-none focus:border-[#1d1d1f] transition-colors"
+              className={`${FILTER_SEARCH_CLS} pr-9`}
             />
             {searchInput && (
               <button
@@ -112,22 +113,22 @@ export default function DrillTable({ query }) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[#66655F]">{t('Từ ngày')}</label>
+          <label className={FILTER_LABEL_CLS}>{t('Từ ngày')}</label>
           <input
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="h-[38px] px-3 border border-[#e5e2db] rounded-lg text-[12px] text-[#1d1d1f] bg-white outline-none focus:border-[#1d1d1f] transition-colors"
+            className={FILTER_CONTROL_CLS}
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[#66655F]">{t('Đến ngày')}</label>
+          <label className={FILTER_LABEL_CLS}>{t('Đến ngày')}</label>
           <input
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="h-[38px] px-3 border border-[#e5e2db] rounded-lg text-[12px] text-[#1d1d1f] bg-white outline-none focus:border-[#1d1d1f] transition-colors"
+            className={FILTER_CONTROL_CLS}
           />
         </div>
 
@@ -139,7 +140,7 @@ export default function DrillTable({ query }) {
               setFrom('');
               setTo('');
             }}
-            className="h-[38px] px-4 rounded-lg border border-[#e5e2db] text-[12px] font-semibold text-[#66655F] hover:text-[#1d1d1f] hover:border-[#c9c5bb] transition-colors cursor-pointer"
+            className={FILTER_GHOST_BUTTON_CLS}
           >
             {t('Đặt lại')}
           </button>

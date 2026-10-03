@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import NotificationBell from '../components/NotificationBell';
+import BrandLogo from '../components/BrandLogo';
 import { useApproval } from '../context/useApproval';
  
 export default function MainLayout() {
@@ -45,7 +46,7 @@ export default function MainLayout() {
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
-          <h1 className="font-headline-sm text-headline-sm text-primary font-bold">KMart</h1>
+          <BrandLogo size="sm" />
           <NotificationBell variant="header" />
         </header>
  

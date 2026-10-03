@@ -4,14 +4,19 @@ import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { STATUS_META } from '../data/constants';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { canUserCancel } from '../approvalEligibility';
+import CancelRequestModal from './CancelRequestModal';
 
 // Status-driven request card. Clicking navigates to the detail page.
 export default function RequestCard({ request: r }) {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { canApprove, departments } = useApproval();
+  const { canApprove, departments, currentUserId, cancelRequest } = useApproval();
   const { employees } = useHr();
   const [isExpanded, setIsExpanded] = useState(false);
+  // BE-76: chỉ chủ đơn và chỉ khi chưa ai duyệt mới thấy nút Hủy.
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const cancellable = canUserCancel(r, currentUserId);
 
   // BE-16: phòng ban mà đơn nhắm tới (Data.departments) -> hiện rõ "đơn phòng nào"
   const targetDeptCodes = (() => {
@@ -174,6 +179,17 @@ export default function RequestCard({ request: r }) {
                 <span className="px-2.5 py-0.5 bg-warning-container text-on-warning-container rounded-full text-[10px] uppercase font-bold flex items-center gap-1 animate-pulse shadow-sm">
                   <span className="material-symbols-outlined text-[12px]">priority_high</span> {t('Cần bạn duyệt')}
                 </span>
+              )}
+              {/* BE-76: chủ đơn tự hủy được khi chưa ai duyệt */}
+              {cancellable && (
+                <button
+                  type="button"
+                  onClick={(ev) => { ev.stopPropagation(); setCancelOpen(true); }}
+                  className="px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold flex items-center gap-1 border border-error/30 text-error hover:bg-error-container/40 transition-colors cursor-pointer"
+                  title={t('Hủy đơn này (chưa ai duyệt)')}
+                >
+                  <span className="material-symbols-outlined text-[12px]">cancel</span> {t('Hủy đơn')}
+                </button>
               )}
             </div>
             
@@ -482,6 +498,16 @@ export default function RequestCard({ request: r }) {
             
           </div>
         </div>
+      )}
+
+      {/* BE-76: hộp thoại xác nhận hủy đơn */}
+      {cancelOpen && (
+        <CancelRequestModal
+          requestId={r.id.substring(0, 8).toUpperCase()}
+          requestTitle={r.title}
+          onClose={() => setCancelOpen(false)}
+          onConfirm={(reason) => cancelRequest(r.id, reason)}
+        />
       )}
     </div>
   );

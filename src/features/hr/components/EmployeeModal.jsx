@@ -11,12 +11,16 @@ const EMPTY_EMPLOYEE = {
   phone: '',
   password: '',
   personalEmail: '',
+  dateOfBirth: '',
   departmentId: '',
   positionId: '',
   roleId: '', // For now we allow selecting 1 role
   status: 'active',
   secondary: []
 };
+
+/** BE-74: ngày hôm nay theo giờ máy — dùng làm giới hạn trên cho ô ngày sinh. */
+const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
@@ -36,6 +40,8 @@ const PASSWORD_RULES = [
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 /** Số điện thoại Việt Nam: 10 số bắt đầu bằng 0, cho phép khoảng trắng/gạch nối. */
 const PHONE_RE = /^0\d{9}$/;
+/** Ngày dạng YYYY-MM-DD (giá trị của <input type="date">). */
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * BE-68: kiểm tra dữ liệu nhân sự NGAY TRÊN FORM (trước đây chỉ dựa vào `required` của HTML,
@@ -72,6 +78,18 @@ function validateEmployee(form, isEdit, t) {
 
   if (form.phone && !PHONE_RE.test(form.phone.replace(/[\s.-]/g, ''))) {
     errors.phone = t('Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0)');
+  }
+
+  // BE-74: ngày sinh tuỳ chọn, nhưng nếu nhập thì phải là ngày có thật và không ở tương lai.
+  // Quy tắc phải KHỚP backend (Services/Validators/UserValidators.cs).
+  if (form.dateOfBirth) {
+    if (!DATE_RE.test(form.dateOfBirth) || Number.isNaN(Date.parse(form.dateOfBirth))) {
+      errors.dateOfBirth = t('Ngày sinh không hợp lệ');
+    } else if (form.dateOfBirth > TODAY_ISO) {
+      errors.dateOfBirth = t('Ngày sinh không được ở tương lai');
+    } else if (form.dateOfBirth < '1900-01-01') {
+      errors.dateOfBirth = t('Ngày sinh không hợp lệ (phải từ năm 1900 trở đi)');
+    }
   }
 
   // Nhân sự phải thuộc một phòng ban + chức vụ, nếu không luồng duyệt sẽ không tìm được người duyệt.
@@ -256,6 +274,21 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                   placeholder="0901 234 567"
                 />
                 {errors.phone && <p className="text-xs text-error mt-1">{errors.phone}</p>}
+              </div>
+              <div>
+                <label className={labelCls}>{t('Ngày sinh')}</label>
+                <input
+                  data-field="dateOfBirth"
+                  className={errors.dateOfBirth ? fieldErrCls : fieldCls}
+                  type="date"
+                  min="1900-01-01"
+                  max={TODAY_ISO}
+                  value={form.dateOfBirth || ''}
+                  onChange={set('dateOfBirth')}
+                />
+                {errors.dateOfBirth
+                  ? <p className="text-xs text-error mt-1">{errors.dateOfBirth}</p>
+                  : <p className="text-xs text-secondary mt-1">{t('Dùng để phân biệt nhân sự trùng họ tên.')}</p>}
               </div>
               {!isEdit && (
                 <div>

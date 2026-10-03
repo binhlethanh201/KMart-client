@@ -123,23 +123,15 @@ export const applicationService = {
     return response.data.items.map(mapToFrontendModel);
   },
 
-  getPendingApprovals: async (currentUserId) => {
+  getPendingApprovals: async () => {
     const response = await apiClient.get('/applications/pending?limit=1000');
+    // BE-75: `/applications/pending` trả cả những đơn người này ĐÃ đi qua (để hiện ở tab
+    // "Đã phê duyệt"/"Từ chối"), nên cờ `_isPendingReq` ở đây mang nghĩa "đơn có gửi đến tôi",
+    // KHÔNG phải "đang chờ tôi duyệt". Việc quyết định có hiện nút Duyệt hay không do
+    // `canUserApprove` đảm nhiệm (dùng chung với trang phòng ban và trang chi tiết).
     return response.data.items.map(a => {
       const mapped = mapToFrontendModel(a);
-      let isTrulyPending = false;
-      if (['pending', 'submitted', 'pendingapproval'].includes(mapped.status)) {
-        const currentOrder = Number(mapped.currentStep) || 0;
-        const hasActed = mapped.histories?.some(h => 
-          Number(h.stepOrder) === currentOrder && 
-          String(h.userId) === String(currentUserId) && 
-          ['approved', 'rejected'].includes(h.action)
-        );
-        if (!hasActed) {
-          isTrulyPending = true;
-        }
-      }
-      return { ...mapped, _isPendingReq: isTrulyPending };
+      return { ...mapped, _isPendingReq: true };
     });
   },
 
@@ -180,6 +172,12 @@ export const applicationService = {
 
   supplement: async (id, reason) => {
     const response = await apiClient.post(`/applications/${id}/supplement`, { reason });
+    return mapToFrontendModel(response.data);
+  },
+
+  // BE-76: người tạo tự hủy đơn khi chưa ai duyệt. `reason` là tuỳ chọn.
+  cancel: async (id, reason) => {
+    const response = await apiClient.post(`/applications/${id}/cancel`, { reason: reason || null });
     return mapToFrontendModel(response.data);
   },
 

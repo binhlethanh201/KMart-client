@@ -6,6 +6,7 @@ import Pagination from '../../../components/Pagination';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useApproval } from '../../../context/useApproval';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
 export default function DepartmentDashboard() {
   const { t } = useI18n();
@@ -102,11 +103,11 @@ export default function DepartmentDashboard() {
           <div className="flex flex-wrap gap-3 items-center justify-between">
             <div className="flex flex-wrap items-center gap-3 flex-1">
               <div className="relative w-full sm:w-80">
-                <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[18px]">search</span>
+                <span className={FILTER_SEARCH_ICON_CLS}>search</span>
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 bg-surface border border-outline-variant rounded-md focus:ring-1 focus:ring-primary focus:border-primary text-sm outline-none placeholder:text-secondary"
+                  className={FILTER_SEARCH_CLS}
                   placeholder={t('Tìm kiếm mã, tên đơn vị...')}
                   type="text"
                 />
@@ -114,7 +115,7 @@ export default function DepartmentDashboard() {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
+                className={`${FILTER_CONTROL_CLS} cursor-pointer`}
               >
                 <option value="all">{t('Loại đơn vị: Tất cả')}</option>
                 <option value="Phòng ban">{t('Phòng ban')}</option>
@@ -124,7 +125,7 @@ export default function DepartmentDashboard() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
+                className={`${FILTER_CONTROL_CLS} cursor-pointer`}
               >
                 <option value="all">{t('Trạng thái: Tất cả')}</option>
                 <option value="active">{t('Đang hoạt động')}</option>

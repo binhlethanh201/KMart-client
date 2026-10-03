@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { STATUS_META } from '../../requests/data/constants';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { FILTER_CONTROL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
 // BE-43: nhân viên chỉ xem báo cáo của CHÍNH MÌNH; trưởng/phó phòng xem toàn phòng.
 export default function DepartmentReport({ deptRequests, members, employees, isDeptManager = true, currentUserId }) {
@@ -140,7 +141,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              className={FILTER_CONTROL_CLS}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -149,7 +150,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              className={FILTER_CONTROL_CLS}
             />
           </div>
           {(startDate || endDate) && (
@@ -273,13 +274,13 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
             {t('Chi tiết theo nhân sự')}
           </h3>
           <div className="relative w-full sm:w-64">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">search</span>
+            <span className={FILTER_SEARCH_ICON_CLS}>search</span>
             <input
               type="text"
               placeholder={t('Tìm nhân viên...')}
               value={memberSearch}
               onChange={(e) => handleMemberSearch(e.target.value)}
-              className="w-full bg-surface border border-outline-variant rounded-full pl-9 pr-4 py-1.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              className={FILTER_SEARCH_CLS}
             />
           </div>
         </div>

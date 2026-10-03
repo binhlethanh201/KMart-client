@@ -9,6 +9,8 @@ import UserInfoModal from '../components/UserInfoModal';
 import { STATUS_META } from '../data/constants';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { applicationService } from '../services/applicationService';
+import { canUserApprove, canUserCancel } from '../approvalEligibility';
+import CancelRequestModal from '../components/CancelRequestModal';
 import { useI18n } from '../../../i18n/I18nProvider';
 
 // BE-09: định dạng dung lượng file đính kèm
@@ -34,7 +36,7 @@ export default function RequestDetail() {
   const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
-  const { requests, currentUser, currentUserId, canApprove, approveRequest, rejectRequest, requestSupplement, addComment, simulateTimeout, pushToast } = useApproval();
+  const { requests, currentUser, currentUserId, canApprove, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, pushToast } = useApproval();
   const { employees } = useHr();
   const listRequest = requests.find((r) => r.id === id);
 
@@ -56,10 +58,11 @@ export default function RequestDetail() {
     return () => { cancelled = true; };
   }, [id]);
 
-  // BE-15: giữ cờ _isPendingReq của bản ghi trong danh sách "chờ tôi duyệt"
-  // vì getById không trả cờ này -> nếu ghi đè thẳng sẽ làm nút Duyệt bị vô hiệu.
+  // BE-75: tính trực tiếp từ dữ liệu chi tiết (có đủ steps + histories) thay vì mượn cờ
+  // `_isPendingReq` của bản ghi trong danh sách — cờ đó có thể cũ, khiến trang chi tiết vẫn
+  // hiện "Yêu cầu hành động" và bật nút Duyệt cho người đã duyệt xong (đơn chuỗi liên tiếp).
   const request = detail && detail.id === id
-    ? { ...detail, _isPendingReq: listRequest?._isPendingReq }
+    ? { ...detail, _isPendingReq: canUserApprove(detail, currentUserId) }
     : listRequest;
 
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -67,6 +70,8 @@ export default function RequestDetail() {
   const [supplementEditOpen, setSupplementEditOpen] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  // BE-76: hộp thoại xác nhận hủy đơn (chỉ chủ đơn, chỉ khi chưa ai duyệt).
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [comment, setComment] = useState('');
   const commentRef = useRef(null);
 
@@ -123,6 +128,8 @@ export default function RequestDetail() {
   const creatorRole = employees.find((u) => u.id === request.creatorId)?.position || t('Nhân viên');
   const creatorAvatar = employees.find((u) => u.id === request.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
   const actionable = canApprove(request);
+  // BE-76: chủ đơn hủy được khi chưa ai duyệt (quy tắc phải khớp backend).
+  const canCancel = canUserCancel(request, currentUserId);
   const isPendingWorkflow = ['pending', 'submitted', 'pendingapproval'].includes(request.status);
 
   /**
@@ -378,6 +385,17 @@ export default function RequestDetail() {
 
           {/* Action bar */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* BE-76: chủ đơn tự hủy khi chưa ai duyệt — hiện ở nhánh nào cũng được */}
+            {canCancel && !isSupplementOwner && (
+              <button
+                onClick={() => setCancelOpen(true)}
+                className="px-4 py-1.5 rounded text-sm font-medium border border-error/40 text-error hover:bg-error-container/40 transition-colors flex items-center gap-2 bg-surface cursor-pointer"
+                title={t('Hủy đơn này (chưa ai duyệt)')}
+              >
+                <span className="material-symbols-outlined text-[16px]">cancel</span>
+                {t('Hủy đơn')}
+              </button>
+            )}
             {/* BE-15: đơn đang chờ chính người tạo bổ sung -> cho bổ sung & gửi lại ngay tại đây */}
             {isSupplementOwner ? (
               <>
@@ -1086,6 +1104,20 @@ export default function RequestDetail() {
             setRejectOpen(false);
             await rejectRequest(request.id, reason);
             refreshDetail();
+          }}
+        />
+      )}
+
+      {/* BE-76: xác nhận hủy đơn — chỉ chủ đơn, chỉ khi chưa ai duyệt */}
+      {cancelOpen && (
+        <CancelRequestModal
+          requestId={request.id.substring(0, 8).toUpperCase()}
+          requestTitle={request.title}
+          onClose={() => setCancelOpen(false)}
+          onConfirm={async (reason) => {
+            const ok = await cancelRequest(request.id, reason);
+            if (ok) refreshDetail();
+            return ok;
           }}
         />
       )}

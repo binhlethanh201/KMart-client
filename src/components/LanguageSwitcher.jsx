@@ -34,6 +34,33 @@ export default function LanguageSwitcher({ isCollapsed = false, variant = 'dark'
     );
   }
 
+  // BE-77c: nền TỐI (gradient thương hiệu) -> viên thuỷ tinh trắng mờ, chữ sáng.
+  // Khác hẳn variant 'light' (nền sáng) và variant 'dark' (dành riêng cho sidebar).
+  if (variant === 'onDark') {
+    return (
+      <div className="flex items-center rounded-full border border-white/20 bg-white/10 px-1 py-0.5 backdrop-blur-sm">
+        {languages.map((l, i) => {
+          const active = language === l.code;
+          return (
+            <span key={l.code} className="flex items-center">
+              {i > 0 && <span className="w-px h-3.5 bg-white/25" />}
+              <button
+                type="button"
+                onClick={() => setLanguage(l.code)}
+                title={l.label}
+                className={`px-2.5 py-1 rounded-full text-[12px] font-semibold tracking-wide transition-colors cursor-pointer ${
+                  active ? 'bg-white text-primary' : 'text-white/75 hover:text-white'
+                }`}
+              >
+                {l.short}
+              </button>
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
   // Sidebar thu gọn: xếp dọc, chỉ chữ
   if (isCollapsed) {
     return (

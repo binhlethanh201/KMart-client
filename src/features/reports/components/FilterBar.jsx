@@ -1,9 +1,11 @@
 import { useI18n } from '../../../i18n/I18nProvider';
+import { FILTER_CONTROL_CLS, FILTER_LABEL_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
 
 export default function FilterBar({ filters, departments, documentTypes = [], positions = [], onChange }) {
   const { t } = useI18n();
-  const inputClass = "h-[44px] border border-[#D9D5CC] rounded-[3px] px-[16px] text-[14px] text-[#111315] bg-[#FFFEFA] focus:border-[#111315] focus:outline-none transition-colors min-w-[180px]";
-  const labelClass = "text-[12px] font-bold uppercase tracking-[1.68px] text-[#66655F]";
+  // BE-77: style lấy từ bộ dùng chung để mọi trang lọc giống nhau.
+  const inputClass = `${FILTER_CONTROL_CLS} min-w-[180px]`;
+  const labelClass = FILTER_LABEL_CLS;
 
   const filteredDepartments = (departments || []).filter(d => {
     if (!filters.block) return true;
@@ -103,7 +105,7 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
         {/* Reset */}
         {(filters.from || filters.to || filters.block || filters.departmentId || filters.documentTypeId || filters.positionId) && (
           <button
-            className="flex items-center justify-center px-[16px] py-[8px] h-[44px] text-[14px] font-semibold text-[#66655F] bg-transparent border border-transparent hover:border-[#D9D5CC] rounded-[8px] transition-colors ml-auto mt-[26px]"
+            className={`${FILTER_GHOST_BUTTON_CLS} ml-auto mt-[26px]`}
             onClick={() => onChange({ from: null, to: null, block: null, departmentId: null, documentTypeId: null, positionId: null })}
           >
             {t('Đặt lại')}
