@@ -97,24 +97,14 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
           </select>
         </div>
 
-        {/* Trạng thái — báo cáo chỉ quan tâm đơn đã duyệt */}
-        <div className="flex flex-col gap-2">
-          <label className={labelClass}>{t('Trạng thái')}</label>
-          <select
-            className={inputClass}
-            value={filters.status || ''}
-            onChange={(e) => onChange({ status: e.target.value || null })}
-          >
-            <option value="">{t('Đã duyệt (mặc định)')}</option>
-            <option value="Approved">{t('Đã duyệt')}</option>
-          </select>
-        </div>
+        {/* Trạng thái — đã bỏ: báo cáo chỉ thống kê ĐƠN ĐÃ DUYỆT nên lọc trạng thái
+            không làm số liệu thay đổi, gây hiểu nhầm là bộ lọc hỏng. */}
 
         {/* Reset */}
-        {(filters.from || filters.to || filters.block || filters.departmentId || filters.documentTypeId || filters.positionId || filters.status) && (
+        {(filters.from || filters.to || filters.block || filters.departmentId || filters.documentTypeId || filters.positionId) && (
           <button
             className="flex items-center justify-center px-[16px] py-[8px] h-[44px] text-[14px] font-semibold text-[#66655F] bg-transparent border border-transparent hover:border-[#D9D5CC] rounded-[8px] transition-colors ml-auto mt-[26px]"
-            onClick={() => onChange({ from: null, to: null, block: null, departmentId: null, documentTypeId: null, positionId: null, status: null })}
+            onClick={() => onChange({ from: null, to: null, block: null, departmentId: null, documentTypeId: null, positionId: null })}
           >
             {t('Đặt lại')}
           </button>

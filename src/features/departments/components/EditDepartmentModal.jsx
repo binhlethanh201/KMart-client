@@ -10,10 +10,16 @@ const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 const inputCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
+// BE-70: ô sai định dạng được tô đỏ (giống form Thêm mới).
+const inputErrCls =
+  'w-full rounded-md border border-error bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:border-error focus:ring-1 focus:ring-error';
+
+// BE-70: quy tắc phải KHỚP backend (DepartmentValidators.cs).
+const CODE_RE = /^[A-Z0-9_]+$/;
 
 export default function EditDepartmentModal({ department, onClose }) {
   const { t } = useI18n();
-  const { updateDepartment, employees } = useApproval();
+  const { updateDepartment, employees, departments = [] } = useApproval();
   
   const [code, setCode] = useState(department.code || '');
   const [name, setName] = useState(department.name || '');
@@ -27,6 +33,9 @@ export default function EditDepartmentModal({ department, onClose }) {
     employees.find((e) => e.id === department.deputyManagerId) || null
   );
   const isStore = type === 'Siêu thị / Chi nhánh';
+  // BE-70: lỗi kiểm tra dữ liệu hiện ngay dưới ô nhập thay vì đóng form rồi báo "Validation failed".
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -34,12 +43,48 @@ export default function EditDepartmentModal({ department, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const valid = code.trim() && name.trim();
+  const validate = () => {
+    const next = {};
+    const codeValue = code.trim();
+    const nameValue = name.trim();
 
-  const submit = (e) => {
+    if (!codeValue) next.code = t('Vui lòng nhập mã phòng ban');
+    else if (codeValue.length < 2) next.code = t('Mã phòng ban tối thiểu 2 ký tự');
+    else if (codeValue.length > 20) next.code = t('Mã phòng ban tối đa 20 ký tự');
+    else if (!CODE_RE.test(codeValue)) next.code = t('Mã phòng ban chỉ gồm chữ in hoa, số và dấu gạch dưới');
+    else {
+      // BE-71: báo trước nếu mã đang thuộc phòng ban KHÁC (bỏ qua chính phòng ban đang sửa).
+      const owner = departments.find(
+        (d) => d.id !== department.id && String(d.code || '').trim().toUpperCase() === codeValue
+      );
+      if (owner) {
+        next.code = owner.status === 'Active'
+          ? t('Mã "{v0}" đã thuộc phòng ban "{v1}" (đang hoạt động). Hãy dùng mã khác, hoặc xoá phòng ban đó trước khi tạo mới.', { v0: codeValue, v1: owner.name })
+          : t('Mã "{v0}" đã thuộc phòng ban "{v1}" (đang ngừng hoạt động). Hãy dùng mã khác, hoặc bật lại / xoá hẳn phòng ban đó trước khi tạo mới.', { v0: codeValue, v1: owner.name });
+      }
+    }
+
+    if (!nameValue) next.name = t('Vui lòng nhập tên phòng ban');
+    else if (nameValue.length < 2) next.name = t('Tên phòng ban tối thiểu 2 ký tự');
+    else if (nameValue.length > 100) next.name = t('Tên phòng ban tối đa 100 ký tự');
+
+    return next;
+  };
+
+  const submit = async (e) => {
     e.preventDefault();
-    if (!valid) return;
-    updateDepartment(department.id, {
+    const found = validate();
+    setErrors(found);
+    if (Object.keys(found).length > 0) {
+      const first = document.querySelector(`[data-field="edit-dept-${Object.keys(found)[0]}"]`);
+      first?.focus?.();
+      first?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      return;
+    }
+
+    setSaving(true);
+    // BE-70: chờ máy chủ trả kết quả rồi mới đóng form để không mất dữ liệu khi bị từ chối.
+    const updatedId = await updateDepartment(department.id, {
       code: code.trim().toUpperCase(),
       name: name.trim(),
       type,
@@ -48,7 +93,8 @@ export default function EditDepartmentModal({ department, onClose }) {
       head,
       deputy,
     });
-    onClose();
+    setSaving(false);
+    if (updatedId) onClose();
   };
 
   return createPortal(
@@ -86,21 +132,25 @@ export default function EditDepartmentModal({ department, onClose }) {
           <div>
             <label className={labelCls}>{t('Mã đơn vị')} <span className="text-error">*</span></label>
             <input
+              data-field="edit-dept-code"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
-              className={inputCls}
+              className={errors.code ? inputErrCls : inputCls}
               placeholder="VD: HR-01"
             />
+            {errors.code && <p className="text-xs text-error mt-1">{errors.code}</p>}
           </div>
 
           <div>
             <label className={labelCls}>{t('Tên đơn vị / Phòng ban')} <span className="text-error">*</span></label>
             <input
+              data-field="edit-dept-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className={inputCls}
+              className={errors.name ? inputErrCls : inputCls}
               placeholder={t('VD: Phòng Hành chính Nhân sự')}
             />
+            {errors.name && <p className="text-xs text-error mt-1">{errors.name}</p>}
           </div>
 
           <div>
@@ -162,7 +212,7 @@ export default function EditDepartmentModal({ department, onClose }) {
           </button>
           <button
             type="submit"
-            disabled={!valid}
+            disabled={saving}
             className="font-label-md text-on-primary bg-primary hover:bg-on-primary-fixed-variant px-5 py-2 rounded-md transition-colors shadow-sm cursor-pointer disabled:opacity-40 flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-[18px]">save</span>

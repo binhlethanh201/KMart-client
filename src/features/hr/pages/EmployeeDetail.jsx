@@ -380,8 +380,11 @@ export default function EmployeeDetail() {
           currentUser={currentUser}
           onClose={() => setEditOpen(false)}
           onSave={async (form) => {
-            const ok = await saveEmployee(form);
-            if (ok) setEditOpen(false);
+            // BE-70: saveEmployee trả { ok, message } — chỉ đóng form khi lưu THÀNH CÔNG,
+            // nếu không thì đóng form là mất luôn dòng báo lỗi bên trong.
+            const result = await saveEmployee(form);
+            if (result?.ok) setEditOpen(false);
+            return result;
           }}
         />
       )}

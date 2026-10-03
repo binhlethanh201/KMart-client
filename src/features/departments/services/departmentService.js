@@ -69,6 +69,9 @@ export const departmentService = {
       name: data.name,
       code: data.code,
       type: data.type,
+      // BE-71: gửi trạng thái người dùng chọn — trước đây bỏ quên nên chọn "Ngừng hoạt động"
+      // vẫn tạo ra phòng ban "Đang hoạt động".
+      isActive: data.status !== 'inactive',
       managerId: data.head?.id || null,
       deputyManagerId: data.deputy?.id || null,
       icon: data.icon || null,

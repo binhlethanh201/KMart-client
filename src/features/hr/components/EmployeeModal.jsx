@@ -163,8 +163,9 @@ export default function EmployeeModal({ employee, departments = [], positions = 
     });
     setSaving(false);
     // BE-68: lỗi từ máy chủ hiển thị ngay trong form (dịch theo ngôn ngữ đang dùng), không dùng alert().
+    // BE-70: HrProvider đã dịch sẵn câu giải thích chi tiết nên ở đây chỉ hiển thị.
     if (result && result.ok === false) {
-      setServerError(result.message ? t(result.message) : t('Không lưu được nhân sự'));
+      setServerError(result.message || t('Không lưu được nhân sự'));
     }
   };
 

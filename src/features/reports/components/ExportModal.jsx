@@ -161,7 +161,6 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
                 {filters.to && <li>{t('Đến:')} {filters.to}</li>}
                 {filters.departmentId && <li>{t('Phòng ban: đã chọn')}</li>}
                 {filters.documentTypeId && <li>{t('Loại đơn: đã chọn')}</li>}
-                {filters.status && <li>{t('Trạng thái:')} {t(filters.status)}</li>}
               </ul>
             </div>
           )}

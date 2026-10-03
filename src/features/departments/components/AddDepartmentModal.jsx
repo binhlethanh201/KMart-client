@@ -9,7 +9,18 @@ const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 const inputCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
+// BE-70: ô sai định dạng được tô đỏ để người dùng thấy ngay chỗ cần sửa.
+const inputErrCls =
+  'w-full rounded-md border border-error bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:border-error focus:ring-1 focus:ring-error';
 const cardCls = 'bg-surface border border-outline-variant/60 rounded-lg p-4';
+
+// BE-70: quy tắc phải KHỚP với backend (K_Market_Application/Validators/DepartmentValidators.cs)
+// để lỗi hiện ngay trong form thay vì gửi lên máy chủ rồi nhận "Validation failed".
+const CODE_RE = /^[A-Z0-9_]+$/;
+const NAME_MIN = 2;
+const NAME_MAX = 100;
+const CODE_MIN = 2;
+const CODE_MAX = 20;
 
 // Searchable single-select for an employee.
 export function EmployeeSelect({ employees, value, onChange, placeholder, exclude = [], allowClear = false }) {
@@ -120,7 +131,7 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
 
 export default function AddDepartmentModal({ onClose }) {
   const { t } = useI18n();
-  const { employees, addDepartment } = useApproval();
+  const { employees, departments = [], addDepartment } = useApproval();
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState(TYPES[0]);
@@ -131,6 +142,9 @@ export default function AddDepartmentModal({ onClose }) {
   const [deputy, setDeputy] = useState(null);
   const [memberQuery, setMemberQuery] = useState('');
   const [members, setMembers] = useState([]); // [{ employee, assignment }]
+  // BE-70: lỗi kiểm tra dữ liệu hiện ngay dưới ô nhập.
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -160,12 +174,53 @@ export default function AddDepartmentModal({ onClose }) {
   const setAssignment = (id, assignment) =>
     setMembers((m) => m.map((x) => (x.employee.id === id ? { ...x, assignment } : x)));
 
-  const valid = code.trim() && name.trim();
+  // BE-70: kiểm tra ngay trên form, dùng ĐÚNG câu chữ mà backend trả về để thông báo
+  // được dịch đồng nhất ở cả 3 ngôn ngữ.
+  const validate = () => {
+    const next = {};
+    const codeValue = code.trim();
+    const nameValue = name.trim();
 
-  const submit = (e) => {
+    if (!codeValue) next.code = t('Vui lòng nhập mã phòng ban');
+    else if (codeValue.length < CODE_MIN) next.code = t('Mã phòng ban tối thiểu 2 ký tự');
+    else if (codeValue.length > CODE_MAX) next.code = t('Mã phòng ban tối đa 20 ký tự');
+    else if (!CODE_RE.test(codeValue)) next.code = t('Mã phòng ban chỉ gồm chữ in hoa, số và dấu gạch dưới');
+    else {
+      // BE-71: kiểm tra mã TRƯỚC khi gửi lên máy chủ, và nói rõ phòng ban nào đang giữ mã
+      // kèm trạng thái — trước đây chỉ nhận lại "Mã … đã thuộc phòng ban …" sau khi bấm Lưu,
+      // nên người dùng hiểu nhầm là phải xoá phòng ban cũ mới tạo được.
+      const owner = departments.find(
+        (d) => String(d.code || '').trim().toUpperCase() === codeValue
+      );
+      if (owner) {
+        next.code = owner.status === 'Active'
+          ? t('Mã "{v0}" đã thuộc phòng ban "{v1}" (đang hoạt động). Hãy dùng mã khác, hoặc xoá phòng ban đó trước khi tạo mới.', { v0: codeValue, v1: owner.name })
+          : t('Mã "{v0}" đã thuộc phòng ban "{v1}" (đang ngừng hoạt động). Hãy dùng mã khác, hoặc bật lại / xoá hẳn phòng ban đó trước khi tạo mới.', { v0: codeValue, v1: owner.name });
+      }
+    }
+
+    if (!nameValue) next.name = t('Vui lòng nhập tên phòng ban');
+    else if (nameValue.length < NAME_MIN) next.name = t('Tên phòng ban tối thiểu 2 ký tự');
+    else if (nameValue.length > NAME_MAX) next.name = t('Tên phòng ban tối đa 100 ký tự');
+
+    return next;
+  };
+
+  const submit = async (e) => {
     e.preventDefault();
-    if (!valid) return;
-    addDepartment({
+    const found = validate();
+    setErrors(found);
+    if (Object.keys(found).length > 0) {
+      const first = document.querySelector(`[data-field="dept-${Object.keys(found)[0]}"]`);
+      first?.focus?.();
+      first?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      return;
+    }
+
+    setSaving(true);
+    // BE-70: chờ máy chủ trả kết quả rồi mới đóng form. Trước đây form đóng ngay sau khi
+    // gửi nên khi máy chủ từ chối, người dùng mất hết dữ liệu vừa nhập và không hiểu lỗi gì.
+    const createdId = await addDepartment({
       code: code.trim().toUpperCase(),
       name: name.trim(),
       type,
@@ -176,7 +231,8 @@ export default function AddDepartmentModal({ onClose }) {
       deputy,
       members,
     });
-    onClose();
+    setSaving(false);
+    if (createdId) onClose();
   };
 
   return createPortal(
@@ -229,12 +285,15 @@ export default function AddDepartmentModal({ onClose }) {
                 {t('Mã đơn vị')} <span className="text-error">*</span>
               </label>
               <input
+                data-field="dept-code"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                className={inputCls}
+                className={errors.code ? inputErrCls : inputCls}
                 placeholder="VD: HR-01, LOG-01"
               />
-              <p className="text-xs text-secondary mt-1">{t('Tự động viết hoa.')}</p>
+              {errors.code
+                ? <p className="text-xs text-error mt-1">{errors.code}</p>
+                : <p className="text-xs text-secondary mt-1">{t('Tự động viết hoa.')}</p>}
             </div>
 
             <div>
@@ -242,11 +301,13 @@ export default function AddDepartmentModal({ onClose }) {
                 {t('Tên đơn vị / Phòng ban')} <span className="text-error">*</span>
               </label>
               <input
+                data-field="dept-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={inputCls}
+                className={errors.name ? inputErrCls : inputCls}
                 placeholder={t('VD: Phòng Hành chính Nhân sự')}
               />
+              {errors.name && <p className="text-xs text-error mt-1">{errors.name}</p>}
             </div>
 
             <div>
@@ -442,11 +503,11 @@ export default function AddDepartmentModal({ onClose }) {
             </button>
             <button
               type="submit"
-              disabled={!valid}
+              disabled={saving}
               className="font-label-md text-on-primary bg-primary hover:bg-on-primary-fixed-variant px-5 py-2 rounded-md transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-[18px]">check_circle</span>
-              {t('Tạo đơn vị mới')}
+              {saving ? t('Đang tạo...') : t('Tạo đơn vị mới')}
             </button>
           </div>
         </div>

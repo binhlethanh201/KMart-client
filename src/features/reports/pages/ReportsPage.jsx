@@ -16,10 +16,6 @@ import RosterTable from '../components/RosterTable';
 import ExportModal from '../components/ExportModal';
 import { useI18n } from '../../../i18n/I18nProvider';
 
-const STATUS_LABELS = {
-  Approved: 'Đã duyệt',
-};
-
 export default function ReportsPage() {
   const { t } = useI18n();
   useDocumentTitle(t('Báo cáo & Thống kê'));
@@ -39,7 +35,6 @@ export default function ReportsPage() {
     departmentId: null,
     documentTypeId: null,
     positionId: null,
-    status: null,
   });
 
   const [departments, setDepartments] = useState([]);
@@ -61,7 +56,6 @@ export default function ReportsPage() {
     departmentId: filters.departmentId || undefined,
     documentTypeId: filters.documentTypeId || undefined,
     positionId: filters.positionId || undefined,
-    status: filters.status || undefined,
   }), [filters]);
 
 

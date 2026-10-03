@@ -4,6 +4,7 @@ import { departmentService } from '../../departments/services/departmentService'
 import { positionService } from '../services/positionService';
 import { roleService } from '../services/roleService';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { describeApiError } from '../../../utils/apiError';
 
 const HrContext = createContext(null);
 
@@ -53,18 +54,13 @@ export function HrProvider({ children }) {
     } catch (err) {
       console.error('Failed to save employee', err);
       const status = err.response?.status;
-      const body = err.response?.data;
       // BE-68: trả lỗi về cho FORM hiển thị (dịch được theo ngôn ngữ), không dùng alert()
       // vì alert chặn giao diện và không đổi được ngôn ngữ.
-      const detail =
-        body?.error ||
-        body?.message ||
-        (Array.isArray(body?.errors) ? body.errors.join('; ') : '') ||
-        err.message ||
-        t('Không lưu được nhân sự');
-      return { ok: false, message: detail, status };
+      // BE-70: lấy câu giải thích chi tiết; trước đây ưu tiên `message` nên lỗi kiểm tra dữ liệu
+      // chỉ hiện đúng một chữ "Validation failed".
+      return { ok: false, message: describeApiError(err, t, 'Không lưu được nhân sự'), status };
     }
-  }, []);
+  }, [t]);
 
   const toggleLock = useCallback(async (id) => {
     try {

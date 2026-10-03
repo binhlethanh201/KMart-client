@@ -55,8 +55,10 @@ export const reportService = {
   getOverview: (filters = {}) => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
+      // BE-72: bỏ 'status' — báo cáo luôn chỉ tính đơn đã duyệt ở phía máy chủ
+      // nên lọc trạng thái trên giao diện không có tác dụng.
       if (value !== null && value !== undefined && value !== '' &&
-          ['from', 'to', 'departmentId', 'documentTypeId', 'status'].includes(key)) {
+          ['from', 'to', 'departmentId', 'documentTypeId'].includes(key)) {
         params.append(key, value);
       }
     });
@@ -72,7 +74,7 @@ export const reportService = {
     const params = new URLSearchParams();
     params.append('months', months);
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'status', 'positionId'].includes(key)) {
+      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'positionId'].includes(key)) {
         params.append(key, value);
       }
     });
@@ -110,7 +112,7 @@ export const reportService = {
     params.append('pageSize', pageSize);
     Object.entries(filters).forEach(([key, value]) => {
       // BE-63: thêm 'search' cho ô tìm kiếm của bảng "Soi kĩ từng đơn".
-      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'status', 'positionId', 'search'].includes(key)) {
+      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'positionId', 'search'].includes(key)) {
         params.append(key, value);
       }
     });

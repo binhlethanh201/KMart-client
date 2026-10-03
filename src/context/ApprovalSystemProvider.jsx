@@ -6,6 +6,7 @@ import { authService } from '../features/auth/services/authService';
 import { userService, getFullAvatarUrl } from '../features/hr/services/userService';
 import { PERMISSIONS } from '../constants/permissions';
 import { useI18n } from '../i18n/I18nProvider';
+import { describeApiError } from '../utils/apiError';
 
 const STORAGE_KEY = 'kmart.approval.v3';
 
@@ -110,9 +111,9 @@ export function ApprovalSystemProvider({ children }) {
 
   const currentUserId = currentUser?.id;
 
-  const pushToast = useCallback((message, variant = 'info') => {
+  const pushToast = useCallback((message, variant = 'info', { resolved = false } = {}) => {
     const id = Date.now();
-    setToasts((t) => [...t, { id, message, variant }]);
+    setToasts((t) => [...t, { id, message, variant, resolved }]);
     setTimeout(() => {
       setToasts((t) => t.filter((x) => x.id !== id));
     }, 3000);
@@ -281,15 +282,26 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const newDept = await departmentService.create(data);
         setDepartments((d) => [...d, newDept]);
-        pushToast(t('Thêm mới phòng ban thành công!'), 'success');
+        // BE-71: nói rõ trạng thái vừa tạo — phòng ban "Ngừng hoạt động" không hiện trong
+        // bộ lọc mặc định nên người dùng dễ tưởng tạo nhầm thành "Đang hoạt động".
+        if (newDept?.status === 'Inactive') {
+          pushToast(
+            t('Đã tạo phòng ban "{v0}" ở trạng thái Ngừng hoạt động. Chọn bộ lọc "Ngừng hoạt động" để xem.',
+              { v0: newDept.name }),
+            'success'
+          );
+        } else {
+          pushToast(t('Thêm mới phòng ban thành công!'), 'success');
+        }
         return newDept.id;
       } catch (err) {
-        const backendMessage = err.response?.data?.message || t('Lỗi khi thêm phòng ban');
-        pushToast(backendMessage, 'error');
         console.error(err);
+        // BE-70: hiện câu giải thích chi tiết ("Tên phòng ban tối thiểu 2 ký tự"...) thay vì
+        // "Validation failed" chung chung khiến người dùng đoán sai nguyên nhân.
+        pushToast(describeApiError(err, t, 'Lỗi khi thêm phòng ban'), 'error', { resolved: true });
       }
     },
-    [pushToast]
+    [pushToast, t]
   );
 
   const updateDepartment = useCallback(
@@ -298,13 +310,14 @@ export function ApprovalSystemProvider({ children }) {
         const updated = await departmentService.update(id, updates);
         setDepartments((list) => list.map((d) => (d.id === id ? updated : d)));
         pushToast(t('Cập nhật phòng ban thành công!'), 'success');
+        // BE-70: trả về id để form chỉ đóng khi máy chủ đã lưu xong.
+        return updated?.id || id;
       } catch (err) {
-        const backendMessage = err.response?.data?.message || t('Lỗi cập nhật phòng ban');
-        pushToast(backendMessage, 'error');
         console.error(err);
+        pushToast(describeApiError(err, t, 'Lỗi cập nhật phòng ban'), 'error', { resolved: true });
       }
     },
-    [pushToast]
+    [pushToast, t]
   );
 
   const deleteDepartment = useCallback(
@@ -314,7 +327,8 @@ export function ApprovalSystemProvider({ children }) {
         setDepartments((list) => list.filter((d) => d.id !== id));
         pushToast(t('Đã xóa phòng ban'), 'success');
       } catch (err) {
-        pushToast(t('Lỗi xóa phòng ban'), 'error');
+        console.error(err);
+        pushToast(describeApiError(err, t, 'Lỗi xóa phòng ban'), 'error', { resolved: true });
       }
     },
     [pushToast]

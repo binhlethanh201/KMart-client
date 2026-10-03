@@ -5,10 +5,6 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import ExportTableButton from './ExportTableButton';
 import TablePager from './TablePager';
 
-const STATUS_LABELS = {
-  Approved: 'Đã duyệt',
-};
-
 /**
  * BE-64: bảng "Soi kĩ từng đơn" tách thành component RIÊNG.
  *
@@ -170,14 +166,13 @@ export default function DrillTable({ query }) {
               <th className="py-3 pr-4 font-bold">{t('Phòng ban')}</th>
               <th className="py-3 pr-4 font-bold">{t('Chức vụ')}</th>
               <th className="py-3 pr-4 font-bold">{t('Bước')}</th>
-              <th className="py-3 pr-4 font-bold">{t('Trạng thái')}</th>
               <th className="py-3 pr-4 font-bold text-right">{t('Xử lý (giờ)')}</th>
             </tr>
           </thead>
           <tbody>
             {loading && items.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-gray-400 text-sm">{t('Đang tải...')}</td>
+                <td colSpan={7} className="py-8 text-center text-gray-400 text-sm">{t('Đang tải...')}</td>
               </tr>
             )}
             {(!loading || items.length > 0) && items.map((a) => (
@@ -196,11 +191,6 @@ export default function DrillTable({ query }) {
                 <td className="py-3 pr-4 text-[12px] text-gray-600">
                   {a.totalSteps ? `${a.currentStepOrder || 0}/${a.totalSteps}` : '—'}
                 </td>
-                <td className="py-3 pr-4">
-                  <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
-                    {t(STATUS_LABELS[a.status] || a.status || '—')}
-                  </span>
-                </td>
                 <td className="py-3 pr-4 text-right text-[12px] text-gray-600">
                   {a.durationHours != null ? a.durationHours.toFixed(1) : '—'}
                 </td>
@@ -208,7 +198,7 @@ export default function DrillTable({ query }) {
             ))}
             {!loading && items.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-10 text-center text-gray-500 text-sm">
+                <td colSpan={7} className="py-10 text-center text-gray-500 text-sm">
                   {t('Không có đơn nào phù hợp bộ lọc')}
                 </td>
               </tr>
