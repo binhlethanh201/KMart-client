@@ -13,12 +13,19 @@ const LoginPage = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // State cho phần đặt lại mật khẩu
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetTempPassword, setResetTempPassword] = useState("");
   const [resetNewPassword, setResetNewPassword] = useState("");
   const [resetConfirmPassword, setResetConfirmPassword] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
+
+  // Thêm state để quản lý hiển thị mật khẩu
+  const [showPassword, setShowPassword] = useState(false);
+  const [showResetTempPassword, setShowResetTempPassword] = useState(false);
+  const [showResetNewPassword, setShowResetNewPassword] = useState(false);
+  const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -50,10 +57,6 @@ const LoginPage = ({ onLoginSuccess }) => {
     }
   };
 
-  /**
-   * BE-50: đặt lại mật khẩu bằng MẬT KHẨU TẠM do HR/Quản trị cấp (chức năng "Đặt lại mật khẩu"
-   * ở màn Nhân sự). Trước đây màn này chỉ giả lập gửi email nên không đặt lại được thật.
-   */
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setError("");
@@ -91,7 +94,6 @@ const LoginPage = ({ onLoginSuccess }) => {
             "url('https://k-market.vn/wp-content/uploads/2025/09/pano-about-02.jpg')",
         }}
       >
-        {/* Lớp phủ màu xanh đen đậm kết hợp làm mờ kính (glassmorphism) */}
         <div className="absolute inset-0 bg-on-primary-fixed/80 backdrop-blur-sm"></div>
       </div>
 
@@ -158,14 +160,25 @@ const LoginPage = ({ onLoginSuccess }) => {
                   {t('Đặt lại mật khẩu')}
                 </button>
               </div>
-              <input
-                type="password"
-                required
-                className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative w-full">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all pr-10"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-outline focus:outline-none hover:text-on-surface transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    {showPassword ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
+              </div>
             </div>
 
             <button
@@ -200,40 +213,73 @@ const LoginPage = ({ onLoginSuccess }) => {
                   <label className="block text-label-md text-on-surface mb-1.5">
                     {t('Mật khẩu tạm')}
                   </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all"
-                    placeholder={t('Mật khẩu tạm do HR cấp')}
-                    value={resetTempPassword}
-                    onChange={(e) => setResetTempPassword(e.target.value)}
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type={showResetTempPassword ? "text" : "password"}
+                      required
+                      className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all pr-10"
+                      placeholder={t('Mật khẩu tạm do HR cấp')}
+                      value={resetTempPassword}
+                      onChange={(e) => setResetTempPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowResetTempPassword(!showResetTempPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-outline focus:outline-none hover:text-on-surface transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {showResetTempPassword ? "visibility_off" : "visibility"}
+                      </span>
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-label-md text-on-surface mb-1.5">
                     {t('Mật khẩu mới')}
                   </label>
-                  <input
-                    type="password"
-                    required
-                    className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all"
-                    placeholder="••••••••"
-                    value={resetNewPassword}
-                    onChange={(e) => setResetNewPassword(e.target.value)}
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type={showResetNewPassword ? "text" : "password"}
+                      required
+                      className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all pr-10"
+                      placeholder="••••••••"
+                      value={resetNewPassword}
+                      onChange={(e) => setResetNewPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowResetNewPassword(!showResetNewPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-outline focus:outline-none hover:text-on-surface transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {showResetNewPassword ? "visibility_off" : "visibility"}
+                      </span>
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-label-md text-on-surface mb-1.5">
                     {t('Xác nhận mật khẩu mới')}
                   </label>
-                  <input
-                    type="password"
-                    required
-                    className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all"
-                    placeholder="••••••••"
-                    value={resetConfirmPassword}
-                    onChange={(e) => setResetConfirmPassword(e.target.value)}
-                  />
+                  <div className="relative w-full">
+                    <input
+                      type={showResetConfirmPassword ? "text" : "password"}
+                      required
+                      className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary-container transition-all pr-10"
+                      placeholder="•••••••"
+                      value={resetConfirmPassword}
+                      onChange={(e) => setResetConfirmPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowResetConfirmPassword(!showResetConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-outline focus:outline-none hover:text-on-surface transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {showResetConfirmPassword ? "visibility_off" : "visibility"}
+                      </span>
+                    </button>
+                  </div>
                   <p className="text-xs text-secondary mt-1.5">
                     {t('Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường và chữ số.')}
                   </p>
