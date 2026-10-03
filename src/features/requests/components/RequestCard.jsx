@@ -374,7 +374,7 @@ export default function RequestCard({ request: r }) {
               const badgeClass = nodeBadge === 'success' ? 'bg-success' : nodeBadge === 'warning' ? 'bg-warning' : nodeBadge === 'error' ? 'bg-error' : 'bg-outline-variant';
               const badgeIcon = nodeBadge === 'success' ? 'check' : nodeBadge === 'warning' ? 'schedule' : nodeBadge === 'error' ? 'close' : 'more_horiz';
 
-              const renderPerson = (aid) => {
+              const renderPerson = (aid, aidx) => {
                 const u = employees.find((x) => x.id === aid);
                 const nm = u?.name || t('Người duyệt');
                 let role = t('NHÂN SỰ');
@@ -385,6 +385,37 @@ export default function RequestCard({ request: r }) {
                   else if (u.department) role = u.department;
                   else if (u.position) role = u.position;
                 }
+
+                // Compute individual badge
+                let personBadge = nodeBadge;
+                const hList = r.histories?.filter(h => h.userId === aid && h.stepOrder === s.stepOrder);
+                if (hList && hList.length > 0) {
+                  // get latest action
+                  const lastH = hList.sort((a,b) => new Date(b.atRaw || b.at) - new Date(a.atRaw || a.at))[0];
+                  if (lastH.action === 'approved') personBadge = 'success';
+                  else if (lastH.action === 'rejected') personBadge = 'error';
+                  else if (lastH.action === 'supplement_requested') personBadge = 'warning';
+                } else if (isSequential) {
+                  // If sequential and no history, they didn't act
+                  if (s.status === 'approved' || s.status === 'rejected' || s.status === 'canceled') {
+                     personBadge = 'muted';
+                  } else if (s.status === 'pending') {
+                     // Find the first person without history
+                     const firstPendingIdx = ids.findIndex(id => {
+                        const hl = r.histories?.filter(h => h.userId === id && h.stepOrder === s.stepOrder);
+                        return !hl || hl.length === 0;
+                     });
+                     if (aidx > firstPendingIdx) personBadge = 'muted';
+                  }
+                } else if (isGroupStep) {
+                  if (s.status === 'approved' || s.status === 'rejected' || s.status === 'canceled') {
+                     personBadge = 'muted';
+                  }
+                }
+
+                const badgeClass = personBadge === 'success' ? 'bg-success' : personBadge === 'warning' ? 'bg-warning' : personBadge === 'error' ? 'bg-error' : 'bg-outline-variant';
+                const badgeIcon = personBadge === 'success' ? 'check' : personBadge === 'warning' ? 'schedule' : personBadge === 'error' ? 'close' : 'more_horiz';
+
                 return (
                   <div key={aid} className="flex flex-col items-center min-w-[64px] max-w-[88px]">
                     <div className="relative">
@@ -423,7 +454,7 @@ export default function RequestCard({ request: r }) {
                     <div className="flex items-center gap-1 shrink-0">
                       {ids.map((aid, aidx) => (
                         <div key={aid} className="flex items-center gap-1 shrink-0">
-                          {renderPerson(aid)}
+                          {renderPerson(aid, aidx)}
                           {aidx < ids.length - 1 && (
                             <span className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
                               arrow_forward

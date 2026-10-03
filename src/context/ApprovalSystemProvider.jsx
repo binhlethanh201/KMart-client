@@ -179,7 +179,7 @@ export function ApprovalSystemProvider({ children }) {
     async (reqId) => {
       try {
         const updated = await applicationService.approve(reqId);
-        setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
+        setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r)));
         pushToast(t('Đã phê duyệt bước này'), 'success');
       } catch (err) {
         const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi phê duyệt');
@@ -198,7 +198,7 @@ export function ApprovalSystemProvider({ children }) {
         // BE-09: bổ sung thêm file đính kèm (nếu có) trước khi gửi lại
         await uploadAttachments(reqId, data.attachments);
         const submitted = await applicationService.submit(reqId);
-        setRequests((list) => list.map((r) => (r.id === reqId ? submitted : r)));
+        setRequests((list) => list.map((r) => (r.id === reqId ? { ...submitted, _isPendingReq: r._isPendingReq } : r)));
         pushToast(t('Đã bổ sung và gửi lại đơn'), 'success');
         return submitted.id;
       } catch (err) {
@@ -214,7 +214,7 @@ export function ApprovalSystemProvider({ children }) {
     async (reqId, reason) => {
       try {
         const updated = await applicationService.reject(reqId, reason);
-        setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
+        setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r)));
         pushToast(t('Đã từ chối yêu cầu'), 'success');
       } catch (err) {
         const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi từ chối');
@@ -229,7 +229,7 @@ export function ApprovalSystemProvider({ children }) {
     async (reqId, reason) => {
       try {
         const updated = await applicationService.supplement(reqId, reason);
-        setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
+        setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r)));
         pushToast(t('Đã gửi yêu cầu bổ sung'), 'success');
       } catch (err) {
         const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi yêu cầu bổ sung');
@@ -247,7 +247,7 @@ export function ApprovalSystemProvider({ children }) {
         await applicationService.addComment(reqId, text);
         // Refresh request to get the comment
         const updated = await applicationService.getById(reqId);
-        setRequests((list) => list.map((r) => (r.id === reqId ? updated : r)));
+        setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r)));
       } catch (err) {
         const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi thêm bình luận');
         pushToast(errorMsg, 'error');

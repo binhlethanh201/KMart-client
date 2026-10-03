@@ -182,7 +182,10 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
       const role = String(firstStep.role).toUpperCase();
       const matched = (employees || []).filter((e) => {
         if (String(e.role || '').toUpperCase() === role) return true;
-        if (Array.isArray(e.roles) && e.roles.includes(firstStep.role)) return true;
+        if (String(e.position || '').toUpperCase() === role) return true;
+        if (Array.isArray(e.roles) && e.roles.some(r => String(r).toUpperCase() === role)) return true;
+        if (Array.isArray(e.secondary) && e.secondary.some(s => String(s.position || '').toUpperCase() === role)) return true;
+        if (Array.isArray(e.allPositions) && e.allPositions.some(p => String(p.position || p.name || '').toUpperCase() === role)) return true;
         return Array.isArray(e.systemRoles)
           && e.systemRoles.some(r => String(r?.roleName || r || '').toUpperCase() === role);
       });
@@ -315,9 +318,13 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           {showDepartmentPicker && departments.length > 0 && (
             <div className="flex flex-col gap-2">
               <label className={labelCls}>{t('Phòng ban liên quan')}</label>
-              <div className="flex gap-2.5 flex-wrap mt-0.5">
+              <span className="text-xs text-secondary mt-[-4px]">
+                {t('Nhấn chọn theo đúng thứ tự mà bạn muốn luồng duyệt diễn ra (Ví dụ: Số 1 sẽ duyệt trước, Số 2 duyệt sau)')}
+              </span>
+              <div className="flex gap-2.5 flex-wrap mt-1">
                 {departments.map((d) => {
-                  const isChecked = form.departments.includes(d.id);
+                  const idx = form.departments.indexOf(d.id);
+                  const isChecked = idx > -1;
                   return (
                     <label 
                       key={d.id} 
@@ -338,7 +345,11 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                           setForm(f => ({ ...f, departments: newArr }));
                         }}
                       />
-                      {isChecked && <span className="material-symbols-outlined text-[16px] leading-none">check</span>}
+                      {isChecked && (
+                        <span className="flex items-center justify-center w-4 h-4 rounded-full bg-white text-primary text-[10px] font-bold shadow-sm">
+                          {idx + 1}
+                        </span>
+                      )}
                       <span>{t(d.name)}</span>
                     </label>
                   );
@@ -347,31 +358,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             </div>
           )}
 
-          {firstStepHasDesignatedApprovers && firstStepCandidates.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <label className={labelCls}>{t('Người duyệt đã chỉ định')}</label>
-              <div className="rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2.5">
-                <div className="flex flex-col gap-2">
-                  {firstStepCandidates.map((c, index) => (
-                    <div key={c.id} className="flex items-center gap-2.5 text-sm text-on-surface">
-                      <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center flex-shrink-0">
-                        {index + 1}
-                      </span>
-                      <span className="font-medium">{c.name}</span>
-                      {c.position && <span className="text-xs text-secondary">· {c.position}</span>}
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs text-secondary">
-                  {firstStepMultiRule === 'sequential'
-                    ? t('Đơn sẽ gửi lần lượt theo thứ tự đã cấu hình.')
-                    : firstStepMultiRule === 'and'
-                      ? t('Đơn sẽ gửi đồng thời và cần tất cả người được chỉ định duyệt.')
-                      : t('Đơn sẽ gửi đồng thời và chỉ cần 1 người được chỉ định duyệt.')}
-                </p>
-              </div>
-            </div>
-          )}
+
 
           {/* BE-17: quản lý trực tiếp / chuỗi quản lý -> người duyệt tự suy ra từ phòng & chức vụ của người tạo */}
           {(isHierarchyFlow || isChainFlow) && (
@@ -657,6 +644,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                     employees={employees}
                     currentUser={currentUser}
                     selectedApproverId={selectedApproverId}
+                    departmentsSelected={form.departments}
                     variant="inline"
                   />
                 </div>
@@ -705,6 +693,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                   employees={employees}
                   currentUser={currentUser}
                   selectedApproverId={selectedApproverId}
+                  departmentsSelected={form.departments}
                   variant="full"
                 />
               </div>
