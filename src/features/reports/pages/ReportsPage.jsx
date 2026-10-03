@@ -184,7 +184,7 @@ export default function ReportsPage() {
   const totalDrillPages = Math.max(1, Math.ceil((drill.totalCount || 0) / DRILL_PAGE_SIZE));
 
   return (
-    <div className="py-10 px-6 md:px-10 lg:px-16 space-y-8 h-full overflow-y-auto bg-[#f6f6f4] font-sans">
+    <div className="py-10 px-6 md:px-10 lg:px-16 space-y-8 h-full overflow-y-auto bg-background font-sans">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
@@ -293,44 +293,53 @@ export default function ReportsPage() {
 
       {/* Xu hướng theo tháng — tổng hợp hoặc tách theo từng loại đơn */}
       <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
           <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
             {t('Xu hướng đơn ĐÃ DUYỆT theo tháng (12 tháng)')}
           </h3>
 
           <div className="flex items-center gap-3 flex-wrap">
             {/* BE-53: chuyển chế độ xem */}
-            <div className="flex p-0.5 bg-[#f6f6f4] border border-[#eeece7] rounded-lg">
-              <button
-                type="button"
-                onClick={() => setTrendMode('total')}
-                className={`text-[11px] px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
-                  trendMode === 'total' ? 'bg-white text-[#1d1d1f] shadow-sm' : 'text-gray-500 hover:text-[#1d1d1f]'
-                }`}
-              >
-                {t('Tổng hợp')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTrendMode('type')}
-                className={`text-[11px] px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
-                  trendMode === 'type' ? 'bg-white text-[#1d1d1f] shadow-sm' : 'text-gray-500 hover:text-[#1d1d1f]'
-                }`}
-              >
-                {t('Theo loại đơn')}
-              </button>
+            <div className="flex p-1 bg-[#f6f6f4] rounded-full">
+              {[
+                { id: 'total', label: t('Tổng hợp') },
+                { id: 'type', label: t('Theo loại đơn') },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setTrendMode(m.id)}
+                  className={`text-[11px] px-3.5 py-1.5 rounded-full font-semibold transition-all cursor-pointer ${
+                    trendMode === m.id
+                      ? 'bg-white text-[#1d1d1f] shadow-[0_1px_4px_rgba(0,0,0,0.10)]'
+                      : 'text-gray-500 hover:text-[#1d1d1f]'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
             </div>
 
             {hasTrend && (
-              <div className="flex items-center gap-4 text-[11px]">
-                <span className="text-gray-500">
-                  {t('Tháng này')}: <strong className="text-[#1d1d1f]">{lastMonth?.total ?? 0}</strong> {t('đơn đã duyệt')}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f6f6f4] text-[11px] text-gray-600">
+                  {t('Tháng này')}
+                  <strong className="text-[13px] font-black text-[#1d1d1f]">{lastMonth?.total ?? 0}</strong>
+                  {t('đơn đã duyệt')}
                 </span>
-                <span className={`font-bold ${(lastMonth?.totalChangePercent ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {(lastMonth?.totalChangePercent ?? 0) >= 0 ? '▲' : '▼'}{' '}
-                  {Math.abs(lastMonth?.totalChangePercent ?? 0).toFixed(0)}%
-                  <span className="text-gray-400 font-normal"> {t('so với tháng trước')}</span>
-                </span>
+                {(lastMonth?.totalChangePercent ?? 0) !== 0 && (
+                  <span
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold ${
+                      (lastMonth?.totalChangePercent ?? 0) > 0
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-red-50 text-red-700'
+                    }`}
+                    title={t('So với tháng trước')}
+                  >
+                    {(lastMonth?.totalChangePercent ?? 0) > 0 ? '▲' : '▼'}{' '}
+                    {Math.abs(lastMonth?.totalChangePercent ?? 0).toFixed(0)}%
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -338,13 +347,14 @@ export default function ReportsPage() {
 
         {/* Kết luận nhanh: loại đơn được duyệt nhiều nhất trong tháng đang xem */}
         {topTypeOfMonth && (
-          <p className="text-[11px] text-gray-500 mb-4">
-            {t('Tháng này duyệt nhiều nhất:')}{' '}
-            <strong className="text-[#1d1d1f]">{topTypeOfMonth.documentType}</strong>{' '}
-            <span className="text-emerald-600 font-semibold">
+          <div className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50/70 border border-emerald-100">
+            <span className="material-symbols-outlined text-[16px] text-emerald-600">emoji_events</span>
+            <span className="text-[11px] text-gray-600">{t('Tháng này duyệt nhiều nhất:')}</span>
+            <strong className="text-[12px] text-[#1d1d1f]">{topTypeOfMonth.documentType}</strong>
+            <span className="text-[11px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-100">
               {topTypeOfMonth.count} {t('đơn')} · {(topTypeOfMonth.percentage ?? 0).toFixed(0)}%
             </span>
-          </p>
+          </div>
         )}
 
         <TrendLineChart
@@ -352,7 +362,7 @@ export default function ReportsPage() {
           series={trendSeries}
           changePercents={trendMode === 'total' ? trendChange : null}
           tooltips={trendTooltips}
-          height={280}
+          height={300}
         />
       </div>
 

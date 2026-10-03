@@ -116,7 +116,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
   }, [filtered.length, itemsPerPage]);
 
   return (
-    <div className="flex flex-1 h-full overflow-hidden bg-surface">
+    <div className="flex flex-1 h-full overflow-hidden bg-background">
       <section className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
 
         {/* ── Header ── */}

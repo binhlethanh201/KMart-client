@@ -129,7 +129,7 @@ export default function EmployeeDetail() {
 
   if (!employee) {
     return (
-      <section className="flex-1 overflow-y-auto bg-surface p-6">
+      <section className="flex-1 overflow-y-auto bg-background p-6">
         <div className="max-w-3xl mx-auto text-center py-16">
           <span className="material-symbols-outlined text-[48px] text-outline block mb-3">person_off</span>
           <p className="text-on-surface font-medium">{t('Không tìm thấy nhân sự với mã')} {id}.</p>
@@ -162,7 +162,7 @@ export default function EmployeeDetail() {
   };
 
   return (
-    <section className="flex-1 overflow-y-auto bg-surface-container-lowest h-full relative">
+    <section className="flex-1 overflow-y-auto bg-background h-full relative">
       <div className="w-full px-4 md:px-6 lg:px-8 py-6 space-y-6">
         
         {/* Back Button */}
