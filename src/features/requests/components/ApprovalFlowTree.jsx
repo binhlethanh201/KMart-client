@@ -8,6 +8,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 // variant: 'inline' (chip nhỏ) | 'full' (chip lớn hơn cho popup)
 export default function ApprovalFlowTree({
   steps = [],
+  resolvedSteps = null,
   departments = [],
   employees = [],
   currentUser,
@@ -395,6 +396,67 @@ export default function ApprovalFlowTree({
     }];
   });
 
+  /**
+   * BE-50: nếu backend đã trả về luồng ĐÃ PHÂN GIẢI (đúng người duyệt thật theo sơ đồ tổ chức)
+   * thì dùng thẳng dữ liệu đó. Trước đây cây luồng tự "đoán" người duyệt ở client nên hiển thị
+   * sai: có cả chính người gửi, gộp/tách bước không đúng với cấu hình.
+   */
+  const flowStages = useMemo(() => {
+    if (!Array.isArray(resolvedSteps) || resolvedSteps.length === 0) return stages;
+    return [...resolvedSteps]
+      .sort((a, b) => (a.stepOrder ?? 0) - (b.stepOrder ?? 0))
+      .map((s, i) => {
+        const stepNo = s.stepOrder ?? i + 1;
+        const people = Array.isArray(s.approvers) ? s.approvers : [];
+        const parallel = people.length > 1 && s.multiRule !== 'sequential';
+        const badge = t('Cấp {v0}', { v0: stepNo });
+        const badgeTitle = t('Bước {v0}', { v0: stepNo });
+        return {
+          key: `resolved-${stepNo}`,
+          stepNo,
+          parallel,
+          branches: people.length > 0
+            ? people.map((u, ui) => ({
+                key: `resolved-${stepNo}-${u.id || ui}`,
+                badge,
+                badgeTitle,
+                name: u.fullName || t('Người duyệt'),
+                hasManager: true,
+                avatar: u.avatarUrl,
+                role: [u.departmentName, u.positionName].filter(Boolean).join(' - ') || t('Người duyệt'),
+                isStep: true,
+              }))
+            : [{
+                key: `resolved-${stepNo}-none`,
+                badge,
+                badgeTitle,
+                name: t('Chưa xác định được người duyệt'),
+                hasManager: false,
+                role: t('Cần bổ sung trưởng phòng / người duyệt cho bước này'),
+                isStep: true,
+              }],
+        };
+      });
+  }, [resolvedSteps, stages, t]);
+
+  // Chuỗi "từ ai ➔ đến ai" để đọc nhanh toàn bộ luồng (chỉ hiện ở bản đầy đủ).
+  const chainPath = useMemo(() => {
+    const people = [];
+    flowStages.forEach((stage) => {
+      const names = stage.branches
+        .filter((b) => b.hasManager)
+        .map((b) => b.name)
+        .filter(Boolean);
+      if (names.length === 0) return;
+      people.push({
+        key: stage.key,
+        stepNo: stage.stepNo,
+        label: names.join(' / '),
+      });
+    });
+    return people;
+  }, [flowStages]);
+
   const chipW = isFull ? 'w-[260px]' : 'w-[220px]';
 
   const chip = (node) => {
@@ -438,6 +500,28 @@ export default function ApprovalFlowTree({
 
   return (
     <div className="flex flex-col items-center min-w-fit">
+      {/* BE-50: chuỗi "từ ai ➔ đến ai" — đọc nhanh toàn bộ luồng duyệt */}
+      {isFull && chainPath.length > 0 && (
+        <div className="mb-5 max-w-[900px] flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-4 py-2.5 rounded-lg border border-primary/20 bg-primary/5">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-primary">
+            <span className="material-symbols-outlined text-[15px]">route</span>
+            {t('Đường đi của đơn')}
+          </span>
+          <span className="text-[12px] font-semibold text-on-surface">{currentUser?.name || t('Tôi')}</span>
+          {chainPath.map((p) => (
+            <span key={p.key} className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[16px]">arrow_forward</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="text-[10px] font-bold uppercase text-secondary">{t('Cấp')} {p.stepNo}</span>
+                <span className="text-[12px] font-semibold text-on-surface">{p.label}</span>
+              </span>
+            </span>
+          ))}
+          <span className="material-symbols-outlined text-success text-[16px]">arrow_forward</span>
+          <span className="text-[12px] font-semibold text-success">{t('Hoàn tất')}</span>
+        </div>
+      )}
+
       {/* Người gửi */}
       <div className="flex flex-col items-center">
         <div className="flex items-center gap-2.5 rounded-lg border-2 border-primary/30 bg-primary/5 px-4 py-2 shadow-sm">
@@ -453,16 +537,20 @@ export default function ApprovalFlowTree({
         </div>
       </div>
 
-      {/* Các tầng duyệt */}
-      {stages.map((stage, si) => (
+      {/* Các tầng duyệt — có mũi tên chỉ hướng đi giữa các bước */}
+      {flowStages.map((stage, si) => (
         <div key={stage.key} className="flex flex-col items-center">
-          <div className="w-px h-5 bg-outline-variant" />
+          <div className="flex flex-col items-center" title={t('Chuyển tiếp sang bước sau')}>
+            <div className="w-px h-3 bg-outline-variant" />
+            <span className="material-symbols-outlined text-primary text-[18px] leading-none">arrow_downward</span>
+            <div className="w-px h-2 bg-outline-variant" />
+          </div>
 
           {stage.parallel && stage.branches.length > 1 ? (
             <div className="flex flex-col items-center">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
                 <span className="material-symbols-outlined text-[12px]">call_split</span>
-                {t('Bước')} {si + 1} {t('(Cấp')} {si + 1}) · song song
+                {t('Bước')} {stage.stepNo ?? si + 1} {t('(Cấp')} {stage.stepNo ?? si + 1}) · song song
               </span>
               <div className="w-px h-3 bg-outline-variant" />
               <div className="flex items-start">
@@ -483,7 +571,7 @@ export default function ApprovalFlowTree({
             <div className="flex flex-col items-center">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
                 <span className="material-symbols-outlined text-[12px]">account_tree</span>
-                {t('Bước')} {si + 1} {t('(Cấp')} {si + 1})
+                {t('Bước')} {stage.stepNo ?? si + 1} {t('(Cấp')} {stage.stepNo ?? si + 1})
               </span>
               <div className="w-px h-3 bg-outline-variant" />
               {chip(stage.branches[0])}
@@ -493,7 +581,11 @@ export default function ApprovalFlowTree({
       ))}
 
       {/* Nối + Hoàn tất */}
-      <div className="w-px h-5 bg-outline-variant" />
+      <div className="flex flex-col items-center">
+        <div className="w-px h-3 bg-outline-variant" />
+        <span className="material-symbols-outlined text-success text-[18px] leading-none">arrow_downward</span>
+        <div className="w-px h-2 bg-outline-variant" />
+      </div>
       <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success-container/30 px-4 py-1.5 shadow-sm">
         <span className="material-symbols-outlined text-success text-[18px]">flag</span>
         <span className="text-[12px] font-semibold text-success">{t('Hoàn tất')}</span>

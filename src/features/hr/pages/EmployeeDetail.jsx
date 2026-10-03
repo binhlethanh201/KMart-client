@@ -7,6 +7,7 @@ import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
 import { userService } from '../services/userService';
+import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -57,10 +58,10 @@ export default function EmployeeDetail() {
   const navigate = useNavigate();
   const { getEmployee, saveEmployee, toggleLock, resetPassword, departments, positions, roles } = useHr();
   const { pushToast, currentUser, hasPermission } = useApproval();
-  const canEditEmployee = hasPermission ? hasPermission('PERSONNEL_UPDATE') : true;
-  const canDeleteEmployee = hasPermission ? hasPermission('PERSONNEL_DELETE') : true;
-  const canResetPassword = hasPermission ? hasPermission('PERSONNEL_RESET_PASSWORD') : true;
-  const canLockEmployee = hasPermission ? hasPermission('PERSONNEL_LOCK') : true;
+  const canEditEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_UPDATE) : true;
+  const canDeleteEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_DELETE) : true;
+  const canResetPassword = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_RESET_PASSWORD) : true;
+  const canLockEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_LOCK) : true;
 
   const employee = useMemo(() => getEmployee(id), [getEmployee, id]);
   const [log, setLog] = useState([]);

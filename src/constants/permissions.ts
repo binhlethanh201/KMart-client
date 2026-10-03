@@ -13,8 +13,10 @@ export const PERMISSIONS = {
   PERSONNEL_CREATE: 'USER_CREATE',
   PERSONNEL_UPDATE: 'USER_UPDATE',
   PERSONNEL_DELETE: 'USER_DELETE',
-  PERSONNEL_RESET_PASSWORD: 'PERSONNEL_RESET_PASSWORD',
-  PERSONNEL_LOCK: 'PERSONNEL_LOCK',
+  // BE chưa có mã riêng cho 2 thao tác này — dùng chung quyền USER_UPDATE
+  // (API /users/{id}/reset-password và /users/{id}/lock đều yêu cầu Permission:USER_UPDATE).
+  PERSONNEL_RESET_PASSWORD: 'USER_UPDATE',
+  PERSONNEL_LOCK: 'USER_UPDATE',
   // Roles/System Config (BE dùng ROLE_*)
   ROLE_VIEW: 'ROLE_VIEW',
   ROLE_MANAGE: 'ROLE_MANAGE',
