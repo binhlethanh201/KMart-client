@@ -49,6 +49,10 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
   // BE-04: người duyệt do người tạo chọn (chỉ cần khi bước 1 có nhiều ứng viên)
   const [selectedApproverId, setSelectedApproverId] = useState('');
 
+  // BE-50: luồng duyệt ĐÃ PHÂN GIẢI (người duyệt thật theo sơ đồ tổ chức) — nguồn duy nhất
+  // cho cây "Luồng phê duyệt dự kiến". Trước đây client tự đoán nên cây vẽ sai.
+  const [flowPreview, setFlowPreview] = useState(null);
+
   // BE-20: popup xem full luồng phê duyệt
   const [flowOpen, setFlowOpen] = useState(false);
 
@@ -118,6 +122,20 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
       setActiveWorkflow(null);
     }
   }, [form.documentTypeId]);
+
+  // BE-50: nạp luồng duyệt đã phân giải (đúng người thật). Gọi lại khi đổi loại đơn hoặc
+  // đổi phòng ban đích — vì người duyệt phụ thuộc cả hai.
+  useEffect(() => {
+    if (!form.documentTypeId) {
+      setFlowPreview(null);
+      return;
+    }
+    let cancelled = false;
+    workflowService.preview(form.documentTypeId, form.departments || [])
+      .then((data) => { if (!cancelled) setFlowPreview(data); })
+      .catch(() => { if (!cancelled) setFlowPreview(null); });
+    return () => { cancelled = true; };
+  }, [form.documentTypeId, form.departments]);
 
   // Auto-calculate days when dates change
   useEffect(() => {
@@ -657,6 +675,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 <div className="scale-[0.82] origin-top pointer-events-none opacity-70 overflow-x-auto">
                   <ApprovalFlowTree
                     steps={activeWorkflow.steps}
+                    resolvedSteps={flowPreview?.steps}
                     departments={departments}
                     employees={employees}
                     currentUser={currentUser}
@@ -706,6 +725,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               <div className="flex-1 overflow-auto p-6 bg-surface-container-lowest">
                 <ApprovalFlowTree
                   steps={activeWorkflow.steps}
+                  resolvedSteps={flowPreview?.steps}
                   departments={departments}
                   employees={employees}
                   currentUser={currentUser}

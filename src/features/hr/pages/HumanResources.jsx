@@ -6,6 +6,7 @@ import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
 import { roleStyle } from '../../../utils/roleLabels';
+import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
 
 const selectCls =
@@ -34,11 +35,13 @@ export default function HumanResources() {
     }
   }, [isStaff, navigate]);
 
-  const canAddEmployee = hasPermission ? hasPermission('PERSONNEL_CREATE') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
-  const canEditEmployee = hasPermission ? hasPermission('PERSONNEL_UPDATE') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
-  const canDeleteEmployee = hasPermission ? hasPermission('PERSONNEL_DELETE') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
-  const canResetPassword = hasPermission ? hasPermission('PERSONNEL_RESET_PASSWORD') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
-  const canLockEmployee = hasPermission ? hasPermission('PERSONNEL_LOCK') : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  // BE dùng mã USER_* cho nghiệp vụ nhân sự -> dùng hằng số có alias (không hardcode
+  // 'PERSONNEL_*' vì các mã đó không tồn tại ở backend nên nút luôn bị ẩn).
+  const canAddEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_CREATE) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  const canEditEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_UPDATE) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  const canDeleteEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_DELETE) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  const canResetPassword = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_RESET_PASSWORD) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
+  const canLockEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_LOCK) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
   
   const canEdit = canEditEmployee || canAddEmployee;
 

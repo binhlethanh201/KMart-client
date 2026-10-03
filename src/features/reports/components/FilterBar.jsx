@@ -1,4 +1,4 @@
-export default function FilterBar({ filters, departments, onChange }) {
+export default function FilterBar({ filters, departments, documentTypes = [], positions = [], onChange }) {
   const inputClass = "h-[44px] border border-[#D9D5CC] rounded-[3px] px-[16px] text-[14px] text-[#111315] bg-[#FFFEFA] focus:border-[#111315] focus:outline-none transition-colors min-w-[180px]";
   const labelClass = "text-[12px] font-bold uppercase tracking-[1.68px] text-[#66655F]";
 
@@ -63,11 +63,54 @@ export default function FilterBar({ filters, departments, onChange }) {
           </select>
         </div>
 
+        {/* Loại đơn */}
+        <div className="flex flex-col gap-2">
+          <label className={labelClass}>Loại đơn</label>
+          <select
+            className={inputClass}
+            value={filters.documentTypeId || ''}
+            onChange={(e) => onChange({ documentTypeId: e.target.value || null })}
+          >
+            <option value="">Tất cả loại đơn</option>
+            {(documentTypes || []).map(dt => (
+              <option key={dt.id} value={dt.id}>{dt.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Chức vụ người tạo */}
+        <div className="flex flex-col gap-2">
+          <label className={labelClass}>Chức vụ</label>
+          <select
+            className={inputClass}
+            value={filters.positionId || ''}
+            onChange={(e) => onChange({ positionId: e.target.value || null })}
+          >
+            <option value="">Tất cả chức vụ</option>
+            {(positions || []).map(p => (
+              <option key={p.id} value={p.id}>{p.name || p.positionName}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Trạng thái — báo cáo chỉ quan tâm đơn đã duyệt */}
+        <div className="flex flex-col gap-2">
+          <label className={labelClass}>Trạng thái</label>
+          <select
+            className={inputClass}
+            value={filters.status || ''}
+            onChange={(e) => onChange({ status: e.target.value || null })}
+          >
+            <option value="">Đã duyệt (mặc định)</option>
+            <option value="Approved">Đã duyệt</option>
+          </select>
+        </div>
+
         {/* Reset */}
-        {(filters.from || filters.to || filters.block || filters.departmentId) && (
+        {(filters.from || filters.to || filters.block || filters.departmentId || filters.documentTypeId || filters.positionId || filters.status) && (
           <button
             className="flex items-center justify-center px-[16px] py-[8px] h-[44px] text-[14px] font-semibold text-[#66655F] bg-transparent border border-transparent hover:border-[#D9D5CC] rounded-[8px] transition-colors ml-auto mt-[26px]"
-            onClick={() => onChange({ from: null, to: null, block: null, departmentId: null })}
+            onClick={() => onChange({ from: null, to: null, block: null, departmentId: null, documentTypeId: null, positionId: null, status: null })}
           >
             Đặt lại
           </button>

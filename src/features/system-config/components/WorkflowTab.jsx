@@ -33,6 +33,19 @@ const BLOCK_OPTIONS = [
   { id: 'common', label: 'Dùng chung', icon: 'merge' },
 ];
 
+const BLOCK_IDS = BLOCK_OPTIONS.map((b) => b.id);
+
+// Nhãn ngắn để chú thích "đã cấu hình ở khối nào" trong dropdown chọn loại đơn.
+const BLOCK_LABELS = BLOCK_OPTIONS.reduce((acc, b) => { acc[b.id] = b.label; return acc; }, {});
+
+// Nhắc nhở khi một khối chưa có bước duyệt: nhân viên thuộc khối đó sẽ KHÔNG tạo được
+// đơn của loại đơn này (backend chặn vì không tìm thấy luồng duyệt nào áp dụng được).
+const BLOCK_MISSING_HINTS = {
+  hq: 'Chưa cấu hình luồng cho Khối Văn phòng. Nhân viên khối Văn phòng sẽ KHÔNG tạo được đơn loại này. Bấm "Thêm bước duyệt tiếp theo" rồi "Lưu cấu hình luồng duyệt".',
+  retail: 'Chưa cấu hình luồng cho Khối Cửa hàng. Nhân viên Siêu thị / Cửa hàng sẽ KHÔNG tạo được đơn loại này. Bấm "Thêm bước duyệt tiếp theo" rồi "Lưu cấu hình luồng duyệt".',
+  common: 'Chưa có luồng Dùng chung. Khối nào chưa có luồng riêng (Văn phòng hoặc Cửa hàng) sẽ KHÔNG tạo được đơn loại này. Bấm "Thêm bước duyệt tiếp theo" rồi "Lưu cấu hình luồng duyệt".',
+};
+
 const APPROVAL_LABELS = APPROVAL_TYPES.reduce((acc, t) => { acc[t.id] = t.label; return acc; }, {});
 
 // Tóm tắt hình thức duyệt cho trạng thái thu gọn
@@ -683,6 +696,9 @@ function makeStep(overrides = {}, roles = [], employees = []) {
     condition: null,
     approvers: null,
     timeoutEnabled: true,
+    // BE-50: giao diện luôn hiển thị "12 giờ" khi bật xử lý quá hạn, nhưng giá trị đó chỉ là
+    // fallback lúc render nên KHÔNG được lưu -> phải khởi tạo thật để cấu hình đúng như đang thấy.
+    maxDurationHours: 12,
     timeoutMode: 'continuous',
     timeoutAction: 'return',
     rejectReasonRequired: true,
@@ -690,7 +706,7 @@ function makeStep(overrides = {}, roles = [], employees = []) {
   };
 }
 
-function CustomGroupedSelect({ categories, documentTypes, value, onChange, configuredTypes = new Set() }) {
+function CustomGroupedSelect({ categories, documentTypes, value, onChange, configuredTypes = new Set(), blockStatusOf }) {
   const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState(() => 
@@ -700,6 +716,12 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
   const toggleGroup = (id) => setExpandedGroups(prev => ({...prev, [id]: !prev[id]}));
 
   const selectedDoc = documentTypes.find(d => d.id === value);
+  const statusOf = (docId) => (blockStatusOf ? blockStatusOf(docId) : { configuredHere: false, otherBlocks: [], blocked: false });
+  const statusOfSelected = statusOf(value);
+  // Chú thích loại đơn đang chọn đã được cấu hình ở khối nào
+  const selectedNote = statusOfSelected.otherBlocks.length > 0
+    ? t('Đã cấu hình ở {v0}', { v0: statusOfSelected.otherBlocks.map((b) => t(BLOCK_LABELS[b])).join(', ') })
+    : null;
 
   return (
     <div className="relative w-full min-w-[280px] max-w-[320px] z-[50]">
@@ -713,6 +735,9 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
           </span>
           {selectedDoc && configuredTypes.has(selectedDoc.id) && (
             <span className="material-symbols-outlined text-[16px] text-success flex-shrink-0" title={t('Đã cấu hình luồng cho khối này')}>check_circle</span>
+          )}
+          {selectedNote && (
+            <span className="text-[11px] text-secondary truncate" title={selectedNote}>{selectedNote}</span>
           )}
         </div>
         <span className={`material-symbols-outlined text-secondary group-hover:text-primary text-[20px] transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}>
@@ -746,18 +771,40 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
                       <div className="py-1">
                         {catDocs.map(f => {
                           const isConfigured = configuredTypes.has(f.id);
+                          const st = statusOf(f.id);
+                          const note = st.otherBlocks.length > 0
+                            ? t('Đã cấu hình ở {v0}', { v0: st.otherBlocks.map((b) => t(BLOCK_LABELS[b])).join(', ') })
+                            : null;
                           return (
                             <button
                               key={f.id}
+                              disabled={st.blocked}
+                              title={st.blocked ? note : undefined}
                               onClick={() => { onChange(f.id); setIsOpen(false); }}
-                              className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between gap-3 transition-colors cursor-pointer ${
-                                value === f.id ? 'bg-primary/10 text-primary font-semibold relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-3/4 before:w-1 before:bg-primary before:rounded-r' : 'text-on-surface hover:bg-surface-container hover:text-primary'
+                              className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between gap-3 transition-colors ${
+                                st.blocked
+                                  ? 'opacity-45 cursor-not-allowed text-secondary'
+                                  : 'cursor-pointer'
+                              } ${
+                                value === f.id ? 'bg-primary/10 text-primary font-semibold relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-3/4 before:w-1 before:bg-primary before:rounded-r' : st.blocked ? '' : 'text-on-surface hover:bg-surface-container hover:text-primary'
                               }`}
                             >
-                              <span className="break-words whitespace-normal leading-tight">{f.name}</span>
+                              <span className="flex flex-col gap-0.5 min-w-0">
+                                <span className="break-words whitespace-normal leading-tight">{f.name}</span>
+                                {note && (
+                                  <span className={`text-[11px] leading-tight ${st.blocked ? 'text-secondary' : 'text-on-surface/60'}`}>
+                                    {note}
+                                  </span>
+                                )}
+                              </span>
                               {isConfigured && (
                                 <span className="material-symbols-outlined text-[16px] text-success flex-shrink-0" title={t('Đã cấu hình luồng cho khối này')}>
                                   check_circle
+                                </span>
+                              )}
+                              {st.blocked && (
+                                <span className="material-symbols-outlined text-[16px] text-secondary flex-shrink-0" title={note}>
+                                  block
                                 </span>
                               )}
                             </button>
@@ -796,6 +843,7 @@ export default function WorkflowTab() {
 
   const [workflows, setWorkflows] = useState({});
   const [workflowIds, setWorkflowIds] = useState({});
+  const [loadingWorkflows, setLoadingWorkflows] = useState(false);
   const [saved, setSaved] = useState(false);
   
   const [allWorkflows, setAllWorkflows] = useState([]);
@@ -808,22 +856,66 @@ export default function WorkflowTab() {
     }).catch(err => console.error('Failed to load all workflows', err));
   }, []);
 
-  const configuredTypes = useMemo(() => {
-    const set = new Set();
-    
+  /**
+   * Loại đơn đang được cấu hình ở (những) khối nào.
+   * Gộp cả dữ liệu đã lưu trên server và thay đổi chưa lưu trong state để dropdown
+   * cập nhật ngay sau khi Lưu.
+   */
+  const blockUsage = useMemo(() => {
+    const map = new Map(); // documentTypeId -> Set<'hq'|'retail'|'common'>
+    const add = (docId, blk) => {
+      if (!docId || !BLOCK_IDS.includes(blk)) return;
+      if (!map.has(docId)) map.set(docId, new Set());
+      map.get(docId).add(blk);
+    };
+
     allWorkflows.forEach(wf => {
-      if (wf.scope === block && wf.steps && wf.steps.length > 0 && wf.isActive !== false) {
-        set.add(wf.documentTypeId);
-      }
+      if (wf.isActive !== false && wf.steps && wf.steps.length > 0) add(wf.documentTypeId, wf.scope);
     });
 
     Object.keys(workflows).forEach(docId => {
-      const wfs = workflows[docId];
-      if (wfs && wfs[block] && wfs[block].length > 0) {
-        set.add(docId);
-      }
+      BLOCK_IDS.forEach(blk => {
+        if (workflows[docId] && workflows[docId][blk] && workflows[docId][blk].length > 0) add(docId, blk);
+      });
     });
-    
+
+    // BE-49: "Dùng chung" chỉ là phương án DỰ PHÒNG cho khối chưa có luồng riêng.
+    // Khi cả Khối Văn phòng và Khối Cửa hàng đều đã có luồng thì cấu hình Dùng chung không
+    // còn tác dụng (không đơn nào đi qua nó) -> không tính là "đã cấu hình" nữa, tránh hiển
+    // thị nhầm "đã cấu hình ở Dùng chung" và tránh khoá 2 khối kia. Bản ghi cũ sẽ được gỡ
+    // tự động khi bấm Lưu (xem save()).
+    map.forEach((used) => {
+      if (used.has('hq') && used.has('retail')) used.delete('common');
+    });
+
+    return map;
+  }, [allWorkflows, workflows]);
+
+  /**
+   * Trạng thái của một loại đơn trong KHỐI ĐANG CHỌN:
+   * - configuredHere: đã có luồng ở chính khối này (vẫn cho bấm để sửa — nếu chặn thì
+   *   không còn cách nào mở lại luồng đã cấu hình để chỉnh).
+   * - otherBlocks:    đã có luồng ở khối KHÁC -> hiện chú thích.
+   * - blocked:        làm mờ, không cho kích hoạt khi loại đơn đã "thuộc" về nơi khác:
+   *     + "Dùng chung" chỉ dùng khi loại đơn CHƯA có luồng riêng ở Văn phòng/Cửa hàng.
+   *   BE-49: Khối Văn phòng và Khối Cửa hàng là 2 khối CHÍNH, luôn cấu hình được — kể cả khi
+   *   đang có luồng "Dùng chung" (trước đây Dùng chung khoá 2 khối này nên không thể chuyển
+   *   một loại đơn từ Dùng chung về đúng khối, và khối Cửa hàng như bị "liệt").
+   */
+  const blockStatusOf = (docId) => {
+    const used = blockUsage.get(docId);
+    if (!used || used.size === 0) return { configuredHere: false, otherBlocks: [], blocked: false };
+    const otherBlocks = [...used].filter(b => b !== block);
+    const configuredHere = used.has(block);
+    const blocked = !configuredHere && block === 'common' && otherBlocks.length > 0;
+    return { configuredHere, otherBlocks, blocked };
+  };
+
+  const configuredTypes = useMemo(() => {
+    const set = new Set();
+    blockUsage.forEach((used, docId) => {
+      if (used.has(block)) set.add(docId);
+    });
     return set;
   }, [allWorkflows, workflows, block]);
 
@@ -906,11 +998,18 @@ export default function WorkflowTab() {
     const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formType);
     
     if (isGuid) {
+      setLoadingWorkflows(true);
       workflowService.getByDocumentType(formType)
         .then(res => {
-          const nextHq = res.find(w => w.scope === 'hq');
-          const nextRetail = res.find(w => w.scope === 'retail');
-          const nextCommon = res.find(w => w.scope === 'common');
+          // BE-47: một khối có thể có nhiều phiên bản (bản đang dùng + các bản đã lưu trữ)
+          // -> luôn chọn phiên bản ĐANG HOẠT ĐỘNG.
+          // BE-49: KHÔNG fallback sang bản đã ngừng hoạt động. Một khối bị gỡ cấu hình
+          // (xoá hết bước rồi Lưu -> is_active = false) phải hiện là "chưa cấu hình"; nếu
+          // nạp lại bước của bản cũ thì người dùng xoá xong, tải lại trang lại thấy y như cũ.
+          const pick = (scope) => res.find(w => w.scope === scope && w.isActive !== false);
+          const nextHq = pick('hq');
+          const nextRetail = pick('retail');
+          const nextCommon = pick('common');
           
           const formatSteps = (wf) => wf && wf.steps ? wf.steps.map(s => {
             const stepData = {
@@ -918,6 +1017,14 @@ export default function WorkflowTab() {
               id: s.id || `s${Date.now()}-${Math.random()}`,
               specificUser: s.specificUserName || s.specificUserId || null
             };
+
+            // BE-50: nếu bước đang bật "Xử lý quá hạn" mà chưa có số giờ (dữ liệu cũ) thì lấy
+            // đúng giá trị giao diện đang hiển thị (12). Trước đây ô nhập chỉ hiển thị 12 nhưng
+            // state vẫn rỗng, nên bấm Lưu là bị chặn với lỗi "Cần nhập thời gian xử lý quá hạn"
+            // dù trên màn hình đã thấy 12 giờ.
+            if (stepData.timeoutEnabled && !(Number(stepData.maxDurationHours) > 0)) {
+              stepData.maxDurationHours = 12;
+            }
             
             if (stepData.sequentialOrder && typeof stepData.sequentialOrder === 'string') {
               try {
@@ -988,8 +1095,10 @@ export default function WorkflowTab() {
               [formType]: { hq: [], retail: [], common: [] }
             };
           });
-        });
+        })
+        .finally(() => setLoadingWorkflows(false));
     } else {
+      setLoadingWorkflows(false);
       setWorkflows(prev => {
         if (prev[formType]) return prev;
         return {
@@ -1002,12 +1111,16 @@ export default function WorkflowTab() {
 
   const steps = (workflows[formType] && workflows[formType][block]) || [];
 
+  // Khối có thể chưa tồn tại trong state (ví dụ loại đơn chưa từng nạp) — luôn đọc qua
+  // hàm này để "Thêm bước / Sửa bước" không ném TypeError khiến nút như bị liệt.
+  const stepsOf = (state, formKey, blockKey) => state[formKey]?.[blockKey] ?? [];
+
   const updateStep = (id, patch) =>
     setWorkflows((prev) => ({
       ...prev,
       [formType]: {
         ...prev[formType],
-        [block]: prev[formType][block].map((s) => (s.id === id ? { ...s, ...patch } : s)),
+        [block]: stepsOf(prev, formType, block).map((s) => (s.id === id ? { ...s, ...patch } : s)),
       },
     }));
 
@@ -1028,7 +1141,7 @@ export default function WorkflowTab() {
       ...prev,
       [formType]: {
         ...prev[formType],
-        [block]: prev[formType][block].map((s) => {
+        [block]: stepsOf(prev, formType, block).map((s) => {
           if (s.id !== id) return s;
           let nextType = approvalType;
           if (approvalType === 'arrangement') nextType = 'role';
@@ -1051,6 +1164,30 @@ export default function WorkflowTab() {
             }
             next.multiRule = 'sequential';
           }
+          // BE-50: XOÁ các lựa chọn của hình thức CŨ để các bước không "ăn vào nhau"
+          // (bước quản lý trực tiếp còn sót người được chỉ định của bước trước...).
+          if (nextType !== 'role') {
+            next.role = '';
+            next.roleName = '';
+            next.approvers = null;
+            next.sequentialOrder = null;
+            next.arrangementMode = 'role';
+          }
+          if (nextType !== 'specific') {
+            next.specificUser = null;
+            next.specificUserId = null;
+          }
+          if (nextType !== 'chain') {
+            next.chainStart = null;
+            next.chainEnd = null;
+            next.chainList = null;
+          }
+          if (nextType !== 'hierarchy') {
+            next.hierarchyOption = null;
+          }
+          if (nextType === 'specific') {
+            next.multiRule = null;
+          }
           return next;
         }),
       },
@@ -1064,7 +1201,7 @@ export default function WorkflowTab() {
       ...prev,
       [formType]: {
         ...prev[formType],
-        [block]: prev[formType][block].map((s) =>
+        [block]: stepsOf(prev, formType, block).map((s) =>
           s.id === id ? { ...s, role, roleName: role, specificUser: null, specificUserId: null, approvers: null, sequentialOrder: null, arrangementMode: 'role' } : s
         ),
       },
@@ -1074,7 +1211,7 @@ export default function WorkflowTab() {
       ...prev,
       [formType]: {
         ...prev[formType],
-        [block]: prev[formType][block].filter((s) => s.id !== id),
+        [block]: stepsOf(prev, formType, block).filter((s) => s.id !== id),
       },
     }));
     setOpenStepIds((cur) => {
@@ -1090,7 +1227,7 @@ export default function WorkflowTab() {
       ...prev,
       [formType]: {
         ...prev[formType],
-        [block]: [...prev[formType][block], newStep],
+        [block]: [...stepsOf(prev, formType, block), newStep],
       },
     }));
     setOpenStepIds((cur) => new Set(cur).add(newStep.id));
@@ -1101,7 +1238,7 @@ export default function WorkflowTab() {
     if (!draggedStepId || draggedStepId === dropId) return;
     setDraggedStepId(null);
     setWorkflows((prev) => {
-      const arr = [...prev[formType][block]];
+      const arr = [...stepsOf(prev, formType, block)];
       const fromIdx = arr.findIndex((s) => s.id === draggedStepId);
       const toIdx = arr.findIndex((s) => s.id === dropId);
       if (fromIdx === -1 || toIdx === -1) return prev;
@@ -1175,6 +1312,11 @@ export default function WorkflowTab() {
           (Array.isArray(step.approvers) && step.approvers.length === 1 && resolveEmployeeId(step.approvers[0]));
         if (!hasUser) errs.push(t('{v0}: Cần chọn người duyệt cụ thể', { v0: where }));
       }
+      // BE-50: bật "Xử lý quá hạn" thì backend BẮT BUỘC có số giờ > 0. Trước đây bước mới
+      // không lưu số giờ nên người dùng chỉ thấy lỗi khó hiểu từ backend khi bấm Lưu.
+      if (step.timeoutEnabled && !(Number(step.maxDurationHours) > 0)) {
+        errs.push(t('{v0}: Cần nhập thời gian xử lý quá hạn (số giờ lớn hơn 0)', { v0: where }));
+      }
       return errs;
     });
 
@@ -1192,7 +1334,9 @@ export default function WorkflowTab() {
     // thay vì để backend trả 400 rồi nuốt lỗi trong console.
     const invalid = validateSteps(scopeDataForValidation());
     if (invalid.length > 0) {
-      pushToast(invalid[0], 'error');
+      // Hiển thị ĐỦ mọi lỗi: trước đây chỉ hiện lỗi đầu tiên nên khi lỗi nằm ở khối khác
+      // người dùng tưởng "khối đang sửa không lưu được".
+      pushToast(invalid.join(' • '), 'error');
       console.error('Luồng duyệt chưa hợp lệ:', invalid);
       return;
     }
@@ -1200,6 +1344,13 @@ export default function WorkflowTab() {
     try {
       const scopeData = workflows[formType] || { hq: [], retail: [], common: [] };
       const scopes = ['hq', 'retail', 'common'];
+
+      // BE-49: "Dùng chung" chỉ là phương án dự phòng. Khi cả Khối Văn phòng và Khối Cửa hàng
+      // đều đã có luồng riêng thì cấu hình Dùng chung không còn tác dụng -> tự gỡ để dropdown
+      // không hiển thị nhầm "đã cấu hình ở Dùng chung" (và để 2 khối chính không bị khoá).
+      const staleCommonId = workflowIds[`${formType}_common`];
+      const bothBlocksHaveFlow = scopeData.hq.length > 0 && scopeData.retail.length > 0;
+      const dropCommon = bothBlocksHaveFlow && (Boolean(staleCommonId) || scopeData.common?.length > 0);
 
       for (const scope of scopes) {
         const wfId = workflowIds[`${formType}_${scope}`];
@@ -1209,38 +1360,49 @@ export default function WorkflowTab() {
           scope: scope,
           isDefault: true,
           steps: scopeData[scope].map((s, idx) => {
-            // BE-35: người được CHỈ ĐỊNH cho bước "theo chức danh".
-            // BE-46: resolve được cả khi giá trị là TÊN (UserSelect) hoặc ID.
+            const type = s.approvalType || 'role';
+            // BE-50: CHỈ gửi các trường thuộc hình thức duyệt đang chọn.
+            // Trước đây gửi tất cả (role + specificUser + chainStart/End + hierarchyOption) cho
+            // MỌI bước, nên các bước "ăn vào nhau": bước quản lý trực tiếp vẫn mang theo người
+            // được chỉ định + chức danh của bước khác -> cây luồng và đơn bị lẫn người duyệt.
             const designatedUserId = (() => {
-              if (s.approvalType === 'role' && s.arrangementMode === 'role') return null;
+              if (type === 'role' && s.arrangementMode === 'role') return null;
               if (Array.isArray(s.approvers) && s.approvers.length === 1) return resolveEmployeeId(s.approvers[0]);
               if (s.specificUser) return resolveEmployeeId(s.specificUser);
               if (s.specificUserId) return resolveEmployeeId(s.specificUserId);
               return null;
             })();
-            const specificUserId = designatedUserId;
+
+            const isRole = type === 'role';
+            const isChain = type === 'chain';
+            const isHierarchy = type === 'hierarchy';
+            const isSpecific = type === 'specific' || type === 'specific_user';
+
+            // Người được chỉ định chỉ có ý nghĩa với bước "chỉ định 1 người" hoặc bước
+            // "theo chức danh" ở chế độ chọn tay.
+            const specificUserId = isSpecific
+              ? designatedUserId
+              : (isRole && s.arrangementMode !== 'role' ? designatedUserId : null);
+
+            const sequentialOrder = isRole && s.arrangementMode !== 'role'
+              ? (Array.isArray(s.sequentialOrder) && s.sequentialOrder.length > 0
+                  ? s.sequentialOrder
+                  : (Array.isArray(s.approvers) ? s.approvers : null))
+              : null;
 
             return {
               name: s.name,
               stepOrder: idx + 1,
               isActive: s.isActive !== false,
-              approvalType: s.approvalType || 'role',
-              hierarchyOption: s.hierarchyOption,
-              chainStart: s.chainStart,
-              chainEnd: s.chainEnd,
-              chainList: s.chainList,
-              role: s.role,
-              roleName: s.role,
-              // Quy tắc nhiều người duyệt: áp dụng cho bước "theo chức danh" (dù chỉ định
-              // hay để tự resolve theo chức danh) — trước đây chỉ gửi khi có ≥2 người được
-              // CHỈ ĐỊNH nên chọn quy tắc ở chế độ theo chức danh bị mất khi lưu.
-              multiRule: s.approvalType === 'role' ? s.multiRule : (s.approvalType === 'chain' ? 'sequential' : null),
-              // Đẩy danh sách người duyệt cụ thể vào sequentialOrder (backend dùng trường này để nhận danh sách IDs)
-              sequentialOrder: s.approvalType === 'role'
-                ? (s.arrangementMode === 'role' ? null : (Array.isArray(s.sequentialOrder) && s.sequentialOrder.length > 0
-                    ? s.sequentialOrder
-                    : (Array.isArray(s.approvers) ? s.approvers : null)))
-                : null,
+              approvalType: type,
+              hierarchyOption: isHierarchy ? s.hierarchyOption : null,
+              chainStart: isChain ? s.chainStart : null,
+              chainEnd: isChain ? s.chainEnd : null,
+              chainList: isChain ? s.chainList : null,
+              role: isRole ? s.role : null,
+              roleName: isRole ? s.role : null,
+              multiRule: isRole ? s.multiRule : (isChain ? 'sequential' : null),
+              sequentialOrder,
               specificUserId,
               scope: s.scope || 'auto',
               condition: s.condition,
@@ -1254,16 +1416,48 @@ export default function WorkflowTab() {
         };
 
         if (wfId) {
-          await workflowService.update(wfId, req);
-        } else if (req.steps.length > 0) {
+          // BE-49: khối này đã bị gỡ cấu hình -> gửi danh sách bước RỖNG để backend ngừng
+          // hoạt động luồng đó (không xoá cứng để đơn cũ vẫn hiển thị được luồng duyệt).
+          // Trước đây thao tác này bị backend chặn 400 nên không thể gỡ cấu hình khối nào.
+          const payload = scope === 'common' && dropCommon ? { ...req, steps: [] } : req;
+          // BE-47: luồng đã có đơn sử dụng sẽ được backend lưu trữ và thay bằng phiên bản
+          // mới -> response trả về id MỚI. Không cập nhật lại id thì lần lưu sau sẽ sửa
+          // nhầm vào bản đã lưu trữ và sinh thêm phiên bản mới mỗi lần bấm Lưu.
+          const updated = await workflowService.update(wfId, payload);
+          if (updated?.id && updated.id !== wfId) {
+            setWorkflowIds(prev => ({ ...prev, [`${formType}_${scope}`]: updated.id }));
+          }
+          if (scope === 'common' && dropCommon) {
+            setWorkflowIds(prev => ({ ...prev, [`${formType}_common`]: undefined }));
+            setWorkflows(prev => ({
+              ...prev,
+              [formType]: { ...prev[formType], common: [] },
+            }));
+          } else if (wfId && scope === 'common') {
+            setWorkflowIds(prev => ({ ...prev, [`${formType}_common`]: updated?.id ?? wfId }));
+          }
+        } else if (req.steps.length > 0 && !(scope === 'common' && dropCommon)) {
           const created = await workflowService.create(req);
           setWorkflowIds(prev => ({ ...prev, [`${formType}_${scope}`]: created.id }));
         }
       }
-      
+
+      // Danh sách "loại đơn đã cấu hình ở khối nào" được dựng từ dữ liệu server -> nạp lại
+      // để chú thích trong dropdown đúng ngay sau khi lưu (khối vừa gỡ không còn bị đánh dấu).
+      workflowService.getAll()
+        .then(data => setAllWorkflows(data || []))
+        .catch(err => console.error('Failed to refresh workflows', err));
+
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-      pushToast(t('Đã lưu cấu hình luồng duyệt'), 'success');
+      // Một toast duy nhất: pushToast dùng Date.now() làm id nên gọi 2 lần liên tiếp sẽ trùng
+      // key trong danh sách toast (React cảnh báo "two children with the same key").
+      pushToast(
+        dropCommon
+          ? t('Đã lưu cấu hình luồng duyệt. Đã gỡ luồng "Dùng chung" vì Khối Văn phòng và Khối Cửa hàng đều đã có luồng riêng')
+          : t('Đã lưu cấu hình luồng duyệt'),
+        'success'
+      );
     } catch (err) {
       console.error(t('Không lưu được luồng duyệt:'), err);
       // Hiển thị thông báo lỗi từ backend (validator trả về mảng errors)
@@ -1288,6 +1482,7 @@ export default function WorkflowTab() {
             documentTypes={documentTypes}
             value={formType}
             configuredTypes={configuredTypes}
+            blockStatusOf={blockStatusOf}
             onChange={(val) => {
               setFormType(val);
               setOpenStepIds(new Set());
@@ -1316,7 +1511,31 @@ export default function WorkflowTab() {
             ))}
           </div>
         </div>
-      </div>
+
+          {/* Khối đang chọn chưa có bước duyệt -> nhân viên khối đó không tạo được đơn */}
+          {!loadingWorkflows && steps.length === 0 && (
+            <div className="flex items-start gap-2 text-xs rounded-md border border-warning/40 bg-warning-container/40 text-on-warning-container px-3 py-2">
+              <span className="material-symbols-outlined text-[16px] text-warning flex-shrink-0">warning</span>
+              <span>{t(BLOCK_MISSING_HINTS[block] || '')}</span>
+            </div>
+          )}
+
+          {/* Chú giải nhỏ: loại đơn đã cấu hình ở khối nào thì bị làm mờ ở khối còn lại */}
+          <div className="flex flex-col gap-1 pt-3 border-t border-outline-variant/50">
+            <div className="flex items-start gap-2 text-[11px] text-secondary">
+              <span className="material-symbols-outlined text-[15px] text-success flex-shrink-0 mt-px">check_circle</span>
+              <span>
+                {t('Khối Văn phòng và Khối Cửa hàng là 2 khối CHÍNH, luôn cấu hình được: mỗi khối có luồng riêng cho nhân viên của mình nên một loại đơn có thể có ở cả hai khối.')}
+              </span>
+            </div>
+            <div className="flex items-start gap-2 text-[11px] text-secondary pl-[23px]">
+              <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">menu_book</span>
+              <span>
+                {t('Riêng "Dùng chung" là phương án DỰ PHÒNG: chỉ mở khi loại đơn chưa có luồng ở khối nào. Khi cả Văn phòng và Cửa hàng đã có luồng riêng thì luồng Dùng chung tự được gỡ lúc bấm Lưu.')}
+              </span>
+            </div>
+          </div>
+        </div>
 
       {/* Vertical flow - Accordion / Flow Builder */}
       <div className="flex flex-col gap-0">
@@ -1501,6 +1720,20 @@ export default function WorkflowTab() {
                                     />
                                   ))}
                                 </div>
+
+                                {/* Giải thích quy tắc đang chọn để tránh nhầm "chưa đến lượt" */}
+                                {step.multiRule && (
+                                  <div className="flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
+                                    <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">info</span>
+                                    <span className="text-secondary">
+                                      {step.multiRule === 'sequential'
+                                        ? t('BẮT BUỘC theo đúng thứ tự: người đứng trước duyệt xong mới tới người kế tiếp (kéo-thả danh sách bên dưới để đổi thứ tự).')
+                                        : step.multiRule === 'and'
+                                          ? t('KHÔNG cần theo thứ tự: ai duyệt trước cũng được, nhưng TẤT CẢ người trong danh sách phải duyệt thì bước mới hoàn tất.')
+                                          : t('KHÔNG cần theo thứ tự: ai duyệt trước cũng được, CHỈ CẦN 1 người duyệt là bước hoàn tất.')}
+                                    </span>
+                                  </div>
+                                )}
 
                                 {step.multiRule && (
                                   <div className="mt-4 border border-outline-variant/60 rounded-lg p-3.5 bg-surface-container-lowest flex items-center justify-between gap-4">

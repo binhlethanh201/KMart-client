@@ -360,9 +360,13 @@ export default function RequestCard({ request: r }) {
             {/* Approver Nodes — BE-20: bước nhiều người hiển thị TỪNG người rõ ràng */}
             {r.steps.map((s, idx) => {
               const ids = s.approverIds?.length ? s.approverIds : (s.approverId ? [s.approverId] : []);
-              const isParallel = ['and', 'or'].includes((s.multiRule || '').trim().toLowerCase());
-              const isSequential = ids.length > 1 && !isParallel;
-              const isGroupStep = ids.length > 1 && isParallel;
+              // BE-13: chỉ "Duyệt lần lượt" (và bước "Chuỗi quản lý liên tiếp") mới theo
+              // thứ tự; And/Or và bước không cấu hình quy tắc cho phép bất kỳ ai duyệt trước.
+              const isSequential = ids.length > 1 && (
+                (s.multiRule || '').trim().toLowerCase() === 'sequential'
+                || (s.approvalType || '').trim().toLowerCase() === 'chain'
+              );
+              const isGroupStep = ids.length > 1 && !isSequential;
               const isTimeoutStep = r.status === 'returned_timeout' && idx === (r.steps.findIndex(x => ['pending', 'submitted', 'pendingapproval'].includes((x.status || '').toLowerCase())) >= 0 ? r.steps.findIndex(x => ['pending', 'submitted', 'pendingapproval'].includes((x.status || '').toLowerCase())) : Math.min(Number(r.currentStep) || 0, r.steps.length - 1));
 
               // Badge trạng thái cho từng người: nếu bước đã duyệt/từ chối thì dùng chung, còn lại theo bước

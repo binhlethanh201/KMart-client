@@ -291,6 +291,18 @@ export default function RequestDetail() {
   timelineItems.push({ kind: 'finish', key: 'finish', order: 999999 });
   timelineItems.sort((a, b) => a.order - b.order);
 
+  // BE-50: chuỗi "từ ai ➔ đến ai" của đơn — người đọc thấy ngay thứ tự duyệt.
+  const flowPath = [
+    { key: 'path-creator', label: request.applicantName || currentUser?.name || t('Người nộp'), stepNo: null, status: 'done' },
+  ];
+  stepOrdered.forEach(({ step: s, index: i }) => {
+    const n = s.stepOrder ?? i + 1;
+    const ids = (s.approverIds?.length ? s.approverIds : [s.approverId]).filter(Boolean);
+    const names = ids.map((id) => employees.find((x) => x.id === id)?.name).filter(Boolean);
+    if (names.length === 0) return;
+    flowPath.push({ key: `path-${n}`, label: names.join(' / '), stepNo: n, status: s.status });
+  });
+
   const postComment = async () => {
     if (!comment.trim()) return;
     const text = comment;
@@ -692,6 +704,32 @@ export default function RequestDetail() {
               <span className="material-symbols-outlined text-[16px]">account_tree</span>
               {t('Tiến trình xử lý')}
             </h3>
+
+            {/* BE-50: đường đi của đơn — rõ ràng TỪ AI ➔ ĐẾN AI theo đúng thứ tự duyệt */}
+            <div className="mb-5 flex flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-2.5 rounded-lg border border-primary/20 bg-primary/5">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-primary">
+                <span className="material-symbols-outlined text-[14px]">route</span>
+                {t('Đường đi của đơn')}
+              </span>
+              {flowPath.map((p, pi) => (
+                <span key={p.key} className="flex items-center gap-2">
+                  {pi > 0 && (
+                    <span className="material-symbols-outlined text-primary text-[16px] leading-none">arrow_forward</span>
+                  )}
+                  <span className="inline-flex items-center gap-1.5">
+                    {p.stepNo != null && (
+                      <span className="text-[10px] font-bold uppercase text-secondary">{t('Cấp')} {p.stepNo}</span>
+                    )}
+                    <span className={`text-[12px] font-semibold ${p.status === 'approved' ? 'text-success' : p.status === 'rejected' ? 'text-error' : 'text-on-surface'}`}>
+                      {p.label}
+                    </span>
+                  </span>
+                </span>
+              ))}
+              <span className="material-symbols-outlined text-success text-[16px] leading-none">arrow_forward</span>
+              <span className="text-[12px] font-semibold text-success">{t('Hoàn tất')}</span>
+            </div>
+
             <div className="relative">
               <div className="absolute left-[11px] top-3 bottom-3 w-px bg-outline-variant z-0"></div>
               <ul className="space-y-5 relative z-10">
@@ -803,8 +841,14 @@ export default function RequestDetail() {
                     // BE-31: đơn đã dừng (từ chối / hủy / quá hạn) -> người chưa thao tác không còn "chưa đến lượt"
                     const isTerminated = request.status === 'rejected' || request.status === 'canceled' || isTimeoutWorkflow;
 
-                    const isParallel = ['and', 'or'].includes((s.multiRule || '').trim().toLowerCase());
-                    const isSequential = (s.approverIds?.length > 1) && !isParallel;
+                    // BE-13: CHỈ "Duyệt lần lượt" mới bắt buộc theo đúng thứ tự.
+                    // "Đồng thời — cần tất cả đồng ý", "Đồng thời — chỉ cần 1 người" và bước
+                    // không cấu hình quy tắc: ai duyệt trước cũng được, không có "chưa đến lượt".
+                    // Bước "Chuỗi quản lý liên tiếp" luôn là tuần tự (giống backend).
+                    const isSequential = (s.approverIds?.length > 1) && (
+                      (s.multiRule || '').trim().toLowerCase() === 'sequential'
+                      || (s.approvalType || '').trim().toLowerCase() === 'chain'
+                    );
                     let isCurrentSequentialPerson = true;
                     if (isSequential && isCurrent) {
                       const ids = (s.approverIds?.length ? s.approverIds : [s.approverId]).filter(Boolean);
