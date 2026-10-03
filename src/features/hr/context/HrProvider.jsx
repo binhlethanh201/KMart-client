@@ -49,17 +49,20 @@ export function HrProvider({ children }) {
         const created = await userService.create(form);
         setEmployees(list => [created, ...list]);
       }
-      return true;
+      return { ok: true };
     } catch (err) {
       console.error('Failed to save employee', err);
       const status = err.response?.status;
       const body = err.response?.data;
+      // BE-68: trả lỗi về cho FORM hiển thị (dịch được theo ngôn ngữ), không dùng alert()
+      // vì alert chặn giao diện và không đổi được ngôn ngữ.
       const detail =
-        body?.message || body?.error ||
+        body?.error ||
+        body?.message ||
         (Array.isArray(body?.errors) ? body.errors.join('; ') : '') ||
-        err.message;
-      alert(t('Lỗi lưu nhân sự{v0}: {v1}', { v0: status ? ` (HTTP ${status})` : '', v1: detail }));
-      return false;
+        err.message ||
+        t('Không lưu được nhân sự');
+      return { ok: false, message: detail, status };
     }
   }, []);
 

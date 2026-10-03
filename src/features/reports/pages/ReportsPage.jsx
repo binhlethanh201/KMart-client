@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { reportService } from '../services/reportService';
 import { departmentService } from '../../departments/services/departmentService';
@@ -10,14 +10,15 @@ import FilterBar from '../components/FilterBar';
 import BarChart from '../components/BarChart';
 import PieChart from '../components/PieChart';
 import TrendLineChart from '../components/TrendLineChart';
+import ExportTableButton from '../components/ExportTableButton';
+import DrillTable from '../components/DrillTable';
+import RosterTable from '../components/RosterTable';
 import ExportModal from '../components/ExportModal';
 import { useI18n } from '../../../i18n/I18nProvider';
 
 const STATUS_LABELS = {
   Approved: 'Đã duyệt',
 };
-
-const DRILL_PAGE_SIZE = 10;
 
 export default function ReportsPage() {
   const { t } = useI18n();
@@ -30,9 +31,6 @@ export default function ReportsPage() {
   const [trend, setTrend] = useState([]);
   const [managers, setManagers] = useState([]);
   const [byPosition, setByPosition] = useState([]);
-  const [drill, setDrill] = useState({ items: [], totalCount: 0 });
-  const [drillPage, setDrillPage] = useState(1);
-  const [drillLoading, setDrillLoading] = useState(false);
 
   const [filters, setFilters] = useState({
     from: '',
@@ -66,6 +64,7 @@ export default function ReportsPage() {
     status: filters.status || undefined,
   }), [filters]);
 
+
   // KPI + xu hướng + bảng quản lý + so sánh chức vụ
   useEffect(() => {
     let cancelled = false;
@@ -89,23 +88,7 @@ export default function ReportsPage() {
     return () => { cancelled = true; };
   }, [query, rosterMode]);
 
-  // Danh sách đơn chi tiết — "soi kĩ từng đơn"
-  const loadDrill = useCallback((page) => {
-    setDrillLoading(true);
-    reportService.getApplications(query, page, DRILL_PAGE_SIZE)
-      .then((r) => {
-        const data = r.data || {};
-        setDrill({
-          items: data.items || data.Items || [],
-          totalCount: data.totalCount ?? data.TotalCount ?? 0,
-        });
-        setDrillPage(page);
-      })
-      .catch(() => setDrill({ items: [], totalCount: 0 }))
-      .finally(() => setDrillLoading(false));
-  }, [query]);
 
-  useEffect(() => { loadDrill(1); }, [loadDrill]);
 
   const handleFilterChange = (newFilters) => setFilters((prev) => ({ ...prev, ...newFilters }));
 
@@ -128,7 +111,7 @@ export default function ReportsPage() {
     if (trendMode === 'type' && trendTypeNames.length > 0) {
       return trendTypeNames.map((name, i) => ({
         key: `type-${i}`,
-        label: name,
+        label: t(name),
         color: TREND_TYPE_COLORS[i % TREND_TYPE_COLORS.length],
         values: trend.map((p) => {
           const found = (p.byType || []).find((tp) => tp.documentType === name);
@@ -153,7 +136,7 @@ export default function ReportsPage() {
       const rows = {};
       const sorted = [...(p.byType || [])].sort((a, b) => (b.count || 0) - (a.count || 0));
       if (trendMode === 'type' && sorted.length) {
-        sorted.forEach((tp) => { rows[tp.documentType] = `${tp.count} · ${(tp.percentage ?? 0).toFixed(0)}%`; });
+        sorted.forEach((tp) => { rows[t(tp.documentType)] = `${tp.count} · ${(tp.percentage ?? 0).toFixed(0)}%`; });
         rows[t('Tổng tháng')] = p.total || 0;
       } else {
         rows[t('Tháng trước')] = trend[i - 1]?.total ?? 0;
@@ -180,8 +163,6 @@ export default function ReportsPage() {
   const lastMonth = trend.slice(-1)[0];
   const hasTrend = trend.length > 1;
 
-  const visibleDrill = drill.items || [];
-  const totalDrillPages = Math.max(1, Math.ceil((drill.totalCount || 0) / DRILL_PAGE_SIZE));
 
   return (
     <div className="py-10 px-6 md:px-10 lg:px-16 space-y-8 h-full overflow-y-auto bg-background font-sans">
@@ -192,7 +173,7 @@ export default function ReportsPage() {
             {t('Báo cáo & Thống kê')}
           </p>
           <h1 className="text-3xl md:text-4xl font-black text-[#1d1d1f] tracking-tight max-w-2xl leading-tight">
-            {t('Đơn đã được duyệt, nhìn từ mọi góc độ.')}
+            {t('Báo cáo đơn từ')}
           </h1>
         </div>
         <button
@@ -227,13 +208,13 @@ export default function ReportsPage() {
           <StatCard title={t('Tổng đơn đã duyệt')} value={total} icon="verified" accent="green" />
           <StatCard
             title={t('Phòng ban nhiều nhất')}
-            value={byDepartment[0]?.departmentName || '—'}
+            value={t(byDepartment[0]?.departmentName || '—')}
             icon="apartment"
             sub={byDepartment[0] ? `${byDepartment[0].totalApplications ?? 0} ${t('đơn')} · ${topDeptShare.toFixed(0)}%` : null}
           />
           <StatCard
             title={t('Loại đơn nhiều nhất')}
-            value={byType[0]?.documentType || '—'}
+            value={t(byType[0]?.documentType || '—')}
             icon="description"
             sub={byType[0] ? `${byType[0].count ?? 0} ${t('đơn')} · ${topTypeShare.toFixed(0)}%` : null}
           />
@@ -263,13 +244,16 @@ export default function ReportsPage() {
       {/* Phân bổ theo loại đơn & phòng ban — đặt TRƯỚC xu hướng để nhìn tổng quan trước */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8 flex flex-col h-[420px]">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38] mb-6">
-            {t('Đơn đã duyệt theo loại đơn')}
-          </h3>
+          <div className="flex items-start justify-between gap-3 mb-6">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
+              {t('Đơn đã duyệt theo loại đơn')}
+            </h3>
+            <ExportTableButton table="byType" filters={query} filePrefix="DonDaDuyet_TheoLoaiDon" />
+          </div>
           <div className="flex-1 min-h-0 overflow-y-auto pr-4 custom-scrollbar">
             <BarChart
               data={byType.map((tp) => ({
-                name: tp.documentType || t('Không rõ'),
+                name: t(tp.documentType || 'Không rõ'),
                 value: tp.count || 0,
               }))}
             />
@@ -277,13 +261,16 @@ export default function ReportsPage() {
         </div>
 
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8 flex flex-col h-[420px]">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38] mb-6">
-            {t('Đơn đã duyệt theo phòng ban')}
-          </h3>
+          <div className="flex items-start justify-between gap-3 mb-6">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
+              {t('Đơn đã duyệt theo phòng ban')}
+            </h3>
+            <ExportTableButton table="byDepartment" filters={query} filePrefix="DonDaDuyet_TheoPhongBan" />
+          </div>
           <div className="flex-1 min-h-0">
             <PieChart
               data={byDepartment.map((d) => ({
-                name: d.departmentName || t('Chưa phân bổ'),
+                name: t(d.departmentName || 'Chưa phân bổ'),
                 value: d.totalApplications ?? d.approved ?? 0,
               }))}
             />
@@ -350,7 +337,7 @@ export default function ReportsPage() {
           <div className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50/70 border border-emerald-100">
             <span className="material-symbols-outlined text-[16px] text-emerald-600">emoji_events</span>
             <span className="text-[11px] text-gray-600">{t('Tháng này duyệt nhiều nhất:')}</span>
-            <strong className="text-[12px] text-[#1d1d1f]">{topTypeOfMonth.documentType}</strong>
+            <strong className="text-[12px] text-[#1d1d1f]">{t(topTypeOfMonth.documentType)}</strong>
             <span className="text-[11px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-100">
               {topTypeOfMonth.count} {t('đơn')} · {(topTypeOfMonth.percentage ?? 0).toFixed(0)}%
             </span>
@@ -366,123 +353,29 @@ export default function ReportsPage() {
         />
       </div>
 
-      {/* Bảng điều hành — Quản lý cấp cao */}
+      {/* Bảng điều hành — Quản lý cấp cao (BE-64: tách riêng để tìm kiếm không vẽ lại cả trang) */}
       <div className="bg-[#1d1d1f] rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#f6f6f4] opacity-80">
-              {t('Bảng điều hành — Đơn được duyệt theo nhân sự')}
-            </h3>
-            <p className="text-[11px] text-gray-400 mt-1">
-              {rosterMode === 'all'
-                ? t('Số đơn CỦA mỗi nhân sự đã được người khác duyệt trong kỳ, tách riêng đơn nghỉ (căn cứ tính lương). Bấm vào một dòng để lọc theo phòng ban.')
-                : t('Số đơn CỦA mỗi quản lý đã được người khác duyệt trong kỳ, tách riêng đơn nghỉ (căn cứ tính lương). Bấm vào một dòng để lọc theo phòng ban.')}
-            </p>
-          </div>
-          <span className="material-symbols-outlined text-white/40 text-[28px]">supervisor_account</span>
-        </div>
-
-        {/* BE-54: chuyển giữa xem quản lý và xem tất cả nhân sự (phục vụ tính lương) */}
-        <div className="flex p-0.5 bg-white/5 border border-white/10 rounded-lg w-fit mb-6">
-          <button
-            type="button"
-            onClick={() => setRosterMode('managers')}
-            className={`text-[11px] px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
-              rosterMode === 'managers' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            {t('Quản lý')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setRosterMode('all')}
-            className={`text-[11px] px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
-              rosterMode === 'all' ? 'bg-white/15 text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            {t('Tất cả nhân sự')}
-          </button>
-        </div>
-
-        {managers.length === 0 ? (
-          <p className="text-sm text-gray-400 py-6 text-center">{t('Chưa có dữ liệu nhân sự')}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[820px]">
-              <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-white/10">
-                  <th className="py-3 pr-4 font-bold">{t('Nhân sự')}</th>
-                  <th className="py-3 pr-4 font-bold">{t('Phòng công tác chính')}</th>
-                  <th className="py-3 pr-4 font-bold">{t('Chức vụ')}</th>
-                  <th className="py-3 pr-4 font-bold text-right">{t('Đơn được duyệt')}</th>
-                  <th className="py-3 pr-4 font-bold text-right">{t('Trong đó đơn nghỉ')}</th>
-                  <th className="py-3 pr-4 font-bold">{t('Tỷ trọng')}</th>
-                  <th className="py-3 font-bold text-right">{t('Lần được duyệt gần nhất')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {managers.map((m) => {
-                  const maxApproved = Math.max(...managers.map((x) => x.approvedCount || 0), 1);
-                  const share = total > 0 ? ((m.approvedCount || 0) / total) * 100 : 0;
-                  return (
-                    <tr
-                      key={m.userId}
-                      onClick={() => handleFilterChange({ departmentId: m.departmentId || null })}
-                      className={`border-b border-white/5 hover:bg-white/5 transition-colors ${m.departmentId ? 'cursor-pointer' : ''}`}
-                      title={m.departmentId ? t('Lọc báo cáo theo phòng ban của người này') : undefined}
-                    >
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0">
-                            {(m.fullName || '?').trim().split(' ').slice(-1)[0].charAt(0)}
-                          </div>
-                          <p className="text-[13px] font-semibold text-white truncate">{m.fullName}</p>
-                        </div>
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span className="text-[12px] text-gray-300">{m.departmentName || '—'}</span>
-                      </td>
-                      <td className="py-3 pr-4 text-[12px] text-gray-300">{m.positionName || '—'}</td>
-                      <td className="py-3 pr-4 text-right text-[15px] font-bold text-emerald-400">
-                        {m.approvedCount}
-                      </td>
-                      <td className="py-3 pr-4 text-right">
-                        <span
-                          className={`text-[13px] font-bold ${m.leaveApprovedCount > 0 ? 'text-amber-300' : 'text-gray-500'}`}
-                          title={t('Số đơn nghỉ phép / làm việc tại nhà đã được duyệt — căn cứ tính lương')}
-                        >
-                          {m.leaveApprovedCount}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 w-[170px]">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-emerald-400 rounded-full"
-                              style={{ width: `${((m.approvedCount || 0) / maxApproved) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-[11px] text-gray-400 w-10 text-right">{share.toFixed(0)}%</span>
-                        </div>
-                      </td>
-                      <td className="py-3 text-right text-[12px] text-gray-300">
-                        {m.lastActionAt ? new Date(m.lastActionAt).toLocaleDateString('vi-VN') : '—'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <RosterTable
+          managers={managers}
+          rosterMode={rosterMode}
+          total={total}
+          query={query}
+          onPickDepartment={(patch) => {
+            if (patch.rosterMode) setRosterMode(patch.rosterMode);
+            else handleFilterChange(patch);
+          }}
+        />
       </div>
 
       {/* So sánh theo phòng ban & chức vụ */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38] mb-6">
-            {t('So sánh theo phòng ban')}
-          </h3>
+          <div className="flex items-start justify-between gap-3 mb-6">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
+              {t('So sánh theo phòng ban')}
+            </h3>
+            <ExportTableButton table="byDepartment" filters={query} filePrefix="SoSanh_PhongBan" />
+          </div>
           <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
             {byDepartment.map((d, index) => {
               const value = d.totalApplications ?? d.approved ?? 0;
@@ -496,7 +389,7 @@ export default function ReportsPage() {
                       className="font-bold text-[#1d1d1f] text-[15px] hover:text-[#d94a38] transition-colors text-left cursor-pointer"
                       title={t('Lọc báo cáo theo phòng ban này')}
                     >
-                      {d.departmentName}
+                      {t(d.departmentName)}
                     </button>
                     <span
                       className="text-[11px] font-bold text-[#d94a38] bg-[#fdf2f0] px-2 py-1 rounded-full cursor-help"
@@ -528,9 +421,12 @@ export default function ReportsPage() {
         </div>
 
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38] mb-6">
-            {t('So sánh theo chức vụ')}
-          </h3>
+          <div className="flex items-start justify-between gap-3 mb-6">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
+              {t('So sánh theo chức vụ')}
+            </h3>
+            <ExportTableButton table="byPosition" filters={query} filePrefix="SoSanh_ChucVu" />
+          </div>
           <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
             {byPosition.map((p, index) => {
               const share = total > 0 ? ((p.total ?? 0) / total) * 100 : 0;
@@ -542,7 +438,7 @@ export default function ReportsPage() {
                       className="font-bold text-[#1d1d1f] text-[15px] hover:text-[#d94a38] transition-colors text-left cursor-pointer"
                       title={t('Lọc báo cáo theo chức vụ này')}
                     >
-                      {p.positionName}
+                      {t(p.positionName)}
                     </button>
                     <span
                       className="text-[11px] font-bold text-[#d94a38] bg-[#fdf2f0] px-2 py-1 rounded-full cursor-help"
@@ -571,96 +467,8 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Soi kĩ từng đơn */}
-      <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
-        <div className="mb-6">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
-            {t('Soi kĩ từng đơn')}
-          </h3>
-          <p className="text-[11px] text-gray-500 mt-1">
-            {t('Bấm vào một dòng để mở chi tiết đơn.')} · {drill.totalCount} {t('đơn')}
-          </p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[900px]">
-            <thead>
-              <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-[#eeece7]">
-                <th className="py-3 pr-4 font-bold">{t('Mã đơn')}</th>
-                <th className="py-3 pr-4 font-bold">{t('Loại đơn')}</th>
-                <th className="py-3 pr-4 font-bold">{t('Người tạo')}</th>
-                <th className="py-3 pr-4 font-bold">{t('Phòng ban')}</th>
-                <th className="py-3 pr-4 font-bold">{t('Chức vụ')}</th>
-                <th className="py-3 pr-4 font-bold">{t('Bước')}</th>
-                <th className="py-3 pr-4 font-bold">{t('Trạng thái')}</th>
-                <th className="py-3 pr-4 font-bold text-right">{t('Xử lý (giờ)')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {drillLoading && (
-                <tr>
-                  <td colSpan={8} className="py-8 text-center text-gray-400 text-sm">{t('Đang tải...')}</td>
-                </tr>
-              )}
-              {!drillLoading && visibleDrill.map((a) => (
-                <tr
-                  key={a.id}
-                  onClick={() => navigate(`/requests/${a.id}`)}
-                  className="border-b border-[#f4f2ee] hover:bg-[#faf9f7] cursor-pointer transition-colors"
-                >
-                  <td className="py-3 pr-4 text-[12px] font-mono font-semibold text-[#1d1d1f]">
-                    {(a.code || a.id || '').toString().substring(0, 8).toUpperCase()}
-                  </td>
-                  <td className="py-3 pr-4 text-[12px] text-[#1d1d1f]">{a.documentTypeName || '—'}</td>
-                  <td className="py-3 pr-4 text-[12px] text-gray-600">{a.applicantName || '—'}</td>
-                  <td className="py-3 pr-4 text-[12px] text-gray-600">{a.departmentName || '—'}</td>
-                  <td className="py-3 pr-4 text-[12px] text-gray-600">{a.positionName || '—'}</td>
-                  <td className="py-3 pr-4 text-[12px] text-gray-600">
-                    {a.totalSteps ? `${a.currentStepOrder || 0}/${a.totalSteps}` : '—'}
-                  </td>
-                  <td className="py-3 pr-4">
-                    <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
-                      {t(STATUS_LABELS[a.status] || a.status || '—')}
-                    </span>
-                  </td>
-                  <td className="py-3 pr-4 text-right text-[12px] text-gray-600">
-                    {a.durationHours != null ? a.durationHours.toFixed(1) : '—'}
-                  </td>
-                </tr>
-              ))}
-              {!drillLoading && visibleDrill.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="py-10 text-center text-gray-500 text-sm">
-                    {t('Không có đơn nào phù hợp bộ lọc')}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {totalDrillPages > 1 && (
-          <div className="flex items-center justify-center gap-3 mt-6">
-            <button
-              disabled={drillPage <= 1}
-              onClick={() => loadDrill(drillPage - 1)}
-              className="px-3 py-1.5 rounded-md border border-[#D9D5CC] text-[12px] font-semibold disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-            >
-              ‹ {t('Trước')}
-            </button>
-            <span className="text-[12px] text-gray-500">
-              {t('Trang')} {drillPage} / {totalDrillPages}
-            </span>
-            <button
-              disabled={drillPage >= totalDrillPages}
-              onClick={() => loadDrill(drillPage + 1)}
-              className="px-3 py-1.5 rounded-md border border-[#D9D5CC] text-[12px] font-semibold disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-            >
-              {t('Sau')} ›
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Soi kĩ từng đơn (BE-64: tách riêng để tìm kiếm/lọc ngày không vẽ lại cả trang) */}
+      <DrillTable query={query} />
 
       <ExportModal
         open={exportModalOpen}

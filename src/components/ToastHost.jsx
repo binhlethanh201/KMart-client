@@ -1,9 +1,14 @@
 import { createPortal } from 'react-dom';
 import { useApproval } from '../context/useApproval';
+import { useI18n } from '../i18n/I18nProvider';
 
 // Fixed toast stack. Reads from context so any handler can fire one.
 export default function ToastHost() {
   const { toasts, dismissToast } = useApproval();
+  // BE-65: dịch thông báo tại ĐÚNG chỗ hiển thị. Thông báo lỗi từ máy chủ là chuỗi tiếng Việt
+  // (ví dụ "Email đã tồn tại") nên trước đây đổi sang tiếng Anh/Hàn là không dịch.
+  // Dịch ở đây cũng giúp đổi ngôn ngữ là thông báo đang hiện tự đổi theo.
+  const { t } = useI18n();
 
   const styles = {
     success: { bar: 'bg-success', icon: 'check_circle', cls: 'text-on-success-container bg-success-container border-success/20' },
@@ -16,16 +21,16 @@ export default function ToastHost() {
 
   return createPortal(
     <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[130] flex flex-col gap-2 items-center w-full max-w-sm px-4 pointer-events-none">
-      {toasts.map((t) => {
-        const s = styles[t.variant] || styles.info;
+      {toasts.map((toast) => {
+        const s = styles[toast.variant] || styles.info;
         return (
           <div
-            key={t.id}
+            key={toast.id}
             className={`pointer-events-auto flex items-center gap-2.5 pl-3 pr-2 py-2.5 rounded-lg border shadow-lg ${s.cls} w-full`}
           >
             <span className={`material-symbols-outlined text-[20px]`}>{s.icon}</span>
-            <span className="text-sm font-medium flex-1">{t.message}</span>
-            <button onClick={() => dismissToast(t.id)} className="p-1 rounded hover:bg-black/10 cursor-pointer" aria-label="Đóng">
+            <span className="text-sm font-medium flex-1">{t(toast.message)}</span>
+            <button onClick={() => dismissToast(toast.id)} className="p-1 rounded hover:bg-black/10 cursor-pointer" aria-label={t('Đóng')}>
               <span className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </div>

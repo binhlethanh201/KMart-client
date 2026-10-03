@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import NotificationBell from '../components/NotificationBell';
 import { useApproval } from '../context/useApproval';
  
 export default function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const contentRef = useRef(null);
  
   // currentUser comes from your existing ApprovalSystemProvider
   const { currentUser } = useApproval();
+
+  /**
+   * BE-60: chuyển trang thì đưa mọi vùng cuộn về đầu trang NGAY (chạy trước khi trình duyệt vẽ),
+   * nên không thấy cảnh nội dung bị "nhảy". Cần thiết vì có nhiều route dùng chung một component
+   * (ví dụ "/" và "/departments" cùng là DepartmentDashboard) — React giữ nguyên DOM nên vị trí
+   * cuộn của trang trước bị mang sang trang sau.
+   */
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    const root = contentRef.current;
+    if (!root) return;
+    root.querySelectorAll('*').forEach((el) => {
+      if (el.scrollTop > 0) el.scrollTop = 0;
+    });
+  }, [location.pathname]);
  
   return (
     <div className="flex h-screen bg-background text-on-background font-body-md overflow-hidden">
@@ -32,7 +49,7 @@ export default function MainLayout() {
           <NotificationBell variant="header" />
         </header>
  
-        <div className="flex-1 flex flex-col min-h-0">
+        <div ref={contentRef} className="flex-1 flex flex-col min-h-0">
           <Outlet />
         </div>
       </main>

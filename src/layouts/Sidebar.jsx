@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApproval } from '../context/useApproval';
 import { useI18n } from '../i18n/I18nProvider';
@@ -176,8 +176,36 @@ export default function UnifiedSidebar({
 }) {
   const location = useLocation();
   const { t } = useI18n();
-  const [openSubPanel, setOpenSubPanel] = useState(null); // 'requests' | null
+  const [openSubPanel, setOpenSubPanel] = useState(null); // 'requests' | 'settings' | null
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  /**
+   * BE-61: bảng con (Đơn từ / Cấu hình) THÒI RA khi rê chuột vào, không cần bấm.
+   * - Rê vào mục có bảng con -> mở ngay.
+   * - Rê ra khỏi cả thanh điều hướng + bảng con -> đóng, nhưng trễ 180ms để không bị
+   *   đóng oan khi chuột đang đi từ mục cha sang bảng con.
+   * - Bấm vẫn mở/đóng được như trước (cần cho màn hình cảm ứng).
+   */
+  const closeTimer = useRef(null);
+
+  const cancelClose = useCallback(() => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }, []);
+
+  const openPanel = useCallback((key) => {
+    cancelClose();
+    setOpenSubPanel((prev) => (prev === key ? prev : key));
+  }, [cancelClose]);
+
+  const scheduleClose = useCallback(() => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => setOpenSubPanel(null), 180);
+  }, [cancelClose]);
+
+  useEffect(() => cancelClose, [cancelClose]);
 
   const handleLogout = () => {
     // BE-14: xoa toan bo trang thai phien (token + formFields + requests cache)
@@ -225,6 +253,8 @@ export default function UnifiedSidebar({
 
       {/* Sidebar shell: rail + optional flyout side-by-side */}
       <div
+        onMouseEnter={cancelClose}
+        onMouseLeave={scheduleClose}
         className={`fixed md:static z-50 h-full flex flex-row transform ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 transition-transform duration-300 relative`}
@@ -314,9 +344,9 @@ export default function UnifiedSidebar({
                   item.subPanel === 'requests' ? pendingCount : item.badge;
 
                 if (item.subPanel) {
-                  /* Sub-panel trigger button */
+                  /* Sub-panel trigger: rê chuột vào là thòi ra, bấm vẫn được (cảm ứng) */
                   return (
-                    <li key={item.name}>
+                    <li key={item.name} onMouseEnter={() => openPanel(item.subPanel)}>
                       <button
                         onClick={() => toggleSubPanel(item.subPanel)}
                         title={isCollapsed ? t(item.name) : undefined}
@@ -355,7 +385,7 @@ export default function UnifiedSidebar({
                 }
 
                 return (
-                  <li key={item.name}>
+                  <li key={item.name} onMouseEnter={() => openPanel(null)}>
                     <Link
                       to={item.path}
                       onClick={() => setOpenSubPanel(null)}
@@ -404,8 +434,9 @@ export default function UnifiedSidebar({
           </div>
         </nav>
 
-        {/* Sub-panel side-by-side pushing content */}
+        {/* Sub-panel side-by-side pushing content — mở ra khi rê chuột vào mục cha */}
         <div
+          onMouseEnter={cancelClose}
           className={`h-full overflow-hidden transition-all duration-300 ease-in-out flex ${
             openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
           }`}

@@ -20,7 +20,71 @@ const EMPTY_EMPLOYEE = {
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
+const fieldErrCls =
+  'w-full rounded-md border border-error bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-error focus:ring-1 focus:ring-error transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
+
+/** BE-68: quy tắc mật khẩu phải KHỚP với backend (Services/Validators/UserValidators.cs). */
+const PASSWORD_RULES = [
+  { test: (v) => v.length >= 8, message: 'Mật khẩu tối thiểu 8 ký tự' },
+  { test: (v) => /[A-Z]/.test(v), message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa' },
+  { test: (v) => /[a-z]/.test(v), message: 'Mật khẩu phải chứa ít nhất 1 chữ thường' },
+  { test: (v) => /[0-9]/.test(v), message: 'Mật khẩu phải chứa ít nhất 1 số' },
+  { test: (v) => /[^a-zA-Z0-9]/.test(v), message: 'Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt' },
+];
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+/** Số điện thoại Việt Nam: 10 số bắt đầu bằng 0, cho phép khoảng trắng/gạch nối. */
+const PHONE_RE = /^0\d{9}$/;
+
+/**
+ * BE-68: kiểm tra dữ liệu nhân sự NGAY TRÊN FORM (trước đây chỉ dựa vào `required` của HTML,
+ * nhập sai định dạng vẫn gửi lên máy chủ rồi báo lỗi khó hiểu).
+ * Trả về object { field: thông báo } — rỗng nghĩa là hợp lệ.
+ */
+function validateEmployee(form, isEdit, t) {
+  const errors = {};
+
+  if (!form.name || !form.name.trim()) {
+    errors.name = t('Vui lòng nhập họ tên');
+  } else if (form.name.trim().length > 100) {
+    errors.name = t('Họ tên tối đa 100 ký tự');
+  }
+
+  if (!isEdit) {
+    if (!form.email || !form.email.trim()) {
+      errors.email = t('Vui lòng nhập email làm việc');
+    } else if (!EMAIL_RE.test(form.email.trim())) {
+      errors.email = t('Email không hợp lệ');
+    }
+
+    if (!form.password) {
+      errors.password = t('Vui lòng nhập mật khẩu');
+    } else {
+      const failed = PASSWORD_RULES.find((r) => !r.test(form.password));
+      if (failed) errors.password = t(failed.message);
+    }
+  }
+
+  if (form.personalEmail && !EMAIL_RE.test(form.personalEmail.trim())) {
+    errors.personalEmail = t('Email cá nhân không hợp lệ');
+  }
+
+  if (form.phone && !PHONE_RE.test(form.phone.replace(/[\s.-]/g, ''))) {
+    errors.phone = t('Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0)');
+  }
+
+  // Nhân sự phải thuộc một phòng ban + chức vụ, nếu không luồng duyệt sẽ không tìm được người duyệt.
+  if (!form.departmentId || !form.positionId) {
+    errors.positions = t('Vui lòng chọn phòng ban và chức vụ công tác chính');
+  }
+
+  if (!form.roleId) {
+    errors.roleId = t('Vui lòng chọn vai trò hệ thống');
+  }
+
+  return errors;
+}
 
 export default function EmployeeModal({ employee, departments = [], positions = [], roles = [], currentUser, onClose, onSave }) {
   const { t } = useI18n();
@@ -33,6 +97,10 @@ export default function EmployeeModal({ employee, departments = [], positions = 
 
   // Permission preview state
   const [rolePermissions, setRolePermissions] = useState([]);
+  // BE-68: lỗi kiểm tra dữ liệu + lỗi từ máy chủ, hiển thị ngay trong form.
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   // Load permissions when role changes
   const handleRoleChange = async (e) => {
@@ -74,12 +142,30 @@ export default function EmployeeModal({ employee, departments = [], positions = 
   const removeSecondary = (idx) =>
     setForm((f) => ({ ...f, secondary: f.secondary.filter((_, i) => i !== idx) }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    onSave({
+    const errors = validateEmployee(form, isEdit, t);
+    setErrors(errors);
+    setServerError('');
+    if (Object.keys(errors).length > 0) {
+      // Đưa người dùng tới ô lỗi đầu tiên cho dễ sửa (dùng optional-call để an toàn ở mọi môi trường).
+      const firstField = Object.keys(errors)[0];
+      const el = document.querySelector(`[data-field="${firstField}"]`);
+      el?.focus?.();
+      el?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      return;
+    }
+
+    setSaving(true);
+    const result = await onSave({
       ...form,
       roleIds: form.roleId ? [form.roleId] : []
     });
+    setSaving(false);
+    // BE-68: lỗi từ máy chủ hiển thị ngay trong form (dịch theo ngôn ngữ đang dùng), không dùng alert().
+    if (result && result.ok === false) {
+      setServerError(result.message ? t(result.message) : t('Không lưu được nhân sự'));
+    }
   };
 
   return createPortal(
@@ -117,7 +203,15 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </div>
               <div>
                 <label className={labelCls}>{t('Họ và tên')}</label>
-                <input required className={fieldCls} value={form.name} onChange={set('name')} placeholder={t('Nguyễn Văn A')} />
+                <input
+                  required
+                  data-field="name"
+                  className={errors.name ? fieldErrCls : fieldCls}
+                  value={form.name}
+                  onChange={set('name')}
+                  placeholder={t('Nguyễn Văn A')}
+                />
+                {errors.name && <p className="text-xs text-error mt-1">{errors.name}</p>}
               </div>
               <div>
                 <label className={labelCls}>{t('Mã nhân viên')}</label>
@@ -127,23 +221,60 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </div>
               <div>
                 <label className={labelCls}>{t('Email công ty')}</label>
-                <input required className={fieldCls} type="email" value={form.email} onChange={set('email')} placeholder="a.nguyenvan@ktm.vn" disabled={isEdit} />
+                <input
+                  required
+                  data-field="email"
+                  className={errors.email ? fieldErrCls : fieldCls}
+                  type="email"
+                  value={form.email}
+                  onChange={set('email')}
+                  placeholder="a.nguyenvan@ktm.vn"
+                  disabled={isEdit}
+                />
+                {errors.email && <p className="text-xs text-error mt-1">{errors.email}</p>}
               </div>
               <div>
                 <label className={labelCls}>{t('Email cá nhân')}</label>
-                <input className={fieldCls} type="email" value={form.personalEmail} onChange={set('personalEmail')} placeholder="nguyenvana@gmail.com" />
+                <input
+                  data-field="personalEmail"
+                  className={errors.personalEmail ? fieldErrCls : fieldCls}
+                  type="email"
+                  value={form.personalEmail}
+                  onChange={set('personalEmail')}
+                  placeholder="nguyenvana@gmail.com"
+                />
+                {errors.personalEmail && <p className="text-xs text-error mt-1">{errors.personalEmail}</p>}
               </div>
               <div>
                 <label className={labelCls}>{t('Số điện thoại')}</label>
-                <input className={fieldCls} value={form.phone || ''} onChange={set('phone')} placeholder="0901 234 567" />
+                <input
+                  data-field="phone"
+                  className={errors.phone ? fieldErrCls : fieldCls}
+                  value={form.phone || ''}
+                  onChange={set('phone')}
+                  placeholder="0901 234 567"
+                />
+                {errors.phone && <p className="text-xs text-error mt-1">{errors.phone}</p>}
               </div>
               {!isEdit && (
                 <div>
                   <label className={labelCls}>{t('Mật khẩu')}</label>
-                  <input required className={fieldCls} type="password" value={form.password} onChange={set('password')} placeholder="••••••••" />
-                  <p className="text-xs text-secondary mt-1 leading-relaxed">
-                    {t('Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.')}
-                  </p>
+                  <input
+                    required
+                    data-field="password"
+                    className={errors.password ? fieldErrCls : fieldCls}
+                    type="password"
+                    value={form.password}
+                    onChange={set('password')}
+                    placeholder="••••••••"
+                  />
+                  {errors.password
+                    ? <p className="text-xs text-error mt-1">{errors.password}</p>
+                    : (
+                      <p className="text-xs text-secondary mt-1 leading-relaxed">
+                        {t('Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.')}
+                      </p>
+                    )}
                 </div>
               )}
             </div>
@@ -154,7 +285,12 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </div>
               <div>
                 <label className={labelCls}>{t('Phòng ban chính')}</label>
-                <select className={fieldCls} value={form.departmentId} onChange={set('departmentId')}>
+                <select
+                  data-field="positions"
+                  className={errors.positions ? fieldErrCls : fieldCls}
+                  value={form.departmentId}
+                  onChange={set('departmentId')}
+                >
                   <option value="">{t('-- Chọn phòng ban --')}</option>
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>{t(d.name)}</option>
@@ -163,16 +299,28 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </div>
               <div>
                 <label className={labelCls}>{t('Chức vụ chính')}</label>
-                <select className={fieldCls} value={form.positionId} onChange={set('positionId')}>
+                <select
+                  data-field="positions"
+                  className={errors.positions ? fieldErrCls : fieldCls}
+                  value={form.positionId}
+                  onChange={set('positionId')}
+                >
                   <option value="">{t('-- Chọn chức vụ --')}</option>
                   {positions.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
+                {errors.positions && <p className="text-xs text-error mt-1">{errors.positions}</p>}
               </div>
               <div>
                 <label className={labelCls}>{t('Vai trò hệ thống')}</label>
-                <select className={fieldCls} value={form.roleId} onChange={handleRoleChange} disabled={currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR'}>
+                <select
+                  data-field="roleId"
+                  className={errors.roleId ? fieldErrCls : fieldCls}
+                  value={form.roleId}
+                  onChange={handleRoleChange}
+                  disabled={currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR'}
+                >
                   <option value="">{t('-- Chọn vai trò --')}</option>
                   {roles.map((r) => (
                     <option key={r.id} value={r.id}>{roleStyle(r.roleName).label}</option>
@@ -258,7 +406,16 @@ export default function EmployeeModal({ employee, departments = [], positions = 
           </div>
         </div>
 
-        <div className="p-6 border-t border-outline-variant/30 bg-surface flex justify-end items-center gap-3 rounded-b-lg">
+        <div className="p-6 border-t border-outline-variant/30 bg-surface flex justify-between items-center gap-3 rounded-b-lg">
+          {/* BE-68: lỗi từ máy chủ hiển thị ngay trong form, dịch theo ngôn ngữ đang dùng */}
+          <div className="flex-1 min-w-0">
+            {serverError && (
+              <p className="text-xs text-error flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">error</span>
+                {t(serverError)}
+              </p>
+            )}
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -268,10 +425,11 @@ export default function EmployeeModal({ employee, departments = [], positions = 
           </button>
           <button
             type="submit"
-            className="flex items-center gap-2 font-label-md text-label-md text-on-primary bg-primary px-5 py-2 rounded-md hover:bg-on-primary-fixed-variant transition-colors shadow-sm cursor-pointer"
+            disabled={saving}
+            className="flex items-center gap-2 font-label-md text-label-md text-on-primary bg-primary px-5 py-2 rounded-md hover:bg-on-primary-fixed-variant transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined text-[18px]">save</span>
-            {t('Lưu thông tin')}
+            <span className="material-symbols-outlined text-[18px]">{saving ? 'progress_activity' : 'save'}</span>
+            {saving ? t('Đang lưu...') : t('Lưu thông tin')}
           </button>
         </div>
       </form>
