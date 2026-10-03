@@ -72,6 +72,7 @@ const LoginPage = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // State cho phần đặt lại mật khẩu
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetTempPassword, setResetTempPassword] = useState("");
@@ -109,10 +110,6 @@ const LoginPage = ({ onLoginSuccess }) => {
     }
   };
 
-  /**
-   * BE-50: đặt lại mật khẩu bằng MẬT KHẨU TẠM do HR/Quản trị cấp (chức năng "Đặt lại mật khẩu"
-   * ở màn Nhân sự). Trước đây màn này chỉ giả lập gửi email nên không đặt lại được thật.
-   */
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setError("");
