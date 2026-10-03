@@ -117,7 +117,7 @@ const LoginPage = ({ onLoginSuccess }) => {
 
         {error && (
           <div className="mb-5 p-3 bg-error-container text-on-error-container rounded-md text-body-md border border-error/20">
-            {error}
+            {t(error)}
           </div>
         )}
 

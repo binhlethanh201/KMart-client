@@ -157,7 +157,7 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                             setForm(f => ({ ...f, avatar: url }));
                           } catch (err) {
                             console.error("Upload failed", err);
-                            alert("Tải ảnh thất bại: " + (err.response?.data?.error || err.message));
+                            alert(t('Tải ảnh thất bại: {v0}', { v0: t(err.response?.data?.error || err.message) }));
                           } finally {
                             setLoading(false);
                           }

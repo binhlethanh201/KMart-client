@@ -157,7 +157,7 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
         </label>
       )}
 
-      {error && <p className="text-xs text-error mt-1.5">{error}</p>}
+      {error && <p className="text-xs text-error mt-1.5">{t(error)}</p>}
     </div>
   );
 }

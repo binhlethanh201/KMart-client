@@ -109,10 +109,13 @@ export default function HumanResources() {
     setPopoverId(null);
   };
   const handleSave = async (form) => {
-    const success = await saveEmployee(form);
-    if (success) {
+    const result = await saveEmployee(form);
+    // BE-68: saveEmployee trả { ok, message } để form hiển thị lỗi dịch được theo ngôn ngữ.
+    if (result?.ok) {
       setModalOpen(false);
+      return { ok: true };
     }
+    return { ok: false, message: result?.message };
   };
   const toggleLock = (emp, e) => {
     if (e) e.stopPropagation();
@@ -204,7 +207,9 @@ export default function HumanResources() {
                   </tr>
                 </thead>
                 <tbody>
-                  {loading ? (
+                  {/* BE-60: đang nạp lại thì GIỮ danh sách cũ và làm mờ, không thay bằng 1 dòng
+                      "Đang tải" để chiều cao trang không tụt (tránh bị nhảy lên đầu bảng). */}
+                  {loading && employees.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-4 py-12 text-center text-secondary">
                         <span className="material-symbols-outlined text-[32px] block mb-2 animate-spin">progress_activity</span>
@@ -215,7 +220,7 @@ export default function HumanResources() {
                     <tr>
                       <td colSpan={7} className="px-4 py-12 text-center text-error">
                         <span className="material-symbols-outlined text-[32px] block mb-2">error</span>
-                        {error}
+                        {t(error)}
                       </td>
                     </tr>
                   ) : paged.map((e) => {

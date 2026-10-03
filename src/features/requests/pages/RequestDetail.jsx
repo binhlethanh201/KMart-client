@@ -124,6 +124,24 @@ export default function RequestDetail() {
   const creatorAvatar = employees.find((u) => u.id === request.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
   const actionable = canApprove(request);
   const isPendingWorkflow = ['pending', 'submitted', 'pendingapproval'].includes(request.status);
+
+  /**
+   * BE-67: hiển thị hạn xử lý của bước hiện tại (máy chủ đặt theo cấu hình "Xử lý quá hạn").
+   * Trước đây người dùng không thấy còn bao lâu là hết hạn nên không hiểu vì sao đơn bị trả về.
+   */
+  const deadlineInfo = (() => {
+    if (!isPendingWorkflow || !request.deadlineAt) return null;
+    const deadline = new Date(request.deadlineAt);
+    if (Number.isNaN(deadline.getTime())) return null;
+    const hoursLeft = (deadline.getTime() - Date.now()) / 36e5;
+    return {
+      text: deadline.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      hoursLeft,
+      overdue: hoursLeft <= 0,
+      // Cảnh báo khi còn dưới 25% thời gian hoặc dưới 6 giờ.
+      warning: hoursLeft > 0 && hoursLeft <= 6,
+    };
+  })();
   const isTimeoutWorkflow = request.status === 'returned_timeout';
   const timeoutStepIndex = (() => {
     if (!request.steps?.length) return Math.max(0, Number(request.currentStep) || 0);
@@ -338,6 +356,24 @@ export default function RequestDetail() {
             <p className="font-body-md text-secondary text-sm">
               {t('Mã hệ thống:')} <strong>{request.id.substring(0, 8).toUpperCase()}</strong> {t('- Đã nộp:')} {request.createdAt} {t('- Người tạo:')} <strong>{creatorName}</strong>
             </p>
+
+            {/* BE-67: hạn xử lý của bước hiện tại để người dùng biết còn bao lâu là quá hạn */}
+            {deadlineInfo && (
+              <p
+                className={`mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                  deadlineInfo.overdue
+                    ? 'bg-error-container text-on-error-container border-error/30'
+                    : deadlineInfo.warning
+                      ? 'bg-warning-container text-on-warning-container border-warning/30'
+                      : 'bg-surface-container-low text-secondary border-outline-variant'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[15px]">schedule</span>
+                {deadlineInfo.overdue
+                  ? t('Đã quá hạn xử lý từ {v0}', { v0: deadlineInfo.text })
+                  : t('Hạn xử lý: {v0} (còn {v1} giờ)', { v0: deadlineInfo.text, v1: Math.max(1, Math.round(deadlineInfo.hoursLeft)) })}
+              </p>
+            )}
           </div>
 
           {/* Action bar */}
@@ -363,10 +399,10 @@ export default function RequestDetail() {
                   <button
                     onClick={() => simulateTimeout(request.id)}
                     className="px-3 py-1.5 rounded text-sm font-medium border border-warning text-warning hover:bg-warning-container transition-colors flex items-center gap-2 bg-surface cursor-pointer"
-                    title={t('Giả lập quá hạn 12h không xử lý (BR11)')}
+                    title={t('Giả lập đơn quá hạn để thử luồng xử lý quá hạn (chỉ ADMIN/HR)')}
                   >
                     <span className="material-symbols-outlined text-[16px]">bolt</span>
-                    {t('Giả lập quá hạn 12h')}
+                    {t('Giả lập quá hạn')}
                   </button>
                 )}
                 <div className="w-px h-6 bg-outline-variant mx-1"></div>

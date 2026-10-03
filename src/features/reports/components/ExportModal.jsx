@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { reportService } from '../services/reportService';
 import { documentTypeService } from '../../../services/documentTypeService';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 export default function ExportModal({ open, onClose, documentTypes, filters }) {
+  const { t } = useI18n();
   const [selectedDocType, setSelectedDocType] = useState(null);
   const [docTypeDetail, setDocTypeDetail] = useState(null);
   const [selectedFields, setSelectedFields] = useState([]);
@@ -26,6 +28,7 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
       })
       .catch(err => {
         console.error(err);
+        // Lưu KHOÁ tiếng Việt rồi dịch lúc render, để đổi ngôn ngữ là đổi theo.
         setError('Không tải được cấu hình đơn');
       });
   }, [selectedDocType]);
@@ -78,7 +81,7 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
       <div className="bg-white rounded-lg w-full max-w-lg p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Xuất Excel Báo Cáo</h2>
+          <h2 className="text-lg font-semibold">{t('Xuất Excel Báo Cáo')}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer">
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -86,7 +89,7 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm">
-            {error}
+            {t(error)}
           </div>
         )}
 
@@ -94,20 +97,20 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
           {/* Chọn loại đơn */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Loại đơn <span className="text-red-500">*</span>
+              {t('Loại đơn')} <span className="text-red-500">*</span>
             </label>
             <select
               className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500"
               value={selectedDocType || ''}
               onChange={(e) => setSelectedDocType(e.target.value || null)}
             >
-              <option value="">-- Chọn loại đơn --</option>
+              <option value="">{t('-- Chọn loại đơn --')}</option>
               {documentTypes.map(dt => (
-                <option key={dt.id} value={dt.id}>{dt.name}</option>
+                <option key={dt.id} value={dt.id}>{t(dt.name)}</option>
               ))}
             </select>
             <p className="text-xs text-gray-500 mt-1">
-              Chỉ xuất các trường được đánh dấu "Lưu trữ" trong cấu hình mẫu đơn
+              {t('Chỉ xuất các trường được đánh dấu "Lưu trữ" trong cấu hình mẫu đơn')}
             </p>
           </div>
 
@@ -115,7 +118,7 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
           {docTypeDetail && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Trường sẽ xuất ({selectedFields.length} đã chọn)
+                {t('Trường sẽ xuất')} ({selectedFields.length} {t('đã chọn')})
               </label>
               <div className="border rounded p-3 max-h-60 overflow-y-auto space-y-2">
                 {docTypeDetail.fields
@@ -133,7 +136,7 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
                         className="rounded"
                       />
                       <span className="text-sm flex-1">
-                        {field.label || field.fieldName || field.name}
+                        {t(field.label || field.fieldName || field.name)}
                         {field.isRequired && <span className="text-red-500">*</span>}
                       </span>
                       <span className={`text-xs px-2 py-0.5 rounded ${
@@ -141,7 +144,7 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {field.isPersisted ? 'Lưu' : 'Không'}
+                        {field.isPersisted ? t('Lưu') : t('Không')}
                       </span>
                     </label>
                   ))}
@@ -152,13 +155,13 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
           {/* Bộ lọc đang áp dụng */}
           {Object.values(filters).some(v => v) && (
             <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
-              <p className="font-medium text-blue-800">Bộ lọc đang áp dụng:</p>
+              <p className="font-medium text-blue-800">{t('Bộ lọc đang áp dụng:')}</p>
               <ul className="text-blue-700 text-xs mt-1 space-y-1">
-                {filters.from && <li>Từ: {filters.from}</li>}
-                {filters.to && <li>Đến: {filters.to}</li>}
-                {filters.departmentId && <li>Phòng ban: đã chọn</li>}
-                {filters.documentTypeId && <li>Loại đơn: đã chọn</li>}
-                {filters.status && <li>Trạng thái: {filters.status}</li>}
+                {filters.from && <li>{t('Từ:')} {filters.from}</li>}
+                {filters.to && <li>{t('Đến:')} {filters.to}</li>}
+                {filters.departmentId && <li>{t('Phòng ban: đã chọn')}</li>}
+                {filters.documentTypeId && <li>{t('Loại đơn: đã chọn')}</li>}
+                {filters.status && <li>{t('Trạng thái:')} {t(filters.status)}</li>}
               </ul>
             </div>
           )}
@@ -171,14 +174,14 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
             onClick={onClose}
             disabled={exporting}
           >
-            Hủy
+            {t('Hủy')}
           </button>
           <button
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
             onClick={handleExport}
             disabled={!selectedDocType || selectedFields.length === 0 || exporting}
           >
-            {exporting ? 'Đang xuất...' : 'Xuất Excel'}
+            {exporting ? t('Đang xuất...') : t('Xuất Excel')}
           </button>
         </div>
       </div>

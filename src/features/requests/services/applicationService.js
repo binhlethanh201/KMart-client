@@ -17,8 +17,22 @@ const HISTORY_META = {
   timeout: { type: 'timeout', text: 'Trả về do quá hạn xử lý' },
 };
 
-const mapToFrontendModel = (a) => {
-  const rawData = (typeof a.data === 'string')
+/**
+ * BE-67: trạng thái hiển thị của đơn.
+ *
+ * Máy chủ khi đơn quá hạn sẽ đặt status = Canceled và ghi một mốc nhật ký Action = "Timeout".
+ * Trước đây FE tự bịa ra trạng thái 'returned_timeout' ở client (chỉ sửa state, mất khi tải lại).
+ * Nay suy ra TỪ DỮ LIỆU THẬT để UI hiện đúng "Trả về (quá hạn)".
+ */
+const deriveStatus = (a) => {
+  const status = (a.status || '').toLowerCase();
+  const hasTimeoutHistory = (a.histories || []).some(
+    (h) => (h.action || '').toLowerCase() === 'timeout'
+  );
+  return status === 'canceled' && hasTimeoutHistory ? 'returned_timeout' : status;
+};
+
+const mapToFrontendModel = (a) => {  const rawData = (typeof a.data === 'string')
     ? (() => { try { return JSON.parse(a.data); } catch { return {}; } })()
     : (a.data || {});
   return {
@@ -34,7 +48,9 @@ const mapToFrontendModel = (a) => {
     departmentId: a.departmentId,
     createdAt: new Date(a.createdAt).toLocaleString('vi-VN'),
     _createdAt: a.createdAt,
-    status: a.status.toLowerCase(), // 'draft', 'pending', 'approved', 'rejected'
+    // BE-67: hạn xử lý của bước hiện tại (máy chủ đặt theo cấu hình "Xử lý quá hạn" của bước).
+    deadlineAt: a.deadlineAt || null,
+    status: deriveStatus(a),
     currentStep: a.currentStepOrder || 0,
     fields: {
       ...rawData,
@@ -165,6 +181,16 @@ export const applicationService = {
   supplement: async (id, reason) => {
     const response = await apiClient.post(`/applications/${id}/supplement`, { reason });
     return mapToFrontendModel(response.data);
+  },
+
+  /**
+   * BE-67: giả lập quá hạn cho đơn đang chờ duyệt (chỉ ADMIN/HR).
+   * Máy chủ đẩy hạn về quá khứ rồi chạy ĐÚNG luồng xử lý quá hạn thật
+   * (trả về nơi khởi tạo hoặc chuyển lên cấp trên theo cấu hình bước).
+   */
+  simulateTimeout: async (id) => {
+    const response = await apiClient.post(`/applications/${id}/simulate-timeout`);
+    return response.data;
   },
 
   addComment: async (id, content) => {

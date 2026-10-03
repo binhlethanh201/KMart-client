@@ -109,13 +109,26 @@ export const reportService = {
     params.append('page', page);
     params.append('pageSize', pageSize);
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'status', 'positionId'].includes(key)) {
+      // BE-63: thêm 'search' cho ô tìm kiếm của bảng "Soi kĩ từng đơn".
+      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'status', 'positionId', 'search'].includes(key)) {
         params.append(key, value);
       }
     });
     return apiClient.get(`/reports/applications?${params.toString()}`);
   },
 
+  /** BE-62: xuất RIÊNG một bảng ra Excel (bảng điều hành, so sánh phòng ban/chức vụ, danh sách đơn). */
+  exportTable: async ({ table, filters = {}, scope = null }) => {
+    const params = {
+      table,
+      scope,
+      filters: Object.fromEntries(
+        Object.entries(filters).filter(([, value]) => value !== null && value !== undefined && value !== '')
+      ),
+    };
+    const response = await apiClient.post('/reports/export-table', params, { responseType: 'blob' });
+    return response.data;
+  },
   // Xuất Excel
   exportToExcel: async (request) => {    const response = await apiClient.post('/reports/export', request, {
       responseType: 'blob',

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { en } from './translations/en';
 import { ko } from './translations/ko';
+import { getAutoTranslation, requestAutoTranslation, subscribeAutoTranslate } from './autoTranslate';
 
 /**
  * Hệ thống đa ngôn ngữ (Việt - Anh - Hàn).
@@ -11,8 +12,12 @@ import { ko } from './translations/ko';
  *
  * Cách hoạt động: khoá dịch CHÍNH LÀ chuỗi tiếng Việt gốc trong code.
  * - Ngôn ngữ 'vi'  -> trả nguyên văn (không cần bảng dịch)
- * - Ngôn ngữ 'en'/'ko' -> tra bảng; nếu chưa có bản dịch thì trả lại tiếng Việt
- *   (không bao giờ hiện khoá thô, nên thiếu dịch vẫn dùng được).
+ * - Ngôn ngữ 'en'/'ko' -> tra bảng dịch tĩnh; nếu chưa có thì tra tiếp bản dịch TỰ ĐỘNG
+ *   (nhãn do người dùng nhập ở màn Cấu hình — xem autoTranslate.js); nếu vẫn chưa có thì
+ *   trả lại tiếng Việt (không bao giờ hiện khoá thô) và âm thầm yêu cầu dịch để lần sau có.
+ *
+ * Bảng dịch tĩnh được tự sinh bằng `npm run i18n:sync` (chạy tự động trước dev/build),
+ * nên thêm chữ mới trong code không phải tự thêm bản dịch nữa.
  *
  * Ngôn ngữ đã chọn được lưu vào localStorage và áp lên thuộc tính lang của <html>.
  */
@@ -42,7 +47,19 @@ function resolve(text, params, language) {
   const key = String(text);
   let out = key;
   if (language !== 'vi') {
-    out = DICTIONARIES[language]?.[key] ?? key;
+    const staticTranslation = DICTIONARIES[language]?.[key];
+    if (staticTranslation) {
+      out = staticTranslation;
+    } else {
+      // BE-59: nhãn chưa có trong bảng tĩnh (thường là nhãn người dùng tự nhập ở màn Cấu hình)
+      // -> dùng bản dịch tự động nếu đã có, đồng thời yêu cầu dịch cho lần render sau.
+      const auto = getAutoTranslation(language, key);
+      if (auto) {
+        out = auto;
+      } else {
+        requestAutoTranslation(language, key);
+      }
+    }
   }
   if (params && typeof params === 'object') {
     out = out.replace(/\{(\w+)\}/g, (m, name) =>
@@ -73,6 +90,10 @@ export function I18nProvider({ children }) {
     return DEFAULT_LANG;
   });
 
+  // BE-59: khi có bản dịch tự động mới về thì vẽ lại để các nhãn đổi ngôn ngữ ngay.
+  const [autoVersion, setAutoVersion] = useState(0);
+  useEffect(() => subscribeAutoTranslate(() => setAutoVersion((v) => v + 1)), []);
+
   // Đồng bộ localStorage + thuộc tính lang của <html>
   useEffect(() => {
     activeLanguage = language;
@@ -94,8 +115,9 @@ export function I18nProvider({ children }) {
   /**
    * Dịch một chuỗi tiếng Việt sang ngôn ngữ hiện tại.
    * Hỗ trợ nội suy tham số: t('Xin chào {name}', { name: 'An' })
+   * `autoVersion` nằm trong deps để t() mới khi có bản dịch tự động về.
    */
-  const t = useCallback((text, params) => resolve(text, params, language), [language]);
+  const t = useCallback((text, params) => resolve(text, params, language), [language, autoVersion]);
 
   const value = useMemo(
     () => ({ language, setLanguage, t, languages: LANGUAGES }),

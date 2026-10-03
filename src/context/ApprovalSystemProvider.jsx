@@ -26,12 +26,6 @@ function load() {
   };
 }
 
-function stamp() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 export function ApprovalSystemProvider({ children }) {
   const { t } = useI18n();
   const init = load();
@@ -257,20 +251,25 @@ export function ApprovalSystemProvider({ children }) {
     [pushToast]
   );
 
+  /**
+   * BE-67: giả lập quá hạn — gọi API thật để chạy đúng luồng xử lý quá hạn của máy chủ,
+   * sau đó nạp lại đơn để thấy trạng thái/nhật ký mới (trước đây chỉ sửa state ở client nên
+   * không phản ánh gì thật và mất ngay khi tải lại trang).
+   */
   const simulateTimeout = useCallback(
-    (reqId) => {
-      setRequests((list) =>
-        list.map((r) => {
-          if (r.id !== reqId) return r;
-          const entry = {
-            at: stamp(),
-            text: t('Hệ thống tự động trả đơn về nơi khởi tạo do quá hạn 12h không xử lý'),
-            type: 'timeout',
-          };
-          return { ...r, status: 'returned_timeout', history: [entry, ...r.history] };
-        })
-      );
-      pushToast(t('Đã giả lập quá hạn 12h - đơn trả về nơi khởi tạo'), 'warning');
+    async (reqId) => {
+      try {
+        const result = await applicationService.simulateTimeout(reqId);
+        const updated = await applicationService.getById(reqId);
+        setRequests((list) =>
+          list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r))
+        );
+        pushToast(result?.message || t('Đã xử lý quá hạn cho đơn này'), 'warning');
+      } catch (err) {
+        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Không giả lập được quá hạn');
+        pushToast(errorMsg, 'error');
+        console.error('Simulate timeout error:', err);
+      }
     },
     [pushToast]
   );

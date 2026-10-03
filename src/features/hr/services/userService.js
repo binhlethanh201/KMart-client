@@ -77,6 +77,8 @@ export const userService = {
       email: data.email,
       personalEmail: data.personalEmail || null,
       fullName: data.name,
+      // BE-68: gửi kèm số điện thoại — trước đây bị bỏ quên nên nhập xong là mất.
+      phone: data.phone || null,
       password: data.password || 'Kmart@123',
       positions,
       roleIds: data.roleIds || []
@@ -109,6 +111,8 @@ export const userService = {
     const payload = {
       fullName: data.name,
       personalEmail: data.personalEmail || null,
+      // BE-68: cập nhật được số điện thoại
+      phone: data.phone || null,
       positions,
       roleIds: data.roleIds || []
     };
