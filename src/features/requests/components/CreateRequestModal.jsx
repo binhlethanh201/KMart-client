@@ -291,6 +291,14 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
   const isChainFlow = firstStepAppType === 'chain';
   const isSpecificFlow = firstStepAppType === 'specific_user' || firstStepAppType === 'specific';
 
+  // BE-125: bước 1 theo luồng đã PHÂN GIẢI THẬT (flowPreview) — nguồn đúng để hiển thị người duyệt,
+  // vì máy chủ còn xét chức vụ, cấp bậc và cả các phòng kiêm nhiệm của người tạo.
+  const firstPreviewStep = useMemo(() => {
+    const steps = flowPreview?.steps;
+    if (!Array.isArray(steps) || steps.length === 0) return null;
+    return [...steps].sort((a, b) => a.stepOrder - b.stepOrder)[0];
+  }, [flowPreview]);
+
   // BE-04: danh sách người CÓ THỂ duyệt bước 1.
   const firstStepCandidates = useMemo(() => {
     if (!firstStep) return [];
@@ -326,6 +334,22 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     }
 
     if (appType === 'hierarchy' || appType === 'chain') {
+      /*
+       * BE-125: ưu tiên người duyệt do MÁY CHỦ phân giải (flowPreview) — đây mới là người thật sự
+       * duyệt đơn. Trước đây chỉ suy từ `managerId` của phòng ban nên với luồng theo chức vụ/cấp bậc
+       * (ví dụ "Quản lý khu vực") khách hàng thấy báo sai "(chưa xác định được quản lý)" ngay cả khi
+       * khối "Luồng phê duyệt dự kiến" bên dưới vẫn hiện đúng người duyệt.
+       */
+      const previewApprovers = Array.isArray(firstPreviewStep?.approvers) ? firstPreviewStep.approvers : [];
+      if (previewApprovers.length > 0) {
+        return previewApprovers.map((a) => ({
+          id: a.id,
+          name: a.fullName || a.name,
+          position: a.positionName || a.position,
+          avatar: a.avatarUrl || a.avatar,
+        }));
+      }
+
       // BE-17: người quản lý trực tiếp của CHÍNH người tạo đơn (theo phòng ban & chức vụ
       // mà người tạo được phân bổ), KHÔNG phải theo phòng ban liên quan.
       const ownDeptId = currentUser?.departmentId;
@@ -338,7 +362,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     }
 
     return [];
-  }, [firstStep, employees, departments, currentUser]);
+  }, [firstStep, firstPreviewStep, employees, departments, currentUser]);
 
   // Bỏ lựa chọn cũ nếu nó không còn trong danh sách ứng viên
   useEffect(() => {

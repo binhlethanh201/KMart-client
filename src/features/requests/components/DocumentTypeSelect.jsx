@@ -180,47 +180,58 @@ export default function DocumentTypeSelect({ documentTypes = [], value, onChange
                     </span>
                   </button>
                   {!isCollapsed && items.map((dt) => {
-                    // BE-115: mẫu đơn chưa có luồng duyệt hoặc thiếu người phê duyệt vẫn hiện
-                    // nhưng LÀM MỜ và không chọn được, kèm lý do cụ thể.
-                    const blocked = dt.canCreate === false;
-                    return (
-                    <button
-                      key={dt.id}
-                      type="button"
-                      role="option"
-                      aria-selected={value === dt.id}
-                      aria-disabled={blocked || undefined}
-                      disabled={blocked}
-                      title={blocked ? dt.unavailableReason || t('Thiếu người phê duyệt') : undefined}
-                      onClick={() => { if (!blocked) pick(dt.id); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm flex flex-col gap-0.5 transition-colors ${
-                        blocked
-                          ? 'opacity-50 cursor-not-allowed'
-                          : value === dt.id
-                            ? 'bg-primary/10 text-primary font-semibold cursor-pointer'
-                            : 'text-on-surface hover:bg-surface-container hover:text-primary cursor-pointer'
-                      }`}
-                    >
-                      <span className="flex items-center justify-between gap-3">
-                        <span className="break-words whitespace-normal leading-tight">{t(dt.name)}</span>
-                        {value === dt.id && !blocked && (
-                          <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
+                  // BE-115: mẫu đơn chưa có luồng duyệt cho khối này vẫn hiện nhưng LÀM MỜ và
+                  // không chọn được, kèm lý do cụ thể.
+                  // BE-125: mẫu đơn chỉ THIẾU người duyệt ở một bước thì VẪN chọn được (bước đó bị
+                  // bỏ qua khi gửi) — chỉ hiện nhắc nhở để quản trị viên bổ sung nhân sự.
+                  const blocked = dt.canCreate === false;
+                  const warnMissingApprover = !blocked && dt.unavailableCode === 'MISSING_APPROVER';
+                  return (
+                  <button
+                    key={dt.id}
+                    type="button"
+                    role="option"
+                    aria-selected={value === dt.id}
+                    aria-disabled={blocked || undefined}
+                    disabled={blocked}
+                    title={blocked ? dt.unavailableReason || t('Thiếu người phê duyệt') : undefined}
+                    onClick={() => { if (!blocked) pick(dt.id); }}
+                    className={`w-full text-left px-4 py-2.5 text-sm flex flex-col gap-0.5 transition-colors ${
+                      blocked
+                        ? 'opacity-50 cursor-not-allowed'
+                        : value === dt.id
+                          ? 'bg-primary/10 text-primary font-semibold cursor-pointer'
+                          : 'text-on-surface hover:bg-surface-container hover:text-primary cursor-pointer'
+                    }`}
+                  >
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="break-words whitespace-normal leading-tight">{t(dt.name)}</span>
+                      {value === dt.id && !blocked && (
+                        <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
                         )}
-                        {blocked && (
-                          <span className="material-symbols-outlined text-[16px] text-warning flex-shrink-0" title={t('Thiếu người phê duyệt')}>block</span>
-                        )}
-                      </span>
                       {blocked && (
-                        <span className="text-[11px] text-warning leading-snug">
-                          {/* BE-118: dùng MÃ lý do để hiện nhãn ngắn gọn, cố định — không phải câu động
-                              nên dịch sẵn được ở cả 3 ngôn ngữ, không phụ thuộc bộ dịch tự động. */}
-                          {dt.unavailableCode === 'NO_WORKFLOW'
-                            ? t('Chưa có luồng duyệt')
-                            : t('Thiếu người phê duyệt')}
-                        </span>
+                        <span className="material-symbols-outlined text-[16px] text-warning flex-shrink-0" title={t('Thiếu người phê duyệt')}>block</span>
                       )}
-                    </button>
-                    );
+                      {warnMissingApprover && (
+                        <span className="material-symbols-outlined text-[16px] text-warning flex-shrink-0" title={t('Thiếu người phê duyệt')}>info</span>
+                      )}
+                    </span>
+                    {blocked && (
+                      <span className="text-[11px] text-warning leading-snug">
+                        {/* BE-118: dùng MÃ lý do để hiện nhãn ngắn gọn, cố định — không phải câu động
+                            nên dịch sẵn được ở cả 3 ngôn ngữ, không phụ thuộc bộ dịch tự động. */}
+                        {dt.unavailableCode === 'NO_WORKFLOW'
+                          ? t('Chưa có luồng duyệt')
+                          : t('Thiếu người phê duyệt')}
+                      </span>
+                    )}
+                    {warnMissingApprover && (
+                      <span className="text-[11px] text-warning leading-snug">
+                        {t('Thiếu người phê duyệt')}
+                      </span>
+                    )}
+                  </button>
+                  );
                   })}
                 </div>
               );
