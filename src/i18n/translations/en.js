@@ -1030,6 +1030,9 @@ export const en = {
   'Tìm kiếm...': 'Search...',
   'Không tìm thấy kết quả.': 'No results found.',
 
+  // BE-121: hướng dẫn chọn phòng khi quy tắc duyệt là "đồng thời".
+  'Chọn phòng ban nhận đơn trong số các phòng ban bạn là thành viên (chính hoặc kiêm nhiệm).': 'Choose the receiving department among those you belong to (primary or secondary).',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- Select order type --',
   '(để trống)': '(blank)',

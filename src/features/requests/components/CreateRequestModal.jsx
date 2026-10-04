@@ -261,8 +261,31 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
   const firstStepHasDesignatedApprovers = firstStepAppType === 'role'
     && firstStepDesignatedIds.length > 0;
   const firstStepMultiRule = (firstStep?.multiRule || '').toLowerCase();
-  // BE-17: chỉ luồng theo chức danh chưa chỉ định người mới cần chọn phòng ban liên quan.
-  const showDepartmentPicker = firstStepAppType === 'role' && !firstStepHasDesignatedApprovers;
+  /**
+   * BE-121: phần "Phòng ban liên quan" chỉ hiện khi quy tắc duyệt THỰC SỰ cho người tạo quyết định:
+   *   * "Duyệt theo chức danh" chưa chỉ định người  -> cần biết phòng nào để tìm người duyệt;
+   *   * "Đồng thời – cần tất cả / chỉ cần 1 người"  -> người tạo chọn phòng NHẬN đơn.
+   * KHÔNG hiện với:
+   *   * "Duyệt lần lượt"        -> đơn cứ đi đúng theo danh sách người đã đặt;
+   *   * "Chỉ định cụ thể người" -> đơn đi theo đúng người được chỉ định;
+   *   * cấp quản lý trực tiếp / chuỗi quản lý -> tự suy theo phòng của người tạo.
+   */
+  const isSimultaneousRule = firstStepMultiRule === 'and' || firstStepMultiRule === 'or';
+  // BE-121: chọn phòng khi "theo chức danh chưa chỉ định người" HOẶC quy tắc "đồng thời".
+  const showDepartmentPicker = firstStepAppType === 'role'
+    && (!firstStepHasDesignatedApprovers || isSimultaneousRule);
+
+  /**
+   * BE-121: chỉ cho chọn trong các phòng ban mà người tạo ĐANG là thành viên (chính hoặc kiêm nhiệm)
+   * — đơn phải được gửi vào nơi người đó thực sự thuộc về, không phải bất kỳ phòng nào trong công ty.
+   */
+  const myDepartmentIds = new Set(
+    (currentUser?.allPositions || []).map((p) => p.departmentId).filter(Boolean)
+  );
+  const selectableDepartments = (departments || []).filter(
+    (d) => (d.status === 'Active' || d.status === 'active')
+      && (myDepartmentIds.size === 0 || myDepartmentIds.has(d.id))
+  );
   // Luồng tự tìm người theo phòng/chức vụ của người tạo: quản lý trực tiếp / chuỗi quản lý
   const isHierarchyFlow = firstStepAppType === 'hierarchy';
   const isChainFlow = firstStepAppType === 'chain';
@@ -521,15 +544,17 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             />
           </div>
 
-          {/* Department Checkboxes — chỉ hiện với luồng duyệt theo chức danh */}
-          {showDepartmentPicker && departments.length > 0 && (
+          {/* Department Checkboxes — chỉ hiện khi quy tắc duyệt cho người tạo quyết định phòng nhận đơn */}
+          {showDepartmentPicker && selectableDepartments.length > 0 && (
             <div className="flex flex-col gap-2">
               <label className={labelCls}>{t('Phòng ban liên quan')}</label>
               <span className="text-xs text-secondary mt-[-4px]">
-                {t('Nhấn chọn theo đúng thứ tự mà bạn muốn luồng duyệt diễn ra (Ví dụ: Số 1 sẽ duyệt trước, Số 2 duyệt sau)')}
+                {isSimultaneousRule
+                  ? t('Chọn phòng ban nhận đơn trong số các phòng ban bạn là thành viên (chính hoặc kiêm nhiệm).')
+                  : t('Nhấn chọn theo đúng thứ tự mà bạn muốn luồng duyệt diễn ra (Ví dụ: Số 1 sẽ duyệt trước, Số 2 duyệt sau)')}
               </span>
               <div className="flex gap-2.5 flex-wrap mt-1">
-                {departments.filter(d => d.status === 'Active' || d.status === 'active').map((d) => {
+                {selectableDepartments.map((d) => {
                   const idx = form.departments.indexOf(d.id);
                   const isChecked = idx > -1;
                   return (

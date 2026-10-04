@@ -1015,6 +1015,9 @@ export const ko = {
   'Tìm kiếm...': '검색...',
   'Không tìm thấy kết quả.': '검색 결과가 없습니다.',
 
+  // BE-121: hướng dẫn chọn phòng khi quy tắc duyệt là "đồng thời".
+  'Chọn phòng ban nhận đơn trong số các phòng ban bạn là thành viên (chính hoặc kiêm nhiệm).': '본인이 소속된 부서(주 부서 또는 겸임) 중에서 신청서를 받을 부서를 선택하세요.',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- 주문 유형 선택 --',
   '(để trống)': '(공백)',
