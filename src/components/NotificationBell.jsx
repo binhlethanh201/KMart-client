@@ -13,6 +13,7 @@ const TYPE_META = {
   Reminder: { icon: 'alarm', color: 'text-warning', bg: 'bg-warning/10' },
   SystemAnnouncement: { icon: 'campaign', color: 'text-secondary', bg: 'bg-surface-container' },
   ReturnTimeout: { icon: 'history_toggle_off', color: 'text-error', bg: 'bg-error/10' },
+  ApplicationStepAdvanced: { icon: 'moving', color: 'text-primary', bg: 'bg-primary/10' },
   TimeoutAlert: { icon: 'schedule', color: 'text-error', bg: 'bg-error/10' },
   CommentAdded: { icon: 'forum', color: 'text-secondary', bg: 'bg-surface-container' },
 };
