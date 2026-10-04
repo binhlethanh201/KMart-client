@@ -403,40 +403,59 @@ export default function ApprovalFlowTree({
    */
   const flowStages = useMemo(() => {
     if (!Array.isArray(resolvedSteps) || resolvedSteps.length === 0) return stages;
-    return [...resolvedSteps]
+
+    const makeBranch = (stepNo, u, ui) => ({
+      key: `resolved-${stepNo}-${u.id || ui}`,
+      name: u.fullName || t('Người duyệt'),
+      hasManager: true,
+      avatar: u.avatarUrl,
+      role: [u.departmentName, u.positionName].filter(Boolean).join(' - ') || t('Người duyệt'),
+      isStep: true,
+    });
+
+    const missingBranch = (stepNo) => ({
+      key: `resolved-${stepNo}-none`,
+      name: t('Chưa xác định được người duyệt'),
+      hasManager: false,
+      role: t('Cần bổ sung trưởng phòng / người duyệt cho bước này'),
+      isStep: true,
+    });
+
+    const out = [];
+    let levelNo = 0;
+
+    [...resolvedSteps]
       .sort((a, b) => (a.stepOrder ?? 0) - (b.stepOrder ?? 0))
-      .map((s, i) => {
+      .forEach((s, i) => {
         const stepNo = s.stepOrder ?? i + 1;
         const people = Array.isArray(s.approvers) ? s.approvers : [];
-        const parallel = people.length > 1 && s.multiRule !== 'sequential';
-        const badge = t('Cấp {v0}', { v0: stepNo });
-        const badgeTitle = t('Bước {v0}', { v0: stepNo });
-        return {
-          key: `resolved-${stepNo}`,
-          stepNo,
-          parallel,
-          branches: people.length > 0
-            ? people.map((u, ui) => ({
-                key: `resolved-${stepNo}-${u.id || ui}`,
-                badge,
-                badgeTitle,
-                name: u.fullName || t('Người duyệt'),
-                hasManager: true,
-                avatar: u.avatarUrl,
-                role: [u.departmentName, u.positionName].filter(Boolean).join(' - ') || t('Người duyệt'),
-                isStep: true,
-              }))
-            : [{
-                key: `resolved-${stepNo}-none`,
-                badge,
-                badgeTitle,
-                name: t('Chưa xác định được người duyệt'),
-                hasManager: false,
-                role: t('Cần bổ sung trưởng phòng / người duyệt cho bước này'),
-                isStep: true,
-              }],
-        };
+        const branches = people.length > 0
+          ? people.map((u, ui) => makeBranch(stepNo, u, ui))
+          : [missingBranch(stepNo)];
+
+        // BE-95: quy tắc "Duyệt lần lượt" (multiRule = sequential) — mỗi người duyệt là MỘT CẤP
+        // riêng, theo đúng thứ tự đã cấu hình. Trước đây cả bước chỉ vẽ người đầu tiên
+        // (branches[0]) nên các cấp duyệt phía sau bị ẩn khỏi sơ đồ.
+        const isSequential = String(s.multiRule || '').toLowerCase() === 'sequential';
+        const levels = isSequential && branches.length > 1
+          ? branches.map((b) => [b])
+          : [branches];
+
+        levels.forEach((levelBranches) => {
+          levelNo += 1;
+          const badge = t('Cấp {v0}', { v0: levelNo });
+          const badgeTitle = t('Bước {v0}', { v0: stepNo });
+          out.push({
+            key: levelBranches.length === 1 ? levelBranches[0].key : `resolved-${stepNo}`,
+            stepNo,
+            levelNo,
+            parallel: levelBranches.length > 1,
+            branches: levelBranches.map((b) => ({ ...b, badge, badgeTitle })),
+          });
+        });
       });
+
+    return out;
   }, [resolvedSteps, stages, t]);
 
   // Chuỗi "từ ai ➔ đến ai" để đọc nhanh toàn bộ luồng (chỉ hiện ở bản đầy đủ).
@@ -450,7 +469,8 @@ export default function ApprovalFlowTree({
       if (names.length === 0) return;
       people.push({
         key: stage.key,
-        stepNo: stage.stepNo,
+        // BE-95: "Cấp" là số thứ tự cấp duyệt (bước "Duyệt lần lượt" có nhiều cấp trong cùng 1 bước)
+        stepNo: stage.levelNo ?? stage.stepNo,
         label: names.join(' / '),
       });
     });
@@ -554,7 +574,7 @@ export default function ApprovalFlowTree({
             <div className="flex flex-col items-center">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
                 <span className="material-symbols-outlined text-[12px]">call_split</span>
-                {t('Bước')} {stage.stepNo ?? si + 1} {t('(Cấp')} {stage.stepNo ?? si + 1}) · song song
+                {t('Bước')} {stage.stepNo ?? si + 1} {t('(Cấp')} {stage.levelNo ?? stage.stepNo ?? si + 1}) · song song
               </span>
               <div className="w-px h-3 bg-outline-variant" />
               {/* BE-85: những người duyệt CÙNG CẤP phải nằm CÙNG MỘT DÒNG.
@@ -578,7 +598,7 @@ export default function ApprovalFlowTree({
             <div className="flex flex-col items-center">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
                 <span className="material-symbols-outlined text-[12px]">account_tree</span>
-                {t('Bước')} {stage.stepNo ?? si + 1} {t('(Cấp')} {stage.stepNo ?? si + 1})
+                {t('Bước')} {stage.stepNo ?? si + 1} {t('(Cấp')} {stage.levelNo ?? stage.stepNo ?? si + 1})
               </span>
               <div className="w-px h-3 bg-outline-variant" />
               {chip(stage.branches[0])}

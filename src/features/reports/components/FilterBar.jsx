@@ -8,13 +8,20 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
   const selectClass = `${FILTER_SELECT_CLS} min-w-[180px]`;
   const labelClass = FILTER_LABEL_CLS;
 
-  const filteredDepartments = (departments || []).filter(d => {
-    if (!filters.block) return true;
+  // Loại đơn vị (giá trị API trả về) thuộc mỗi khối — dùng chung cho cả việc lọc danh sách
+  // phòng ban hiển thị và việc giữ/bỏ phòng ban đang chọn khi đổi khối.
+  const blockTypes = (block) => {
     // So sánh với giá trị dữ liệu API trả về nên KHÔNG dịch.
-    if (filters.block === 'hq') return d.type === 'Phòng ban' || d.type === 'Khối chuyên môn';
-    if (filters.block === 'retail') return d.type === 'Siêu thị / Chi nhánh';
-    return true;
-  });
+    if (block === 'hq') return ['Phòng ban', 'Khối chuyên môn'];
+    if (block === 'retail') return ['Siêu thị / Chi nhánh'];
+    return null;
+  };
+  const deptMatchesBlock = (dept, block) => {
+    const types = blockTypes(block);
+    return !types || types.includes(dept.type);
+  };
+
+  const filteredDepartments = (departments || []).filter((d) => deptMatchesBlock(d, filters.block));
 
   return (
     <div className="p-2">
@@ -47,7 +54,15 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
           <select
             className={selectClass}
             value={filters.block || ''}
-            onChange={(e) => onChange({ block: e.target.value || null, departmentId: null })}
+            onChange={(e) => {
+              const nextBlock = e.target.value || null;
+              // Chỉ bỏ phòng ban đang chọn khi nó KHÔNG còn thuộc khối vừa chọn.
+              // Trước đây đổi khối luôn xoá phòng ban nên người dùng mất lựa chọn vừa lọc.
+              const keepDepartment = (departments || []).some(
+                (d) => d.id === filters.departmentId && deptMatchesBlock(d, nextBlock)
+              );
+              onChange(keepDepartment ? { block: nextBlock } : { block: nextBlock, departmentId: null });
+            }}
           >
             <option value="">{t('Tất cả khối')}</option>
             <option value="hq">{t('Khối Văn phòng')}</option>
