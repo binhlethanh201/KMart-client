@@ -849,6 +849,16 @@ export const en = {
   'Siêu thị Kiểm thử': 'Test Supermarket',
   'Giám đốc': 'Director',
 
+  /*
+   * BE-108: tên MẪU ĐƠN đã bị xoá mềm vẫn hiện trong báo cáo (đơn cũ vẫn thuộc mẫu đó) nhưng
+   * không còn trong danh sách /document-types nên không được gửi đi dịch tự động — nhãn đứng
+   * nguyên tiếng Việt ở chế độ EN/KO. Khai báo sẵn ở đây để luôn hiển thị đúng, không phụ thuộc mạng.
+   */
+  'Đơn công tác': 'Business trip request',
+  'Đơn kiểm thử luồng duyệt': 'Approval flow test request',
+  'Đơn kiểm thử (cũ)': 'Test request (old)',
+  'đơn nghỉ': 'Leave request',
+
   // ── BE-58: bản dịch CHỈNH TAY — luôn thắng bản tự động ở khối dưới ──
   'Báo cáo & Thống kê': 'Reports & Statistics',
   'Đơn đã được duyệt, nhìn từ mọi góc độ.': 'Approved requests, seen from every angle.',

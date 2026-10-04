@@ -837,6 +837,16 @@ export const ko = {
   'Siêu thị Kiểm thử': '테스트 슈퍼마켓',
   'Giám đốc': '이사',
 
+  /*
+   * BE-108: tên MẪU ĐƠN đã bị xoá mềm vẫn hiện trong báo cáo (đơn cũ vẫn thuộc mẫu đó) nhưng
+   * không còn trong danh sách /document-types nên không được gửi đi dịch tự động — nhãn đứng
+   * nguyên tiếng Việt ở chế độ EN/KO. Khai báo sẵn ở đây để luôn hiển thị đúng, không phụ thuộc mạng.
+   */
+  'Đơn công tác': '출장 신청서',
+  'Đơn kiểm thử luồng duyệt': '결재 흐름 테스트 신청서',
+  'Đơn kiểm thử (cũ)': '테스트 신청서(이전)',
+  'đơn nghỉ': '휴가 신청서',
+
   // ── BE-58: bản dịch CHỈNH TAY — luôn thắng bản tự động ở khối dưới ──
   'Báo cáo & Thống kê': '보고서 및 통계',
   'Đơn đã được duyệt, nhìn từ mọi góc độ.': '승인된 신청을 모든 각도에서 확인하세요.',

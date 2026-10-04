@@ -67,8 +67,13 @@ export default function BarChart({ data, maxBars = 10 }) {
             onMouseLeave={() => setHoverIdx(null)}
             title={`${item.name}: ${item.value} (${share.toFixed(1)}%)`}
           >
-            <div className={`w-40 text-sm truncate ${isHover ? 'text-[#1d1d1f] font-semibold' : 'text-gray-700'}`} title={t(item.name)}>
-              {t(item.name)}
+            {/*
+              KHÔNG gọi t() ở đây: ReportsPage đã dịch tên trước khi truyền vào (`name: t(tp.documentType)`).
+              Gọi thêm lần nữa là DỊCH HAI LẦN — chuỗi tiếng Hàn lại bị đem đi dịch tiếp, tốn lượt gọi
+              dịch tự động và làm nhãn không hiện đúng (xem BE-108).
+            */}
+            <div className={`w-40 text-sm truncate ${isHover ? 'text-[#1d1d1f] font-semibold' : 'text-gray-700'}`} title={item.name}>
+              {item.name}
             </div>
             <div
               ref={idx === 0 ? trackRef : null}

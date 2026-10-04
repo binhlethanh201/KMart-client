@@ -49,7 +49,8 @@ export default function PieChart({ data }) {
                 onMouseLeave={() => setHoverIdx(null)}
                 className="cursor-pointer transition-all"
               >
-                <title>{`${t(item.label)}: ${item.value} (${percentage.toFixed(1)}%)`}</title>
+                {/* KHÔNG t() lần nữa — tên đã được dịch ở nơi truyền dữ liệu vào (BE-108). */}
+                <title>{`${item.label}: ${item.value} (${percentage.toFixed(1)}%)`}</title>
               </circle>
             );
             acc.offset -= percentage;
@@ -92,7 +93,8 @@ export default function PieChart({ data }) {
                 className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: COLORS[idx % COLORS.length] }}
               />
-              <span className={`text-sm flex-1 truncate ${isHover ? 'font-semibold text-[#1d1d1f]' : ''}`}>{t(item.label)}</span>
+              {/* KHÔNG t() lần nữa — tên đã được dịch ở ReportsPage trước khi truyền vào (BE-108). */}
+              <span className={`text-sm flex-1 truncate ${isHover ? 'font-semibold text-[#1d1d1f]' : ''}`}>{item.label}</span>
               <span className="text-sm font-medium">{percentage}%</span>
               <span className="text-xs text-gray-500 w-10 text-right">{item.value}</span>
             </div>
