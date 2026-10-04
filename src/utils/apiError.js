@@ -9,9 +9,53 @@
  * Hàm này lấy đúng câu giải thích chi tiết và dịch theo ngôn ngữ đang dùng;
  * chuỗi chưa có trong bảng dịch sẽ do bộ dịch tự động xử lý.
  */
+/**
+ * BE-112: lỗi "không xoá được phòng ban vì đơn vị chưa rỗng".
+ *
+ * Máy chủ trả `errorCode = 'DEPARTMENT_NOT_EMPTY'` kèm `details` (số nhân sự / số đơn vị trực thuộc).
+ * Ở đây dựng câu theo ngôn ngữ đang dùng rồi mới chèn tên đơn vị vào — nhờ vậy tên đơn vị do người
+ * dùng đặt ("Siêu thị Kiểm thử"…) KHÔNG bao giờ bị gửi sang bộ dịch tự động.
+ */
+function describeDepartmentNotEmpty(data, translate) {
+  const details = data?.details || {};
+  const members = Number(details.memberCount) || 0;
+  const children = Number(details.childCount) || 0;
+
+  if (members === 0 && children === 0) return '';
+
+  // Tên đơn vị CHÈN SAU khi t() đã dịch xong câu mẫu (xem resolve(): nội suy {name} chạy sau
+  // bước dịch) nên tên riêng không bị gửi sang bộ dịch tự động.
+  const name = String(details.departmentName ?? '').trim();
+
+  const reasons = [];
+  if (members > 0 && children > 0) {
+    reasons.push(translate('còn {members} nhân sự và {children} đơn vị trực thuộc', { members, children }));
+  } else if (members > 0) {
+    reasons.push(translate('còn {members} nhân sự đang thuộc đơn vị', { members }));
+  } else {
+    reasons.push(translate('còn {children} đơn vị trực thuộc', { children }));
+  }
+
+  const fixes = [];
+  if (members > 0) fixes.push(translate('chuyển nhân sự sang đơn vị khác'));
+  if (children > 0) fixes.push(translate('chuyển các đơn vị trực thuộc sang đơn vị khác'));
+
+  const head = name
+    ? translate('Không thể xóa "{name}" vì {reason}.', { name, reason: reasons.join(' ') })
+    : translate('Không thể xóa đơn vị vì {reason}.', { reason: reasons.join(' ') });
+  const tail = translate('Vui lòng {fixes} rồi thử lại.', { fixes: fixes.join('; ') });
+  const note = members > 0 ? translate('Đơn từ cũ của nhân sự không bị xóa.') : '';
+  return [head, tail, note].filter(Boolean).join(' ');
+}
+
 export function describeApiError(err, t, fallbackKey) {
   const translate = typeof t === 'function' ? t : (s) => s;
   const data = err?.response?.data;
+
+  if (data?.errorCode === 'DEPARTMENT_NOT_EMPTY') {
+    const described = describeDepartmentNotEmpty(data, translate);
+    if (described) return described;
+  }
 
   const parts = [];
   const push = (value) => {

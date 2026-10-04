@@ -970,6 +970,17 @@ export const ko = {
   'Chức danh / Phòng ban cần duyệt': '결재할 직위 / 부서',
   'Đã lưu cấu hình luồng duyệt': '결재 흐름 설정이 저장되었습니다.',
 
+  // BE-112: thông báo chặn xoá phòng ban chưa rỗng. Có {placeholder} nên resolve() nội suy SAU khi
+  // dịch -> tên đơn vị do người dùng đặt không bao giờ bị gửi sang bộ dịch tự động.
+  'Không thể xóa "{name}" vì {reason}.': '"{name}"을(를) 삭제할 수 없습니다. {reason}',
+  'Không thể xóa đơn vị vì {reason}.': '단위를 삭제할 수 없습니다. {reason}',
+  'còn {members} nhân sự và {children} đơn vị trực thuộc': '직원 {members}명과 하위 단위 {children}개가 아직 소속되어 있습니다',
+  'còn {members} nhân sự đang thuộc đơn vị': '직원 {members}명이 아직 이 단위에 소속되어 있습니다',
+  'còn {children} đơn vị trực thuộc': '하위 단위 {children}개가 아직 소속되어 있습니다',
+  'chuyển nhân sự sang đơn vị khác': '직원을 다른 단위로 이동',
+  'chuyển các đơn vị trực thuộc sang đơn vị khác': '하위 단위를 다른 단위로 이동',
+  'Vui lòng {fixes} rồi thử lại.': '{fixes}한 뒤 다시 시도하세요.',
+  'Đơn từ cũ của nhân sự không bị xóa.': '직원의 기존 신청서는 삭제되지 않습니다.',
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- 주문 유형 선택 --',
   '(để trống)': '(공백)',

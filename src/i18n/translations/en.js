@@ -982,6 +982,17 @@ export const en = {
   'Chức danh / Phòng ban cần duyệt': 'Position / Department to approve',
   'Đã lưu cấu hình luồng duyệt': 'Approval flow configuration saved',
 
+  // BE-112: thông báo chặn xoá phòng ban chưa rỗng. Có {placeholder} nên resolve() nội suy SAU khi
+  // dịch -> tên đơn vị do người dùng đặt không bao giờ bị gửi sang bộ dịch tự động.
+  'Không thể xóa "{name}" vì {reason}.': 'Cannot delete "{name}" because {reason}.',
+  'Không thể xóa đơn vị vì {reason}.': 'Cannot delete this unit because {reason}.',
+  'còn {members} nhân sự và {children} đơn vị trực thuộc': '{members} staff members and {children} sub-units still belong to it',
+  'còn {members} nhân sự đang thuộc đơn vị': '{members} staff members still belong to this unit',
+  'còn {children} đơn vị trực thuộc': '{children} sub-units still belong to it',
+  'chuyển nhân sự sang đơn vị khác': 'move the staff members to another unit',
+  'chuyển các đơn vị trực thuộc sang đơn vị khác': 'move the sub-units to another unit',
+  'Vui lòng {fixes} rồi thử lại.': 'Please {fixes} and try again.',
+  'Đơn từ cũ của nhân sự không bị xóa.': 'Existing requests of the staff are not deleted.',
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- Select order type --',
   '(để trống)': '(blank)',
