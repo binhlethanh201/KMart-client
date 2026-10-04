@@ -36,7 +36,10 @@ export default function DepartmentDashboard() {
   const [viewMode, setViewMode] = useState('grid');
 
   // Computed filtered list
-  const filteredDepartments = departments.filter((dept) => {
+  // BE-113: tách 2 lớp để sơ đồ cây vẫn dựng đủ nhánh.
+  //   * visibleDepartments: đơn vị người dùng ĐƯỢC PHÉP thấy (theo vai trò).
+  //   * filteredDepartments: kết quả KHỚP điều kiện tìm kiếm/lọc.
+  const visibleDepartments = departments.filter((dept) => {
     // 0. Role-based visibility
     if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') {
       const userDeptIds = currentUser?.allPositions?.map(p => p.departmentId) || [];
@@ -44,7 +47,10 @@ export default function DepartmentDashboard() {
         return false;
       }
     }
+    return true;
+  });
 
+  const filteredDepartments = visibleDepartments.filter((dept) => {
     // 1. Search filter
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -64,6 +70,62 @@ export default function DepartmentDashboard() {
     }
     return true;
   });
+
+  // BE-113: chỉ khi có điều kiện thu hẹp danh sách mới cần "làm mờ" phần còn lại.
+  const isFilterActive = filteredDepartments.length !== visibleDepartments.length;
+  const filterKey = `${searchQuery}|${filterType}|${filterStatus}`;
+
+  /**
+   * Danh sách đưa vào sơ đồ cây = kết quả khớp + CẤP TRÊN + CẤP DƯỚI của kết quả.
+   *
+   * Vì sao: trước đây truyền thẳng danh sách đã lọc vào cây, nên tìm "Phòng Marketing" thì cây chỉ
+   * còn đúng 1 nút — mất Ban cơ sở hạ tầng (cấp trên) và mọi đơn vị trực thuộc, bộ đếm "đơn vị cấp
+   * cao nhất" cũng sai. Nay giữ nguyên nhánh và LÀM MỜ những đơn vị không khớp.
+   *
+   * Phạm vi mở rộng chỉ trong `visibleDepartments` để không lộ đơn vị ngoài quyền của người dùng.
+   */
+  const treeDepartments = React.useMemo(() => {
+    if (viewMode !== 'tree') return filteredDepartments;
+
+    const byId = new Map(visibleDepartments.map((d) => [d.id, d]));
+    const matchedIds = new Set(filteredDepartments.map((d) => d.id));
+    const keep = new Set(matchedIds);
+
+    // cấp trên (đi ngược lên tận gốc)
+    filteredDepartments.forEach((dept) => {
+      let current = dept.parentDepartmentId ? byId.get(dept.parentDepartmentId) : null;
+      let guard = 0;
+      while (current && guard < 50) {
+        if (keep.has(current.id)) break;
+        keep.add(current.id);
+        current = current.parentDepartmentId ? byId.get(current.parentDepartmentId) : null;
+        guard += 1;
+      }
+    });
+
+    // cấp dưới (đi xuống hết nhánh)
+    const childrenOf = new Map();
+    visibleDepartments.forEach((d) => {
+      if (!d.parentDepartmentId) return;
+      if (!childrenOf.has(d.parentDepartmentId)) childrenOf.set(d.parentDepartmentId, []);
+      childrenOf.get(d.parentDepartmentId).push(d);
+    });
+    const queue = [...matchedIds];
+    let guard = 0;
+    while (queue.length && guard < 5000) {
+      const id = queue.pop();
+      (childrenOf.get(id) || []).forEach((child) => {
+        if (keep.has(child.id)) return;
+        keep.add(child.id);
+        queue.push(child.id);
+      });
+      guard += 1;
+    }
+
+    return visibleDepartments
+      .filter((d) => keep.has(d.id))
+      .map((d) => ({ ...d, isFilterMatch: matchedIds.has(d.id) }));
+  }, [visibleDepartments, filteredDepartments, viewMode]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredDepartments.length / ITEMS_PER_PAGE) || 1;
@@ -169,7 +231,10 @@ export default function DepartmentDashboard() {
             </div>
           ) : viewMode === 'tree' ? (
             <OrgTree
-              departments={filteredDepartments}
+              departments={treeDepartments}
+              matchCount={filteredDepartments.length}
+              isFiltered={isFilterActive}
+              autoExpandKey={filterKey}
               canEdit={canEdit}
               onEdit={(dept) => setEditDept(dept)}
               onToggleStatus={(dept) => toggleDepartmentStatus(dept.id)}

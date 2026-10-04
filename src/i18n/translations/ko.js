@@ -981,6 +981,11 @@ export const ko = {
   'chuyển các đơn vị trực thuộc sang đơn vị khác': '하위 단위를 다른 단위로 이동',
   'Vui lòng {fixes} rồi thử lại.': '{fixes}한 뒤 다시 시도하세요.',
   'Đơn từ cũ của nhân sự không bị xóa.': '직원의 기존 신청서는 삭제되지 않습니다.',
+
+  // BE-113: bộ đếm ở sơ đồ cây khi đang lọc — dịch tay vì bản dịch máy hiểu "đơn vị" thành
+  // "thiết bị hiển thị" (디스플레이 장치).
+  '{v0} kết quả · {v1} đơn vị hiển thị': '{v0}개 결과 · {v1}개 단위 표시',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- 주문 유형 선택 --',
   '(để trống)': '(공백)',

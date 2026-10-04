@@ -993,6 +993,11 @@ export const en = {
   'chuyển các đơn vị trực thuộc sang đơn vị khác': 'move the sub-units to another unit',
   'Vui lòng {fixes} rồi thử lại.': 'Please {fixes} and try again.',
   'Đơn từ cũ của nhân sự không bị xóa.': 'Existing requests of the staff are not deleted.',
+
+  // BE-113: bộ đếm ở sơ đồ cây khi đang lọc — dịch tay vì bản dịch máy hiểu "đơn vị" thành
+  // "đơn vị đo lường" ("display unit").
+  '{v0} kết quả · {v1} đơn vị hiển thị': '{v0} matching · {v1} units shown',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- Select order type --',
   '(để trống)': '(blank)',

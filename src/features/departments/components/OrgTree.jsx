@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 
@@ -8,8 +8,21 @@ import { useI18n } from '../../../i18n/I18nProvider';
  * Trước đây màn "Cơ cấu tổ chức & Siêu thị" chỉ có lưới thẻ phẳng nên không thấy được quan hệ
  * cấp trên – cấp dưới (dù dữ liệu đã có `parentDepartmentId`). Cây này dựng từ chính dữ liệu đó:
  * đơn vị không có cấp trên là gốc, các đơn vị con thụt vào trong, có thể mở/thu từng nhánh.
+ *
+ * BE-113: khi đang TÌM KIẾM/LỌC, cây nhận thêm cả cấp trên và cấp dưới của kết quả khớp:
+ *   * `isFilterMatch === false` -> đơn vị chỉ hiện để giữ nhánh, được LÀM MỜ;
+ *   * bộ đếm tách rõ "<N> kết quả · <M> đơn vị hiển thị" để không gây hiểu nhầm là mất dữ liệu.
  */
-export default function OrgTree({ departments = [], onEdit, onToggleStatus, onDelete, canEdit = false }) {
+export default function OrgTree({
+  departments = [],
+  onEdit,
+  onToggleStatus,
+  onDelete,
+  canEdit = false,
+  matchCount,
+  isFiltered = false,
+  autoExpandKey,
+}) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState({});
@@ -32,13 +45,23 @@ export default function OrgTree({ departments = [], onEdit, onToggleStatus, onDe
 
   const toggle = (id) => setCollapsed((c) => ({ ...c, [id]: !c[id] }));
 
+  // BE-113: có kết quả tìm kiếm/lọc thì mở sẵn mọi nhánh để nhìn thấy ngay vị trí của kết quả
+  // (nếu để nhánh đang thu thì kết quả nằm sâu sẽ không thấy, càng giống "bị mất").
+  useEffect(() => {
+    if (!autoExpandKey || !isFiltered) return;
+    setCollapsed({});
+  }, [autoExpandKey, isFiltered]);
+
   const Node = ({ dept, depth }) => {
     const children = childrenOf(dept.id);
     const isCollapsed = collapsed[dept.id] === true;
     const leader = dept.leaders?.[0];
+    // BE-113: đơn vị không khớp điều kiện lọc chỉ hiện để giữ nhánh -> làm mờ, không nổi ngang
+    // với kết quả thật.
+    const dimmed = dept.isFilterMatch === false;
 
     return (
-      <div className="flex flex-col">
+      <div className={`flex flex-col ${dimmed ? 'opacity-45' : ''}`}>
         <div
           className="group relative flex items-center gap-2 rounded-lg border border-outline-variant bg-white px-3 py-2.5 shadow-sm hover:border-primary/40 hover:shadow transition-all"
           style={{ marginLeft: depth * 28 }}
@@ -159,7 +182,9 @@ export default function OrgTree({ departments = [], onEdit, onToggleStatus, onDe
           <span className="font-semibold">{t('Sơ đồ tổ chức')}</span>
         </div>
         <span className="text-xs text-secondary">
-          {t('{v0} đơn vị · {v1} đơn vị cấp cao nhất', { v0: departments.length, v1: roots.length })}
+          {isFiltered
+            ? t('{v0} kết quả · {v1} đơn vị hiển thị', { v0: matchCount ?? 0, v1: departments.length })
+            : t('{v0} đơn vị · {v1} đơn vị cấp cao nhất', { v0: departments.length, v1: roots.length })}
         </span>
       </div>
 
