@@ -1023,6 +1023,13 @@ export const en = {
 
   'Thiếu người phê duyệt': 'No approver available for this request type',
 
+  // BE-118: nhãn ngắn gọn cho ô chọn có tìm kiếm + lý do mẫu đơn không tạo được.
+  // Dịch tay vì bản dịch máy hiểu "duyệt" thành "duyệt web" ("No browsing flow yet",
+  // "아직 탐색 흐름이 없습니다") và "Tìm kiếm..." thành động từ nguyên thể ("찾다...").
+  'Chưa có luồng duyệt': 'No approval flow configured',
+  'Tìm kiếm...': 'Search...',
+  'Không tìm thấy kết quả.': 'No results found.',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- Select order type --',
   '(để trống)': '(blank)',

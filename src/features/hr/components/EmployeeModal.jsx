@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { roleStyle } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
+import SearchableSelect from '../../../components/SearchableSelect';
 
 const EMPTY_EMPLOYEE = {
   name: '',
@@ -219,12 +220,16 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 />
                 {errors.name && <p className="text-xs text-error mt-1">{errors.name}</p>}
               </div>
-              <div>
-                <label className={labelCls}>{t('Mã nhân viên')}</label>
-                <div className="bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-secondary font-mono h-[38px] flex items-center">
-                  {isEdit && form.id ? form.id.substring(0, 8).toUpperCase() : t('(Tự động tạo)')}
+              {/* BE-118: khi TẠO MỚI không hiện "Mã nhân viên" — mã do hệ thống tự sinh nên đưa ra
+                  ô "(Tự động tạo)" chỉ làm rối form; chỉ hiển thị khi đang sửa hồ sơ. */}
+              {isEdit && form.id && (
+                <div>
+                  <label className={labelCls}>{t('Mã nhân viên')}</label>
+                  <div className="bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-secondary font-mono h-[38px] flex items-center">
+                    {form.id.substring(0, 8).toUpperCase()}
+                  </div>
                 </div>
-              </div>
+              )}
               <div>
                 <label className={labelCls}>{t('Email công ty')}</label>
                 <input
@@ -306,47 +311,45 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </div>
               <div>
                 <label className={labelCls}>{t('Phòng ban chính')}</label>
-                <select
+                {/* BE-118: danh sách phòng ban dài -> dùng ô chọn có TÌM KIẾM */}
+                <SearchableSelect
+                  testId="department-select"
                   data-field="positions"
                   className={errors.positions ? fieldErrCls : fieldCls}
                   value={form.departmentId}
-                  onChange={set('departmentId')}
-                >
-                  <option value="">{t('-- Chọn phòng ban --')}</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>{t(d.name)}</option>
-                  ))}
-                </select>
+                  onChange={(v) => set('departmentId')({ target: { value: v } })}
+                  placeholder="-- Chọn phòng ban --"
+                  options={departments.map((d) => ({ value: d.id, label: d.name }))}
+                  renderLabel={(o) => t(o.label)}
+                />
               </div>
               <div>
                 <label className={labelCls}>{t('Chức vụ chính')}</label>
-                <select
+                <SearchableSelect
+                  testId="position-select"
                   data-field="positions"
                   className={errors.positions ? fieldErrCls : fieldCls}
                   value={form.positionId}
-                  onChange={set('positionId')}
-                >
-                  <option value="">{t('-- Chọn chức vụ --')}</option>
-                  {positions.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                  onChange={(v) => set('positionId')({ target: { value: v } })}
+                  placeholder="-- Chọn chức vụ --"
+                  options={positions.map((p) => ({ value: p.id, label: p.name }))}
+                  renderLabel={(o) => o.label}
+                />
                 {errors.positions && <p className="text-xs text-error mt-1">{errors.positions}</p>}
               </div>
               <div>
                 <label className={labelCls}>{t('Vai trò hệ thống')}</label>
-                <select
+                <SearchableSelect
+                  testId="role-select"
                   data-field="roleId"
                   className={errors.roleId ? fieldErrCls : fieldCls}
                   value={form.roleId}
-                  onChange={handleRoleChange}
+                  onChange={(v) => handleRoleChange({ target: { value: v } })}
+                  placeholder="-- Chọn vai trò --"
                   disabled={currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR'}
-                >
-                  <option value="">{t('-- Chọn vai trò --')}</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>{roleStyle(r.roleName).label}</option>
-                  ))}
-                </select>
+                  options={roles.map((r) => ({ value: r.id, label: roleStyle(r.roleName).label }))}
+                  renderLabel={(o) => o.label}
+                />
                 {/* BE-86: bỏ khối "Quyền được gán tự động từ vai trò" — chỉ liệt kê lại mã quyền,
                     không thao tác được gì, làm form tạo nhân sự thừa và rối. */}
               </div>
@@ -376,26 +379,22 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 <div className="flex flex-col gap-2">
                   {form.secondary.map((s, idx) => (
                     <div key={idx} className="flex items-center gap-2">
-                      <select
+                      <SearchableSelect
                         className={fieldCls + ' flex-1'}
                         value={s.departmentId}
-                        onChange={(e) => updateSecondary(idx, 'departmentId', e.target.value)}
-                      >
-                        <option value="">{t('- Chọn -')}</option>
-                        {departments.map((d) => (
-                          <option key={d.id} value={d.id}>{t(d.name)}</option>
-                        ))}
-                      </select>
-                      <select
+                        onChange={(v) => updateSecondary(idx, 'departmentId', v)}
+                        placeholder="- Chọn -"
+                        options={departments.map((d) => ({ value: d.id, label: d.name }))}
+                        renderLabel={(o) => t(o.label)}
+                      />
+                      <SearchableSelect
                         className={fieldCls + ' flex-1'}
                         value={s.positionId}
-                        onChange={(e) => updateSecondary(idx, 'positionId', e.target.value)}
-                      >
-                        <option value="">{t('- Chọn -')}</option>
-                        {positions.map((p) => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                      </select>
+                        onChange={(v) => updateSecondary(idx, 'positionId', v)}
+                        placeholder="- Chọn -"
+                        options={positions.map((p) => ({ value: p.id, label: p.name }))}
+                        renderLabel={(o) => o.label}
+                      />
                       <button
                         type="button"
                         onClick={() => removeSecondary(idx)}

@@ -424,8 +424,6 @@ export default function EmployeeDetail() {
              </div>
            </div>
         </div>
-      </div>
-
       {/* BE-114: Lịch sử công tác (phòng ban & chức vụ) — đơn từ đi theo NGƯỜI nên khi nhân sự
           chuyển phòng, cần tra được đã từng thuộc phòng nào. */}
       <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
@@ -505,6 +503,9 @@ export default function EmployeeDetail() {
             </div>
           </div>
         )}
+      </div>
+
+
       </div>
 
       {editOpen && (

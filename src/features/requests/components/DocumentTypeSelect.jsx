@@ -212,8 +212,11 @@ export default function DocumentTypeSelect({ documentTypes = [], value, onChange
                       </span>
                       {blocked && (
                         <span className="text-[11px] text-warning leading-snug">
-                          {t('Thiếu người phê duyệt')}
-                          {dt.unavailableReason ? ` — ${t(dt.unavailableReason)}` : ''}
+                          {/* BE-118: dùng MÃ lý do để hiện nhãn ngắn gọn, cố định — không phải câu động
+                              nên dịch sẵn được ở cả 3 ngôn ngữ, không phụ thuộc bộ dịch tự động. */}
+                          {dt.unavailableCode === 'NO_WORKFLOW'
+                            ? t('Chưa có luồng duyệt')
+                            : t('Thiếu người phê duyệt')}
                         </span>
                       )}
                     </button>

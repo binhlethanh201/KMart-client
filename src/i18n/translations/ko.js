@@ -1010,6 +1010,11 @@ export const ko = {
 
   'Thiếu người phê duyệt': '결재자가 지정되지 않아 신청할 수 없습니다',
 
+  // BE-118: nhãn ngắn gọn cho ô chọn có tìm kiếm + lý do mẫu đơn không tạo được.
+  'Chưa có luồng duyệt': '결재 흐름이 없습니다',
+  'Tìm kiếm...': '검색...',
+  'Không tìm thấy kết quả.': '검색 결과가 없습니다.',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- 주문 유형 선택 --',
   '(để trống)': '(공백)',
