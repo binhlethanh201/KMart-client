@@ -1019,6 +1019,8 @@ export const en = {
   'Chưa có phòng ban công tác chính': 'No primary department assigned',
   'Chưa có phòng ban chính': 'No primary department',
 
+  'Chuyển thành chức vụ kiêm nhiệm': 'Changed to a secondary position',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- Select order type --',
   '(để trống)': '(blank)',

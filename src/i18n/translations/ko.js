@@ -1006,6 +1006,8 @@ export const ko = {
   'Chưa có phòng ban công tác chính': '주 근무 부서가 지정되지 않았습니다',
   'Chưa có phòng ban chính': '주 부서 없음',
 
+  'Chuyển thành chức vụ kiêm nhiệm': '겸임 직책으로 변경',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- 주문 유형 선택 --',
   '(để trống)': '(공백)',

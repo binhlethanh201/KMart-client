@@ -449,6 +449,7 @@ export default function EmployeeDetail() {
                     REMOVED: { label: t('Gỡ khỏi phòng ban'), icon: 'remove_circle', cls: 'text-error' },
                     POSITION_CHANGED: { label: t('Đổi chức danh'), icon: 'badge', cls: 'text-warning' },
                     PRIMARY_CHANGED: { label: t('Chuyển phòng ban công tác chính'), icon: 'swap_horiz', cls: 'text-primary' },
+                    PRIMARY_UNSET: { label: t('Chuyển thành chức vụ kiêm nhiệm'), icon: 'remove_circle', cls: 'text-secondary' },
                   }[h.changeType] || { label: h.changeType, icon: 'history', cls: 'text-secondary' };
 
                   return (
