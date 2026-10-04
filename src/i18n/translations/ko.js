@@ -262,7 +262,7 @@ export const ko = {
   'Gửi đơn để phê duyệt': '결재 요청 상신',
   'Yêu cầu bổ sung thông tin': '정보 보완 요청',
   'Đã bổ sung và gửi lại': '보완 후 재상신됨',
-  'Trả về do quá hạn xử lý': '처리 기한 초과로 회수',
+  'Hệ thống xử lý quá hạn': '시스템이 기한 초과 건을 처리했습니다',
   'Đã từ chối đơn': '요청서 반려됨',
   'Đã hủy đơn': '요청서 취소됨',
   'Không có đơn nào cần bổ sung.': '보완이 필요한 요청서가 없습니다.',

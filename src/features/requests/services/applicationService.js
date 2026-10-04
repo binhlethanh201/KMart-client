@@ -13,8 +13,9 @@ const HISTORY_META = {
   cancelled: { type: 'timeout', text: 'Đã hủy đơn' },
   supplement_requested: { type: 'supplement', text: 'Yêu cầu bổ sung thông tin' },
   supplement_completed: { type: 'supplement', text: 'Đã bổ sung và gửi lại' },
-  // BE-38: hệ thống tự xử lý do quá hạn (trả về nơi khởi tạo)
-  timeout: { type: 'timeout', text: 'Trả về do quá hạn xử lý' },
+  // BE-38 / BE-127: hệ thống tự xử lý do quá hạn. Mã TIMEOUT dùng cho CẢ "trả về nơi khởi tạo"
+  // lẫn "chuyển lên cấp trên" nên nhãn phải trung tính — chi tiết nằm ở phần comment của mốc.
+  timeout: { type: 'timeout', text: 'Hệ thống xử lý quá hạn' },
 };
 
 /**

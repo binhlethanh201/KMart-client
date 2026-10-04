@@ -264,7 +264,7 @@ export const en = {
   'Gửi đơn để phê duyệt': 'Submitted for approval',
   'Yêu cầu bổ sung thông tin': 'Supplement requested',
   'Đã bổ sung và gửi lại': 'Supplemented and resubmitted',
-  'Trả về do quá hạn xử lý': 'Returned due to overdue',
+  'Hệ thống xử lý quá hạn': 'System handled an overdue request',
   'Đã từ chối đơn': 'Request rejected',
   'Đã hủy đơn': 'Request cancelled',
   'Không có đơn nào cần bổ sung.': 'No requests need supplement.',

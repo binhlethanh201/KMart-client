@@ -695,7 +695,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             if (f.type === 'LABEL' || f.type === 'INFO') return null;
 
             if (f.type === 'NUMBER' || f.type === 'Số') {
-              const labelKey = f.label || f.id;
+              const labelKey = fieldLabel(f);
               // 'tự động' là giá trị dữ liệu của field (BE trả về), KHÔNG dịch.
               const fieldId = resolveFieldKey(f);
               const isAuto = f.options?.includes('auto') || f.options?.includes('tự động');
@@ -720,7 +720,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             }
 
             if (f.type === 'DATE' || f.type === 'Ngày') {
-              const labelKey = f.label || f.id;
+              const labelKey = fieldLabel(f);
               const fieldId = resolveFieldKey(f);
               let inputType = 'date';
               const l = (labelKey || '').toLowerCase();
@@ -743,7 +743,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             }
 
             if (f.type === 'TEXTAREA' || f.type === 'Văn bản') {
-              const labelKey = f.label || f.id;
+              const labelKey = fieldLabel(f);
               const fieldId = resolveFieldKey(f);
               return (
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
@@ -761,7 +761,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             }
 
             if (f.type === 'SELECT' || f.type === 'Lựa chọn') {
-              const labelKey = f.label || f.id;
+              const labelKey = fieldLabel(f);
               const fieldId = resolveFieldKey(f);
               const options = f.options || [];
               return (
@@ -786,7 +786,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             }
 
             if (f.type === 'FILE' || f.type === 'Tải file') {
-              const labelKey = f.label || f.id;
+              const labelKey = fieldLabel(f);
               const fieldId = resolveFieldKey(f);
               
               // Recover templateFile from localStorage since backend doesn't save it
@@ -848,7 +848,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             }
 
             if (f.type === 'USER' || f.type === 'Người duyệt thay') {
-              const labelKey = f.label || f.id;
+              const labelKey = fieldLabel(f);
               const fieldId = resolveFieldKey(f);
               return (
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
@@ -870,7 +870,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             }
 
             // Default: render as text input
-            const labelKey = f.label || f.id;
+            const labelKey = fieldLabel(f);
             const fieldId = resolveFieldKey(f);
             return (
               <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
