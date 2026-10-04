@@ -94,9 +94,16 @@ export function HrProvider({ children }) {
     try {
       const emp = employees.find(e => e.id === id);
       if (emp) {
-        await userService.toggleLock(id, emp.status);
+        // BE-119: dùng trạng thái THẬT trong CSDL (dbStatus) để đảo, không dùng `status` hiển thị
+        // (đã bị đổi thành inactive khi tài khoản thiếu phòng ban chính) — nếu không sẽ gửi sai.
+        await userService.toggleLock(id, emp.dbStatus || emp.status);
         setEmployees((list) =>
-          list.map((e) => (e.id === id ? { ...e, status: e.status === 'active' ? 'inactive' : 'active' } : e))
+          list.map((e) => {
+            if (e.id !== id) return e;
+            const nextDb = (e.dbStatus || e.status) === 'active' ? 'inactive' : 'active';
+            // Trạng thái hiển thị vẫn là "tắt" nếu tài khoản chưa có phòng ban công tác chính.
+            return { ...e, dbStatus: nextDb, status: e.blockedByNoPrimary ? 'inactive' : nextDb };
+          })
         );
       }
     } catch (err) {

@@ -2,8 +2,20 @@ import axios from 'axios';
 import { clearSessionStorage } from '../utils/session';
 
 // Sau khi hợp nhất: chỉ khai báo địa chỉ API ở MỘT nơi rồi export cho các service khác dùng.
-// .env không còn được commit (đã nằm trong .gitignore) nên phải giữ giá trị dự phòng cho máy dev.
-export const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:5151';
+//
+// BE-119: KHÔNG dùng giá trị dự phòng `|| 'http://localhost:5151'` nữa. Lý do: khi deploy (bản
+// build tĩnh), nếu quên cấu hình biến môi trường thì giá trị dự phòng sẽ âm thầm trỏ mọi request về
+// localhost của CHÍNH MÁY NGƯỜI DÙNG — giao diện vẫn chạy nhưng mọi API đều hỏng, rất khó lần ra.
+// Nay địa chỉ API CHỈ đến từ biến môi trường (xem `.env.example`); thiếu biến thì cảnh báo rõ ngay
+// trên console thay vì im lặng dùng sai địa chỉ.
+export const API_URL = import.meta.env.PUBLIC_API_URL;
+
+if (!API_URL) {
+  console.error(
+    '[KMart] Thiếu biến môi trường PUBLIC_API_URL. Hãy tạo file .env (xem .env.example) ' +
+    'và đặt PUBLIC_API_URL=<địa chỉ máy chủ API>, sau đó khởi động lại dev server / build lại.'
+  );
+}
 
 const apiClient = axios.create({
   baseURL: `${API_URL}/api`,

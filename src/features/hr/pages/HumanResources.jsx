@@ -293,10 +293,20 @@ export default function HumanResources() {
                         </td>
                         {/* Trạng thái */}
                         <td className="px-4 py-3">
-                          <Badge cls={st.cls}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
-                            {t(st.label)}
-                          </Badge>
+                          {/* BE-119: tài khoản thiếu phòng ban công tác chính hiển thị là "Ngừng hoạt động"
+                              (không đăng nhập được) — kèm chú thích để người quản lý biết lý do thật. */}
+                          <span title={e.blockedByNoPrimary ? t('Chưa có phòng ban công tác chính') : undefined}>
+                            <Badge cls={st.cls}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+                              {t(st.label)}
+                            </Badge>
+                          </span>
+                          {e.blockedByNoPrimary && (
+                            <div className="text-[11px] text-warning mt-1 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[13px]">warning</span>
+                              {t('Chưa có phòng ban công tác chính')}
+                            </div>
+                          )}
                         </td>
                         {/* Thao tác */}
                         <td className="px-4 py-3">

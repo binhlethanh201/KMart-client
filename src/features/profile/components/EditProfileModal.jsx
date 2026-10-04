@@ -183,13 +183,13 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                           try {
                             setErrors((prev) => ({ ...prev, avatar: null }));
                             setLoading(true);
-                            // BE-97: máy chủ trả về ĐƯỜNG DẪN (/api/users/avatar/...) -> giữ nguyên
-                            // dạng đường dẫn trong hồ sơ, chỉ ghép host khi hiển thị. Trước đây form
-                            // lưu luôn URL đầy đủ nên đổi máy chủ là ảnh hỏng.
-                            const path = await userService.uploadAvatar(file);
-                            setForm(f => ({ ...f, avatar: path }));
+                            // BE-119: nén ảnh ngay trên trình duyệt rồi lưu data URL vào hồ sơ —
+                            // giống hệt cách ảnh phòng ban đang làm. Trước đây tải tệp lên ổ đĩa máy
+                            // chủ nên chỉ máy chủ đó thấy ảnh, mở ở nơi khác là hỏng.
+                            const dataUrl = await userService.uploadAvatar(file);
+                            setForm(f => ({ ...f, avatar: dataUrl }));
                           } catch (err) {
-                            console.error('Upload avatar failed', err);
+                            console.error('Đọc ảnh đại diện thất bại', err);
                             setErrors((prev) => ({
                               ...prev,
                               avatar: t(err.response?.data?.error || err.message || 'Tải ảnh thất bại'),

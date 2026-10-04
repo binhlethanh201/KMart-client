@@ -1,8 +1,17 @@
 import apiClient, { API_URL } from '../../../services/apiClient';
+import { readImageDownscaled } from '../../../utils/readImageDownscaled';
 
+/** BE-119: ảnh đại diện nén về tối đa 256px trước khi lưu vào hồ sơ (đủ nét cho avatar, dữ liệu nhỏ). */
+const AVATAR_MAX_SIZE = 256;
+
+/**
+ * BE-119: ảnh đại diện nay lưu ngay trong hồ sơ dưới dạng **data URL** (giống ảnh phòng ban) nên
+ * mở ở máy/địa chỉ nào cũng thấy. Hàm này chỉ còn ghép host cho các ảnh CŨ đang lưu dạng đường dẫn.
+ */
 export const getFullAvatarUrl = (url) => {
   if (!url || url.includes('ui-avatars.com')) return null;
-  if (url.startsWith('/')) return `${API_URL}${url}`;
+  if (url.startsWith('data:')) return url;
+  if (url.startsWith('/')) return API_URL ? `${API_URL}${url}` : url;
   return url;
 };
 
@@ -10,10 +19,13 @@ export const getFullAvatarUrl = (url) => {
  * BE-97: đổi URL ảnh đại diện về dạng ĐƯỜNG DẪN tương đối trước khi lưu vào hồ sơ.
  * Giá trị hiển thị trong app là URL đầy đủ (có host) nên nếu lưu nguyên vào DB thì ảnh sẽ hỏng
  * khi API đổi địa chỉ (đổi cổng/máy chủ/tên miền).
+ *
+ * BE-119: data URL (ảnh đã nén, lưu thẳng trong hồ sơ) được giữ nguyên, không cắt host.
  */
 export const toApiPath = (url) => {
   if (!url) return url;
-  if (url.startsWith(API_URL)) return url.slice(API_URL.length);
+  if (url.startsWith('data:')) return url;
+  if (API_URL && url.startsWith(API_URL)) return url.slice(API_URL.length);
   return url;
 };
 
@@ -26,6 +38,16 @@ const mapToFrontendModel = (u) => {
   const hasPrimaryPosition = Boolean(primaryPosition);
   const departmentLabel = primaryPosition?.departmentName
     || (u.positions?.length ? 'Chưa có phòng ban chính' : 'Chưa phân bổ');
+  /**
+   * BE-119: nhân sự KHÔNG có phòng ban công tác chính thì bị coi là "đang tắt": tài khoản không
+   * đăng nhập được (xem AuthService) nên giao diện phải hiển thị đúng như vậy, thay vì vẫn ghi
+   * "Đang hoạt động" như trước đây khiến người quản lý tưởng tài khoản còn dùng được.
+   *
+   * KHÔNG đổi trạng thái trong CSDL (giữ đúng như đã thống nhất: tránh lẫn với người thật sự đã
+   * nghỉ việc). Trạng thái thật vẫn được giữ ở `dbStatus` để nút Khoá/Mở khoá hoạt động chính xác.
+   */
+  const dbStatus = u.status?.toLowerCase() === 'active' ? 'active' : 'inactive';
+  const blockedByNoPrimary = !hasPrimaryPosition;
   const secondaryPos = u.positions?.filter(p => !p.isPrimary) || [];
   const rawRole = u.roles?.[0] || 'STAFF';
   const role = typeof rawRole === 'string' ? rawRole.toUpperCase() : 'STAFF';
@@ -36,7 +58,11 @@ const mapToFrontendModel = (u) => {
     shortId: u.id ? u.id.substring(0, 8).toUpperCase() : '',
     name: u.fullName,
     avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`,
-    status: u.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
+    status: blockedByNoPrimary ? 'inactive' : dbStatus,
+    // Trạng thái THẬT trong CSDL (khác `status` khi tài khoản bị tắt do thiếu phòng ban chính).
+    dbStatus,
+    // Tài khoản đang bị coi là tắt vì chưa có phòng ban công tác chính -> giao diện nói rõ lý do.
+    blockedByNoPrimary,
     department: departmentLabel,
     departmentId: primaryPos?.departmentId,
     position: primaryPos?.positionName || 'Nhân viên',
@@ -164,16 +190,20 @@ export const userService = {
   },
 
   uploadAvatar: async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    // BE-97: bỏ Content-Type mặc định (application/json) để trình duyệt tự đặt
-    // multipart/form-data kèm boundary — nếu giữ application/json thì máy chủ không đọc được tệp.
-    const response = await apiClient.put('/users/avatar', formData, {
-      headers: { 'Content-Type': undefined }
+    // BE-119: KHÔNG tải tệp lên ổ đĩa máy chủ nữa (làm ảnh chỉ thấy trên đúng máy chủ đó).
+    // Nén ảnh ngay trên trình duyệt rồi trả về data URL để lưu vào hồ sơ — giống hệt cách ảnh
+    // phòng ban đang làm, nhờ vậy máy nào mở vào cũng thấy ảnh.
+    return new Promise((resolve, reject) => {
+      readImageDownscaled(
+        file,
+        AVATAR_MAX_SIZE,
+        (dataUrl) => {
+          if (dataUrl) resolve(dataUrl);
+          else reject(new Error('Không đọc được file ảnh.'));
+        },
+        () => reject(new Error('Không đọc được file ảnh.'))
+      );
     });
-    // Trả về ĐÚNG giá trị máy chủ gửi (đường dẫn tương đối) để lưu vào hồ sơ;
-    // việc ghép host chỉ làm lúc hiển thị qua getFullAvatarUrl().
-    return response.data.avatarUrl;
   },
 
   delete: async (id) => {

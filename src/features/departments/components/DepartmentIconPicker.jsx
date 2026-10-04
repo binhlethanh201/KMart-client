@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { readImageDownscaled } from '../../../utils/readImageDownscaled';
 
 // Bộ chọn icon đại diện cho phòng ban: 2 chế độ — "Icon" (preset material symbols)
 // hoặc "Ảnh" (tải lên ảnh đại diện, tự thu nhỏ về 160px để persist an toàn vào localStorage).
@@ -15,33 +16,6 @@ const ICON_PRESETS = [
   { icon: 'account_balance', label: 'Tài chính' },
 ];
 
-// Đọc file ảnh, vẽ lại lên canvas ở kích thước tối đa `maxSize` để dữ liệu nhỏ,
-// tránh làm phình localStorage khi persist. Trả data URL PNG.
-function readImageDownscaled(file, maxSize, onData, onError) {
-  const reader = new FileReader();
-  reader.onerror = () => onError?.();
-  reader.onload = () => {
-    const img = new Image();
-    img.onerror = () => onData?.(reader.result); // fallback: dùng data URL gốc
-    img.onload = () => {
-      try {
-        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-        const w = Math.max(1, Math.round(img.width * scale));
-        const h = Math.max(1, Math.round(img.height * scale));
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        onData?.(canvas.toDataURL('image/png'));
-      } catch {
-        onData?.(reader.result); // fallback nếu canvas bị chặn (private mode)
-      }
-    };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file);
-}
 
 export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
   const { t } = useI18n();
