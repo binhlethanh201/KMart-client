@@ -174,11 +174,6 @@ export default function PersonalRequests({ mode = 'sent' }) {
           */}
           <div className="rounded-lg border border-outline-variant/60 bg-surface-container-low px-3 py-2.5 mb-3">
             <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-1.5 text-on-surface-variant flex-shrink-0">
-                <span className="material-symbols-outlined text-[18px]">filter_list</span>
-                <span className="text-xs font-semibold uppercase tracking-wide">{t('Bộ lọc')}</span>
-              </div>
-
               {/* Search */}
               <div className="relative flex-1 min-w-[220px]">
                 <span className={FILTER_SEARCH_ICON_CLS}>

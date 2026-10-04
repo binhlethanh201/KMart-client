@@ -60,7 +60,7 @@ export default function RequestCard({ request: r }) {
     currentActorStep = r.steps[timeoutIndex] || r.steps[r.steps.length - 1];
     summaryText = t('Quá hạn 12h');
     summaryColor = 'text-error';
-    statusIcon = 'close';
+    statusIcon = 'alarm';
   } else if (isPending) {
     currentActorStep = r.steps.find(s => s.status === 'pending' || s.status === 'submitted' || s.status === 'pendingapproval');
     summaryText = t('Đang chờ duyệt');
@@ -164,9 +164,18 @@ export default function RequestCard({ request: r }) {
       >
         <div className="flex items-start gap-4 flex-1 min-w-0">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${isApproved ? 'bg-success/10 border-success/20 text-success' : isNeedsSupplement ? 'bg-supplement/10 border-supplement/20 text-supplement' : isPending ? 'bg-warning/10 border-warning/20 text-warning' : 'bg-error/10 border-error/20 text-error'}`}>
-            <span className="material-symbols-outlined text-[24px]">
-              {isApproved ? 'task_alt' : isPending ? 'pending_actions' : isNeedsSupplement ? 'edit_note' : 'block'}
-            </span>
+            {r.status === 'returned_timeout' ? (
+              <div className="relative flex items-center justify-center w-full h-full">
+                <span className="material-symbols-outlined text-[24px]">schedule</span>
+                <div className="absolute bottom-1 right-1 bg-error text-white rounded-full w-4 h-4 flex items-center justify-center border-2 border-white shadow-sm">
+                  <span className="material-symbols-outlined text-[10px] font-bold">priority_high</span>
+                </div>
+              </div>
+            ) : (
+              <span className="material-symbols-outlined text-[24px]">
+                {isApproved ? 'task_alt' : isPending ? 'pending_actions' : isNeedsSupplement ? 'edit_note' : 'block'}
+              </span>
+            )}
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             {/* Status Badge */}
