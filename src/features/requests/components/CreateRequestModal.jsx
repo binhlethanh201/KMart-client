@@ -65,7 +65,9 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
       });
   }, []);
   
-  const initialType = documentTypes[0] || null;
+  // BE-115: API trả về ĐỦ mẫu đơn (mẫu thiếu người phê duyệt có canCreate=false để giao diện làm mờ).
+  // Mặc định phải chọn mẫu TẠO ĐƯỢC đầu tiên, nếu không form sẽ mở sẵn ở mẫu bị chặn.
+  const initialType = documentTypes.find((d) => d.canCreate !== false) || null;
   
   const [form, setForm] = useState({
     documentTypeId: initialType?.id || '',

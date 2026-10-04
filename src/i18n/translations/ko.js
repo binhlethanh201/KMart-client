@@ -1008,6 +1008,8 @@ export const ko = {
 
   'Chuyển thành chức vụ kiêm nhiệm': '겸임 직책으로 변경',
 
+  'Thiếu người phê duyệt': '결재자가 지정되지 않아 신청할 수 없습니다',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- 주문 유형 선택 --',
   '(để trống)': '(공백)',

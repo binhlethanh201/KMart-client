@@ -179,25 +179,46 @@ export default function DocumentTypeSelect({ documentTypes = [], value, onChange
                       expand_more
                     </span>
                   </button>
-                  {!isCollapsed && items.map((dt) => (
+                  {!isCollapsed && items.map((dt) => {
+                    // BE-115: mẫu đơn chưa có luồng duyệt hoặc thiếu người phê duyệt vẫn hiện
+                    // nhưng LÀM MỜ và không chọn được, kèm lý do cụ thể.
+                    const blocked = dt.canCreate === false;
+                    return (
                     <button
                       key={dt.id}
                       type="button"
                       role="option"
                       aria-selected={value === dt.id}
-                      onClick={() => pick(dt.id)}
-                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between gap-3 transition-colors cursor-pointer ${
-                        value === dt.id
-                          ? 'bg-primary/10 text-primary font-semibold'
-                          : 'text-on-surface hover:bg-surface-container hover:text-primary'
+                      aria-disabled={blocked || undefined}
+                      disabled={blocked}
+                      title={blocked ? dt.unavailableReason || t('Thiếu người phê duyệt') : undefined}
+                      onClick={() => { if (!blocked) pick(dt.id); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm flex flex-col gap-0.5 transition-colors ${
+                        blocked
+                          ? 'opacity-50 cursor-not-allowed'
+                          : value === dt.id
+                            ? 'bg-primary/10 text-primary font-semibold cursor-pointer'
+                            : 'text-on-surface hover:bg-surface-container hover:text-primary cursor-pointer'
                       }`}
                     >
-                      <span className="break-words whitespace-normal leading-tight">{t(dt.name)}</span>
-                      {value === dt.id && (
-                        <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
+                      <span className="flex items-center justify-between gap-3">
+                        <span className="break-words whitespace-normal leading-tight">{t(dt.name)}</span>
+                        {value === dt.id && !blocked && (
+                          <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
+                        )}
+                        {blocked && (
+                          <span className="material-symbols-outlined text-[16px] text-warning flex-shrink-0" title={t('Thiếu người phê duyệt')}>block</span>
+                        )}
+                      </span>
+                      {blocked && (
+                        <span className="text-[11px] text-warning leading-snug">
+                          {t('Thiếu người phê duyệt')}
+                          {dt.unavailableReason ? ` — ${t(dt.unavailableReason)}` : ''}
+                        </span>
                       )}
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })}

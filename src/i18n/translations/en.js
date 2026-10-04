@@ -1021,6 +1021,8 @@ export const en = {
 
   'Chuyển thành chức vụ kiêm nhiệm': 'Changed to a secondary position',
 
+  'Thiếu người phê duyệt': 'No approver available for this request type',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- Select order type --',
   '(để trống)': '(blank)',
