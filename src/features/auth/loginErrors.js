@@ -30,6 +30,8 @@ export function createLoginErrorTranslator(t) {
   return (rawMessage) => {
     const message = String(rawMessage ?? '').trim();
     if (!message) return null;
+    // BE-114: các câu mới của máy chủ về "chưa có phòng ban công tác chính" đi qua bảng dịch
+    // tĩnh ở đây để EN/KO hiện đúng ngay, không chờ dịch máy.
     return map[message] || t(message);
   };
 }

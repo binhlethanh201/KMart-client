@@ -986,9 +986,30 @@ export const ko = {
   // "thiết bị hiển thị" (디스플레이 장치).
   '{v0} kết quả · {v1} đơn vị hiển thị': '{v0}개 결과 · {v1}개 단위 표시',
 
+  // BE-114: lịch sử công tác — dịch tay (bản dịch máy sai nghĩa).
+  'Lịch sử công tác (phòng ban & chức vụ)': '근무 이력 (부서 및 직책)',
+  'Thêm vào phòng ban': '부서에 추가됨',
+  'Gỡ khỏi phòng ban': '부서에서 제외됨',
+  'Đổi chức danh': '직책 변경',
+  'Chuyển phòng ban công tác chính': '주 근무 부서 변경',
+  'Chức vụ chính': '주 직책',
+  'trước đây': '이전',
+  'Thực hiện: {v0}': '처리자: {v0}',
+  'Hệ thống tự ghi nhận': '시스템이 자동으로 기록',
+  'Tổng {v0} thay đổi': '총 {v0}건 변경',
+  'Chưa ghi nhận thay đổi phòng ban / chức vụ nào.': '부서 또는 직책 변경 기록이 없습니다.',
+  '{v0} → {v1}': '{v0} → {v1}',
+
+  'Thay đổi phòng ban / chức vụ': '부서 / 직책 변경',
+
+  // BE-114: cảnh báo tài khoản chưa có phòng ban công tác chính.
+  'Chưa có phòng ban công tác chính': '주 근무 부서가 지정되지 않았습니다',
+  'Chưa có phòng ban chính': '주 부서 없음',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- 주문 유형 선택 --',
   '(để trống)': '(공백)',
+  '(không có)': '(사용할 수 없음)',
   '(trống)': '(북)',
   '{v0} đơn': '{v0} 싱글',
   '{v0} người duyệt đã chỉ định': '{v0} 지정된 검토자',

@@ -998,9 +998,31 @@ export const en = {
   // "đơn vị đo lường" ("display unit").
   '{v0} kết quả · {v1} đơn vị hiển thị': '{v0} matching · {v1} units shown',
 
+  // BE-114: lịch sử công tác — dịch tay vì bản dịch máy sai nghĩa ("Hệ thống tự ghi nhận" thành
+  // "The system records itself", "Thực hiện:" thành "Implementation:", "trước đây" thành "before").
+  'Lịch sử công tác (phòng ban & chức vụ)': 'Work history (department & position)',
+  'Thêm vào phòng ban': 'Added to department',
+  'Gỡ khỏi phòng ban': 'Removed from department',
+  'Đổi chức danh': 'Changed position title',
+  'Chuyển phòng ban công tác chính': 'Changed primary department',
+  'Chức vụ chính': 'Primary position',
+  'trước đây': 'previously',
+  'Thực hiện: {v0}': 'By: {v0}',
+  'Hệ thống tự ghi nhận': 'Recorded automatically by the system',
+  'Tổng {v0} thay đổi': '{v0} changes in total',
+  'Chưa ghi nhận thay đổi phòng ban / chức vụ nào.': 'No department or position changes recorded yet.',
+  '{v0} → {v1}': '{v0} → {v1}',
+
+  'Thay đổi phòng ban / chức vụ': 'Department / position change',
+
+  // BE-114: cảnh báo tài khoản chưa có phòng ban công tác chính.
+  'Chưa có phòng ban công tác chính': 'No primary department assigned',
+  'Chưa có phòng ban chính': 'No primary department',
+
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- Select order type --',
   '(để trống)': '(blank)',
+  '(không có)': '(Not available)',
   '(trống)': '(drum)',
   '{v0} đơn': '{v0} single',
   '{v0} người duyệt đã chỉ định': '{v0} assigned reviewer',

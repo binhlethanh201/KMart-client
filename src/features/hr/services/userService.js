@@ -19,6 +19,13 @@ export const toApiPath = (url) => {
 
 const mapToFrontendModel = (u) => {
   const primaryPos = u.positions?.find(p => p.isPrimary) || u.positions?.[0];
+  // BE-114: không có chức vụ nào là CHÍNH nghĩa là tài khoản chưa xác định được phòng ban công tác.
+  // Nhân sự thường bị chặn đăng nhập; tài khoản ADMIN được miễn trừ nên cần cảnh báo rõ trên UI
+  // thay vì im lặng lấy đại chức vụ kiêm nhiệm đầu tiên (gây hiểu nhầm là phòng chính).
+  const primaryPosition = u.positions?.find(p => p.isPrimary);
+  const hasPrimaryPosition = Boolean(primaryPosition);
+  const departmentLabel = primaryPosition?.departmentName
+    || (u.positions?.length ? 'Chưa có phòng ban chính' : 'Chưa phân bổ');
   const secondaryPos = u.positions?.filter(p => !p.isPrimary) || [];
   const rawRole = u.roles?.[0] || 'STAFF';
   const role = typeof rawRole === 'string' ? rawRole.toUpperCase() : 'STAFF';
@@ -30,11 +37,13 @@ const mapToFrontendModel = (u) => {
     name: u.fullName,
     avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`,
     status: u.status?.toLowerCase() === 'active' ? 'active' : 'inactive',
-    department: primaryPos?.departmentName || 'Chưa phân bổ',
+    department: departmentLabel,
     departmentId: primaryPos?.departmentId,
     position: primaryPos?.positionName || 'Nhân viên',
     positionId: primaryPos?.positionId,
     allPositions: u.positions || [],
+    // BE-114: cờ để giao diện nhắc "Chưa có phòng ban công tác chính".
+    hasPrimaryPosition,
     role,
     // roleId resolved on the consumer side (where the roles list is available).
     email: u.email,
@@ -184,6 +193,16 @@ export const userService = {
 
   getActivityLog: async (userId, page = 1, pageSize = 50) => {
     const response = await apiClient.get(`/admin/audit-logs?userId=${userId}&page=${page}&pageSize=${pageSize}`);
+    return response.data;
+  },
+
+  /**
+   * BE-114: lịch sử chức vụ / phòng ban công tác.
+   *
+   * Trả về cả khi phòng ban đã bị xoá — tên phòng ban được lưu snapshot tại thời điểm thay đổi.
+   */
+  getPositionHistory: async (userId, page = 1, pageSize = 50) => {
+    const response = await apiClient.get(`/users/${userId}/position-history?page=${page}&pageSize=${pageSize}`);
     return response.data;
   }
 };

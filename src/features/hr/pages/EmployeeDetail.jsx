@@ -67,6 +67,21 @@ export default function EmployeeDetail() {
   const employee = useMemo(() => getEmployee(id), [getEmployee, id]);
   const [log, setLog] = useState([]);
   const [logLoading, setLogLoading] = useState(false);
+  // BE-114: lịch sử chức vụ / phòng ban công tác (khác "Lịch sử hoạt động" — đây là dấu vết
+  // nhân sự từng thuộc phòng nào, đọc được cả khi phòng ban đã bị xoá).
+  const [positionHistory, setPositionHistory] = useState([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PAGE_SIZE = 5;
+
+  useEffect(() => {
+    if (!employee?.id) return;
+    userService.getPositionHistory(employee.id, 1, 100)
+      .then((res) => setPositionHistory(Array.isArray(res) ? res : (res.items || [])))
+      .catch((err) => {
+        console.error(err);
+        setPositionHistory([]);
+      });
+  }, [employee?.id]);
 
   useEffect(() => {
     if (!employee?.id) return;
@@ -89,6 +104,10 @@ export default function EmployeeDetail() {
           } else if (l.entityType === 'User' || l.entityType === 'Profile') {
             if (l.action === 'UPDATE') title = t('Cập nhật hồ sơ cá nhân');
             else title = t('Thao tác hồ sơ ({v0})', { v0: l.action });
+          } else if (l.entityType === 'UserPosition') {
+            // BE-114: thay đổi phòng ban / chức vụ — mô tả đã ghi rõ "từ [...] -> [...]".
+            title = t('Thay đổi phòng ban / chức vụ');
+            detail = l.description || '';
           } else if (l.entityType === 'Department') {
             title = t('{v0} phòng ban', { v0: l.action === 'CREATE' ? 'Tạo' : 'Cập nhật' });
           } else if (l.action === 'LOGIN') {
@@ -221,6 +240,14 @@ export default function EmployeeDetail() {
                    <span className="material-symbols-outlined text-[14px]">apartment</span>
                    {employee.department}
                  </span>
+                 {/* BE-114: không có chức vụ CHÍNH => tài khoản chưa xác định được phòng ban công tác.
+                     Nhân sự thường bị chặn đăng nhập; ADMIN được miễn trừ nên phải cảnh báo rõ. */}
+                 {employee.hasPrimaryPosition === false && (
+                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-warning-container text-on-warning-container border border-warning/30">
+                     <span className="material-symbols-outlined text-[14px]">warning</span>
+                     {t('Chưa có phòng ban công tác chính')}
+                   </span>
+                 )}
                </div>
             </div>
           </div>
@@ -397,6 +424,86 @@ export default function EmployeeDetail() {
              </div>
            </div>
         </div>
+      </div>
+
+      {/* BE-114: Lịch sử công tác (phòng ban & chức vụ) — đơn từ đi theo NGƯỜI nên khi nhân sự
+          chuyển phòng, cần tra được đã từng thuộc phòng nào. */}
+      <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-6 py-4 border-b border-outline-variant/50">
+          <span className="material-symbols-outlined text-primary text-[20px]">swap_horiz</span>
+          <h2 className="text-base font-bold text-on-surface tracking-tight">{t('Lịch sử công tác (phòng ban & chức vụ)')}</h2>
+        </div>
+
+        <div className="p-6">
+          {positionHistory.length === 0 ? (
+            <div className="text-center py-8 text-secondary italic text-sm">
+              {t('Chưa ghi nhận thay đổi phòng ban / chức vụ nào.')}
+            </div>
+          ) : (
+            <div className="flex flex-col divide-y divide-outline-variant/40">
+              {positionHistory
+                .slice((historyPage - 1) * HISTORY_PAGE_SIZE, historyPage * HISTORY_PAGE_SIZE)
+                .map((h) => {
+                  const kind = {
+                    ADDED: { label: t('Thêm vào phòng ban'), icon: 'add_circle', cls: 'text-success' },
+                    REMOVED: { label: t('Gỡ khỏi phòng ban'), icon: 'remove_circle', cls: 'text-error' },
+                    POSITION_CHANGED: { label: t('Đổi chức danh'), icon: 'badge', cls: 'text-warning' },
+                    PRIMARY_CHANGED: { label: t('Chuyển phòng ban công tác chính'), icon: 'swap_horiz', cls: 'text-primary' },
+                  }[h.changeType] || { label: h.changeType, icon: 'history', cls: 'text-secondary' };
+
+                  return (
+                    <div key={h.id} className="flex items-start gap-3 py-3">
+                      <span className={`material-symbols-outlined text-[20px] mt-0.5 ${kind.cls}`}>{kind.icon}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-on-surface">{kind.label}</p>
+                        <p className="text-sm text-on-surface-variant mt-0.5">
+                          {h.fromDepartmentName
+                            ? t('{v0} → {v1}', { v0: h.fromDepartmentName, v1: h.departmentName || t('(không có)') })
+                            : (h.departmentName || t('(không có)'))}
+                          {h.positionName ? ` · ${h.positionName}` : ''}
+                          {h.fromPositionName && h.fromPositionName !== h.positionName ? ` (${t('trước đây')}: ${h.fromPositionName})` : ''}
+                        </p>
+                        <p className="text-[11px] text-secondary mt-1">
+                          {h.isPrimary ? `${t('Chức vụ chính')} · ` : ''}
+                          {h.changedByEmail ? t('Thực hiện: {v0}', { v0: h.changedByEmail }) : t('Hệ thống tự ghi nhận')}
+                          {h.note ? ` · ${h.note}` : ''}
+                          {' · '}
+                          {new Date(h.createdAt).toLocaleString('vi-VN')}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+
+        {positionHistory.length > HISTORY_PAGE_SIZE && (
+          <div className="flex items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant">
+            <span className="text-xs text-secondary">
+              {t('Tổng {v0} thay đổi', { v0: positionHistory.length })}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                disabled={historyPage <= 1}
+                className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+              </button>
+              <span className="text-xs text-secondary">
+                {t('Trang {v0} / {v1}', { v0: historyPage, v1: Math.ceil(positionHistory.length / HISTORY_PAGE_SIZE) })}
+              </span>
+              <button
+                onClick={() => setHistoryPage((p) => Math.min(Math.ceil(positionHistory.length / HISTORY_PAGE_SIZE), p + 1))}
+                disabled={historyPage >= Math.ceil(positionHistory.length / HISTORY_PAGE_SIZE)}
+                className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {editOpen && (
