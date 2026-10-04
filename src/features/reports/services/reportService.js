@@ -57,8 +57,11 @@ export const reportService = {
     Object.entries(filters).forEach(([key, value]) => {
       // BE-72: bỏ 'status' — báo cáo luôn chỉ tính đơn đã duyệt ở phía máy chủ
       // nên lọc trạng thái trên giao diện không có tác dụng.
+      // BE-92: thêm 'block' (Khối Văn phòng / Khối Cửa hàng) — trước đây không gửi lên nên
+      // chọn khối nào số liệu cũng giống hệt nhau.
+      // BE-93: thêm 'positionId' — chọn "Chức vụ" cũng không được đổi số liệu thẻ KPI.
       if (value !== null && value !== undefined && value !== '' &&
-          ['from', 'to', 'departmentId', 'documentTypeId'].includes(key)) {
+          ['from', 'to', 'departmentId', 'documentTypeId', 'positionId', 'block'].includes(key)) {
         params.append(key, value);
       }
     });
@@ -74,7 +77,7 @@ export const reportService = {
     const params = new URLSearchParams();
     params.append('months', months);
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'positionId'].includes(key)) {
+      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'positionId', 'block'].includes(key)) {
         params.append(key, value);
       }
     });
@@ -87,7 +90,7 @@ export const reportService = {
     const params = new URLSearchParams();
     params.append('scope', scope);
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId'].includes(key)) {
+      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'block'].includes(key)) {
         params.append(key, value);
       }
     });
@@ -98,7 +101,7 @@ export const reportService = {
   getByPosition: (filters = {}) => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'positionId'].includes(key)) {
+      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'positionId', 'block'].includes(key)) {
         params.append(key, value);
       }
     });
@@ -112,7 +115,8 @@ export const reportService = {
     params.append('pageSize', pageSize);
     Object.entries(filters).forEach(([key, value]) => {
       // BE-63: thêm 'search' cho ô tìm kiếm của bảng "Soi kĩ từng đơn".
-      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'positionId', 'search'].includes(key)) {
+      // BE-92: thêm 'block' để bảng và file xuất Excel theo đúng khối đang chọn.
+      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'documentTypeId', 'positionId', 'search', 'block'].includes(key)) {
         params.append(key, value);
       }
     });

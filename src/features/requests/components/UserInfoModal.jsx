@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { roleLabel } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 
 export default function UserInfoModal({ user, onClose }) {
   const { t } = useI18n();
@@ -51,7 +52,7 @@ export default function UserInfoModal({ user, onClose }) {
               </button>
             </div>
             <div>
-              <h2 className="font-display-sm text-on-surface">{user.name}</h2>
+              <h2 className={`${PAGE_TITLE_CLS} text-2xl md:text-2xl`}>{user.name}</h2>
               <p className="font-body-md text-primary font-medium mt-0.5">{user.role}</p>
             </div>
           </div>

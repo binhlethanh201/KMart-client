@@ -25,7 +25,7 @@ export default function RequestCard({ request: r }) {
     return ids
       .map((id) => (departments || []).find((d) => d.id === id))
       .filter(Boolean)
-      .map((d) => d.code || d.name);
+      .map((d) => d.code || t(d.name));
   })();
 
   const meta = STATUS_META[r.status] || { badge: 'bg-surface-container text-on-surface', dot: 'bg-outline', label: t('Không rõ') };
@@ -102,8 +102,8 @@ export default function RequestCard({ request: r }) {
      if (currentActorUser.role === 'ADMIN') currentActorRole = t('QUẢN TRỊ VIÊN');
      else if (currentActorUser.role === 'HR') currentActorRole = t('NHÂN SỰ');
      else if (currentActorUser.role === 'MANAGER') currentActorRole = t('QUẢN LÝ');
-     else if (currentActorUser.department) currentActorRole = currentActorUser.department;
-     else if (currentActorUser.position) currentActorRole = currentActorUser.position;
+     else if (currentActorUser.department) currentActorRole = t(currentActorUser.department);
+     else if (currentActorUser.position) currentActorRole = t(currentActorUser.position);
   }
 
   // BE-23: lấy danh sách người duyệt của bước liên quan để hiển thị ĐỦ số người
@@ -133,8 +133,8 @@ export default function RequestCard({ request: r }) {
     if (u.role === 'HR') return t('NHÂN SỰ');
     if (u.role === 'MANAGER') return t('QUẢN LÝ');
     if (u.role === 'TEAM_LEADER') return t('TRƯỞNG NHÓM');
-    if (u.department) return u.department;
-    if (u.position) return u.position;
+    if (u.department) return t(u.department);
+    if (u.position) return t(u.position);
     return '';
   };
 
@@ -194,14 +194,14 @@ export default function RequestCard({ request: r }) {
             </div>
             
             {/* Title */}
-            <h3 className="text-base text-on-surface font-bold group-hover:text-primary transition-colors truncate mb-2" title={r.title}>
-              {r.title}
+            <h3 className="text-base text-on-surface font-bold group-hover:text-primary transition-colors truncate mb-2" title={t(r.title)}>
+              {t(r.title)}
             </h3>
             
             {/* Metadata */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-secondary">
               <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">tag</span><span className="font-medium text-on-surface">{r.id.substring(0, 8).toUpperCase()}</span></span>
-              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">category</span><span className="font-medium text-on-surface">{r.type}</span></span>
+              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">category</span><span className="font-medium text-on-surface">{t(r.type)}</span></span>
               <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">schedule</span><span className="font-medium text-on-surface">{r.createdAt}</span></span>
               {targetDeptCodes.length > 0 && (
                 <span className="flex items-center gap-1">
@@ -397,14 +397,7 @@ export default function RequestCard({ request: r }) {
               const renderPerson = (aid, aidx) => {
                 const u = employees.find((x) => x.id === aid);
                 const nm = u?.name || t('Người duyệt');
-                let role = t('NHÂN SỰ');
-                if (u) {
-                  if (u.role === 'ADMIN') role = t('QUẢN TRỊ VIÊN');
-                  else if (u.role === 'HR') role = t('NHÂN SỰ');
-                  else if (u.role === 'MANAGER') role = t('QUẢN LÝ');
-                  else if (u.department) role = u.department;
-                  else if (u.position) role = u.position;
-                }
+                const role = roleLabel(u) || t('NHÂN SỰ');
 
                 // Compute individual badge
                 let personBadge = nodeBadge;

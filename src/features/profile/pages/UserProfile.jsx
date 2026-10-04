@@ -5,6 +5,7 @@ import EditProfileModal from './../components/EditProfileModal';
 import { userService } from '../../hr/services/userService';
 import { roleLabel } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 
 export default function UserProfile({ userId, onClose }) {
   const { t } = useI18n();
@@ -80,8 +81,8 @@ export default function UserProfile({ userId, onClose }) {
 
   return (
     <div className="flex-1 overflow-y-auto bg-background flex flex-col relative z-10 w-full h-full">
-      {/* Header / Breadcrumbs */}
-      <header className="h-[56px] bg-white border-b border-outline-variant flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
+      {/* Header / Breadcrumbs — BE-97: nền ấm cho đồng tông với các trang khác */}
+      <header className="h-[56px] bg-[#f6f6f4] border-b border-outline-variant flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
         <div className="flex items-center text-on-surface-variant font-body-sm flex-wrap">
           <span className="uppercase tracking-wider font-semibold text-xs text-secondary hidden sm:inline">{t('Tài khoản')}</span>
           <span className="material-symbols-outlined text-[16px] mx-1 sm:mx-2 text-outline hidden sm:inline">chevron_right</span>
@@ -119,7 +120,7 @@ export default function UserProfile({ userId, onClose }) {
             />
           </div>
           <div className="flex-1 pt-1 sm:pt-2">
-            <h1 className="font-display-sm text-on-surface mb-1">{user.name}</h1>
+            <h1 className={`${PAGE_TITLE_CLS} mb-1`}>{user.name}</h1>
             <p className="font-body-md text-secondary mb-4 sm:mb-6">{roleLabel(user.role)}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 sm:gap-y-4 gap-x-4 text-sm">
               <div className="flex items-center gap-3">

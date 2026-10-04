@@ -5,6 +5,7 @@ import { departmentService } from '../../departments/services/departmentService'
 import { documentTypeService } from '../../../services/documentTypeService';
 import { positionService } from '../../hr/services/positionService';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
+import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 import StatCard from '../components/StatCard';
 import FilterBar from '../components/FilterBar';
 import BarChart from '../components/BarChart';
@@ -53,6 +54,7 @@ export default function ReportsPage() {
   const query = useMemo(() => ({
     from: filters.from || undefined,
     to: filters.to || undefined,
+    block: filters.block || undefined,
     departmentId: filters.departmentId || undefined,
     documentTypeId: filters.documentTypeId || undefined,
     positionId: filters.positionId || undefined,
@@ -166,7 +168,7 @@ export default function ReportsPage() {
           <p className="text-[10px] font-bold uppercase tracking-widest text-[#d94a38] mb-3">
             {t('Báo cáo & Thống kê')}
           </p>
-          <h1 className="text-3xl md:text-4xl font-black text-[#1d1d1f] tracking-tight max-w-2xl leading-tight">
+          <h1 className={`${PAGE_TITLE_CLS} max-w-2xl`}>
             {t('Báo cáo đơn từ')}
           </h1>
         </div>

@@ -6,6 +6,10 @@ const mapToFrontendModel = (d) => ({
   code: d.code,
   type: d.type || 'Phòng ban',
   status: d.isActive ? 'Active' : 'Inactive',
+  // BE-98: đơn vị cấp trên — dùng để dựng sơ đồ tổ chức & chọn cấp trên khi sửa.
+  parentDepartmentId: d.parentDepartmentId || null,
+  parentDepartmentName: d.parentDepartmentName || null,
+  childCount: d.childCount || 0,
   leaders: [
     ...(d.managerName ? [{ title: d.type === 'Siêu thị / Chi nhánh' ? 'Cửa hàng trưởng' : 'Trưởng phòng', name: d.managerName }] : []),
     ...(d.deputyManagerName ? [{ title: 'Phó phòng', name: d.deputyManagerName }] : []),
@@ -71,6 +75,9 @@ export const departmentService = {
       name: data.name,
       code: data.code,
       type: data.type,
+      // BE-98: đơn vị cấp trên (null = đơn vị gốc) — trước đây form không gửi nên mọi phòng ban
+      // đều nằm ở cấp 1, không dựng được sơ đồ nhiều cấp.
+      parentDepartmentId: data.parentDepartmentId || null,
       // BE-71: gửi trạng thái người dùng chọn — trước đây bỏ quên nên chọn "Ngừng hoạt động"
       // vẫn tạo ra phòng ban "Đang hoạt động".
       isActive: data.status !== 'inactive',
@@ -104,6 +111,11 @@ export const departmentService = {
       icon: data.icon || null,
       iconImage: data.iconImage === undefined ? null : data.iconImage
     };
+    // BE-98: cho phép đổi đơn vị cấp trên (null = đưa về cấp gốc). Chỉ gửi khi caller
+    // chủ động truyền trường này để các luồng cũ không vô tình gỡ cấp trên.
+    if (data.parentDepartmentId !== undefined) {
+      payload.parentDepartmentId = data.parentDepartmentId || null;
+    }
     // Chỉ gửi managerId khi caller có ý định set (có head hoặc managerId rõ ràng).
     // Nếu không có, backend sẽ giữ nguyên trưởng phòng hiện tại.
     if (data.head !== undefined) {

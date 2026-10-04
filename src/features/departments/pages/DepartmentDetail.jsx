@@ -10,6 +10,7 @@ import DepartmentReport from '../components/DepartmentReport';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { roleStyle } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
 const TABS = [
@@ -155,7 +156,7 @@ export default function DepartmentDetail() {
     <div className="flex-1 overflow-y-auto min-h-0 bg-background">
       <div className="w-full">
         {/* Header */}
-        <header className="bg-surface border-b border-outline-variant sticky top-0 z-20">
+        <header className="bg-[#f6f6f4] border-b border-outline-variant sticky top-0 z-20">
           <div className="px-6 pt-4">
             <Link
               to="/"
@@ -175,7 +176,7 @@ export default function DepartmentDetail() {
                 </div>
                 <div>
                   <div className="flex items-center gap-3 flex-wrap mb-1">
-                    <h1 className="font-display-lg text-on-surface">{t(dept.name)}</h1>
+                    <h1 className={PAGE_TITLE_CLS}>{t(dept.name)}</h1>
                     <span
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium ${dept.status === 'Active'
                         ? 'bg-[#E8F8EE] text-[#037847]'

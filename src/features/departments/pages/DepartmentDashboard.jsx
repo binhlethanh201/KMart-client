@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import DepartmentCard from '../components/DepartmentCard';
+import OrgTree from '../components/OrgTree';
 import AddDepartmentModal from '../components/AddDepartmentModal';
 import EditDepartmentModal from '../components/EditDepartmentModal';
 import Pagination from '../../../components/Pagination';
@@ -7,6 +8,7 @@ import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useApproval } from '../../../context/useApproval';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
+import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 
 export default function DepartmentDashboard() {
   const { t } = useI18n();
@@ -30,6 +32,8 @@ export default function DepartmentDashboard() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
+  // BE-98: 'grid' = lưới thẻ (mặc định), 'tree' = sơ đồ tổ chức theo cấp trên – cấp dưới.
+  const [viewMode, setViewMode] = useState('grid');
 
   // Computed filtered list
   const filteredDepartments = departments.filter((dept) => {
@@ -85,7 +89,7 @@ export default function DepartmentDashboard() {
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-[24px]">account_tree</span>
               </div>
-              <h1 className="text-2xl font-bold text-on-surface tracking-tight">{t('Cơ cấu tổ chức & Siêu thị')}</h1>
+              <h1 className={`${PAGE_TITLE_CLS} truncate`}>{t('Cơ cấu tổ chức & Siêu thị')}</h1>
             </div>
             <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
               {canEdit && (
@@ -133,6 +137,28 @@ export default function DepartmentDashboard() {
                 <option value="inactive">{t('Ngừng hoạt động')}</option>
               </select>
             </div>
+
+            {/* BE-98: chuyển giữa lưới thẻ và sơ đồ cây tổ chức */}
+            <div className="flex items-center gap-1 p-1 bg-[#f6f6f4] border border-outline-variant rounded-lg">
+              {[
+                { id: 'grid', icon: 'grid_view', label: t('Lưới thẻ') },
+                { id: 'tree', icon: 'account_tree', label: t('Sơ đồ cây') },
+              ].map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setViewMode(v.id)}
+                  className={`flex items-center gap-1.5 px-3 h-[36px] rounded-md text-sm transition-colors cursor-pointer ${
+                    viewMode === v.id
+                      ? 'bg-primary text-on-primary font-medium shadow-sm'
+                      : 'text-secondary hover:text-on-surface hover:bg-white'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">{v.icon}</span>
+                  {v.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Department Grid */}
@@ -141,6 +167,18 @@ export default function DepartmentDashboard() {
               <span className="material-symbols-outlined text-[48px] opacity-20 mb-3">account_tree</span>
               <p className="text-sm">{t('Không tìm thấy đơn vị nào phù hợp với bộ lọc.')}</p>
             </div>
+          ) : viewMode === 'tree' ? (
+            <OrgTree
+              departments={filteredDepartments}
+              canEdit={canEdit}
+              onEdit={(dept) => setEditDept(dept)}
+              onToggleStatus={(dept) => toggleDepartmentStatus(dept.id)}
+              onDelete={(dept) => {
+                if (window.confirm(`Bạn có chắc muốn xóa đơn vị "${dept.name}" không? Thao tác này không thể hoàn tác.`)) {
+                  deleteDepartment(dept.id);
+                }
+              }}
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {paginatedDepartments.map((dept) => (
@@ -170,8 +208,8 @@ export default function DepartmentDashboard() {
             </div>
           )}
 
-          {/* Footer Pagination */}
-          {totalPages > 1 && (
+          {/* Footer Pagination — chỉ áp dụng cho lưới thẻ (sơ đồ cây hiển thị toàn bộ) */}
+          {viewMode === 'grid' && totalPages > 1 && (
             <div className="pt-4 mt-4 border-t border-outline-variant">
               <Pagination
                 currentPage={currentPage}

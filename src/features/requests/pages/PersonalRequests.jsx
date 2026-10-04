@@ -4,8 +4,10 @@ import CreateRequestModal from '../components/CreateRequestModal';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useI18n } from '../../../i18n/I18nProvider';
+import PageHeader from '../../../components/PageHeader';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 import { scopeDepartmentsForUser } from '../../../utils/departmentScope';
+import { matchesSearchText, normalizeSearchText } from '../../../utils/searchText';
 
 /* ─── Constants ──────────────────────────────────────────────── */
 
@@ -80,7 +82,18 @@ export default function PersonalRequests({ mode = 'sent' }) {
 
   /* filtered list */
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = normalizeSearchText(search);
+
+    /*
+     * BE-92: ô tìm kiếm tra trên MỌI thứ người dùng nhìn thấy trên thẻ đơn — mã đơn, loại đơn,
+     * tên người tạo, lý do/mô tả và nội dung các trường động — và KHÔNG phân biệt dấu.
+     */
+    const departmentNames = new Map();
+    (departments || []).forEach((d) => {
+      if (d?.id) departmentNames.set(d.id, d.name);
+    });
+    const departmentNameOf = (id) => (id ? departmentNames.get(id) : '');
+
     return requests.filter((r) => {
       if (!matchesMode(r)) return false;
 
@@ -90,11 +103,20 @@ export default function PersonalRequests({ mode = 'sent' }) {
       else if (statusFilter === 'approved') matchF = r.status === 'approved';
       else if (statusFilter === 'rejected') matchF = r.status === 'rejected' || r.status === 'returned_timeout';
 
-      const matchQ = !q || String(r.id).toLowerCase().includes(q) || (r.title || '').toLowerCase().includes(q);
+      const matchQ = matchesSearchText([
+        r.id,
+        r.title,
+        r.type,
+        r.creatorName,
+        r.reasonText,
+        departmentNameOf(r.departmentId),
+        ...Object.values(r.fields || {}).map((v) => (v === null || v === undefined ? '' : v)),
+      ], q);
+
       const matchD = !departmentFilter || r.departmentId === departmentFilter;
       return matchQ && matchF && matchD;
     });
-  }, [requests, statusFilter, search, departmentFilter, matchesMode]);
+  }, [requests, statusFilter, search, departmentFilter, matchesMode, departments]);
 
   /* pagination for infinite scroll */
   const [page, setPage] = useState(1);
@@ -131,65 +153,87 @@ export default function PersonalRequests({ mode = 'sent' }) {
       <section className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
 
         {/* ── Header ── */}
-        <div className="bg-surface border-b border-outline-variant px-6 pt-6 pb-0 flex-shrink-0 shadow-sm z-10">
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-[24px]">description</span>
-              </div>
-              <h1 className="text-2xl font-bold text-on-surface tracking-tight">
-                {t(TITLES[mode] || 'Danh sách Đơn từ')}
-              </h1>
-            </div>
-            {mode === 'sent' && (
-              <button
-                onClick={() => setIsCreateOpen(true)}
-                className="bg-primary w-full md:w-auto justify-center text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">add</span>
-                {t('Tạo đề xuất mới')}
-              </button>
-            )}
-          </div>
-
+        <PageHeader
+          icon="description"
+          title={TITLES[mode] || 'Danh sách Đơn từ'}
+          contentClassName="px-6 pt-5 pb-0"
+          actions={mode === 'sent' && (
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="bg-primary w-full md:w-auto justify-center text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              {t('Tạo đề xuất mới')}
+            </button>
+          )}
+        >
           {/* ── Toolbar: search + department filter ── */}
-          <div className="flex items-center gap-3 mb-3 flex-wrap">
-            {/* Search */}
-            <div className="relative flex-1 min-w-[200px] max-w-sm">
-              <span className={FILTER_SEARCH_ICON_CLS}>
-                search
-              </span>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                type="text"
-                placeholder={t('Tìm theo mã, tiêu đề...')}
-                className={FILTER_SEARCH_CLS}
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
-                </button>
-              )}
-            </div>
+          {/*
+            BE-92: gom ô tìm kiếm và ô lọc phòng ban vào MỘT khối có nhãn để nhìn rõ đây là khu vực
+            lọc, kèm số đơn khớp và nút xoá nhanh toàn bộ điều kiện.
+          */}
+          <div className="rounded-lg border border-outline-variant/60 bg-surface-container-low px-3 py-2.5 mb-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5 text-on-surface-variant flex-shrink-0">
+                <span className="material-symbols-outlined text-[18px]">filter_list</span>
+                <span className="text-xs font-semibold uppercase tracking-wide">{t('Bộ lọc')}</span>
+              </div>
 
-            {/* Department dropdown */}
-            <div className="relative min-w-[200px]">
-              <select
-                value={departmentFilter || ''}
-                onChange={(e) => setDepartmentFilter(e.target.value || null)}
-                className={`${FILTER_SELECT_CLS} w-full`}
-              >
-                <option value="">{t('Tất cả phòng ban')}</option>
-                {scopedDepartments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.code} - {t(d.name)}
-                  </option>
-                ))}
-              </select>
+              {/* Search */}
+              <div className="relative flex-1 min-w-[220px]">
+                <span className={FILTER_SEARCH_ICON_CLS}>
+                  search
+                </span>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  type="text"
+                  placeholder={t('Tìm theo mã đơn, loại đơn, người tạo, nội dung...')}
+                  aria-label={t('Tìm kiếm đơn từ')}
+                  className={FILTER_SEARCH_CLS}
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    title={t('Xoá từ khoá')}
+                    aria-label={t('Xoá từ khoá')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Department dropdown */}
+              <div className="relative min-w-[200px]">
+                <select
+                  value={departmentFilter || ''}
+                  onChange={(e) => setDepartmentFilter(e.target.value || null)}
+                  aria-label={t('Phòng ban')}
+                  className={`${FILTER_SELECT_CLS} w-full`}
+                >
+                  <option value="">{t('Tất cả phòng ban')}</option>
+                  {scopedDepartments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.code} - {t(d.name)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Nút xoá nhanh bộ lọc */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {(search || departmentFilter) && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearch(''); setDepartmentFilter(null); }}
+                    className="text-xs font-medium text-primary hover:underline whitespace-nowrap cursor-pointer"
+                  >
+                    {t('Xoá bộ lọc')}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -226,7 +270,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
               );
             })}
           </div>
-        </div>
+        </PageHeader>
 
         {/* ── List ── */}
         <div className="flex-1 p-6 overflow-y-auto">
@@ -252,6 +296,12 @@ export default function PersonalRequests({ mode = 'sent' }) {
                         ? t('Không có đơn từ phù hợp bộ lọc.')
                         : t('Hiện không có đơn nào đang chờ bạn duyệt.'))
                     : t('Không có đơn từ phù hợp bộ lọc.')}
+                {/* BE-92: nói rõ đang bị lọc bởi từ khoá nào để người dùng biết đường sửa. */}
+                {search && (
+                  <p className="mt-2 text-sm">
+                    {t('Không tìm thấy đơn nào khớp từ khoá "{v0}".', { v0: search.trim() })}
+                  </p>
+                )}
               </div>
             ) : (
               <>

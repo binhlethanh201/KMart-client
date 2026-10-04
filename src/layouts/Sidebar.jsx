@@ -92,9 +92,14 @@ function SettingsSubPanel() {
       label: t('Luồng duyệt'),
     },
     {
+      to: '/settings/positions',
+      icon: 'badge',
+      label: t('Chức vụ & cấp bậc'),
+    },
+    {
       to: '/settings/general',
       icon: 'settings',
-      label: 'Chung & Zalo',
+      label: t('Chung & Zalo'),
     },
   ];
 
@@ -297,15 +302,28 @@ export default function UnifiedSidebar({
           {/* BE-85: nút thu gọn / mở rộng nằm TRONG rail.
               Trước đây nó là con của khung bao (rail + bảng con) và neo vào mép phải của khung đó, nên
               vừa rê chuột vào "Đơn từ"/"Cấu hình" cho bảng con thòi ra là nút nhảy sang phải 200px —
-              bấm đúng chỗ cũ thì trúng bảng con, phải dò lại vị trí mới. Neo vào rail thì nút đứng yên. */}
+              bấm đúng chỗ cũ thì trúng bảng con, phải dò lại vị trí mới. Neo vào rail thì nút đứng yên.
+
+              BE-96: nút nằm ĐÚNG ranh giới sidebar/nội dung nên trước đây "phải bấm đúng chỗ mới ăn":
+              bấm lệch một chút là trúng nền rail hoặc nội dung. Nay:
+                - vùng bấm là một ô vuông 44x44 (chuẩn tối thiểu cho cảm ứng), vòng tròn chỉ là phần nhìn;
+                - đổi trạng thái ngay ở `pointerdown` (không đợi `click`) nên không bị mất khi nút nhích
+                  vị trí giữa lúc bấm xuống và nhả chuột (mất cân đối => trình duyệt bắn sự kiện vào nền);
+                - nâng lên z-[70] để không bị bảng con che mất. */}
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden md:flex absolute top-1/2 -right-4 -translate-y-1/2 w-8 h-8 bg-white text-slate-600 border border-slate-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-[60] cursor-pointer hover:text-primary hover:bg-slate-50 hover:border-primary/20 transition-colors group"
+            type="button"
+            onPointerDown={(e) => { e.preventDefault(); setIsCollapsed((v) => !v); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsCollapsed((v) => !v); }
+            }}
+            className="hidden md:flex absolute top-1/2 -right-[22px] -translate-y-1/2 w-11 h-11 items-center justify-center z-[70] cursor-pointer group"
             title={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
             aria-label={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
           >
-            <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
-              {isCollapsed ? 'chevron_right' : 'chevron_left'}
+            <span className="w-8 h-8 bg-white text-slate-600 border border-slate-200 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] group-hover:text-primary group-hover:bg-slate-50 group-hover:border-primary/20 transition-colors">
+              <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
+                {isCollapsed ? 'chevron_right' : 'chevron_left'}
+              </span>
             </span>
           </button>
 

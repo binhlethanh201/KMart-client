@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 /**
  * Biểu đồ tròn (donut) phân bổ theo loại đơn.
@@ -6,6 +7,7 @@ import { useMemo, useState } from 'react';
  * Nhận cả 2 dạng dữ liệu: { count, documentType } và { value, name }.
  */
 export default function PieChart({ data }) {
+  const { t } = useI18n();
   const [hoverIdx, setHoverIdx] = useState(null);
 
   const rows = useMemo(
@@ -17,7 +19,7 @@ export default function PieChart({ data }) {
   );
 
   if (!rows.length) {
-    return <div className="text-center text-gray-500 py-8">Không có dữ liệu</div>;
+    return <div className="text-center text-gray-500 py-8">{t('Không có dữ liệu')}</div>;
   }
 
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
@@ -47,7 +49,7 @@ export default function PieChart({ data }) {
                 onMouseLeave={() => setHoverIdx(null)}
                 className="cursor-pointer transition-all"
               >
-                <title>{`${item.label}: ${item.value} (${percentage.toFixed(1)}%)`}</title>
+                <title>{`${t(item.label)}: ${item.value} (${percentage.toFixed(1)}%)`}</title>
               </circle>
             );
             acc.offset -= percentage;
@@ -58,14 +60,14 @@ export default function PieChart({ data }) {
           {hoverIdx === null ? (
             <>
               <span className="text-2xl font-bold">{total}</span>
-              <span className="text-xs text-gray-500">Tổng</span>
+              <span className="text-xs text-gray-500">{t('Tổng')}</span>
             </>
           ) : (
             <>
               <span className="text-2xl font-bold" style={{ color: COLORS[hoverIdx % COLORS.length] }}>
                 {total > 0 ? ((rows[hoverIdx].value / total) * 100).toFixed(1) : 0}%
               </span>
-              <span className="text-xs text-gray-500">{rows[hoverIdx].value} đơn</span>
+              <span className="text-xs text-gray-500">{rows[hoverIdx].value} {t('đơn')}</span>
             </>
           )}
         </div>
@@ -90,7 +92,7 @@ export default function PieChart({ data }) {
                 className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: COLORS[idx % COLORS.length] }}
               />
-              <span className={`text-sm flex-1 truncate ${isHover ? 'font-semibold text-[#1d1d1f]' : ''}`}>{item.label}</span>
+              <span className={`text-sm flex-1 truncate ${isHover ? 'font-semibold text-[#1d1d1f]' : ''}`}>{t(item.label)}</span>
               <span className="text-sm font-medium">{percentage}%</span>
               <span className="text-xs text-gray-500 w-10 text-right">{item.value}</span>
             </div>

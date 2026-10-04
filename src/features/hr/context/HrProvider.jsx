@@ -5,6 +5,7 @@ import { positionService } from '../services/positionService';
 import { roleService } from '../services/roleService';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { describeApiError } from '../../../utils/apiError';
+import { HR_DATA_CHANGED } from '../../../utils/hrEvents';
 
 const HrContext = createContext(null);
 
@@ -21,23 +22,50 @@ export function HrProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    Promise.all([
-      userService.getAll(),
-      departmentService.getAll(),
-      positionService.getAll(),
-      roleService.getAll()
-    ]).then(([empData, deptData, posData, roleData]) => {
+  /**
+   * BE-95: nạp lại toàn bộ dữ liệu nhân sự.
+   *
+   * Trước đây chỉ nạp MỘT LẦN khi app khởi động nên sau khi xoá/đổi tên phòng ban ở màn
+   * "Phòng ban & Nhóm", danh sách nhân sự vẫn giữ tên phòng ban cũ -> tài khoản nhân sự trông
+   * như vẫn còn thuộc phòng ban đã xoá cho tới khi tải lại cả trang.
+   */
+  const loadAll = useCallback(async () => {
+    try {
+      const [empData, deptData, posData, roleData] = await Promise.all([
+        userService.getAll(),
+        departmentService.getAll(),
+        positionService.getAll(),
+        roleService.getAll()
+      ]);
       setEmployees(empData);
       setDepartments(deptData);
       setPositions(posData);
       setRoles(roleData);
       setError(null);
-    }).catch((err) => {
+    } catch (err) {
       console.error('Failed to load HR data', err);
       setError(err?.response?.data?.message || err?.message || t('Không thể tải dữ liệu nhân sự.'));
-    }).finally(() => setLoading(false));
-  }, []);
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  // BE-95/BE-99: phòng ban hoặc CHỨC VỤ bị tạo/sửa/xoá ở nơi khác -> nạp lại để cột
+  // "Phòng ban & Chức vụ" của nhân sự và các dropdown không còn hiển thị dữ liệu cũ.
+  useEffect(() => {
+    const onChanged = () => { loadAll(); };
+    window.addEventListener(HR_DATA_CHANGED, onChanged);
+    // Tương thích sự kiện cũ (được phát trước khi hợp nhất thành HR_DATA_CHANGED).
+    window.addEventListener('departments:changed', onChanged);
+    return () => {
+      window.removeEventListener(HR_DATA_CHANGED, onChanged);
+      window.removeEventListener('departments:changed', onChanged);
+    };
+  }, [loadAll]);
 
   const getEmployee = useCallback((id) => employees.find((e) => e.id === id) || null, [employees]);
 

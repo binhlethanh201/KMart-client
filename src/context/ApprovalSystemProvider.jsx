@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ApprovalSystemContext } from './approvalStore';
 import { departmentService } from '../features/departments/services/departmentService';
 import { applicationService } from '../features/requests/services/applicationService';
@@ -7,6 +7,7 @@ import { userService, getFullAvatarUrl } from '../features/hr/services/userServi
 import { PERMISSIONS } from '../constants/permissions';
 import { useI18n } from '../i18n/I18nProvider';
 import { describeApiError } from '../utils/apiError';
+import { notifyHrDataChanged } from '../utils/hrEvents';
 import { canUserApprove } from '../features/requests/approvalEligibility';
 
 const STORAGE_KEY = 'kmart.approval.v3';
@@ -257,19 +258,34 @@ export function ApprovalSystemProvider({ children }) {
     [pushToast, t, loadRequests]
   );
 
+  /**
+   * BE-94: người duyệt yêu cầu bổ sung. Trả về { ok, error } để hộp thoại biết có nên đóng hay
+   * không và hiển thị đúng câu lỗi của máy chủ (trước đây hộp thoại đóng ngay, gửi lỗi là mất
+   * sạch nội dung vừa gõ).
+   */
   const requestSupplement = useCallback(
     async (reqId, reason) => {
       try {
         const updated = await applicationService.supplement(reqId, reason);
         setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r)));
         pushToast(t('Đã gửi yêu cầu bổ sung'), 'success');
+        loadRequests();
+        return { ok: true };
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi yêu cầu bổ sung');
+        // Câu lỗi chi tiết của máy chủ nằm trong `errors` (FluentValidation), `message` chỉ là
+        // "Dữ liệu không hợp lệ" nên phải đọc `errors` trước.
+        const errors = err.response?.data?.errors;
+        const errorMsg = (Array.isArray(errors) && errors[0])
+          || err.response?.data?.error
+          || err.response?.data?.message
+          || t('Lỗi khi yêu cầu bổ sung');
         pushToast(errorMsg, 'error');
         console.error('Supplement error:', err);
+        loadRequests();
+        return { ok: false, error: errorMsg };
       }
     },
-    [pushToast]
+    [pushToast, t, loadRequests]
   );
 
   const addComment = useCallback(
@@ -319,6 +335,9 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const newDept = await departmentService.create(data);
         setDepartments((d) => [...d, newDept]);
+        // BE-95: báo cho module Nhân sự nạp lại danh sách (phòng ban mới phải xuất hiện trong
+        // bộ lọc/chức danh của nhân sự ngay, không cần tải lại cả trang).
+        notifyHrDataChanged();
         // BE-71: nói rõ trạng thái vừa tạo — phòng ban "Ngừng hoạt động" không hiện trong
         // bộ lọc mặc định nên người dùng dễ tưởng tạo nhầm thành "Đang hoạt động".
         if (newDept?.status === 'Inactive') {
@@ -346,6 +365,7 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const updated = await departmentService.update(id, updates);
         setDepartments((list) => list.map((d) => (d.id === id ? updated : d)));
+        notifyHrDataChanged();
         pushToast(t('Cập nhật phòng ban thành công!'), 'success');
         // BE-70: trả về id để form chỉ đóng khi máy chủ đã lưu xong.
         return updated?.id || id;
@@ -362,6 +382,9 @@ export function ApprovalSystemProvider({ children }) {
       try {
         await departmentService.delete(id);
         setDepartments((list) => list.filter((d) => d.id !== id));
+        // BE-95: nhân sự từng thuộc phòng ban này phải được nạp lại, nếu không cột
+        // "Phòng ban & Chức vụ" vẫn hiển thị phòng ban vừa xoá.
+        notifyHrDataChanged();
         pushToast(t('Đã xóa phòng ban'), 'success');
       } catch (err) {
         console.error(err);

@@ -18,6 +18,15 @@
 import { API_URL } from '../services/apiClient';
 
 const STORAGE_PREFIX = 'kmart.i18n.auto.';
+/**
+ * BE-100: phiên bản bộ nhớ đệm bản dịch động trên trình duyệt.
+ *
+ * Bộ nhớ đệm cũ chỉ ghi thêm, không bao giờ hỏi lại, nên một bản dịch sai đã lỡ lưu sẽ
+ * "sống" mãi trên máy người dùng dù máy chủ đã sửa (xem từ điển chuyên ngành ở BE).
+ * Khi từ điển/bản dịch phía máy chủ thay đổi đáng kể thì TĂNG số này để mọi trình duyệt
+ * tự bỏ bộ nhớ đệm cũ và lấy bản dịch đúng.
+ */
+const CACHE_VERSION = 2;
 const FLUSH_DELAY_MS = 150;
 const MAX_TEXT_LENGTH = 400;
 const MAX_PENDING = 400;
@@ -40,7 +49,7 @@ function getCache(lang) {
     bucket = new Map();
     cache.set(lang, bucket);
     try {
-      const raw = localStorage.getItem(STORAGE_PREFIX + lang);
+      const raw = localStorage.getItem(STORAGE_PREFIX + lang + '.v' + CACHE_VERSION);
       if (raw) {
         const parsed = JSON.parse(raw);
         Object.entries(parsed).forEach(([key, value]) => {
@@ -59,7 +68,7 @@ function persist(lang) {
     const bucket = getCache(lang);
     const obj = {};
     bucket.forEach((value, key) => { obj[key] = value; });
-    localStorage.setItem(STORAGE_PREFIX + lang, JSON.stringify(obj));
+    localStorage.setItem(STORAGE_PREFIX + lang + '.v' + CACHE_VERSION, JSON.stringify(obj));
   } catch {
     /* hết dung lượng - vẫn dùng được trong phiên hiện tại */
   }
@@ -146,10 +155,13 @@ async function flush() {
       if (changed) {
         persist(lang);
         notify();
-      } else {
-        // Nhãn không dịch được (máy chủ không gọi được dịch vụ) -> cho phép thử lại sau.
-        texts.forEach((text) => requested.delete(`${lang}:${text}`));
       }
+
+      // Nhãn KHÔNG dịch được (máy chủ không gọi được dịch vụ) phải được thử lại ở lần render sau —
+      // kể cả khi những nhãn khác trong cùng lô đã dịch xong.
+      texts.forEach((text) => {
+        if (!Object.prototype.hasOwnProperty.call(items, text)) requested.delete(`${lang}:${text}`);
+      });
     } catch {
       // Không có mạng: thử lại ở lần render sau.
       texts.forEach((text) => requested.delete(`${lang}:${text}`));

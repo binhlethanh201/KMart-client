@@ -52,13 +52,18 @@ const mapToFrontendModel = (a) => {  const rawData = (typeof a.data === 'string'
     deadlineAt: a.deadlineAt || null,
     status: deriveStatus(a),
     currentStep: a.currentStepOrder || 0,
+    // BE-89: KHÔNG ghi đè `reason` (và các khoá trùng tên field động).
+    // Một số mẫu đơn có field động tên `reason` (nhãn "Lý do"); trước đây dòng `...(a.reason ? {reason})`
+    // đè lên giá trị field động nên đơn hiện sai nội dung và mất giá trị nhân viên đã nhập.
+    // Lý do cấp đơn được tách riêng thành `reasonText`.
     fields: {
       ...rawData,
       ...(a.startDate ? { startTime: new Date(a.startDate).toLocaleString('vi-VN') } : {}),
       ...(a.endDate ? { endTime: new Date(a.endDate).toLocaleString('vi-VN') } : {}),
-      ...(a.totalDays ? { totalDays: a.totalDays } : {}),
-      ...(a.reason ? { reason: a.reason } : {})
+      ...(a.totalDays ? { totalDays: a.totalDays } : {})
     },
+    /** Lý do / mô tả cấp đơn (khác field động cùng tên `reason` của mẫu đơn). */
+    reasonText: a.reason || '',
     steps: (a.steps || []).map(s => ({
       approverId: s.approverId,
       // bước MultiRule = And/Sequential có nhiều người cùng duyệt, phải hiện đủ

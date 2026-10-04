@@ -1,16 +1,18 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { workflowService } from '../../../services/workflowService';
 import ApprovalFlowTree from './ApprovalFlowTree';
+import DocumentTypeSelect from './DocumentTypeSelect';
+import { buildDynamicFromRaw, fieldLabel, resolveFieldKey, sortFields } from '../formFieldMapping';
+import { checkNumberValue, isNumberField } from '../formFieldValidation';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { describeApiError } from '../../../utils/apiError';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
-/* BE-88: ô tìm kiếm loại đề xuất — chừa chỗ bên trái cho icon kính lúp (icon đặt tuyệt đối trong JSX). */
-const searchCls = `${fieldCls} pl-9`;
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 
 /**
@@ -82,47 +84,63 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
   // BE-20: popup xem full luồng phê duyệt
   const [flowOpen, setFlowOpen] = useState(false);
 
-  /*
-   * BE-88: từ khoá tìm loại đề xuất + danh sách đã nhóm theo danh mục.
-   * Danh mục lấy từ chính `category` của mẫu đơn (cùng nguồn với trang "Mẫu đơn & Form động") nên
-   * hai nơi luôn khớp nhau; mẫu đơn chưa gán danh mục gom vào nhóm "Khác".
-   */
-  const [docTypeSearch, setDocTypeSearch] = useState('');
-
-  const groupedDocumentTypes = useMemo(() => {
-    // BE-88: tìm không phân biệt hoa/thường VÀ không phân biệt dấu — người dùng thường gõ nhanh
-    // không dấu ("don nghi phep"), nếu so khớp nguyên văn thì không ra kết quả nào.
-    const normalize = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
-    const keyword = normalize(docTypeSearch).trim();
-    const matched = keyword
-      ? documentTypes.filter((dt) => normalize(dt.name).includes(keyword))
-      : documentTypes;
-
-    const byCategory = new Map();
-    matched.forEach((dt) => {
-      const category = (dt.category && String(dt.category).trim()) || t('Khác');
-      if (!byCategory.has(category)) byCategory.set(category, []);
-      byCategory.get(category).push(dt);
-    });
-    return [...byCategory.entries()];
-  }, [documentTypes, docTypeSearch, t]);
+  // BE-96: việc gom nhóm theo danh mục + tìm kiếm loại đề xuất nay nằm trong
+  // <DocumentTypeSelect /> (ô tìm kiếm ở ngay trong dropdown).
 
   // BE-09: File thật của các trường "Tải file", khoá theo nhãn trường.
   // Trước đây chỉ lưu file.name vào form.dynamic nên file CHƯA BAO GIỜ được upload.
   const [files, setFiles] = useState({});
+  /** BE-89: đang gửi đơn bổ sung — dùng để chặn bấm gửi hai lần. */
+  const [saving, setSaving] = useState(false);
 
-  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
-  const setDynamic = (name, val) => setForm((f) => ({
-    ...f,
-    dynamic: { ...f.dynamic, [name]: val }
-  }));
+  /*
+   * BE-89: lỗi hiển thị ngay dưới từng ô nhập. BE-92: xoá lỗi của một ô ngay khi người dùng sửa
+   * ô đó, không bắt họ bấm Gửi lần nữa mới thấy lỗi cũ biến mất.
+   */
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const clearFieldError = useCallback((key) => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }, []);
+
+  /** Danh sách field của một mẫu đơn (BE có thể trả `fields` dạng chuỗi JSON). */
+  const fieldsOfDocumentType = useCallback((docTypeId) => {
+    const dt = documentTypes.find((d) => d.id === docTypeId);
+    let list = dt?.fields || [];
+    if (typeof list === 'string') {
+      try { list = JSON.parse(list); } catch { list = []; }
+    }
+    return Array.isArray(list) ? list : [];
+  }, [documentTypes]);
+
+  const set = (key) => (e) => {
+    setForm((f) => ({ ...f, [key]: e.target.value }));
+    clearFieldError(`__${key}`);
+  };
+  const setDynamic = (name, val) => {
+    setForm((f) => ({
+      ...f,
+      dynamic: { ...f.dynamic, [name]: val }
+    }));
+    clearFieldError(name);
+  };
 
   // Current selected document type
   const selectedDocType = documentTypes.find(d => d.id === form.documentTypeId);
-  let currentFields = selectedDocType?.fields || [];
-  if (typeof currentFields === 'string') {
-    try { currentFields = JSON.parse(currentFields); } catch (e) { currentFields = []; }
-  }
+  // BE-89: field theo đúng thứ tự cấu hình; memo hoá để danh sách không đổi tham chiếu mỗi lần render
+  // (nhiều effect phụ thuộc vào nó).
+  const currentFields = useMemo(() => {
+    let list = selectedDocType?.fields || [];
+    if (typeof list === 'string') {
+      try { list = JSON.parse(list); } catch (e) { list = []; }
+    }
+    return sortFields(Array.isArray(list) ? list : []);
+  }, [selectedDocType]);
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -133,20 +151,35 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
   // Chế độ bổ sung: nạp lại dữ liệu đơn cũ vào form.
   // skipDynamicResetRef chặn effect "reset dynamic khi đổi loại đơn" xoá mất dữ liệu vừa nạp.
   const skipDynamicResetRef = useRef(false);
+  /*
+   * BE-89: chỉ nạp MỘT LẦN cho mỗi đơn.
+   * Trước đây effect phụ thuộc vào `existingRequest` (đối tượng được tạo mới mỗi lần danh sách tải lại)
+   * nên mỗi lần nền cập nhật là form bị nạp lại từ đầu — người dùng đang điền dở bị mất nội dung, và
+   * các ô vừa sửa bị trả về giá trị cũ.
+   */
+  const prefilledForRef = useRef(null);
   useEffect(() => {
     if (!existingRequest || loading) return;
+    if (prefilledForRef.current === existingRequest.id) return;
+    prefilledForRef.current = existingRequest.id;
+
     const raw = existingRequest._rawData || {};
-    const { departments: deptIds, ...dynamic } = raw;
+    const { departments: deptIds } = raw;
+    // BE-89: dữ liệu đơn cũ có thể lưu dưới tên field CŨ; quy về tên field của cấu hình hiện tại
+    // để các ô Từ ngày / Đến ngày / Lý do / Mô tả công việc hiện đúng giá trị đã nhập.
+    // Tra field theo `existingRequest.documentTypeId` (không phải form.documentTypeId, vì lúc này
+    // form còn trống nên sẽ tra ra danh sách rỗng).
+    const { dynamic } = buildDynamicFromRaw(fieldsOfDocumentType(existingRequest.documentTypeId), raw);
     skipDynamicResetRef.current = true;
     setForm({
       documentTypeId: existingRequest.documentTypeId || '',
-      reason: existingRequest.fields?.reason || '',
+      reason: existingRequest.reasonText || '',
       departments: Array.isArray(deptIds) ? deptIds : [],
       dynamic
     });
     setSelectedApproverId(existingRequest.selectedApproverId || '');
     setFiles({});
-  }, [existingRequest, loading]);
+  }, [existingRequest, loading, fieldsOfDocumentType]);
 
   // Reset dynamic fields when document type changes
   useEffect(() => {
@@ -190,9 +223,9 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
   // Auto-calculate days when dates change
   useEffect(() => {
-    const fromField = currentFields.find(f => f.label === 'Từ ngày' || (f.name || f.fieldName || f.id) === 'Từ ngày');
-    const toField = currentFields.find(f => f.label === 'Đến ngày' || (f.name || f.fieldName || f.id) === 'Đến ngày');
-    const totalField = currentFields.find(f => f.label === 'Tổng số ngày' || (f.name || f.fieldName || f.id) === 'Tổng số ngày');
+    const fromField = currentFields.find(f => f.label === 'Từ ngày' || (resolveFieldKey(f)) === 'Từ ngày');
+    const toField = currentFields.find(f => f.label === 'Đến ngày' || (resolveFieldKey(f)) === 'Đến ngày');
+    const totalField = currentFields.find(f => f.label === 'Tổng số ngày' || (resolveFieldKey(f)) === 'Tổng số ngày');
     
     if (fromField && toField && totalField) {
       const from = form.dynamic[fromField.name || fromField.fieldName || fromField.id];
@@ -308,11 +341,66 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     return () => cancelAnimationFrame(raf);
   }, [flowOpen]);
 
-  const submit = (e) => {
+  /*
+   * BE-89: kiểm tra dữ liệu NGAY TRÊN FORM, không đóng form rồi mới báo lỗi bên ngoài.
+   * Trước đây bấm "Bổ sung & gửi lại" là modal đóng ngay; máy chủ từ chối thì người dùng chỉ thấy
+   * badge ở danh sách và mất hết nội dung vừa nhập, phải mở lại từ đầu.
+   * (state `fieldErrors` khai báo ở đầu component — xem `clearFieldError`.)
+   */
+
+  /** BE-89: câu lỗi ngay dưới ô nhập tương ứng, không đóng form rồi mới báo bên ngoài. */
+  const renderFieldError = (key) => (
+    fieldErrors[key] ? (
+      <span className="text-xs text-error">{fieldErrors[key]}</span>
+    ) : null
+  );
+
+  /** Trả về object lỗi theo khoá field; rỗng nghĩa là hợp lệ. */
+  const validateForm = () => {
+    const errs = {};
+    if (!form.documentTypeId) errs.__documentType = t('Vui lòng chọn loại đề xuất');
+    if (!form.reason.trim()) errs.__reason = t('Vui lòng nhập lý do / mô tả');
+
+    currentFields.forEach((f) => {
+      if (f.type === 'LABEL' || f.type === 'INFO') return;
+      const key = resolveFieldKey(f);
+      if (!key) return;
+      const value = form.dynamic[key];
+      const empty = value === undefined || value === null || String(value).trim() === '';
+
+      if (f.required && empty) {
+        errs[key] = t('Trường "{v0}" là bắt buộc', { v0: t(fieldLabel(f)) });
+        return;
+      }
+
+      // BE-92: field kiểu số phải là số hợp lệ và KHÔNG được âm (VD "số ngày" = -15).
+      if (!empty && isNumberField(f)) {
+        const problem = checkNumberValue(value);
+        if (problem === 'invalid') {
+          errs[key] = t('Trường "{v0}" phải là một số', { v0: t(fieldLabel(f)) });
+        } else if (problem === 'negative') {
+          errs[key] = t('Trường "{v0}" không được là số âm', { v0: t(fieldLabel(f)) });
+        }
+      }
+    });
+
+    return errs;
+  };
+
+  const submit = async (e) => {
     e.preventDefault();
-    if (!form.reason.trim() || !form.documentTypeId) return;
-    if (mustPickApprover && !selectedApproverId) return;
-    
+
+    const errs = validateForm();
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      // Giữ nguyên form để người dùng sửa; cuộn tới ô lỗi đầu tiên.
+      const firstKey = Object.keys(errs)[0];
+      const el = document.querySelector(`[data-field-error="${CSS.escape(firstKey)}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      pushToast(t('Vui lòng điền đủ các trường bắt buộc còn thiếu.'), 'error');
+      return;
+    }
+
     // Build payload theo BE DTO
     const payload = {
       documentTypeId: form.documentTypeId,
@@ -324,20 +412,30 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
         departments: showDepartmentPicker ? form.departments : []
       },
     };
-    
-    // Auto extract dates if present
-    const fromField = currentFields.find(f => f.label === 'Từ ngày' || (f.name || f.fieldName || f.id) === 'Từ ngày');
-    const toField = currentFields.find(f => f.label === 'Đến ngày' || (f.name || f.fieldName || f.id) === 'Đến ngày');
-    const totalField = currentFields.find(f => f.label === 'Tổng số ngày' || (f.name || f.fieldName || f.id) === 'Tổng số ngày');
 
-    if (fromField && form.dynamic[fromField.name || fromField.fieldName || fromField.id]) {
-      payload.startDate = form.dynamic[fromField.name || fromField.fieldName || fromField.id];
+    /*
+     * BE-89: giữ lại các khoá cũ mà cấu hình field hiện tại không còn nhận diện.
+     * Máy chủ chỉ ghi những khoá khớp field trong mẫu đơn, nên nếu không gửi kèm thì nội dung cũ bị
+     * XOÁ sau khi bổ sung — đơn bị mất trường / đổi giá trị.
+     */
+    if (isEdit) {
+      const { unmatched } = buildDynamicFromRaw(currentFields, existingRequest?._rawData || {});
+      payload.data = { ...unmatched, ...payload.data };
     }
-    if (toField && form.dynamic[toField.name || toField.fieldName || toField.id]) {
-      payload.endDate = form.dynamic[toField.name || toField.fieldName || toField.id];
+
+    // Auto extract dates if present
+    const fromField = currentFields.find(f => f.label === 'Từ ngày' || (resolveFieldKey(f)) === 'Từ ngày');
+    const toField = currentFields.find(f => f.label === 'Đến ngày' || (resolveFieldKey(f)) === 'Đến ngày');
+    const totalField = currentFields.find(f => f.label === 'Tổng số ngày' || (resolveFieldKey(f)) === 'Tổng số ngày');
+
+    if (fromField && form.dynamic[resolveFieldKey(fromField)]) {
+      payload.startDate = form.dynamic[resolveFieldKey(fromField)];
     }
-    if (totalField && form.dynamic[totalField.name || totalField.fieldName || totalField.id]) {
-      payload.totalDays = parseInt(form.dynamic[totalField.name || totalField.fieldName || totalField.id]);
+    if (toField && form.dynamic[resolveFieldKey(toField)]) {
+      payload.endDate = form.dynamic[resolveFieldKey(toField)];
+    }
+    if (totalField && form.dynamic[resolveFieldKey(totalField)]) {
+      payload.totalDays = parseInt(form.dynamic[resolveFieldKey(totalField)], 10);
     }
 
     // BE-04: chỉ gửi khi bước 1 (theo chức danh) có nhiều người và đã chọn 1
@@ -353,13 +451,21 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     }
 
     if (isEdit) {
-      // BE-15: update + submit là async; báo cho trang chi tiết refresh khi xong
-      Promise.resolve(updateRequest(existingRequest.id, payload)).finally(() => {
+      // BE-15/BE-89: chỉ đóng form khi máy chủ đã nhận. Lỗi thì giữ nguyên nội dung đã nhập để sửa.
+      setSaving(true);
+      try {
+        await updateRequest(existingRequest.id, payload);
         if (onSubmitted) onSubmitted();
-      });
-    } else {
-      createRequest(payload);
+        onClose();
+      } catch (err) {
+        setFieldErrors({ __submit: describeApiError(err, t, 'Không gửi được đơn bổ sung') });
+      } finally {
+        setSaving(false);
+      }
+      return;
     }
+
+    createRequest(payload);
     onClose();
   };
 
@@ -397,40 +503,20 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           <div className="flex flex-col gap-2">
             <label className={labelCls}>{t('Loại Đề Xuất')}</label>
             {/*
-              BE-88: danh sách loại đơn trước đây là một dãy phẳng rất dài. Nay nhóm theo danh mục
-              (cùng cách gom với trang "Mẫu đơn & Form động") và có ô tìm kiếm để lọc nhanh theo tên.
+              BE-96: dropdown gom theo danh mục (giống màn Cấu hình luồng duyệt) và có ô tìm kiếm
+              NGAY BÊN TRONG dropdown; không hiển thị chú thích "đã cấu hình ở khối nào".
             */}
-            <div className="relative">
-              <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-[#8a867c]">
-                search
-              </span>
-              <input
-                type="text"
-                className={searchCls}
-                placeholder={t('Tìm loại đề xuất...')}
-                value={docTypeSearch}
-                onChange={(e) => setDocTypeSearch(e.target.value)}
-                disabled={isEdit}
-              />
-            </div>
-            <select
-              className={`${fieldCls} disabled:opacity-60 disabled:cursor-not-allowed`}
-              value={form.documentTypeId} 
+            <DocumentTypeSelect
+              documentTypes={documentTypes}
+              value={form.documentTypeId}
+              loading={loading}
               disabled={isEdit}
-              onChange={(e) => setForm(f => ({ ...f, documentTypeId: e.target.value }))}
-            >
-              <option value="">{t('-- Chọn loại đề xuất --')}</option>
-              {!loading && groupedDocumentTypes.map(([category, items]) => (
-                <optgroup key={category} label={category}>
-                  {items.map((dt) => (
-                    <option key={dt.id} value={dt.id}>{dt.name}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            {!loading && documentTypes.length > 0 && groupedDocumentTypes.length === 0 && (
-              <span className="text-xs text-secondary">{t('Không có loại đề xuất nào khớp từ khóa.')}</span>
-            )}
+              onChange={(id) => {
+                setForm(f => ({ ...f, documentTypeId: id }));
+                // BE-92: đổi mẫu đơn thì lỗi của mẫu cũ không còn nghĩa — bỏ hết để form sạch.
+                setFieldErrors({});
+              }}
+            />
           </div>
 
           {/* Department Checkboxes — chỉ hiện với luồng duyệt theo chức danh */}
@@ -540,7 +626,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           )}
 
           {/* Lý do/Yêu cầu */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2" data-field-error="__reason">
             <label className={labelCls}>{t('Lý do / Mô tả')} <span className="text-error">*</span></label>
             <textarea
               className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
@@ -549,6 +635,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               placeholder={t('Nhập lý do hoặc mô tả yêu cầu...')}
               required
             />
+            {renderFieldError('__reason')}
           </div>
 
           {/* Dynamic Fields từ BE */}
@@ -559,15 +646,18 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             if (f.type === 'NUMBER' || f.type === 'Số') {
               const labelKey = f.label || f.id;
               // 'tự động' là giá trị dữ liệu của field (BE trả về), KHÔNG dịch.
-              const fieldId = f.name || f.fieldName || f.id;
+              const fieldId = resolveFieldKey(f);
               const isAuto = f.options?.includes('auto') || f.options?.includes('tự động');
               return (
-                <div key={fieldId} className="flex flex-col gap-2">
-                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
+                  <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  {renderFieldError(fieldId)}
                   <input
                     className={fieldCls}
                     type="number"
                     required={f.required}
+                    min="0"
+                    step="any"
                     value={form.dynamic[fieldId] || ''}
                     onChange={(e) => setDynamic(fieldId, e.target.value)}
                     placeholder={f.placeholder || ''}
@@ -580,15 +670,16 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'DATE' || f.type === 'Ngày') {
               const labelKey = f.label || f.id;
-              const fieldId = f.name || f.fieldName || f.id;
+              const fieldId = resolveFieldKey(f);
               let inputType = 'date';
               const l = (labelKey || '').toLowerCase();
               if (l.includes('giờ') || l.includes('time')) inputType = 'time';
               if (l.includes('ngày và giờ') || l.includes('datetime')) inputType = 'datetime-local';
 
               return (
-                <div key={fieldId} className="flex flex-col gap-2">
-                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
+                  <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  {renderFieldError(fieldId)}
                   <input 
                     className={fieldCls} 
                     type={inputType} 
@@ -602,10 +693,11 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'TEXTAREA' || f.type === 'Văn bản') {
               const labelKey = f.label || f.id;
-              const fieldId = f.name || f.fieldName || f.id;
+              const fieldId = resolveFieldKey(f);
               return (
-                <div key={fieldId} className="flex flex-col gap-2">
-                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
+                  <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  {renderFieldError(fieldId)}
                   <textarea
                     className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
                     required={f.required}
@@ -619,11 +711,12 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'SELECT' || f.type === 'Lựa chọn') {
               const labelKey = f.label || f.id;
-              const fieldId = f.name || f.fieldName || f.id;
+              const fieldId = resolveFieldKey(f);
               const options = f.options || [];
               return (
-                <div key={fieldId} className="flex flex-col gap-2">
-                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
+                  <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  {renderFieldError(fieldId)}
                   <select
                     className={fieldCls}
                     required={f.required}
@@ -643,7 +736,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'FILE' || f.type === 'Tải file') {
               const labelKey = f.label || f.id;
-              const fieldId = f.name || f.fieldName || f.id;
+              const fieldId = resolveFieldKey(f);
               
               // Recover templateFile from localStorage since backend doesn't save it
               let templateFile = f.templateFile;
@@ -657,9 +750,10 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               }
 
               return (
-                <div key={fieldId} className="flex flex-col gap-2">
+                <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
                   <div className="flex justify-between items-end">
-                    <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                    <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  {renderFieldError(fieldId)}
                     {templateFile && templateFile.name && (
                       <a href="#" className="flex items-center gap-1 text-xs text-primary font-medium hover:underline bg-primary/5 px-2 py-1 rounded">
                         <span className="material-symbols-outlined text-[14px]">download</span>
@@ -704,10 +798,11 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             if (f.type === 'USER' || f.type === 'Người duyệt thay') {
               const labelKey = f.label || f.id;
-              const fieldId = f.name || f.fieldName || f.id;
+              const fieldId = resolveFieldKey(f);
               return (
-                <div key={fieldId} className="flex flex-col gap-2">
-                  <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+                <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
+                  <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  {renderFieldError(fieldId)}
                   <select
                     className={fieldCls}
                     required={f.required}
@@ -725,10 +820,11 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
             // Default: render as text input
             const labelKey = f.label || f.id;
-            const fieldId = f.name || f.fieldName || f.id;
+            const fieldId = resolveFieldKey(f);
             return (
-              <div key={fieldId} className="flex flex-col gap-2">
-                <label className={labelCls}>{labelKey} {f.required && <span className="text-error">*</span>}</label>
+              <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
+                <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  {renderFieldError(fieldId)}
                 <input
                   className={fieldCls}
                   type="text"
@@ -841,22 +937,31 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
         )}
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t border-outline-variant/30 bg-surface-container-low">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2.5 rounded-md border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
-          >
-            {t('Hủy')}
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!form.documentTypeId || !form.reason.trim() || (mustPickApprover && !selectedApproverId)}
-            className="px-5 py-2.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isEdit ? t('Bổ sung & gửi lại') : t('Gửi yêu cầu')}
-          </button>
+        <div className="flex flex-col gap-3 p-6 border-t border-outline-variant/30 bg-surface-container-low">
+          {/* BE-89: lỗi từ máy chủ hiện NGAY TRONG form, không đóng form rồi báo badge bên ngoài. */}
+          {fieldErrors.__submit && (
+            <div className="flex items-start gap-2 rounded-md border border-error/20 bg-error-container p-3 text-sm text-on-error-container">
+              <span className="material-symbols-outlined text-[18px] leading-none">error</span>
+              <span>{fieldErrors.__submit}</span>
+            </div>
+          )}
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-md border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+            >
+              {t('Hủy')}
+            </button>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={saving}
+              className="px-5 py-2.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? t('Đang gửi...') : (isEdit ? t('Bổ sung & gửi lại') : t('Gửi yêu cầu'))}
+            </button>
+          </div>
         </div>
       </div>
     </div>,

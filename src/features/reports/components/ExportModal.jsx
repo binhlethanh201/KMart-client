@@ -159,8 +159,15 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
               <ul className="text-blue-700 text-xs mt-1 space-y-1">
                 {filters.from && <li>{t('Từ:')} {filters.from}</li>}
                 {filters.to && <li>{t('Đến:')} {filters.to}</li>}
+                {filters.block && (
+                  <li>
+                    {t('Khối:')} {filters.block === 'retail' ? t('Khối Cửa hàng') : t('Khối Văn phòng')}
+                  </li>
+                )}
                 {filters.departmentId && <li>{t('Phòng ban: đã chọn')}</li>}
                 {filters.documentTypeId && <li>{t('Loại đơn: đã chọn')}</li>}
+                {/* BE-92: file xuất ra cũng phải lọc theo từ khoá đang gõ ở bảng. */}
+                {filters.search && <li>{t('Từ khoá:')} "{filters.search}"</li>}
               </ul>
             </div>
           )}

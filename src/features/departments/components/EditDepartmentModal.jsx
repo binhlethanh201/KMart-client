@@ -26,6 +26,23 @@ export default function EditDepartmentModal({ department, onClose }) {
   const [code, setCode] = useState(department.code || '');
   const [name, setName] = useState(department.name || '');
   const [type, setType] = useState(department.type || TYPES[0]);
+  // BE-98: đơn vị cấp trên ('' = đơn vị cấp cao nhất).
+  const [parentId, setParentId] = useState(department.parentDepartmentId || '');
+  // Không cho chọn chính nó hoặc đơn vị con/cháu làm cấp trên (tránh vòng lặp).
+  const descendantIds = (() => {
+    const out = new Set([department.id]);
+    const childrenOf = (id) => (departments || []).filter((d) => d.parentDepartmentId === id);
+    const walk = (id) => {
+      childrenOf(id).forEach((child) => {
+        if (out.has(child.id)) return;
+        out.add(child.id);
+        walk(child.id);
+      });
+    };
+    walk(department.id);
+    return out;
+  })();
+  const parentOptions = (departments || []).filter((d) => !descendantIds.has(d.id) && d.id !== department.id);
   const [icon, setIcon] = useState(department.icon || 'campaign');
   const [iconImage, setIconImage] = useState(department.iconImage || null);
   const [head, setHead] = useState(
@@ -158,6 +175,8 @@ export default function EditDepartmentModal({ department, onClose }) {
       code: code.trim().toUpperCase(),
       name: name.trim(),
       type,
+      // BE-98: đổi được đơn vị cấp trên ('' = đưa về cấp cao nhất).
+      parentDepartmentId: parentId || null,
       icon,
       iconImage,
       head,
@@ -232,6 +251,26 @@ export default function EditDepartmentModal({ department, onClose }) {
                 <option key={t}>{t}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className={labelCls}>{t('Đơn vị cấp trên')}</label>
+            <select
+              data-field="edit-dept-parent"
+              value={parentId}
+              onChange={(e) => setParentId(e.target.value)}
+              className={inputCls}
+            >
+              <option value="">{t('— Không có (đơn vị cấp cao nhất) —')}</option>
+              {parentOptions.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {t(d.name)} ({d.code})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-secondary mt-1">
+              {t('Không hiển thị chính đơn vị này và các đơn vị trực thuộc (tránh vòng lặp).')}
+            </p>
           </div>
 
           <div>

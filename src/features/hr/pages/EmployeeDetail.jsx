@@ -9,6 +9,7 @@ import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
 import { userService } from '../services/userService';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 
 const pad = (n) => String(n).padStart(2, '0');
 const DAY = 24 * 60 * 60 * 1000;
@@ -189,14 +190,23 @@ export default function EmployeeDetail() {
         {/* Profile Header Card */}
         <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-6 flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex items-start gap-5">
-            {/* Avatar */}
-            <div className="w-16 h-16 rounded-full bg-[#003B73] text-white flex items-center justify-center font-bold text-2xl flex-shrink-0 shadow-inner">
-               {employee.name.charAt(0)}
+            {/* Avatar — BE-97: hiện ẢNH ĐẠI DIỆN thật (trước đây chỉ hiện chữ cái đầu nên ảnh vừa
+                tải lên ở danh sách/ hồ sơ không thấy ở đây); lỗi ảnh thì mới rơi về chữ cái đầu. */}
+            <div className="relative w-16 h-16 rounded-full bg-[#003B73] text-white flex items-center justify-center font-bold text-2xl flex-shrink-0 shadow-inner overflow-hidden">
+              <span>{employee.name.charAt(0)}</span>
+              {employee.avatar && (
+                <img
+                  src={employee.avatar}
+                  alt={employee.name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              )}
             </div>
             {/* Info */}
             <div className="flex flex-col gap-1.5">
                <div className="flex items-center gap-2">
-                 <h1 className="text-xl md:text-2xl font-bold text-on-surface tracking-tight leading-none">{employee.name}</h1>
+                 <h1 className={PAGE_TITLE_CLS}>{employee.name}</h1>
                  <button onClick={() => setProfileModalOpen(true)} title={t('Xem hồ sơ chi tiết')} className="w-6 h-6 rounded-full border border-outline-variant text-secondary hover:text-primary hover:border-primary hover:bg-primary/5 flex items-center justify-center transition-colors cursor-pointer">
                    <span className="material-symbols-outlined text-[14px]">person_search</span>
                  </button>

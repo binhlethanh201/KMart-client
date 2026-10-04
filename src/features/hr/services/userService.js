@@ -6,6 +6,17 @@ export const getFullAvatarUrl = (url) => {
   return url;
 };
 
+/**
+ * BE-97: đổi URL ảnh đại diện về dạng ĐƯỜNG DẪN tương đối trước khi lưu vào hồ sơ.
+ * Giá trị hiển thị trong app là URL đầy đủ (có host) nên nếu lưu nguyên vào DB thì ảnh sẽ hỏng
+ * khi API đổi địa chỉ (đổi cổng/máy chủ/tên miền).
+ */
+export const toApiPath = (url) => {
+  if (!url) return url;
+  if (url.startsWith(API_URL)) return url.slice(API_URL.length);
+  return url;
+};
+
 const mapToFrontendModel = (u) => {
   const primaryPos = u.positions?.find(p => p.isPrimary) || u.positions?.[0];
   const secondaryPos = u.positions?.filter(p => !p.isPrimary) || [];
@@ -134,7 +145,9 @@ export const userService = {
       fullName: data.name,
       personalEmail: data.personalEmail || null,
       phone: data.phone || null,
-      avatarUrl: data.avatar || null,
+      // BE-97: lưu ĐƯỜNG DẪN tương đối trong hồ sơ, không lưu URL đầy đủ kèm host
+      // (trước đây lưu "http://localhost:5151/api/..." nên khi đổi máy chủ là ảnh hỏng).
+      avatarUrl: toApiPath(data.avatar) || null,
       profileData: data.profileData ? JSON.stringify(data.profileData) : null
     };
     const response = await apiClient.put('/users/profile', payload);
@@ -144,10 +157,14 @@ export const userService = {
   uploadAvatar: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
+    // BE-97: bỏ Content-Type mặc định (application/json) để trình duyệt tự đặt
+    // multipart/form-data kèm boundary — nếu giữ application/json thì máy chủ không đọc được tệp.
     const response = await apiClient.put('/users/avatar', formData, {
       headers: { 'Content-Type': undefined }
     });
-    return getFullAvatarUrl(response.data.avatarUrl);
+    // Trả về ĐÚNG giá trị máy chủ gửi (đường dẫn tương đối) để lưu vào hồ sơ;
+    // việc ghép host chỉ làm lúc hiển thị qua getFullAvatarUrl().
+    return response.data.avatarUrl;
   },
 
   delete: async (id) => {

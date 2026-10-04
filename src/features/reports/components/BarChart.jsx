@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useI18n } from '../../../i18n/I18nProvider';
 
 /**
  * BE-51: biểu đồ cột ngang cho "Thống kê theo loại đơn".
@@ -17,6 +18,7 @@ import { useEffect, useRef, useState } from 'react';
  * data: [{ name, value, hint? }]
  */
 export default function BarChart({ data, maxBars = 10 }) {
+  const { t } = useI18n();
   const [hoverIdx, setHoverIdx] = useState(null);
   const [trackWidth, setTrackWidth] = useState(0);
   const trackRef = useRef(null);
@@ -35,7 +37,7 @@ export default function BarChart({ data, maxBars = 10 }) {
   }, []);
 
   if (!data || data.length === 0) {
-    return <div className="text-center text-gray-500 py-8">Không có dữ liệu</div>;
+    return <div className="text-center text-gray-500 py-8">{t('Không có dữ liệu')}</div>;
   }
 
   const maxValue = Math.max(...data.map((d) => d.value || 0), 1);
@@ -65,8 +67,8 @@ export default function BarChart({ data, maxBars = 10 }) {
             onMouseLeave={() => setHoverIdx(null)}
             title={`${item.name}: ${item.value} (${share.toFixed(1)}%)`}
           >
-            <div className={`w-40 text-sm truncate ${isHover ? 'text-[#1d1d1f] font-semibold' : 'text-gray-700'}`} title={item.name}>
-              {item.name}
+            <div className={`w-40 text-sm truncate ${isHover ? 'text-[#1d1d1f] font-semibold' : 'text-gray-700'}`} title={t(item.name)}>
+              {t(item.name)}
             </div>
             <div
               ref={idx === 0 ? trackRef : null}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
@@ -10,8 +10,11 @@ import { STATUS_META } from '../data/constants';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { applicationService } from '../services/applicationService';
 import { canUserApprove, canUserCancel } from '../approvalEligibility';
+import { resolveFormRows, describeSupplementChanges, parseSupplementChanges } from '../formFieldMapping';
+import { documentTypeService } from '../../../services/documentTypeService';
 import CancelRequestModal from '../components/CancelRequestModal';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 
 // BE-09: định dạng dung lượng file đính kèm
 const formatFileSize = (bytes) => {
@@ -36,7 +39,7 @@ export default function RequestDetail() {
   const { t } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
-  const { requests, currentUser, currentUserId, canApprove, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, pushToast } = useApproval();
+  const { requests, currentUser, currentUserId, canApprove, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, pushToast, departments } = useApproval();
   const { employees } = useHr();
   const listRequest = requests.find((r) => r.id === id);
 
@@ -64,6 +67,59 @@ export default function RequestDetail() {
   const request = detail && detail.id === id
     ? { ...detail, _isPendingReq: canUserApprove(detail, currentUserId) }
     : listRequest;
+
+  /** BE-89: tra tên phòng ban từ id để không hiện GUID thô trong chi tiết đơn. */
+  const departmentNames = useMemo(() => {
+    const map = new Map();
+    (departments || []).forEach((d) => map.set(d.id, d.name));
+    return map;
+  }, [departments]);
+
+  /*
+   * BE-89: nạp cấu hình field của mẫu đơn để hiện NHÃN thật ("Từ ngày") thay vì tên khoá thô
+   * ("field_1791046240220"). Trước đây trang chi tiết in thẳng khoá dữ liệu nên người duyệt không
+   * hiểu dòng đó là gì.
+   */
+  const [docFields, setDocFields] = useState([]);
+  useEffect(() => {
+    const docTypeId = request?.documentTypeId;
+    if (!docTypeId) {
+      setDocFields([]);
+      return undefined;
+    }
+    let cancelled = false;
+    documentTypeService.getById(docTypeId)
+      .then((dt) => {
+        if (cancelled) return;
+        let list = dt?.fields || [];
+        if (typeof list === 'string') {
+          try { list = JSON.parse(list); } catch (e) { list = []; }
+        }
+        setDocFields(Array.isArray(list) ? list : []);
+      })
+      .catch(() => { if (!cancelled) setDocFields([]); });
+    return () => { cancelled = true; };
+  }, [request?.documentTypeId]);
+
+  /*
+   * BE-89: các dòng chi tiết đơn — nhãn thật theo cấu hình mẫu đơn, giá trị tra theo MỌI cách gọi tên
+   * của field nên đơn tạo bằng cấu hình cũ vẫn hiện đủ.
+   */
+  const formRows = useMemo(() => {
+    const rows = resolveFormRows(docFields, request?.fields || {});
+    return rows.filter(({ key }) => !['title', 'type', 'attachment'].includes(key) && !key.startsWith('__'));
+  }, [docFields, request?.fields]);
+
+  /** Hiển thị một giá trị: mảng -> nối lại; id phòng ban -> tên phòng ban; object -> JSON. */
+  const formatFieldValue = (value, deptNames, translate) => {
+    const toText = (v) => {
+      const s = String(v);
+      return deptNames.has(s) ? translate(deptNames.get(s)) : s;
+    };
+    if (Array.isArray(value)) return value.map(toText).join(', ');
+    if (typeof value === 'object' && value !== null) return JSON.stringify(value);
+    return toText(value);
+  };
 
   const [rejectOpen, setRejectOpen] = useState(false);
   const [supplementOpen, setSupplementOpen] = useState(false);
@@ -339,7 +395,7 @@ export default function RequestDetail() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-background h-full overflow-hidden">
-      <header className="bg-surface border-b border-outline-variant flex-shrink-0 z-20">
+      <header className="bg-[#f6f6f4] border-b border-outline-variant flex-shrink-0 z-20">
         <div className="px-6 py-4 border-b border-outline-variant/50">
           <button
             onClick={() => navigate(-1)}
@@ -354,7 +410,7 @@ export default function RequestDetail() {
         <div className="px-6 py-4 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1 flex-wrap">
-              <h1 className="font-display-lg text-on-surface">{request.title}</h1>
+              <h1 className={PAGE_TITLE_CLS}>{request.title}</h1>
               <span className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${statusBadge.badge}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot}`} />
                 {t(meta.label)}
@@ -572,26 +628,38 @@ export default function RequestDetail() {
                     <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{t('Loại đơn từ')}</th>
                     <td className="py-3 px-4 text-on-surface">{request.type}</td>
                   </tr>
-                  {Object.entries(request.fields).map(([key, val]) => {
-                    // Skip internal or special fields
-                    if (['title', 'type', 'attachment'].includes(key)) return null;
-                    if (key.startsWith('__')) return null; // BE-19: ẩn trường nội bộ (snapshot người duyệt)
-                    if (val === undefined || val === null || val === '') return null; // hide empty
-                    if (Array.isArray(val) && val.length === 0) return null; // ẩn mảng rỗng (vd departments)
-
-                    // Map legacy keys to nice labels for seed data compatibility
-                    let label = key;
-                    if (key === 'startTime') label = t('Thời gian bắt đầu');
-                    else if (key === 'endTime') label = t('Thời gian kết thúc');
-                    else if (key === 'reason') label = t('Lý do cụ thể');
-                    else if (key === 'impact') label = t('Ảnh hưởng công việc');
-                    else if (key === 'totalDays') label = t('Tổng số ngày');
+                  {/* BE-89: lý do cấp đơn hiện riêng, không lẫn với field động cùng tên `reason`. */}
+                  {request.reasonText ? (
+                    <tr>
+                      <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{t('Lý do / Mô tả')}</th>
+                      <td className="py-3 px-4 text-on-surface whitespace-pre-wrap">{request.reasonText}</td>
+                    </tr>
+                  ) : null}
+                  {formRows.map(({ key, label, value, translatable }) => {
+                    /*
+                     * BE-89: nhãn lấy từ cấu hình mẫu đơn ("Từ ngày") thay vì tên khoá thô
+                     * ("field_1791046240220"); dữ liệu cũ vẫn khớp qua mọi cách gọi tên của field.
+                     * Nhãn cấu hình LUÔN thắng: chỉ những khoá không thuộc field nào mới dùng bảng
+                     * nhãn cũ, tránh việc field động tên `reason` bị đổi thành "Lý do cụ thể".
+                     * BE-103: nhãn cũ lấy từ `__fieldLabels` của đơn cũng phải được dịch như nhãn
+                     * field động — trước đây nhãn này hiện nguyên tiếng Việt ở chế độ EN/KO.
+                     */
+                    const hasStoredLabel = !translatable && !!label && label !== key;
+                    let displayLabel = translatable || hasStoredLabel ? t(label) : label;
+                    if (!displayLabel || displayLabel === key) {
+                      if (key === 'startTime') displayLabel = t('Thời gian bắt đầu');
+                      else if (key === 'endTime') displayLabel = t('Thời gian kết thúc');
+                      else if (key === 'reason') displayLabel = t('Lý do cụ thể');
+                      else if (key === 'impact') displayLabel = t('Ảnh hưởng công việc');
+                      else if (key === 'totalDays') displayLabel = t('Tổng số ngày');
+                      else if (key === 'department' || key === 'departments') displayLabel = t('Phòng ban');
+                    }
 
                     return (
                       <tr key={key}>
-                        <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{label}</th>
+                        <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{displayLabel}</th>
                         <td className="py-3 px-4 text-on-surface">
-                          {Array.isArray(val) ? val.join(', ') : (typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val))}
+                          {formatFieldValue(value, departmentNames, t)}
                         </td>
                       </tr>
                     );
@@ -828,15 +896,44 @@ export default function RequestDetail() {
                   /* 3) Người gửi đã bổ sung và gửi lại */
                   if (item.kind === 'suppDone') {
                     const h = item.h;
+                    // BE-89: hiện ĐÚNG những gì nhân viên đã sửa/thêm, không chỉ nói "đã bổ sung".
+                    const changes = describeSupplementChanges(
+                      parseSupplementChanges(h.comment),
+                      docFields,
+                      request.fields || {}
+                    );
                     return (
                       <li key={item.key} className="flex items-start gap-3">
                         <div className="w-6 h-6 rounded-full bg-pink-600/15 text-pink-700 border border-pink-300 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="material-symbols-outlined text-[12px]">refresh</span>
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs font-bold text-pink-700 uppercase tracking-wide">{t('Bổ sung thông tin')}</p>
                           <p className="text-sm text-on-surface font-medium mt-0.5">{nameOf(h.userId)} {t('(Người gửi)')}</p>
                           <p className="text-[11px] text-pink-700 mt-0.5">{t('Đã bổ sung và gửi lại ·')} {h.at}</p>
+                          {changes.length > 0 && (
+                            <div className="mt-2 rounded-lg border border-pink-200 bg-white/70 p-2.5">
+                              <p className="text-[11px] font-bold uppercase tracking-wide text-pink-700 mb-1.5">
+                                {t('Nội dung đã bổ sung')}
+                              </p>
+                              <ul className="flex flex-col gap-1.5">
+                                {changes.map((c, ci) => (
+                                  <li key={`${c.label}-${ci}`} className="text-[12px] text-on-surface">
+                                    <span className="font-semibold">{t(c.label)}:</span>{' '}
+                                    {c.from ? (
+                                      <>
+                                        <span className="text-secondary line-through">{c.from}</span>
+                                        <span className="mx-1 text-secondary">→</span>
+                                      </>
+                                    ) : (
+                                      <span className="text-[11px] uppercase text-secondary mr-1">{t('(trống)')}→</span>
+                                    )}
+                                    <span className="font-medium">{c.to || t('(để trống)')}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
                       </li>
                     );
@@ -1127,9 +1224,10 @@ export default function RequestDetail() {
           requestId={request.id}
           onClose={() => setSupplementOpen(false)}
           onConfirm={async (reason) => {
-            setSupplementOpen(false);
-            await requestSupplement(request.id, reason);
-            refreshDetail();
+            // BE-94: chỉ đóng hộp thoại khi máy chủ nhận yêu cầu; gửi lỗi thì giữ lại nội dung.
+            const res = await requestSupplement(request.id, reason);
+            if (res?.ok) refreshDetail();
+            return res;
           }}
         />
       )}

@@ -115,6 +115,12 @@ function App() {
                     <SystemConfig defaultActive="workflow" />
                   </ProtectedRoute>
                 } />
+                {/* BE-99: quản lý chức vụ & cấp bậc (trước đây chỉ có API, không có giao diện) */}
+                <Route path="settings/positions" element={
+                  <ProtectedRoute requiredPermissions={[PERMISSIONS.CONFIG_VIEW]}>
+                    <SystemConfig defaultActive="positions" />
+                  </ProtectedRoute>
+                } />
                 <Route path="settings/general" element={
                   <ProtectedRoute requiredPermissions={[PERMISSIONS.CONFIG_VIEW]}>
                     <SystemConfig defaultActive="general" />

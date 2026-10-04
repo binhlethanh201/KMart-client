@@ -61,7 +61,7 @@ function approvalSummary(step, employees = []) {
       if (step.arrangementMode === 'role') {
         return translate('Duyệt theo chức danh{v0}', { v0: step.role ? ` · ${translate(step.role)}` : '' });
       }
-      const n = Array.isArray(step.approvers) ? step.approvers.length : 0;
+      const n = stepApproverIds(step).length;
       return translate('Duyệt theo sắp xếp{v0}', { v0: n ? ` · ${n} người` : '' });
     }
     case 'specific':
@@ -73,6 +73,20 @@ function approvalSummary(step, employees = []) {
     default:
       return translate('Chưa cấu hình');
   }
+}
+
+/**
+ * BE-95: danh sách người duyệt của một bước là MỘT nguồn duy nhất.
+ *
+ * `approvers` (từ popup cấu hình) và `sequentialOrder` (kéo-thả/thêm/xoá trong danh sách) trước
+ * đây là 2 trường tách rời: danh sách sửa `sequentialOrder` còn số lượng hiển thị lấy từ
+ * `approvers`, nên thêm/bỏ người trong danh sách không làm số lượng thay đổi theo.
+ */
+function stepApproverIds(step) {
+  if (!step) return [];
+  if (Array.isArray(step.sequentialOrder) && step.sequentialOrder.length > 0) return step.sequentialOrder;
+  if (Array.isArray(step.approvers)) return step.approvers;
+  return [];
 }
 
 function SequentialOrderList({ role, order, onChange, isSequential = true }) {
@@ -346,7 +360,15 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
   const { employees: EMPLOYEES } = useHr();
   
   const [selected, setSelected] = useState(() => new Set(Array.isArray(step.approvers) ? step.approvers : []));
-  const [arrangementMode, setArrangementMode] = useState(step.arrangementMode || (step.role ? 'role' : 'specific'));
+  /**
+   * BE-95: quy tắc "Duyệt lần lượt" phải có danh sách người duyệt cụ thể theo thứ tự nên KHÔNG
+   * cho chọn "Để người tạo đơn quyết định" (chỉ bỏ ở quy tắc này; 2 quy tắc đồng thời vẫn giữ).
+   */
+  const roleModeAllowed = step.multiRule !== 'sequential';
+  const [arrangementMode, setArrangementMode] = useState(() => {
+    const initial = step.arrangementMode || (step.role ? 'role' : 'specific');
+    return !roleModeAllowed && initial === 'role' ? 'specific' : initial;
+  });
   const [role, setRole] = useState(step.role || '');
   
   const [search, setSearch] = useState('');
@@ -431,6 +453,15 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
         </div>
 
         <div className="flex flex-col gap-3 p-4 bg-surface-container-low border-b border-outline-variant/50">
+          {!roleModeAllowed && (
+            <div className="flex items-start gap-2 text-[12px] rounded-md border border-outline-variant bg-surface px-3 py-2">
+              <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0 mt-px">format_list_numbered</span>
+              <span className="text-secondary">
+                {t('Quy tắc "Duyệt lần lượt" cần danh sách người duyệt cụ thể theo thứ tự — hãy tích chọn người duyệt bên dưới.')}
+              </span>
+            </div>
+          )}
+          {roleModeAllowed && (
           <label className="flex items-start gap-2 cursor-pointer group">
             <input
               type="radio"
@@ -463,6 +494,7 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
               )}
             </div>
           </label>
+          )}
 
           <label className="flex items-start gap-2 cursor-pointer group">
             <input
@@ -683,7 +715,9 @@ function makeStep(overrides = {}, roles = [], employees = []) {
   const defaultSpecificUser = employees.length > 0 ? employees[0]?.id : null;
   return {
     id: `s${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    name: 'Bước duyệt mới',
+    // Tên mặc định của bước là DỮ LIỆU người dùng sửa được, nhưng lúc tạo mới thì nên là tiếng của
+    // ngôn ngữ đang dùng — trước đây hardcode tiếng Việt nên chế độ EN/KO hiện "Bước duyệt mới".
+    name: translate('Bước duyệt mới'),
     approvalType: 'hierarchy',
     hierarchyOption: 'department_head',
     chainStart: 'direct_manager',
@@ -731,7 +765,7 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
       >
         <div className="flex items-center gap-2 overflow-hidden pr-2">
           <span className="text-sm text-on-surface font-semibold truncate">
-            {selectedDoc ? selectedDoc.name : t('Chọn loại đơn...')}
+            {selectedDoc ? t(selectedDoc.name) : t('Chọn loại đơn...')}
           </span>
           {selectedDoc && configuredTypes.has(selectedDoc.id) && (
             <span className="material-symbols-outlined text-[16px] text-success flex-shrink-0" title={t('Đã cấu hình luồng cho khối này')}>check_circle</span>
@@ -762,7 +796,7 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
                       onClick={(e) => { e.stopPropagation(); toggleGroup(cat.id); }}
                       className={`px-3 py-2 bg-surface-container-low/90 text-[11px] font-bold text-primary uppercase tracking-wider sticky top-0 backdrop-blur-md flex items-center justify-between z-10 border-b border-outline-variant/30 cursor-pointer hover:bg-surface-container-low ${idx === 0 ? '' : 'mt-1'}`}
                     >
-                      <span>{cat.name}</span>
+                      <span>{t(cat.name)}</span>
                       <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
                         expand_more
                       </span>
@@ -790,7 +824,7 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
                               }`}
                             >
                               <span className="flex flex-col gap-0.5 min-w-0">
-                                <span className="break-words whitespace-normal leading-tight">{f.name}</span>
+                                <span className="break-words whitespace-normal leading-tight">{t(f.name)}</span>
                                 {note && (
                                   <span className={`text-[11px] leading-tight ${st.blocked ? 'text-secondary' : 'text-on-surface/60'}`}>
                                     {note}
@@ -1042,7 +1076,11 @@ export default function WorkflowTab() {
             }
             
             if (stepData.approvalType === 'role') {
-              if (stepData.sequentialOrder !== null) {
+              // BE-95: quy tắc "Duyệt lần lượt" BẮT BUỘC có danh sách người duyệt cụ thể (theo
+              // thứ tự) nên không dùng chế độ "Để người tạo đơn quyết định" ở đây.
+              if (stepData.multiRule === 'sequential') {
+                stepData.arrangementMode = 'specific';
+              } else if (stepData.sequentialOrder !== null) {
                 stepData.arrangementMode = 'specific';
               } else {
                 stepData.arrangementMode = 'role';
@@ -1222,7 +1260,7 @@ export default function WorkflowTab() {
     });
   };
   const addStep = () => {
-    const newStep = makeStep({ track: block, name: 'Bước duyệt mới' }, approvalRoles, EMPLOYEES);
+    const newStep = makeStep({ track: block, name: translate('Bước duyệt mới') }, approvalRoles, EMPLOYEES);
     setWorkflows((prev) => ({
       ...prev,
       [formType]: {
@@ -1306,6 +1344,11 @@ export default function WorkflowTab() {
       if (type === 'role' && (!Array.isArray(step.approvers) || step.approvers.length === 0) && !step.role) {
         errs.push(t('{v0}: Cần chọn chức danh/bộ phận cho hình thức này', { v0: where }));
       }
+      // BE-95: quy tắc "Duyệt lần lượt" không dùng chế độ "Để người tạo đơn quyết định" nên bắt
+      // buộc phải có danh sách người duyệt cụ thể, nếu không máy chủ sẽ lưu bước trống người duyệt.
+      if (type === 'role' && step.multiRule === 'sequential' && stepApproverIds(step).length === 0) {
+        errs.push(t('{v0}: Quy tắc "Duyệt lần lượt" cần chọn danh sách người duyệt theo thứ tự', { v0: where }));
+      }
       if (type === 'specific') {
         const hasUser =
           resolveEmployeeId(step.specificUser) ||
@@ -1352,21 +1395,31 @@ export default function WorkflowTab() {
       const bothBlocksHaveFlow = scopeData.hq.length > 0 && scopeData.retail.length > 0;
       const dropCommon = bothBlocksHaveFlow && (Boolean(staleCommonId) || scopeData.common?.length > 0);
 
+      // Có thực sự ghi gì lên máy chủ không (để không báo "Đã lưu" khi chưa lưu gì).
+      let savedAnything = false;
+
       for (const scope of scopes) {
         const wfId = workflowIds[`${formType}_${scope}`];
+        // BE-95: `scopeData[scope]` có thể chưa tồn tại (dữ liệu nạp dở/khối mới) — trước đây
+        // `.map` trên undefined ném TypeError và người dùng chỉ thấy "Không lưu được luồng duyệt".
+        const scopeSteps = Array.isArray(scopeData[scope]) ? scopeData[scope] : [];
         const req = {
           name: `Luồng duyệt ${scope.toUpperCase()} cho form ${formType}`,
           documentTypeId: formType,
           scope: scope,
           isDefault: true,
-          steps: scopeData[scope].map((s, idx) => {
+          steps: scopeSteps.map((s, idx) => {
             const type = s.approvalType || 'role';
+            // BE-95: "Duyệt lần lượt" luôn là danh sách người duyệt cụ thể (không có chế độ
+            // "Để người tạo đơn quyết định") — áp dụng cả khi dữ liệu cũ còn giữ arrangementMode
+            // là 'role' để không gửi lên cấu hình mâu thuẫn.
+            const arrangementMode = s.multiRule === 'sequential' ? 'specific' : s.arrangementMode;
             // BE-50: CHỈ gửi các trường thuộc hình thức duyệt đang chọn.
             // Trước đây gửi tất cả (role + specificUser + chainStart/End + hierarchyOption) cho
             // MỌI bước, nên các bước "ăn vào nhau": bước quản lý trực tiếp vẫn mang theo người
             // được chỉ định + chức danh của bước khác -> cây luồng và đơn bị lẫn người duyệt.
             const designatedUserId = (() => {
-              if (type === 'role' && s.arrangementMode === 'role') return null;
+              if (type === 'role' && arrangementMode === 'role') return null;
               if (Array.isArray(s.approvers) && s.approvers.length === 1) return resolveEmployeeId(s.approvers[0]);
               if (s.specificUser) return resolveEmployeeId(s.specificUser);
               if (s.specificUserId) return resolveEmployeeId(s.specificUserId);
@@ -1382,12 +1435,10 @@ export default function WorkflowTab() {
             // "theo chức danh" ở chế độ chọn tay.
             const specificUserId = isSpecific
               ? designatedUserId
-              : (isRole && s.arrangementMode !== 'role' ? designatedUserId : null);
+              : (isRole && arrangementMode !== 'role' ? designatedUserId : null);
 
-            const sequentialOrder = isRole && s.arrangementMode !== 'role'
-              ? (Array.isArray(s.sequentialOrder) && s.sequentialOrder.length > 0
-                  ? s.sequentialOrder
-                  : (Array.isArray(s.approvers) ? s.approvers : null))
+            const sequentialOrder = isRole && arrangementMode !== 'role'
+              ? (stepApproverIds(s).length > 0 ? stepApproverIds(s) : null)
               : null;
 
             return {
@@ -1424,6 +1475,7 @@ export default function WorkflowTab() {
           // mới -> response trả về id MỚI. Không cập nhật lại id thì lần lưu sau sẽ sửa
           // nhầm vào bản đã lưu trữ và sinh thêm phiên bản mới mỗi lần bấm Lưu.
           const updated = await workflowService.update(wfId, payload);
+          savedAnything = true;
           if (updated?.id && updated.id !== wfId) {
             setWorkflowIds(prev => ({ ...prev, [`${formType}_${scope}`]: updated.id }));
           }
@@ -1438,8 +1490,19 @@ export default function WorkflowTab() {
           }
         } else if (req.steps.length > 0 && !(scope === 'common' && dropCommon)) {
           const created = await workflowService.create(req);
+          savedAnything = true;
           setWorkflowIds(prev => ({ ...prev, [`${formType}_${scope}`]: created.id }));
         }
+      }
+
+      // BE-95: không có khối nào có bước duyệt thì KHÔNG gửi gì lên máy chủ — trước đây vẫn báo
+      // "Đã lưu cấu hình luồng duyệt" khiến người dùng tưởng đã lưu được nhưng thực tế không có gì.
+      if (!savedAnything) {
+        pushToast(
+          t('Chưa có bước duyệt nào để lưu. Hãy bấm "Thêm bước duyệt tiếp theo" cho khối cần cấu hình rồi lưu lại.'),
+          'warning'
+        );
+        return;
       }
 
       // Danh sách "loại đơn đã cấu hình ở khối nào" được dựng từ dữ liệu server -> nạp lại
@@ -1462,7 +1525,13 @@ export default function WorkflowTab() {
       console.error(t('Không lưu được luồng duyệt:'), err);
       // Hiển thị thông báo lỗi từ backend (validator trả về mảng errors)
       const data = err?.response?.data;
-      const detail = Array.isArray(data?.errors) ? data.errors.join(' • ') : (data?.message || data?.error);
+      const status = err?.response?.status;
+      const detail = Array.isArray(data?.errors)
+        ? data.errors.join(' • ')
+        : (data?.message || data?.error
+          || (status ? t('Máy chủ trả về lỗi {v0}', { v0: status }) : null)
+          || (err?.request ? t('Không kết nối được tới máy chủ. Kiểm tra lại kết nối rồi thử lưu lại.') : null)
+          || (typeof data === 'string' && data.trim() ? data.trim().slice(0, 200) : null));
       pushToast(detail || t('Không lưu được luồng duyệt'), 'error');
     }
   };
@@ -1541,8 +1610,11 @@ export default function WorkflowTab() {
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => {
           const isActive = openStepIds.has(step.id);
-          const hasExplicitApprovers = step.arrangementMode !== 'role' && Array.isArray(step.approvers) && step.approvers.length > 0;
-          const activeApproverCount = step.approvers?.length || 0;
+          const hasExplicitApprovers = step.arrangementMode !== 'role' && stepApproverIds(step).length > 0;
+          const activeApproverCount = stepApproverIds(step).length;
+          // BE-95: "Duyệt lần lượt" không có chế độ "Để người tạo đơn quyết định" -> luôn hiển thị
+          // như danh sách người duyệt cụ thể để thẻ bước khớp với popup cấu hình.
+          const effectiveArrangement = step.multiRule === 'sequential' ? 'specific' : step.arrangementMode;
           const showMulti = step.approvalType === 'role' && hasExplicitApprovers;
           return (
             <div
@@ -1711,7 +1783,12 @@ export default function WorkflowTab() {
                                       name={`multi-${step.id}`}
                                       checked={step.multiRule === r.id}
                                       onClick={() => {
-                                        updateStep(step.id, { multiRule: r.id });
+                                        // BE-95: "Duyệt lần lượt" cần danh sách người duyệt cụ thể
+                                        // theo thứ tự -> bỏ chế độ "Để người tạo đơn quyết định"
+                                        // (chỉ áp dụng cho quy tắc này, 2 quy tắc đồng thời giữ nguyên).
+                                        updateStep(step.id, r.id === 'sequential'
+                                          ? { multiRule: r.id, arrangementMode: 'specific', role: '' }
+                                          : { multiRule: r.id });
                                         setAdvancedStepId(step.id);
                                       }}
                                       title={t(r.label)}
@@ -1739,13 +1816,13 @@ export default function WorkflowTab() {
                                   <div className="mt-4 border border-outline-variant/60 rounded-lg p-3.5 bg-surface-container-lowest flex items-center justify-between gap-4">
                                     <div className="flex-1">
                                       <div className="text-sm font-semibold text-on-surface">
-                                        {step.arrangementMode === 'role' ? t('Chức danh / Phòng ban cần duyệt') : t('Danh sách người duyệt')}
+                                        {effectiveArrangement === 'role' ? t('Chức danh / Phòng ban cần duyệt') : t('Danh sách người duyệt')}
                                       </div>
                                       <div className="text-[12px] text-secondary mt-1">
-                                        {step.arrangementMode === 'role'
+                                        {effectiveArrangement === 'role'
                                           ? t('Để người tạo đơn quyết định · Chức danh: {v0}', { v0: step.role ? t(step.role) : t('Chưa chọn') })
-                                          : step.arrangementMode === 'specific' && step.approvers && step.approvers.length > 0
-                                          ? t(`Đã chỉ định ${step.approvers.length} người`)
+                                          : effectiveArrangement === 'specific' && activeApproverCount > 0
+                                          ? t(`Đã chỉ định ${activeApproverCount} người`)
                                           : t('Chưa cấu hình người duyệt')}
                                       </div>
                                     </div>
@@ -1754,7 +1831,7 @@ export default function WorkflowTab() {
                                       onClick={() => setAdvancedStepId(step.id)}
                                       className="bg-primary/10 text-primary hover:bg-primary hover:text-on-primary transition-colors text-sm font-medium px-4 py-2 rounded-md flex-shrink-0 cursor-pointer"
                                     >
-                                      {(step.arrangementMode === 'role' && step.role) || (step.arrangementMode === 'specific' && step.approvers && step.approvers.length > 0)
+                                      {(effectiveArrangement === 'role' && step.role) || (effectiveArrangement === 'specific' && activeApproverCount > 0)
                                         ? t('Thay đổi')
                                         : t('Cấu hình')}
                                     </button>
@@ -1883,10 +1960,13 @@ export default function WorkflowTab() {
                           <SequentialOrderList
                             role={step.role}
                             isSequential={step.multiRule === 'sequential'}
-                            order={step.sequentialOrder || step.approvers}
-                            onChange={(newOrder) => updateStep(step.id, { sequentialOrder: newOrder })}
+                            order={stepApproverIds(step)}
+                            // BE-95: sửa danh sách người duyệt (thêm/xoá/kéo-thả) phải cập nhật CẢ
+                            // `approvers` lẫn `sequentialOrder`, nếu không số lượng hiển thị và
+                            // dữ liệu gửi lên máy chủ lệch nhau.
+                            onChange={(newOrder) => updateStep(step.id, { sequentialOrder: newOrder, approvers: newOrder })}
                           />
-                          {(Array.isArray(step.approvers) && step.approvers.length === 1) && (
+                          {(Array.isArray(stepApproverIds(step)) && stepApproverIds(step).length === 1) && (
                             <div className="mt-3 flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
                               <span className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
                               <span className="text-secondary">
@@ -1993,7 +2073,7 @@ export default function WorkflowTab() {
                       drag_indicator
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-on-surface truncate">{step.name}</div>
+                      <div className="text-sm font-semibold text-on-surface truncate">{t(step.name)}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="material-symbols-outlined text-outline text-[14px]">account_tree</span>
                         <span className="text-xs text-secondary truncate">{approvalSummary(step, EMPLOYEES)}</span>

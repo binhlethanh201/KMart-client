@@ -9,6 +9,7 @@ import { roleStyle } from '../../../utils/roleLabels';
 import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
+import PageHeader from '../../../components/PageHeader';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
 // BE-77/79: dùng đúng style ô lọc của trang Báo cáo để các trang nhìn đồng bộ.
@@ -26,8 +27,8 @@ export default function HumanResources() {
   const { t } = useI18n();
   useDocumentTitle(t('Quản lý Nhân sự'));
   const navigate = useNavigate();
-  const { employees, departments, positions, roles, loading, error, saveEmployee, toggleLock: toggleLockHr, resetPassword: resetPasswordHr, deleteEmployee } = useHr();
-  const { pushToast, currentUser, hasPermission } = useApproval();
+  const { employees, departments, positions, roles, loading, error, saveEmployee } = useHr();
+  const { currentUser, hasPermission } = useApproval();
 
   const isStaff = currentUser?.role === 'STAFF';
 
@@ -39,12 +40,10 @@ export default function HumanResources() {
 
   // BE dùng mã USER_* cho nghiệp vụ nhân sự -> dùng hằng số có alias (không hardcode
   // 'PERSONNEL_*' vì các mã đó không tồn tại ở backend nên nút luôn bị ẩn).
+  // BE-96: danh sách chỉ còn "Xem chi tiết" + "Chỉnh sửa" nên chỉ cần 2 quyền này.
   const canAddEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_CREATE) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
   const canEditEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_UPDATE) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
-  const canDeleteEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_DELETE) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
-  const canResetPassword = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_RESET_PASSWORD) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
-  const canLockEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_LOCK) : (currentUser?.role === 'ADMIN' || currentUser?.role === 'HR');
-  
+
   const canEdit = canEditEmployee || canAddEmployee;
 
   const [search, setSearch] = useState('');
@@ -121,53 +120,26 @@ export default function HumanResources() {
     }
     return { ok: false, message: result?.message };
   };
-  const toggleLock = (emp, e) => {
-    if (e) e.stopPropagation();
-    toggleLockHr(emp.id);
-  };
-  const handleResetPassword = async (emp, e) => {
-    if (e) e.stopPropagation();
-    if (!window.confirm(t('Đặt lại mật khẩu cho "{v0}"? Một mật khẩu tạm sẽ được tạo.', { v0: emp.name }))) return;
-    const pwd = await resetPasswordHr(emp.id);
-    if (pwd) pushToast(t('Mật khẩu tạm cho {v0}: {v1}', { v0: emp.name, v1: pwd }), 'success');
-    else pushToast(t('Không thể đặt lại mật khẩu cho {v0}.', { v0: emp.name }), 'error');
-  };
-  /** BE-87: xoá nhân sự — hỏi xác nhận rồi mới gọi API. */
-  const handleDeleteEmployee = async (emp, e) => {
-    if (e) e.stopPropagation();
-    if (!window.confirm(t('Bạn có chắc muốn xóa nhân sự "{v0}"? Thao tác này không thể hoàn tác.', { v0: emp.name }))) return;
-    const result = await deleteEmployee(emp.id);
-    if (result?.ok) pushToast(t('Đã xóa nhân sự "{v0}".', { v0: emp.name }), 'success');
-    else pushToast(result?.message || t('Không xóa được nhân sự'), 'error');
-  };
 
   return (
     <section className="flex-1 flex flex-col h-full overflow-hidden bg-background">
-      {/* Header & Action Bar */}
-      <div className="bg-surface border-b border-outline-variant p-6 flex-shrink-0 z-10 shadow-sm">
-        <div className="w-full flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-[24px]">group</span>
-            </div>
-            <h1 className="text-2xl font-bold text-on-surface tracking-tight">{t('Quản lý Nhân sự')}</h1>
-          </div>
-          <div className="flex gap-2 flex-shrink-0 w-full md:w-auto">
-            {canAddEmployee && (
-              <button
-                onClick={openAdd}
-                className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[18px]">person_add</span>
-                {t('Tạo tài khoản nhân viên')}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Header & Action Bar — BE-97: dùng khung tiêu đề chung (nền ấm, chữ đồng nhất) */}
+      <PageHeader
+        icon="group"
+        title="Quản lý Nhân sự"
+        actions={canAddEmployee && (
+          <button
+            onClick={openAdd}
+            className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            {t('Tạo tài khoản nhân viên')}
+          </button>
+        )}
+      />
 
       {/* Filter Bar */}
-      <div className="bg-surface border-b border-outline-variant p-4 flex-shrink-0 z-10">
+      <div className="bg-[#f6f6f4] border-b border-outline-variant p-4 flex-shrink-0 z-10">
         <div className="w-full flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1 lg:max-w-sm">
             <span className={FILTER_SEARCH_ICON_CLS}>search</span>
@@ -328,6 +300,9 @@ export default function HumanResources() {
                         </td>
                         {/* Thao tác */}
                         <td className="px-4 py-3">
+                          {/* BE-96: danh sách chỉ giữ "Xem chi tiết" và "Chỉnh sửa" cho gọn.
+                              Các thao tác còn lại (đặt lại mật khẩu / khoá tài khoản / xoá nhân sự)
+                              nằm trong menu "Thao tác" ở trang chi tiết nhân sự. */}
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={(ev) => { ev.stopPropagation(); openView(e); }}
@@ -337,43 +312,13 @@ export default function HumanResources() {
                               <span className="material-symbols-outlined text-[18px]">visibility</span>
                             </button>
                             {canEdit && (
-                              <>
-                                <button
-                                  onClick={(ev) => openEdit(e, ev)}
-                                  className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
-                                  title={t('Chỉnh sửa')}
-                                >
-                                  <span className="material-symbols-outlined text-[18px]">edit</span>
-                                </button>
-                                <button
-                                  onClick={(ev) => handleResetPassword(e, ev)}
-                                  className="text-secondary hover:text-warning hover:bg-warning-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
-                                  title={t('Reset mật khẩu')}
-                                >
-                                  <span className="material-symbols-outlined text-[18px]">lock_reset</span>
-                                </button>
-                                <button
-                                  onClick={(ev) => toggleLock(e, ev)}
-                                  className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                                    e.status === 'active'
-                                      ? 'text-secondary hover:text-error hover:bg-error-container/40'
-                                      : 'text-secondary hover:text-success hover:bg-success-container/40'
-                                  }`}
-                                  title={e.status === 'active' ? t('Khóa tài khoản') : t('Mở khóa tài khoản')}
-                                >
-                                  <span className="material-symbols-outlined text-[18px]">
-                                    {e.status === 'active' ? 'lock_open' : 'lock'}
-                                  </span>
-                                </button>
-                                {/* BE-87: xoá nhân sự (API đã có sẵn nhưng trước đây UI không gọi tới) */}
-                                <button
-                                  onClick={(ev) => handleDeleteEmployee(e, ev)}
-                                  className="text-secondary hover:text-error hover:bg-error-container/40 p-1.5 rounded-md transition-colors cursor-pointer"
-                                  title={t('Xóa nhân sự')}
-                                >
-                                  <span className="material-symbols-outlined text-[18px]">delete</span>
-                                </button>
-                              </>
+                              <button
+                                onClick={(ev) => openEdit(e, ev)}
+                                className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
+                                title={t('Chỉnh sửa')}
+                              >
+                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                              </button>
                             )}
                           </div>
                         </td>

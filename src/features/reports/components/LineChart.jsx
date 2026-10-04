@@ -1,6 +1,9 @@
+import { useI18n } from '../../../i18n/I18nProvider';
+
 export default function LineChart({ data, isDark = false }) {
+  const { t } = useI18n();
   if (!data || data.length === 0) {
-    return <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Không có dữ liệu xu hướng</div>;
+    return <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t('Không có dữ liệu xu hướng')}</div>;
   }
 
   const chartData = data.slice(0, 6).reverse();
@@ -21,7 +24,7 @@ export default function LineChart({ data, isDark = false }) {
               <div className="w-full flex items-end justify-center h-full relative">
                 {/* Tooltip */}
                 <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-xs py-1 px-2 rounded font-bold pointer-events-none z-10 whitespace-nowrap">
-                  {approved} đơn
+                  {approved} {t('đơn')}
                 </div>
 
                 <div

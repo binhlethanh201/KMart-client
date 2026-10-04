@@ -26,7 +26,7 @@ function Toggle({ checked, onChange, label, disabled }) {
 }
 
 export default function FormTemplatesTab() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { formFields: fields, setFormFields: setFields, pushToast } = useApproval();
 
   const [categories, setCategories] = useState([]);
@@ -373,6 +373,14 @@ export default function FormTemplatesTab() {
 
   const toggleCat = (id) => setExpandedCats(prev => ({...prev, [id]: !prev[id]}));
 
+  // BE-103: xem trước bản dịch của tên trường ở ngôn ngữ hiện tại (rỗng nếu trùng bản gốc).
+  const translateFieldLabelPreview = (label) => {
+    const raw = String(label ?? '').trim();
+    if (!raw) return '';
+    const translated = t(raw);
+    return translated && translated !== raw ? translated : '';
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
       {/* Form templates list */}
@@ -422,7 +430,7 @@ export default function FormTemplatesTab() {
                           onClick={e => e.stopPropagation()}
                         />
                       ) : (
-                        cat.name
+                        t(cat.name)
                       )}
                     </button>
                     {!isEditing && (
@@ -472,7 +480,7 @@ export default function FormTemplatesTab() {
                               }`}
                             >
                               <span className="material-symbols-outlined text-[16px]">{active ? 'description' : 'draft'}</span>
-                              <span className="truncate">{f}</span>
+                              <span className="truncate">{t(f)}</span>
                             </button>
                             <button 
                               onClick={(e) => {
@@ -509,7 +517,7 @@ export default function FormTemplatesTab() {
       <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden flex flex-col">
         <div className="px-4 py-3 border-b border-outline-variant flex items-center justify-between">
           <div>
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('Quản lý trường:')} {selectedForm}</h3>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('Quản lý trường:')} {t(selectedForm)}</h3>
             <p className="text-xs text-secondary mt-0.5">{t('Cấu hình trường dữ liệu và điều kiện hiển thị động')}</p>
           </div>
           <div className="flex gap-2">
@@ -553,6 +561,16 @@ export default function FormTemplatesTab() {
                       onChange={(e) => updateField(idx, { label: e.target.value })}
                       className="text-sm font-medium text-on-surface bg-transparent border-b border-transparent hover:border-outline-variant focus:border-primary outline-none px-1 py-0.5 w-full max-w-[200px] transition-colors"
                     />
+                    {/*
+                      BE-103: giá trị ô này là dữ liệu người dùng nhập (không dịch tại chỗ để tránh ghi
+                      bản dịch ngược vào DB). Hiện thêm dòng xem trước bản dịch của tên trường ở
+                      ngôn ngữ đang chọn để biết trường mới có được dịch đúng hay không.
+                    */}
+                    {language !== 'vi' && translateFieldLabelPreview(f.label) && (
+                      <span className="block text-[11px] text-on-surface-variant px-1 mt-0.5 truncate max-w-[200px]">
+                        {translateFieldLabelPreview(f.label)}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <button 
@@ -563,7 +581,7 @@ export default function FormTemplatesTab() {
                         <span className="material-symbols-outlined text-[14px]">
                           {f.type === 'Tải file' ? 'attach_file' : f.type === 'Ngày' ? 'calendar_month' : f.type === 'Số' ? 'numbers' : f.type === 'Lựa chọn' ? 'list_alt' : f.type === 'Người duyệt thay' ? 'manage_accounts' : 'text_fields'}
                         </span>
-                        {f.type}
+                        {t(f.type)}
                       </div>
                       <span className="material-symbols-outlined text-[14px] text-outline">edit</span>
                     </button>

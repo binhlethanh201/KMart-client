@@ -138,6 +138,8 @@ export default function AddDepartmentModal({ onClose }) {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState(TYPES[0]);
+  // BE-98: đơn vị cấp trên ('' = đơn vị gốc).
+  const [parentId, setParentId] = useState('');
   const [status, setStatus] = useState('active');
   const [icon, setIcon] = useState('campaign');
   const [iconImage, setIconImage] = useState(null);
@@ -239,6 +241,7 @@ export default function AddDepartmentModal({ onClose }) {
       code: code.trim().toUpperCase(),
       name: name.trim(),
       type,
+      parentDepartmentId: parentId || null,
       status,
       icon,
       iconImage,
@@ -332,6 +335,28 @@ export default function AddDepartmentModal({ onClose }) {
                   <option key={t}>{t}</option>
                 ))}
               </select>
+            </div>
+
+            {/* BE-98: đơn vị cấp trên — dựng sơ đồ tổ chức nhiều cấp (VD: Ban → Phòng → Nhóm).
+                Bộ duyệt cũng dựa vào cấp trên để leo cấp khi duyệt đơn. */}
+            <div>
+              <label className={labelCls}>{t('Đơn vị cấp trên')}</label>
+              <select
+                data-field="dept-parent"
+                value={parentId}
+                onChange={(e) => setParentId(e.target.value)}
+                className={errors.parent ? inputErrCls : inputCls}
+              >
+                <option value="">{t('— Không có (đơn vị cấp cao nhất) —')}</option>
+                {(departments || []).map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {t(d.name)} ({d.code})
+                  </option>
+                ))}
+              </select>
+              {errors.parent
+                ? <p className="text-xs text-error mt-1">{errors.parent}</p>
+                : <p className="text-xs text-secondary mt-1">{t('Để trống nếu đây là đơn vị cấp cao nhất.')}</p>}
             </div>
 
             <div>

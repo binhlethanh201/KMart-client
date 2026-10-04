@@ -1,9 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { userService, getFullAvatarUrl } from '../../hr/services/userService';
 
 const fieldCls = 'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
+
+/**
+ * BE-97: kiểm tra ảnh đại diện NGAY TRÊN FORM trước khi gửi lên máy chủ.
+ * Trước đây chọn tệp nào cũng gửi (chỉ chặn ở máy chủ) nên người dùng chỉ nhận một `alert`
+ * khó hiểu; tệp > 5MB còn bị máy chủ trả 413 và không rõ lý do.
+ */
+const AVATAR_EXT = ['.jpg', '.jpeg', '.png'];
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+function validateAvatarFile(file, t) {
+  const name = String(file?.name || '');
+  const dot = name.lastIndexOf('.');
+  const ext = dot >= 0 ? name.slice(dot).toLowerCase() : '';
+  if (!AVATAR_EXT.includes(ext)) {
+    return t('Chỉ nhận ảnh {v0}.', { v0: AVATAR_EXT.join(', ') });
+  }
+  if (file.size > AVATAR_MAX_BYTES) {
+    return t('Ảnh vượt quá {v0}MB.', { v0: AVATAR_MAX_BYTES / (1024 * 1024) });
+  }
+  return null;
+}
 
 export default function EditProfileModal({ user, onClose, onSave }) {
   const { t } = useI18n();
@@ -135,29 +156,44 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                 <div className="flex items-center gap-5">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-outline-variant/50 shadow-sm shrink-0 bg-white">
                     <img 
-                      src={form.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.name || 'User')}&background=random&color=fff&size=128`} 
+                      src={getFullAvatarUrl(form.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.name || 'User')}&background=random&color=fff&size=128`} 
                       alt="Avatar Preview" 
                       className="w-full h-full object-cover"
+                      onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(form.name || 'User')}&background=random&color=fff&size=128`; }}
                     />
                   </div>
                   <div className="flex-1 flex flex-col items-start gap-1">
-                    <label className="cursor-pointer text-sm font-medium text-primary bg-primary-container/50 hover:bg-primary-container px-4 py-2 rounded-full transition-colors inline-block">
-                      {t('Tải ảnh lên')}
+                    <label className={`cursor-pointer text-sm font-medium text-primary bg-primary-container/50 hover:bg-primary-container px-4 py-2 rounded-full transition-colors inline-block ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
+                      {loading ? t('Đang tải ảnh...') : t('Tải ảnh lên')}
                       <input 
                         type="file" 
-                        accept="image/*"
+                        accept="image/png,image/jpeg"
                         className="hidden"
                         onChange={async (e) => {
-                          const file = e.target.files[0];
+                          const file = e.target.files?.[0];
+                          e.target.value = '';   // chọn lại CÙNG một tệp vẫn phải kích hoạt onChange
                           if (!file) return;
+
+                          const invalid = validateAvatarFile(file, t);
+                          if (invalid) {
+                            setErrors((prev) => ({ ...prev, avatar: invalid }));
+                            return;
+                          }
+
                           try {
+                            setErrors((prev) => ({ ...prev, avatar: null }));
                             setLoading(true);
-                            const { userService } = await import('../../hr/services/userService');
-                            const url = await userService.uploadAvatar(file);
-                            setForm(f => ({ ...f, avatar: url }));
+                            // BE-97: máy chủ trả về ĐƯỜNG DẪN (/api/users/avatar/...) -> giữ nguyên
+                            // dạng đường dẫn trong hồ sơ, chỉ ghép host khi hiển thị. Trước đây form
+                            // lưu luôn URL đầy đủ nên đổi máy chủ là ảnh hỏng.
+                            const path = await userService.uploadAvatar(file);
+                            setForm(f => ({ ...f, avatar: path }));
                           } catch (err) {
-                            console.error("Upload failed", err);
-                            alert(t('Tải ảnh thất bại: {v0}', { v0: t(err.response?.data?.error || err.message) }));
+                            console.error('Upload avatar failed', err);
+                            setErrors((prev) => ({
+                              ...prev,
+                              avatar: t(err.response?.data?.error || err.message || 'Tải ảnh thất bại'),
+                            }));
                           } finally {
                             setLoading(false);
                           }
@@ -165,6 +201,12 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                       />
                     </label>
                     <p className="text-xs text-secondary">{t('Hỗ trợ JPG, PNG (Tối đa 5MB)')}</p>
+                    {errors.avatar && (
+                      <p className="text-xs text-error flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">error</span>
+                        {errors.avatar}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
