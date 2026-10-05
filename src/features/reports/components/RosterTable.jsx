@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import ExportTableButton from './ExportTableButton';
 import TablePager from './TablePager';
+import Select from '../../../components/Select';
 
 /**
  * BE-64: bảng "Bảng điều hành — Đơn được duyệt theo nhân sự".
@@ -117,16 +118,16 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
 
         <div className="flex flex-col gap-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{t('Chức vụ')}</label>
-          <select
+          <Select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="h-[38px] px-3 rounded-lg bg-white/5 border border-white/15 text-[12px] text-gray-200 outline-none cursor-pointer hover:border-white/30 transition-colors"
-          >
-            <option value="" className="text-[#1d1d1f]">{t('Tất cả chức vụ')}</option>
-            {positions.map((position) => (
-              <option key={position} value={position} className="text-[#1d1d1f]">{t(position)}</option>
-            ))}
-          </select>
+            onChange={setRoleFilter}
+            className="h-[38px] px-3 rounded-lg bg-white/5 border border-white/15 text-[12px] text-gray-200 hover:border-white/30 transition-colors"
+            align="right"
+            options={[
+              { value: '', label: t('Tất cả chức vụ') },
+              ...positions.map((position) => ({ value: position, label: t(position) })),
+            ]}
+          />
         </div>
 
         {hasFilter && (

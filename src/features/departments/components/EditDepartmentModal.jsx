@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
 import { EmployeeSelect } from './AddDepartmentModal';
+import Select from '../../../components/Select';
 import { departmentService } from '../services/departmentService';
 import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -245,28 +246,26 @@ export default function EditDepartmentModal({ department, onClose }) {
 
           <div>
             <label className={labelCls}>{t('Loại đơn vị')}</label>
-            <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
-              {TYPES.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
+            <Select
+              value={type}
+              onChange={setType}
+              className={inputCls}
+              options={TYPES.map((tp) => ({ value: tp, label: t(tp) }))}
+            />
           </div>
 
           <div>
             <label className={labelCls}>{t('Đơn vị cấp trên')}</label>
-            <select
+            <Select
               data-field="edit-dept-parent"
               value={parentId}
-              onChange={(e) => setParentId(e.target.value)}
+              onChange={setParentId}
               className={inputCls}
-            >
-              <option value="">{t('— Không có (đơn vị cấp cao nhất) —')}</option>
-              {parentOptions.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {t(d.name)} ({d.code})
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: t('— Không có (đơn vị cấp cao nhất) —') },
+                ...parentOptions.map((d) => ({ value: d.id, label: `${t(d.name)} (${d.code})` })),
+              ]}
+            />
             <p className="text-xs text-secondary mt-1">
               {t('Không hiển thị chính đơn vị này và các đơn vị trực thuộc (tránh vòng lặp).')}
             </p>

@@ -1,4 +1,5 @@
 import { useI18n } from '../../../i18n/I18nProvider';
+import Select from '../../../components/Select';
 
 /** Số dòng mỗi trang cho phép chọn. */
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
@@ -44,17 +45,12 @@ export default function TablePager({
     >
       <div className={`flex items-center gap-2 text-[12px] ${textClass}`}>
         <span>{t('Hiển thị')}</span>
-        <select
+        <Select
           value={pageSize}
-          onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className={`h-8 px-2 rounded-md border text-[12px] outline-none cursor-pointer transition-colors ${selectClass}`}
-        >
-          {PAGE_SIZE_OPTIONS.map((size) => (
-            <option key={size} value={size} className={isDark ? 'text-[#1d1d1f]' : undefined}>
-              {size} {t('dòng')}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => onPageSizeChange(Number(v))}
+          className={`h-8 px-2 rounded-md border text-[12px] transition-colors ${selectClass}`}
+          options={PAGE_SIZE_OPTIONS.map((size) => ({ value: size, label: `${size} ${t('dòng')}` }))}
+        />
         <span>
           <strong className={strongClass}>{firstRow}</strong> - <strong className={strongClass}>{lastRow}</strong>
           {' '}{t('trong tổng số')} <strong className={strongClass}>{totalCount}</strong> {unitLabel || t('dòng')}

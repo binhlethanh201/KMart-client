@@ -11,6 +11,8 @@ import { buildDynamicFromRaw, fieldLabel, resolveFieldKey, sortFields } from '..
 import { checkNumberValue, isNumberField } from '../formFieldValidation';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { describeApiError } from '../../../utils/apiError';
+import { getFullAvatarUrl } from '../../hr/services/userService';
+import Select from '../../../components/Select';
 
 const fieldCls =
   'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
@@ -396,7 +398,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           id: a.id,
           name: a.fullName || a.name,
           position: a.positionName || a.position,
-          avatar: a.avatarUrl || a.avatar,
+          avatar: getFullAvatarUrl(a.avatarUrl || a.avatar) || a.avatarUrl || a.avatar,
         }));
       }
 
@@ -710,18 +712,19 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                   {t('(bước 1 có')} {firstStepCandidates.length} {t('người có thể duyệt)')}
                 </span>
               </label>
-              <select
+              <Select
                 className={fieldCls}
                 value={selectedApproverId}
-                onChange={(e) => setSelectedApproverId(e.target.value)}
-              >
-                <option value="">{t('-- Chọn người duyệt --')}</option>
-                {firstStepCandidates.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}{c.position ? ` · ${c.position}` : ''}
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedApproverId}
+                placeholder={t('-- Chọn người duyệt --')}
+                options={[
+                  { value: '', label: t('-- Chọn người duyệt --') },
+                  ...firstStepCandidates.map((c) => ({
+                    value: c.id,
+                    label: `${c.name}${c.position ? ` · ${c.position}` : ''}`,
+                  })),
+                ]}
+              />
             </div>
           )}
 
@@ -817,19 +820,19 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
                   <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
                   {renderFieldError(fieldId)}
-                  <select
+                  <Select
                     className={fieldCls}
-                    required={f.required}
                     value={form.dynamic[fieldId] || ''}
-                    onChange={(e) => setDynamic(fieldId, e.target.value)}
-                  >
-                    <option value="">{t('-- Chọn --')}</option>
-                    {options.map((opt) => {
-                      const optValue = typeof opt === 'string' ? opt : opt.value;
-                      const optLabel = typeof opt === 'string' ? opt : opt.label;
-                      return <option key={optValue} value={optValue}>{optLabel}</option>;
-                    })}
-                  </select>
+                    onChange={(v) => setDynamic(fieldId, v)}
+                    placeholder={t('-- Chọn --')}
+                    options={[
+                      { value: '', label: t('-- Chọn --') },
+                      ...options.map((opt) => ({
+                        value: typeof opt === 'string' ? opt : opt.value,
+                        label: typeof opt === 'string' ? opt : opt.label,
+                      })),
+                    ]}
+                  />
                 </div>
               );
             }
@@ -905,24 +908,25 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
                   <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
                   {renderFieldError(fieldId)}
-                  <select
+                  <Select
                     className={fieldCls}
-                    required={f.required}
                     disabled={Boolean(lockedDelegate)}
                     value={lockedDelegate ? lockedDelegate.delegateId : (form.dynamic[fieldId] || '')}
-                    onChange={(e) => setDynamic(fieldId, e.target.value)}
-                  >
-                    {!lockedDelegate && <option value="">{t('-- Chọn người --')}</option>}
-                    {lockedDelegate ? (
-                      <option value={lockedDelegate.delegateId}>
-                        {lockedDelegate.delegateName || lockedDelegate.delegateId} ({t('được ủy quyền duyệt thay')})
-                      </option>
-                    ) : (
-                      employees?.map((emp) => (
-                        <option key={emp.id} value={emp.id}>{emp.name} ({t(emp.position) || t('Nhân viên')})</option>
-                      ))
-                    )}
-                  </select>
+                    onChange={(v) => setDynamic(fieldId, v)}
+                    placeholder={t('-- Chọn người --')}
+                    options={[
+                      ...(!lockedDelegate ? [{ value: '', label: t('-- Chọn người --') }] : []),
+                      ...(lockedDelegate
+                        ? [{
+                            value: lockedDelegate.delegateId,
+                            label: `${lockedDelegate.delegateName || lockedDelegate.delegateId} (${t('được ủy quyền duyệt thay')})`,
+                          }]
+                        : (employees || []).map((emp) => ({
+                            value: emp.id,
+                            label: `${emp.name} (${t(emp.position) || t('Nhân viên')})`,
+                          }))),
+                    ]}
+                  />
                   {lockedDelegate && (
                     <p className="text-[11px] text-secondary flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px] text-primary">assignment_ind</span>

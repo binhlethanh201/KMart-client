@@ -146,13 +146,12 @@ function App() {
                 } />
 
                 <Route path="delegations" element={
-                  <ProtectedRoute requiredPermissions={[PERMISSIONS.APPLICATION_APPROVE]}>
-                    {/* Cuộn được + cho nội dung cao tối thiểu bằng khung nhìn để trang ủy quyền
-                        luôn được căn giữa và không hở một mảng trắng lớn phía dưới. */}
-                    <div className="p-3 flex-1 flex flex-col min-h-0 overflow-y-auto">
-                      <DelegationsTab />
-                    </div>
-                  </ProtectedRoute>
+                  /* BE-148: ủy quyền duyệt đơn là tính năng CÁ NHÂN — mở cho mọi tài khoản đã đăng nhập
+                     (cấp duyệt tạo ủy quyền, người được ủy quyền xem ai ủy quyền cho mình).
+                     Nút tạo ủy quyền trong trang tự ẩn với tài khoản không phải cấp duyệt. */
+                  <div className="flex-1 flex flex-col min-h-0 min-w-0">
+                    <DelegationsTab />
+                  </div>
                 } />
 
                 {/* Requests pages */}

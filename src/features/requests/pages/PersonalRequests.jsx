@@ -5,6 +5,7 @@ import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useI18n } from '../../../i18n/I18nProvider';
 import PageHeader from '../../../components/PageHeader';
+import Select from '../../../components/Select';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 import { scopeDepartmentsForUser } from '../../../utils/departmentScope';
 import { matchesSearchText, normalizeSearchText } from '../../../utils/searchText';
@@ -46,6 +47,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
     [departments, currentUser]
   );
 
+
   const [isCreateOpen, setIsCreateOpen]        = useState(false);
   const [statusFilter, setStatusFilter]        = useState('all');
   const [search, setSearch]                    = useState('');
@@ -72,6 +74,20 @@ export default function PersonalRequests({ mode = 'sent' }) {
     if (mode === 'supplement') return r.creatorId === currentUserId && r.status === 'needssupplement';
     return r._isPendingReq === true;
   }, [mode, currentUserId]);
+
+  /**
+   * Ô lọc "Phòng ban" chỉ liệt kê những phòng ban THỰC SỰ liên quan tới các đơn đang xem
+   * (đơn tôi gửi / đơn chờ tôi duyệt). Trước đây đổ ra toàn bộ phòng ban của tổ chức nên danh sách
+   * tràn lan, chọn vào phần lớn lại ra rỗng.
+   */
+  const departmentFilterOptions = useMemo(() => {
+    const usedIds = new Set();
+    for (const r of requests) {
+      if (!matchesMode(r)) continue;
+      if (r.departmentId) usedIds.add(r.departmentId);
+    }
+    return scopedDepartments.filter((d) => usedIds.has(d.id));
+  }, [requests, matchesMode, scopedDepartments]);
 
   /* counts per filter tab */
   const counts = useMemo(() => {
@@ -225,36 +241,32 @@ export default function PersonalRequests({ mode = 'sent' }) {
 
               {/* Department dropdown */}
               <div className="relative min-w-[200px]">
-                <select
+                <Select
                   value={departmentFilter || ''}
-                  onChange={(e) => setDepartmentFilter(e.target.value || null)}
+                  onChange={(v) => setDepartmentFilter(v || null)}
                   aria-label={t('Phòng ban')}
                   className={`${FILTER_SELECT_CLS} w-full`}
-                >
-                  <option value="">{t('Tất cả phòng ban')}</option>
-                  {scopedDepartments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.code} - {t(d.name)}
-                    </option>
-                  ))}
-                </select>
+                  searchable
+                  options={[
+                    { value: '', label: t('Tất cả phòng ban') },
+                    ...departmentFilterOptions.map((d) => ({ value: d.id, label: `${d.code} - ${t(d.name)}` })),
+                  ]}
+                />
               </div>
 
               {/* Document type dropdown */}
               <div className="relative min-w-[180px]">
-                <select
+                <Select
                   value={documentTypeFilter || ''}
-                  onChange={(e) => setDocumentTypeFilter(e.target.value || null)}
+                  onChange={(v) => setDocumentTypeFilter(v || null)}
                   aria-label={t('Loại đơn')}
                   className={`${FILTER_SELECT_CLS} w-full`}
-                >
-                  <option value="">{t('Tất cả loại đơn')}</option>
-                  {documentTypes.map((dt) => (
-                    <option key={dt.id} value={dt.id}>
-                      {t(dt.name)}
-                    </option>
-                  ))}
-                </select>
+                  searchable
+                  options={[
+                    { value: '', label: t('Tất cả loại đơn') },
+                    ...documentTypes.map((dt) => ({ value: dt.id, label: t(dt.name) })),
+                  ]}
+                />
               </div>
 
               {/* Nút xoá nhanh bộ lọc */}
@@ -360,16 +372,18 @@ export default function PersonalRequests({ mode = 'sent' }) {
                   <div className="flex items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-secondary">{t('Hiển thị')}</span>
-                      <select
+                      <Select
                         value={pageSize}
-                        onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                        onChange={(v) => { setPageSize(Number(v)); setPage(1); }}
                         className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
-                      >
-                        <option value={5}>{t('5 dòng')}</option>
-                        <option value={10}>{t('10 dòng')}</option>
-                        <option value={20}>{t('20 dòng')}</option>
-                        <option value={50}>{t('50 dòng')}</option>
-                      </select>
+                        align="right"
+                        options={[
+                          { value: 5, label: t('5 dòng') },
+                          { value: 10, label: t('10 dòng') },
+                          { value: 20, label: t('20 dòng') },
+                          { value: 50, label: t('50 dòng') },
+                        ]}
+                      />
                       <span className="text-xs text-secondary">
                         {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1} - {Math.min(page * pageSize, filtered.length)} {t('trong tổng số')} {filtered.length}
                       </span>

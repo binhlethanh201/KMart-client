@@ -7,6 +7,7 @@ import { useApproval } from '../../../context/useApproval';
 import { describeApiError } from '../../../utils/apiError';
 import { notifyHrDataChanged } from '../../../utils/hrEvents';
 import { FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS, FILTER_SELECT_CLS } from '../../../styles/filterControls';
+import Select from '../../../components/Select';
 
 /**
  * BE-99: màn quản lý CHỨC VỤ & CẤP BẬC.
@@ -150,18 +151,13 @@ function PositionModal({ position, onClose, onSaved }) {
 
           <div>
             <label className={labelCls}>{t('Cấp bậc')}</label>
-            <select
+            <Select
               data-field="pos-level"
               value={level}
-              onChange={(e) => { setLevel(Number(e.target.value)); setErrors((x) => ({ ...x, level: null, submit: null })); }}
+              onChange={(v) => { setLevel(Number(v)); setErrors((x) => ({ ...x, level: null, submit: null })); }}
               className={inputCls}
-            >
-              {LEVELS.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.value}. {t(l.label)}
-                </option>
-              ))}
-            </select>
+              options={LEVELS.map((l) => ({ value: l.value, label: `${l.value}. ${t(l.label)}` }))}
+            />
             <p className="text-xs text-secondary mt-1">
               {t('Số càng lớn cấp càng cao. Luồng duyệt "cấp quản lý trực tiếp / chuỗi quản lý" dựa vào thứ tự này.')}
             </p>
@@ -287,12 +283,15 @@ export default function PositionsTab() {
             type="text"
           />
         </div>
-        <select value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)} className={FILTER_SELECT_CLS}>
-          <option value="all">{t('Cấp bậc: Tất cả')}</option>
-          {LEVELS.map((l) => (
-            <option key={l.value} value={l.value}>{`${l.value}. ${t(l.label)}`}</option>
-          ))}
-        </select>
+        <Select
+          value={levelFilter}
+          onChange={setLevelFilter}
+          className={FILTER_SELECT_CLS}
+          options={[
+            { value: 'all', label: t('Cấp bậc: Tất cả') },
+            ...LEVELS.map((l) => ({ value: String(l.value), label: `${l.value}. ${t(l.label)}` })),
+          ]}
+        />
         <span className="text-sm text-secondary ml-auto">{t('{v0} chức vụ', { v0: filtered.length })}</span>
         {canManage && (
           <button

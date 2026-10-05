@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { ROLE_LABELS } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { getFullAvatarUrl } from '../../hr/services/userService';
 
 // BE-20: biểu đồ cây luồng phê duyệt dự kiến, tách riêng để tái sử dụng
 // cho cả bản thu gọn (inline trong modal) và bản đầy đủ (popup toàn màn hình).
@@ -408,7 +409,7 @@ export default function ApprovalFlowTree({
       key: `resolved-${stepNo}-${u.id || ui}`,
       name: u.fullName || t('Người duyệt'),
       hasManager: true,
-      avatar: u.avatarUrl,
+      avatar: getFullAvatarUrl(u.avatarUrl) || u.avatarUrl,
       role: [u.departmentName, u.positionName].filter(Boolean).join(' - ') || t('Người duyệt'),
       isStep: true,
       // BE-146: người được ủy quyền duyệt thay — ghi rõ duyệt thay cho ai

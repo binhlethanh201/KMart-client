@@ -10,6 +10,7 @@ import { userService } from '../services/userService';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
+import Select from '../../../components/Select';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -362,19 +363,20 @@ export default function EmployeeDetail() {
              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
                <span className="text-xs text-secondary flex items-center gap-2">
                  {t('Hiển thị')}
-                 <select
+                 <Select
                    value={pageSize}
-                   onChange={(e) => {
-                     setPageSize(Number(e.target.value));
+                   onChange={(v) => {
+                     setPageSize(Number(v));
                      setPage(1); // Reset page on page size change
                    }}
-                   className="bg-surface border border-outline-variant/50 rounded-md px-2 py-1 text-xs text-on-surface outline-none focus:border-primary cursor-pointer hover:bg-surface-container-low transition-colors"
-                 >
-                   <option value={5}>{t('5 dòng')}</option>
-                   <option value={10}>{t('10 dòng')}</option>
-                   <option value={20}>{t('20 dòng')}</option>
-                   <option value={50}>{t('50 dòng')}</option>
-                 </select>
+                   className="bg-surface border border-outline-variant/50 rounded-md px-2 py-1 text-xs text-on-surface hover:bg-surface-container-low transition-colors"
+                   options={[
+                     { value: 5, label: t('5 dòng') },
+                     { value: 10, label: t('10 dòng') },
+                     { value: 20, label: t('20 dòng') },
+                     { value: 50, label: t('50 dòng') },
+                   ]}
+                 />
                  <span>
                    {log.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, log.length)} {t('trong tổng số')} {log.length} {t('hoạt động')}
                  </span>

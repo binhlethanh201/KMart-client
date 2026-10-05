@@ -4,6 +4,7 @@ import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { useI18n } from '../../../i18n/I18nProvider';
 import describeApiError from '../../../utils/apiError';
+import Select from '../../../components/Select';
 
 function Toggle({ checked, onChange, label, disabled }) {
   return (
@@ -753,15 +754,12 @@ export default function FormTemplatesTab() {
                 <label className="block text-sm font-medium text-on-surface mb-1.5">
                   {t('Lưu vào danh mục')}
                 </label>
-                <select 
-                  className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
+                <Select
+                  className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface focus:border-primary"
                   value={newTypeCatId}
-                  onChange={e => setSelectedCatIdForNewType(e.target.value)}
-                >
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                  onChange={setSelectedCatIdForNewType}
+                  options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                />
               </div>
             </div>
             

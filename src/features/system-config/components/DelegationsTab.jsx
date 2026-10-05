@@ -5,6 +5,8 @@ import { userService } from '../../hr/services/userService';
 import { useApproval } from '../../../context/useApproval';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { describeApiError } from '../../../utils/apiError';
+import PageHeader from '../../../components/PageHeader';
+import { isApproverAccount } from '../../../utils/approverAccounts';
 
 /* ─── Shared form styles ─────────────────────────────────────────────────────── */
 const fieldCls =
@@ -445,9 +447,9 @@ function PersonChip({ label, name, tone, fallback = '—' }) {
 }
 
 /** Hình minh họa "ai duyệt thay ai" — SVG nội bộ, không cần tải ảnh từ ngoài. */
-function DelegationIllustration() {
+function DelegationIllustration({ className = 'w-full h-auto max-h-[132px]' }) {
   return (
-    <svg viewBox="0 0 320 132" className="w-full h-auto max-h-[132px]" role="img" aria-hidden="true">
+    <svg viewBox="0 0 320 132" className={className} role="img" aria-hidden="true">
       {/* người ủy quyền */}
       <circle cx="58" cy="56" r="26" className="fill-primary/10" />
       <circle cx="58" cy="46" r="10" className="fill-primary/60" />
@@ -475,6 +477,25 @@ function DelegationIllustration() {
   );
 }
 
+/** Khối người cỡ lớn trong khung trạng thái ủy quyền. */
+function PersonBlock({ label, name, tone = 'primary' }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0 ${
+          tone === 'primary' ? 'bg-primary/15 text-primary' : 'bg-surface-container-high text-on-surface'
+        }`}
+      >
+        {(name || '?').trim().split(' ').pop()?.charAt(0).toUpperCase()}
+      </div>
+      <div className="text-left min-w-0">
+        <div className="text-[10px] uppercase tracking-wide text-secondary leading-tight">{label}</div>
+        <div className="text-base sm:text-lg font-semibold text-on-surface truncate">{name}</div>
+      </div>
+    </div>
+  );
+}
+
 /** Một bước trong quy trình ủy quyền. */
 function StepCard({ index, icon, title, desc }) {
   return (
@@ -493,33 +514,23 @@ function StepCard({ index, icon, title, desc }) {
   );
 }
 
-/** Một dòng hỏi–đáp gọn trong khối FAQ. */
-function FaqRow({ q, a }) {
+/** Một dòng ghi chú ngắn (icon + nội dung) nằm trong khung minh họa. */
+function TipCard({ icon, text }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0 mt-px">quiz</span>
-      <div className="min-w-0">
-        <div className="text-xs font-semibold text-on-surface">{q}</div>
-        <p className="text-xs text-secondary leading-relaxed">{a}</p>
-      </div>
+    <div className="flex items-center gap-2.5">
+      <span className="material-symbols-outlined text-primary text-[18px] flex-shrink-0">{icon}</span>
+      <p className="text-xs text-on-surface-variant leading-relaxed text-left">{text}</p>
     </div>
-  );
-}
-
-/** Dòng ghi chú ngắn trong panel phụ. */
-function TipRow({ icon, text }) {
-  return (
-    <p className="flex items-start gap-2 text-xs text-on-surface-variant">
-      <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">{icon}</span>
-      <span>{text}</span>
-    </p>
   );
 }
 
 /* ─── DelegationsTab ────────────────────────────────────────────────────────── */
 export default function DelegationsTab() {
   const { t } = useI18n();
-  const { pushToast } = useApproval();
+  const { pushToast, currentUser, hasPermission } = useApproval();
+  // BE-148: chỉ cấp duyệt đơn mới được TẠO ủy quyền. Người ĐƯỢC ủy quyền (kể cả nhân viên) vẫn
+  // mở được trang để xem "Bạn đang duyệt thay".
+  const canApprove = isApproverAccount(currentUser, hasPermission);
 
   const [myDelegations, setMyDelegations] = useState([]);
   const [toMeDelegations, setToMeDelegations] = useState([]);
@@ -546,12 +557,12 @@ export default function DelegationsTab() {
 
   useEffect(() => { load(); }, []);
 
+  /**
+   * Thu hồi ủy quyền: bấm là thu hồi NGAY, không bật hộp thoại xác nhận của trình duyệt
+   * (hộp thoại gốc hiện tiêu đề lạ và lệch giao diện). Người dùng luôn tạo lại ủy quyền được,
+   * còn bản ghi cũ vẫn nằm trong nhật ký do bộ phận Nhân sự quản lý.
+   */
   const handleRevoke = async (delegation) => {
-    const confirmMsg = delegation.isActive
-      ? t('Thu hồi ủy quyền cho "{v0}"? Người này sẽ không còn duyệt đơn thay bạn.', { v0: delegation.delegateName })
-      : t('Xóa bản ghi ủy quyền này?');
-    if (!window.confirm(confirmMsg)) return;
-
     setRevokingId(delegation.id);
     try {
       await delegationService.revoke(delegation.id);
@@ -571,39 +582,69 @@ export default function DelegationsTab() {
   const received = toMeDelegations.filter(isLive);
 
   return (
-    <section className="flex flex-col gap-3 w-full max-w-[1280px] mx-auto flex-1 min-h-full">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-stretch">
-        {/* Ủy quyền của tôi */}
-        <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-          <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-outline-variant/50">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[20px]">swap_horiz</span>
-              <h2 className="text-sm font-semibold text-on-surface">{t('Ủy quyền của tôi')}</h2>
-            </div>
-            {current && (
-              <StatusBadge isActive={current.isActive} startDate={current.startDate} endDate={current.endDate} />
-            )}
-          </div>
+    <section className="flex flex-col flex-1 min-h-0 w-full">
+      {/* Tiêu đề trang dùng khung chung để đồng nhất với các trang khác */}
+      <PageHeader
+        icon="assignment_ind"
+        title="Ủy quyền"
+        subtitle={t('Ủy quyền duyệt đơn tạm thời cho người khác trong khoảng thời gian bạn vắng mặt.')}
+      />
 
+      <div className="p-3 flex flex-col gap-3 flex-1 min-h-0 w-full max-w-[1280px] mx-auto">
+        {/* Hướng dẫn 3 bước */}
+        <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden shrink-0">
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-outline-variant/50">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[20px]">route</span>
+              <h3 className="text-sm font-semibold text-on-surface">{t('Ủy quyền hoạt động thế nào?')}</h3>
+            </div>
+            <span className="text-[11px] text-secondary">{t('3 bước')}</span>
+          </div>
+          <div className="grid gap-3 p-4 md:grid-cols-3 items-stretch">
+            <StepCard
+              index={1}
+              icon="person_search"
+              title={t('Chọn người duyệt thay')}
+              desc={t('Chọn một nhân sự đủ thẩm quyền duyệt đơn của bạn trong khoảng thời gian bạn vắng mặt.')}
+            />
+            <StepCard
+              index={2}
+              icon="swap_horiz"
+              title={t('Người đó duyệt đơn thay bạn')}
+              desc={t('Đơn của bạn được chuyển đúng cho người nhận ủy quyền; lịch sử ghi rõ "duyệt thay".')}
+            />
+            <StepCard
+              index={3}
+              icon="event_busy"
+              title={t('Tự động hết hiệu lực')}
+              desc={t('Hết khoảng thời gian đã đặt, quyền duyệt thay tự chấm dứt, không cần thao tác thêm.')}
+            />
+          </div>
+        </div>
+
+        {/* Khung lớn: khi CHƯA có ủy quyền thì hiện minh họa, khi CÓ thì hiện trạng thái cỡ lớn */}
+        <div className="bg-primary-container/15 border border-primary/20 rounded-xl px-4 py-6 flex flex-col items-center justify-center gap-5 text-center flex-1 min-h-[380px]">
           {loading ? (
-            <div className="px-4 py-8 text-center text-secondary text-sm">
-              <span className="material-symbols-outlined text-[24px] block mb-1.5 animate-spin">progress_activity</span>
+            <div className="px-4 py-6 text-center text-secondary text-sm flex items-center justify-center gap-2">
+              <span className="material-symbols-outlined text-[24px] animate-spin">progress_activity</span>
               {t('Đang tải...')}
             </div>
           ) : current ? (
-            /* Gọn trong MỘT hàng: ai ủy quyền ai · thời gian · thao tác */
-            <div className="px-4 py-3.5 flex flex-wrap items-center gap-x-3 gap-y-3">
-              <PersonChip label={t('Người ủy quyền')} name={t('Bạn')} tone="neutral" />
-
-              <div className="flex items-center gap-1 text-primary flex-shrink-0">
-                <span className="w-6 h-px bg-primary/30" />
-                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                <span className="w-6 h-px bg-primary/30" />
+            /* Trạng thái ủy quyền cỡ LỚN — thay chỗ minh họa, vẫn dùng nền & icon chuyển quyền */
+            <div className="w-full flex flex-col items-center gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-7">
+                <PersonBlock label={t('Người ủy quyền')} name={t('Bạn')} tone="neutral" />
+                <div className="flex items-center gap-1.5 text-primary flex-shrink-0">
+                  <span className="hidden sm:block w-12 h-px bg-primary/30" />
+                  <span className="material-symbols-outlined text-[34px]">swap_horiz</span>
+                  <span className="hidden sm:block w-12 h-px bg-primary/30" />
+                </div>
+                <PersonBlock label={t('Người được ủy quyền')} name={current.delegateName} />
               </div>
 
-              <PersonChip label={t('Người được ủy quyền')} name={current.delegateName} />
+              <StatusBadge isActive={current.isActive} startDate={current.startDate} endDate={current.endDate} />
 
-              <div className="flex items-center gap-2 ml-auto flex-wrap">
+              <div className="w-full max-w-[620px] rounded-lg bg-surface/80 border border-primary/15 px-4 py-3 flex flex-wrap items-center justify-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-on-surface bg-surface-container-lowest border border-outline-variant/60 rounded-full px-3 py-1.5 whitespace-nowrap">
                   <span className="material-symbols-outlined text-[15px] text-secondary">event</span>
                   {FORMAT_DATE(current.startDate)} — {FORMAT_DATE(current.endDate)}
@@ -621,70 +662,50 @@ export default function DelegationsTab() {
                 >
                   {revokingId === current.id ? t('Đang thu hồi...') : t('Thu hồi')}
                 </button>
+                {current.reason && (
+                  <p className="w-full text-xs text-secondary truncate" title={current.reason}>
+                    {t('Lý do')}: {current.reason}
+                  </p>
+                )}
               </div>
-
-              {current.reason && (
-                <p className="w-full text-xs text-secondary truncate" title={current.reason}>
-                  {t('Lý do')}: {current.reason}
-                </p>
-              )}
             </div>
           ) : (
-            <div className="px-4 py-3.5 flex flex-wrap items-center gap-3">
-              <span className="material-symbols-outlined text-primary text-[22px]">person_add</span>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-on-surface">{t('Chưa ủy quyền cho ai')}</div>
+            /* Chưa ủy quyền: giữ nguyên minh họa + lời nhắc + nút tạo */
+            <div className="w-full flex flex-col items-center gap-4">
+              <DelegationIllustration className="w-full max-w-[620px] h-auto" />
+              <div className="flex flex-col items-center gap-1">
+                <div className="text-base font-semibold text-on-surface">{t('Chưa ủy quyền cho ai')}</div>
                 <div className="text-xs text-secondary">
                   {t('Chọn một người duyệt đơn thay bạn trong khoảng thời gian bạn vắng mặt.')}
                 </div>
               </div>
-              <button
-                onClick={() => setShowCreate(true)}
-                className="ml-auto bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
-              >
-                <span className="material-symbols-outlined text-[18px]">add</span>
-                {t('Tạo ủy quyền')}
-              </button>
+              {canApprove && (
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
+                >
+                  <span className="material-symbols-outlined text-[18px]">add</span>
+                  {t('Tạo ủy quyền')}
+                </button>
+              )}
             </div>
           )}
-        </div>
 
-        {/* Phạm vi ủy quyền — nói rõ đây CHỈ là duyệt đơn thay, không phải nâng quyền */}
-        <aside className="bg-primary-container/15 border border-primary/20 rounded-xl px-4 py-3.5 flex flex-col gap-2.5">
-          <div className="flex items-center gap-2 text-primary">
-            <span className="material-symbols-outlined text-[18px]">policy</span>
-            <h3 className="text-sm font-semibold">{t('Phạm vi ủy quyền')}</h3>
-          </div>
-          <p className="flex items-start gap-2 text-xs text-on-surface-variant">
-            <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">check_circle</span>
-            {t('Chỉ áp dụng cho việc DUYỆT ĐƠN thay bạn trong khoảng thời gian trên.')}
-          </p>
-          <p className="flex items-start gap-2 text-xs text-on-surface-variant">
-            <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">shield_person</span>
-            {t('Người được ủy quyền KHÔNG được cấp thêm quyền, không đổi vai trò, không vào được Cấu hình hệ thống.')}
-          </p>
-          <p className="flex items-start gap-2 text-xs text-on-surface-variant">
-            <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">history</span>
-            {t('Lịch sử ủy quyền do bộ phận Nhân sự ghi nhận.')}
-          </p>
-        </aside>
-      </div>
-
-      {/* Đang duyệt thay người khác (chỉ hiện khi có) */}
+        {/* Đang duyệt thay người khác (chỉ hiện khi có) */}
       {!loading && received.length > 0 && (
-        <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant/50">
+        <div className="w-full rounded-lg bg-surface/80 border border-primary/15 overflow-hidden text-left">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-primary/10">
             <span className="material-symbols-outlined text-primary text-[20px]">assignment_ind</span>
             <h3 className="text-sm font-semibold text-on-surface">{t('Bạn đang duyệt thay')}</h3>
             <span className="text-[11px] text-secondary ml-auto">{received.length}</span>
           </div>
-          <div className="divide-y divide-outline-variant/40">
+          <div className="divide-y divide-primary/10">
             {received.map((d) => (
               <div key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
                 <PersonChip label={t('Người ủy quyền')} name={d.delegatorName} />
                 <span className="material-symbols-outlined text-[18px] text-secondary">arrow_forward</span>
                 <PersonChip label={t('Người được ủy quyền')} name={t('Bạn')} tone="neutral" />
-                <span className="inline-flex items-center gap-1.5 text-xs text-secondary bg-surface-container-lowest border border-outline-variant/60 rounded-full px-3 py-1.5 whitespace-nowrap ml-auto">
+                <span className="inline-flex items-center gap-1.5 text-xs text-secondary bg-surface border border-outline-variant/60 rounded-full px-3 py-1.5 whitespace-nowrap ml-auto">
                   <span className="material-symbols-outlined text-[15px]">event</span>
                   {FORMAT_DATE(d.startDate)} — {FORMAT_DATE(d.endDate)}
                 </span>
@@ -695,120 +716,35 @@ export default function DelegationsTab() {
         </div>
       )}
 
-      {/* Hướng dẫn 3 bước */}
-      <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-outline-variant/50">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[20px]">route</span>
-            <h3 className="text-sm font-semibold text-on-surface">{t('Ủy quyền hoạt động thế nào?')}</h3>
-          </div>
-          <span className="text-[11px] text-secondary">{t('3 bước')}</span>
+        <p className="text-sm font-semibold text-on-surface">
+          {t('Ủy quyền chỉ chuyển quyền DUYỆT ĐƠN, không chuyển vai trò hay quyền hệ thống.')}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-on-surface-variant">
+          <span className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[15px] text-primary">person</span>
+            {t('Bạn vắng mặt')}
+          </span>
+          <span className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
+          <span className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[15px] text-primary">assignment_ind</span>
+            {t('Người được ủy quyền duyệt đơn thay bạn')}
+          </span>
+          <span className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
+          <span className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[15px] text-primary">event_busy</span>
+            {t('Tự động hết hiệu lực')}
+          </span>
         </div>
-        <div className="grid gap-3 p-4 md:grid-cols-3 items-stretch">
-          <StepCard
-            index={1}
-            icon="person_search"
-            title={t('Chọn người duyệt thay')}
-            desc={t('Chọn một nhân sự đủ thẩm quyền duyệt đơn của bạn trong khoảng thời gian bạn vắng mặt.')}
-          />
-          <StepCard
-            index={2}
-            icon="swap_horiz"
-            title={t('Người đó duyệt đơn thay bạn')}
-            desc={t('Đơn của bạn được chuyển đúng cho người nhận ủy quyền; lịch sử ghi rõ "duyệt thay".')}
-          />
-          <StepCard
-            index={3}
-            icon="event_busy"
-            title={t('Tự động hết hiệu lực')}
-            desc={t('Hết khoảng thời gian đã đặt, quyền duyệt thay tự chấm dứt, không cần thao tác thêm.')}
-          />
+
+        {/* Ghi chú gộp trong cùng khung — dùng chung tông với phần minh họa phía trên */}
+        <div className="w-full max-w-[900px] mt-1 pt-4 border-t border-primary/15 grid gap-3 sm:grid-cols-2 text-left">
+          <TipCard icon="schedule" text={t('Thời hạn ủy quyền không vượt quá ngày kết thúc bạn đặt.')} />
+          <TipCard icon="looks_one" text={t('Mỗi thời điểm chỉ một người duyệt thay; tạo mới sẽ tự thu hồi ủy quyền cũ.')} />
+          <TipCard icon="verified_user" text={t('Mọi thao tác duyệt thay đều được ghi vào nhật ký hệ thống.')} />
+          <TipCard icon="support_agent" text={t('Cần đổi người hoặc thu hồi gấp? Liên hệ bộ phận Nhân sự.')} />
         </div>
       </div>
 
-      {/* Câu hỏi thường gặp · Giới hạn quyền hạn */}
-      <div className="grid gap-3 lg:grid-cols-2 items-stretch">
-        <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant/50">
-            <span className="material-symbols-outlined text-primary text-[20px]">help</span>
-            <h3 className="text-sm font-semibold text-on-surface">{t('Câu hỏi thường gặp')}</h3>
-          </div>
-          <div className="flex-1 flex flex-col justify-center gap-3 px-4 py-3.5">
-            <FaqRow
-              q={t('Ai có thể được ủy quyền?')}
-              a={t('Một nhân sự đủ thẩm quyền duyệt đơn của bạn — không thể chọn chính bạn.')}
-            />
-            <FaqRow
-              q={t('Đơn đang chờ duyệt có tự chuyển cho người nhận ủy quyền?')}
-              a={t('Có. Đơn phát sinh trong khoảng thời gian ủy quyền sẽ do người được ủy quyền xử lý.')}
-            />
-            <FaqRow
-              q={t('Ủy quyền xong tôi có mất quyền duyệt?')}
-              a={t('Không. Bạn vẫn duyệt đơn của mình bình thường trong thời gian ủy quyền.')}
-            />
-            <FaqRow
-              q={t('Khi nào nên thu hồi?')}
-              a={t('Khi bạn trở lại sớm hơn dự kiến hoặc muốn đổi người duyệt thay.')}
-            />
-          </div>
-        </div>
-
-        <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant/50">
-            <span className="material-symbols-outlined text-primary text-[20px]">fact_check</span>
-            <h3 className="text-sm font-semibold text-on-surface">{t('Người nhận ủy quyền được làm gì?')}</h3>
-          </div>
-          <div className="flex-1 grid sm:grid-cols-2 gap-4 px-4 py-3.5 items-center">
-            <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-success flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[15px]">check_circle</span>
-                {t('Được phép')}
-              </span>
-              {[
-                t('Duyệt hoặc từ chối đơn thay bạn'),
-                t('Yêu cầu bổ sung thông tin'),
-                t('Xem các đơn cần duyệt thay bạn'),
-              ].map((s) => (
-                <span key={s} className="flex items-start gap-2 text-xs text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[15px] text-success flex-shrink-0 mt-px">done</span>
-                  {s}
-                </span>
-              ))}
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-error flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[15px]">block</span>
-                {t('Không được phép')}
-              </span>
-              {[
-                t('Cấp thêm quyền hoặc đổi vai trò'),
-                t('Vào Cấu hình hệ thống'),
-                t('Tạo đơn mới thay bạn'),
-              ].map((s) => (
-                <span key={s} className="flex items-start gap-2 text-xs text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[15px] text-error flex-shrink-0 mt-px">close</span>
-                  {s}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Khối cuối giãn theo chiều cao còn lại để trang không hở mảng trắng lớn */}
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch flex-1 min-h-[150px]">
-        <aside className="bg-primary-container/15 border border-primary/20 rounded-xl px-4 py-3.5 flex flex-col items-center justify-center gap-2.5 text-center">
-          <DelegationIllustration />
-          <p className="text-xs text-on-surface-variant max-w-[260px]">
-            {t('Ủy quyền chỉ chuyển quyền DUYỆT ĐƠN, không chuyển vai trò hay quyền hệ thống.')}
-          </p>
-        </aside>
-        <div className="bg-surface border border-outline-variant rounded-xl shadow-sm px-4 py-3.5 flex flex-col justify-center gap-2.5">
-          <TipRow icon="schedule" text={t('Thời hạn ủy quyền không vượt quá ngày kết thúc bạn đặt.')} />
-          <TipRow icon="looks_one" text={t('Mỗi thời điểm chỉ một người duyệt thay; tạo mới sẽ tự thu hồi ủy quyền cũ.')} />
-          <TipRow icon="verified_user" text={t('Mọi thao tác duyệt thay đều được ghi vào nhật ký hệ thống.')} />
-          <TipRow icon="support_agent" text={t('Cần đổi người hoặc thu hồi gấp? Liên hệ bộ phận Nhân sự.')} />
-        </div>
       </div>
 
       {showCreate && (

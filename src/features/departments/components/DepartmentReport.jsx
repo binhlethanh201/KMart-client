@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { STATUS_META } from '../../requests/data/constants';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { FILTER_CONTROL_CLS, FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
+import Select from '../../../components/Select';
 
 // BE-43: nhân viên chỉ xem báo cáo của CHÍNH MÌNH; trưởng/phó phòng xem toàn phòng.
 export default function DepartmentReport({ deptRequests, members, employees, isDeptManager = true, currentUserId }) {
@@ -196,16 +197,16 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
               <span className="material-symbols-outlined text-primary">bar_chart</span>
               {t('Biểu đồ so sánh lượng đơn từ')}
             </h3>
-            <select
+            <Select
               value={chartFilter}
-              onChange={(e) => setChartFilter(e.target.value)}
+              onChange={setChartFilter}
               className={`${FILTER_SELECT_CLS} h-[38px] min-w-[150px] px-3 text-[13px]`}
-            >
-              <option value="all">{t('Tất cả loại đơn')}</option>
-              {stats.types.map((ty) => (
-                <option key={ty} value={ty}>{ty}</option>
-              ))}
-            </select>
+              align="right"
+              options={[
+                { value: 'all', label: t('Tất cả loại đơn') },
+                ...stats.types.map((ty) => ({ value: ty, label: ty })),
+              ]}
+            />
           </div>
           <div className="relative h-72 w-full mt-4 flex items-end px-4 pb-16 pt-6">
              {/* Grid lines */}

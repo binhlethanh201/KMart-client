@@ -1,5 +1,6 @@
 import { useI18n } from '../../../i18n/I18nProvider';
 import { FILTER_CONTROL_CLS, FILTER_SELECT_CLS, FILTER_LABEL_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
+import Select from '../../../components/Select';
 
 export default function FilterBar({ filters, departments, documentTypes = [], positions = [], onChange }) {
   const { t } = useI18n();
@@ -51,11 +52,11 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
         {/* Khối */}
         <div className="flex flex-col gap-2">
           <label className={labelClass}>{t('Khối')}</label>
-          <select
+          <Select
             className={selectClass}
             value={filters.block || ''}
-            onChange={(e) => {
-              const nextBlock = e.target.value || null;
+            onChange={(v) => {
+              const nextBlock = v || null;
               // Chỉ bỏ phòng ban đang chọn khi nó KHÔNG còn thuộc khối vừa chọn.
               // Trước đây đổi khối luôn xoá phòng ban nên người dùng mất lựa chọn vừa lọc.
               const keepDepartment = (departments || []).some(
@@ -63,73 +64,72 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
               );
               onChange(keepDepartment ? { block: nextBlock } : { block: nextBlock, departmentId: null });
             }}
-          >
-            <option value="">{t('Tất cả khối')}</option>
-            <option value="hq">{t('Khối Văn phòng')}</option>
-            <option value="retail">{t('Khối Cửa hàng')}</option>
-          </select>
+            options={[
+              { value: '', label: t('Tất cả khối') },
+              { value: 'hq', label: t('Khối Văn phòng') },
+              { value: 'retail', label: t('Khối Cửa hàng') },
+            ]}
+          />
         </div>
 
         {/* Phòng ban */}
         <div className="flex flex-col gap-2">
           <label className={labelClass}>{t('Phòng ban')}</label>
-          <select
+          <Select
             className={selectClass}
             value={filters.departmentId || ''}
-            onChange={(e) => onChange({ departmentId: e.target.value || null })}
-          >
-            <option value="">{t('Tất cả phòng ban')}</option>
-            {filteredDepartments.map(d => (
-              <option key={d.id} value={d.id}>{t(d.name)}</option>
-            ))}
-          </select>
+            onChange={(v) => onChange({ departmentId: v || null })}
+            options={[
+              { value: '', label: t('Tất cả phòng ban') },
+              ...filteredDepartments.map((d) => ({ value: d.id, label: t(d.name) })),
+            ]}
+          />
         </div>
 
         {/* Loại đơn */}
         <div className="flex flex-col gap-2">
           <label className={labelClass}>{t('Loại đơn')}</label>
-          <select
+          <Select
             className={selectClass}
             value={filters.documentTypeId || ''}
-            onChange={(e) => onChange({ documentTypeId: e.target.value || null })}
-          >
-            <option value="">{t('Tất cả loại đơn')}</option>
-            {(documentTypes || []).map(dt => (
-              <option key={dt.id} value={dt.id}>{t(dt.name)}</option>
-            ))}
-          </select>
+            onChange={(v) => onChange({ documentTypeId: v || null })}
+            options={[
+              { value: '', label: t('Tất cả loại đơn') },
+              ...(documentTypes || []).map((dt) => ({ value: dt.id, label: t(dt.name) })),
+            ]}
+          />
         </div>
 
         {/* Chức vụ người tạo */}
         <div className="flex flex-col gap-2">
           <label className={labelClass}>{t('Chức vụ')}</label>
-          <select
+          <Select
             className={selectClass}
             value={filters.positionId || ''}
-            onChange={(e) => onChange({ positionId: e.target.value || null })}
-          >
-            <option value="">{t('Tất cả chức vụ')}</option>
-            {(positions || []).map(p => (
-              <option key={p.id} value={p.id}>{t(p.name || p.positionName)}</option>
-            ))}
-          </select>
+            onChange={(v) => onChange({ positionId: v || null })}
+            options={[
+              { value: '', label: t('Tất cả chức vụ') },
+              ...(positions || []).map((p) => ({ value: p.id, label: t(p.name || p.positionName) })),
+            ]}
+          />
         </div>
 
         {/* TC-REP-003: Thêm lại bộ lọc trạng thái */}
         <div className="flex flex-col gap-2">
           <label className={labelClass}>{t('Trạng thái')}</label>
-          <select
+          <Select
             className={selectClass}
             value={filters.status || ''}
-            onChange={(e) => onChange({ status: e.target.value || null })}
-          >
-            <option value="">{t('Tất cả trạng thái')}</option>
-            <option value="pendingapproval">{t('Chờ duyệt')}</option>
-            <option value="approved">{t('Đã duyệt')}</option>
-            <option value="rejected">{t('Từ chối')}</option>
-            <option value="needssupplement">{t('Cần bổ sung')}</option>
-            <option value="canceled">{t('Đã hủy')}</option>
-          </select>
+            onChange={(v) => onChange({ status: v || null })}
+            options={[
+              { value: '', label: t('Tất cả trạng thái') },
+              { value: 'pendingapproval', label: t('Chờ duyệt') },
+              { value: 'approved', label: t('Đã duyệt') },
+              { value: 'rejected', label: t('Từ chối') },
+              { value: 'needssupplement', label: t('Cần bổ sung') },
+              { value: 'canceled', label: t('Đã hủy') },
+            ]}
+          />
         </div>
 
         {/* Reset */}

@@ -8,9 +8,15 @@ import { translate as t } from '../i18n/I18nProvider';
  */
 export const ROLE_LABELS = {
   ADMIN: 'Quản trị viên',
+  ADMINISTRATOR: 'Quản trị viên',
   HR: 'Nhân sự',
   MANAGER: 'Quản lý',
+  DIRECTOR: 'Giám đốc',
+  BOARD: 'Ban giám đốc',
+  SUPERVISOR: 'Giám sát',
   TEAM_LEADER: 'Trưởng nhóm',
+  STORE_MANAGER: 'Cửa hàng trưởng',
+  STORE_LEADER: 'Trưởng ca',
   STAFF: 'Nhân viên',
 };
 

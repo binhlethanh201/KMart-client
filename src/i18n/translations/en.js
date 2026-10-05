@@ -820,6 +820,10 @@ export const en = {
   'Phòng Nhân sự': 'HR Department',
   'Siêu thị Kiểm thử': 'Test Supermarket',
   'Giám đốc': 'Director',
+  // BE-148: nhãn VAI TRÒ hệ thống (được truyền qua biến nên bộ quét i18n không tự thấy)
+  'Ban giám đốc': 'Board of Directors',
+  'Giám sát': 'Supervisor',
+  'Trưởng ca': 'Shift Leader',
 
   /*
    * BE-108: tên MẪU ĐƠN đã bị xoá mềm vẫn hiện trong báo cáo (đơn cũ vẫn thuộc mẫu đó) nhưng
@@ -1041,6 +1045,7 @@ export const en = {
   'Bạn có chắc muốn xóa nhân sự "{v0}"? Thao tác này không thể hoàn tác.': 'Are you sure you want to delete personnel "{v0}"? This operation cannot be undone.',
   'Bạn đã ủy quyền cho {v0} — đơn này chỉ có thể chọn người được ủy quyền duyệt thay.': 'You have delegated to {v0} — this form can only select your delegate as the substitute approver.',
   'Bạn đang duyệt thay': 'You are browsing instead',
+  'Bạn vắng mặt': 'You are absent',
   'BẮT BUỘC theo đúng thứ tự: người đứng trước duyệt xong mới tới người kế tiếp (kéo-thả danh sách bên dưới để đổi thứ tự).': 'MANDATORY in the correct order: the first person must approve before moving on to the next person (drag-and-drop the list below to change the order).',
   'Bắt đầu': 'Starts',
   'Bộ lọc': 'Filter',
@@ -1099,6 +1104,7 @@ export const en = {
   'Đã duyệt (mặc định)': 'Approved (default)',
   'Đã đặt lại mật khẩu': 'Password reset',
   'Đã đặt làm luồng mặc định': 'Set as default stream',
+  'Đã được ủy quyền': 'Authorized',
   'Đã hết hạn': 'Expired',
   'Đã lưu cấu hình chung.': 'General configuration saved.',
   'Đã lưu cấu hình luồng duyệt. Đã gỡ luồng "Dùng chung" vì Khối Văn phòng và Khối Cửa hàng đều đã có luồng riêng': 'Browsing flow configuration saved. Removed the "Shared" thread because the Office Block and the Store Block already have their own threads',
@@ -1111,6 +1117,7 @@ export const en = {
   'Đã thêm mẫu đơn "{v0}".': 'Added application form "{v0}".',
   'Đã thu hồi': 'Revoked',
   'Đã thu hồi ủy quyền.': 'Authorization revoked.',
+  'Đã ủy quyền cho': 'Authorized',
   'Đã xoá luồng duyệt': 'Removed browsing flow',
   'Đã xóa mẫu đơn thành công!': 'Form deleted successfully!',
   'Đã xóa nhân sự "{v0}".': 'Deleted personnel "{v0}".',
@@ -1231,6 +1238,7 @@ export const en = {
   'Ngày trung bình': 'Average day',
   'Người đó duyệt đơn thay bạn': 'That person approves the application on your behalf',
   'Người được ủy quyền': 'Authorized person',
+  'Người được ủy quyền duyệt đơn thay bạn': 'Authorized person approves the application on your behalf',
   'Người được ủy quyền duyệt thay cho {v0}': 'Delegate approving on behalf of {v0}',
   'Người được ủy quyền KHÔNG được cấp thêm quyền, không đổi vai trò, không vào được Cấu hình hệ thống.': 'Authorized people are NOT granted additional rights, cannot change roles, and cannot access System Configuration.',
   'Người được ủy quyền sẽ có thể duyệt đơn thay bạn trong khoảng thời gian được chỉ định.': 'The authorized person will be able to review the application on your behalf within the specified time period.',
@@ -1315,6 +1323,7 @@ export const en = {
   'Tỷ lệ trong tổng': 'Percentage in total',
   'Ủy quyền chỉ chuyển quyền DUYỆT ĐƠN, không chuyển vai trò hay quyền hệ thống.': 'Authorization only transfers APPROVEMENT rights, not roles or system rights.',
   'Ủy quyền của tôi': 'My authorization',
+  'Ủy quyền duyệt đơn tạm thời cho người khác trong khoảng thời gian bạn vắng mặt.': 'Authorize temporary approval of applications to others during your absence.',
   'Ủy quyền đã tạo': 'Authorization created',
   'Ủy quyền hoạt động thế nào?': 'How does authorization work?',
   'Ủy quyền nhận được': 'Authorization received',

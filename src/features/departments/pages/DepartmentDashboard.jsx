@@ -4,6 +4,7 @@ import OrgTree from '../components/OrgTree';
 import AddDepartmentModal from '../components/AddDepartmentModal';
 import EditDepartmentModal from '../components/EditDepartmentModal';
 import Pagination from '../../../components/Pagination';
+import Select from '../../../components/Select';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useApproval } from '../../../context/useApproval';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -131,16 +132,20 @@ export default function DepartmentDashboard() {
       .map((d) => ({ ...d, isFilterMatch: matchedIds.has(d.id) }));
   }, [visibleDepartments, filteredDepartments, viewMode]);
 
-  // Đo số cột thực tế của lưới (đếm số thẻ nằm trên hàng đầu tiên) để chọn số thẻ mỗi trang.
+  // Đo số cột theo BỀ RỘNG khung lưới (không phụ thuộc số thẻ đang hiển thị) rồi chọn số thẻ mỗi
+  // trang = số cột × 3 hàng. Cách đo theo items đang render trước đây gây VÒNG LẶP: chuyển trang →
+  // còn ít thẻ → "số cột" đo sai → số thẻ/trang đổi → danh sách nhảy loạn (18 → 8 → 5 thẻ).
+  // CARD_MIN_WIDTH PHẢI khớp `min-w-[min(250px,100%)]` của thẻ bên dưới.
+  const CARD_MIN_WIDTH = 250;
   React.useEffect(() => {
     const el = gridRef.current;
     if (!el) return undefined;
     const measure = () => {
-      const kids = Array.from(el.children).map((c) => c.getBoundingClientRect());
-      if (!kids.length) return;
-      const firstTop = Math.round(kids[0].top);
-      const cols = kids.filter((k) => Math.abs(Math.round(k.top) - firstTop) <= 2).length;
-      setGridColumns((prev) => (prev === Math.max(1, cols) ? prev : Math.max(1, cols)));
+      const width = el.clientWidth;
+      if (!width) return;
+      const gap = parseFloat(window.getComputedStyle(el).columnGap) || 12;
+      const cols = Math.max(1, Math.floor((width + gap) / (CARD_MIN_WIDTH + gap)));
+      setGridColumns((prev) => (prev === cols ? prev : cols));
     };
     measure();
     if (typeof ResizeObserver === 'undefined') {
@@ -206,25 +211,27 @@ export default function DepartmentDashboard() {
                   type="text"
                 />
               </div>
-              <select
+              <Select
                 value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
+                onChange={setFilterType}
                 className={FILTER_SELECT_CLS}
-              >
-                <option value="all">{t('Loại đơn vị: Tất cả')}</option>
-                <option value="Phòng ban">{t('Phòng ban')}</option>
-                <option value="Khối chuyên môn">{t('Khối chuyên môn')}</option>
-                <option value="Siêu thị / Chi nhánh">{t('Siêu thị / Chi nhánh')}</option>
-              </select>
-              <select
+                options={[
+                  { value: 'all', label: t('Loại đơn vị: Tất cả') },
+                  { value: 'Phòng ban', label: t('Phòng ban') },
+                  { value: 'Khối chuyên môn', label: t('Khối chuyên môn') },
+                  { value: 'Siêu thị / Chi nhánh', label: t('Siêu thị / Chi nhánh') },
+                ]}
+              />
+              <Select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
+                onChange={setFilterStatus}
                 className={FILTER_SELECT_CLS}
-              >
-                <option value="all">{t('Trạng thái: Tất cả')}</option>
-                <option value="active">{t('Đang hoạt động')}</option>
-                <option value="inactive">{t('Ngừng hoạt động')}</option>
-              </select>
+                options={[
+                  { value: 'all', label: t('Trạng thái: Tất cả') },
+                  { value: 'active', label: t('Đang hoạt động') },
+                  { value: 'inactive', label: t('Ngừng hoạt động') },
+                ]}
+              />
             </div>
 
             {/* BE-98: chuyển giữa lưới thẻ và sơ đồ cây tổ chức */}
@@ -286,7 +293,7 @@ export default function DepartmentDashboard() {
                     phóng to vừa đủ phủ hết bề ngang -> không còn khoảng trống lệch một bên. */}
                 <div ref={gridRef} className="flex flex-wrap gap-3">
                   {paginatedDepartments.map((dept) => (
-                    <div key={dept.id} className="flex flex-1 min-w-[min(240px,100%)]">
+                    <div key={dept.id} className="flex flex-1 min-w-[min(250px,100%)]">
                       <DepartmentCard
                         id={dept.id}
                         className="w-full h-full"

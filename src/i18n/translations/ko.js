@@ -817,6 +817,10 @@ export const ko = {
   'Phòng Nhân sự': '인사부',
   'Siêu thị Kiểm thử': '테스트 슈퍼마켓',
   'Giám đốc': '이사',
+  // BE-148: nhãn VAI TRÒ hệ thống (được truyền qua biến nên bộ quét i18n không tự thấy)
+  'Ban giám đốc': '이사회',
+  'Giám sát': '감독관',
+  'Trưởng ca': '조장',
 
   /*
    * BE-108: tên MẪU ĐƠN đã bị xoá mềm vẫn hiện trong báo cáo (đơn cũ vẫn thuộc mẫu đó) nhưng
@@ -1036,6 +1040,7 @@ export const ko = {
   'Bạn có chắc muốn xóa nhân sự "{v0}"? Thao tác này không thể hoàn tác.': '"{v0}" 직원을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.',
   'Bạn đã ủy quyền cho {v0} — đơn này chỉ có thể chọn người được ủy quyền duyệt thay.': '{v0}님에게 위임했습니다 — 이 양식에서는 위임받은 사람만 대리 결재자로 선택할 수 있습니다.',
   'Bạn đang duyệt thay': '대신 탐색 중입니다.',
+  'Bạn vắng mặt': '당신은 결석',
   'BẮT BUỘC theo đúng thứ tự: người đứng trước duyệt xong mới tới người kế tiếp (kéo-thả danh sách bên dưới để đổi thứ tự).': '올바른 순서로 필수: 첫 번째 사람이 승인해야 다음 사람으로 넘어갑니다(순서를 변경하려면 아래 목록을 드래그 앤 드롭하세요).',
   'Bắt đầu': '시작',
   'Bộ lọc': '필터',
@@ -1094,6 +1099,7 @@ export const ko = {
   'Đã duyệt (mặc định)': '승인됨(기본값)',
   'Đã đặt lại mật khẩu': '비밀번호 재설정',
   'Đã đặt làm luồng mặc định': '기본 스트림으로 설정',
+  'Đã được ủy quyền': '인정 받은',
   'Đã hết hạn': '만료됨',
   'Đã lưu cấu hình chung.': '일반 구성이 저장되었습니다.',
   'Đã lưu cấu hình luồng duyệt. Đã gỡ luồng "Dùng chung" vì Khối Văn phòng và Khối Cửa hàng đều đã có luồng riêng': '탐색 흐름 구성이 저장되었습니다. Office Block과 Store Block에 이미 자체 스레드가 있으므로 "공유" 스레드를 제거했습니다.',
@@ -1106,6 +1112,7 @@ export const ko = {
   'Đã thêm mẫu đơn "{v0}".': '신청서 \'{v0}\'을 추가했습니다.',
   'Đã thu hồi': '취소됨',
   'Đã thu hồi ủy quyền.': '승인이 취소되었습니다.',
+  'Đã ủy quyền cho': '인정 받은',
   'Đã xoá luồng duyệt': '탐색 흐름이 제거되었습니다.',
   'Đã xóa mẫu đơn thành công!': '양식이 삭제되었습니다.',
   'Đã xóa nhân sự "{v0}".': '직원 "{v0}"을(를) 삭제했습니다.',
@@ -1226,6 +1233,7 @@ export const ko = {
   'Ngày trung bình': '평균일',
   'Người đó duyệt đơn thay bạn': '그 사람이 귀하를 대신하여 신청서를 승인합니다.',
   'Người được ủy quyền': '허가받은 사람',
+  'Người được ủy quyền duyệt đơn thay bạn': '승인된 사람이 귀하를 대신하여 신청서를 승인합니다.',
   'Người được ủy quyền duyệt thay cho {v0}': '{v0}님을 대신해 위임받은 사람이 결재합니다',
   'Người được ủy quyền KHÔNG được cấp thêm quyền, không đổi vai trò, không vào được Cấu hình hệ thống.': '승인된 사람에게는 추가 권한이 부여되지 않으며 역할을 변경할 수 없으며 시스템 구성에 액세스할 수 없습니다.',
   'Người được ủy quyền sẽ có thể duyệt đơn thay bạn trong khoảng thời gian được chỉ định.': '승인된 사람은 지정된 기간 내에 귀하를 대신하여 신청서를 검토할 수 있습니다.',
@@ -1310,6 +1318,7 @@ export const ko = {
   'Tỷ lệ trong tổng': '전체 비율',
   'Ủy quyền chỉ chuyển quyền DUYỆT ĐƠN, không chuyển vai trò hay quyền hệ thống.': '권한 부여는 역할이나 시스템 권한이 아닌 승인 권한만 전송합니다.',
   'Ủy quyền của tôi': '내 승인',
+  'Ủy quyền duyệt đơn tạm thời cho người khác trong khoảng thời gian bạn vắng mặt.': '귀하가 부재하는 동안 다른 사람에게 임시로 신청서를 승인할 수 있는 권한을 부여합니다.',
   'Ủy quyền đã tạo': '승인이 생성되었습니다.',
   'Ủy quyền hoạt động thế nào?': '승인은 어떻게 이루어지나요?',
   'Ủy quyền nhận được': '승인이 접수됨',
