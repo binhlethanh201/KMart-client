@@ -8,6 +8,7 @@ import PageHeader from '../../../components/PageHeader';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 import { scopeDepartmentsForUser } from '../../../utils/departmentScope';
 import { matchesSearchText, normalizeSearchText } from '../../../utils/searchText';
+import { documentTypeService } from '../../../services/documentTypeService';
 
 /* ─── Constants ──────────────────────────────────────────────── */
 
@@ -49,13 +50,21 @@ export default function PersonalRequests({ mode = 'sent' }) {
   const [statusFilter, setStatusFilter]        = useState('all');
   const [search, setSearch]                    = useState('');
   const [departmentFilter, setDepartmentFilter] = useState(null);
+  const [documentTypeFilter, setDocumentTypeFilter] = useState(null);
+  const [documentTypes, setDocumentTypes] = useState([]);
   const [editingRequest, setEditingRequest]   = useState(null);
 
   useEffect(() => {
     setStatusFilter('all');
     setSearch('');
     setDepartmentFilter(null);
+    setDocumentTypeFilter(null);
   }, [mode]);
+  
+  // Load document types for filter
+  useEffect(() => {
+    documentTypeService.getAll().then(setDocumentTypes).catch(console.error);
+  }, []);
 
   /* BE-05: đơn thuộc màn hình hiện tại */
   const matchesMode = useCallback((r) => {
@@ -114,12 +123,15 @@ export default function PersonalRequests({ mode = 'sent' }) {
       ], q);
 
       const matchD = !departmentFilter || r.departmentId === departmentFilter;
-      return matchQ && matchF && matchD;
+      const matchT = !documentTypeFilter || r.documentTypeId === documentTypeFilter;
+      return matchQ && matchF && matchD && matchT;
     });
-  }, [requests, statusFilter, search, departmentFilter, matchesMode, departments]);
+  }, [requests, statusFilter, search, departmentFilter, documentTypeFilter, matchesMode, departments]);
 
-  /* pagination for infinite scroll */
+  /* phân trang / cuộn vô hạn */
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [usePagination, setUsePagination] = useState(false);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -127,12 +139,23 @@ export default function PersonalRequests({ mode = 'sent' }) {
   }, [mode, statusFilter, search, departmentFilter]);
 
   const visibleFiltered = useMemo(() => {
+    if (usePagination) {
+      const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+      const safePage = Math.min(Math.max(1, page), totalPages);
+      return filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+    }
     return filtered.slice(0, page * itemsPerPage);
-  }, [filtered, page, itemsPerPage]);
+  }, [filtered, page, itemsPerPage, pageSize, usePagination]);
 
   const loaderRef = useRef(null);
-  
+
   useEffect(() => {
+    setPage(1);
+  }, [mode, statusFilter, search, departmentFilter, documentTypeFilter]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (usePagination) return;
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
         setPage(prev => (prev * itemsPerPage < filtered.length ? prev + 1 : prev));
@@ -146,7 +169,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
     return () => {
       if (loaderRef.current) observer.unobserve(loaderRef.current);
     };
-  }, [filtered.length, itemsPerPage]);
+  }, [filtered.length, itemsPerPage, usePagination]);
 
   return (
     <div className="flex flex-1 h-full overflow-hidden bg-background">
@@ -217,12 +240,36 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 </select>
               </div>
 
+              {/* Document type dropdown */}
+              <div className="relative min-w-[180px]">
+                <select
+                  value={documentTypeFilter || ''}
+                  onChange={(e) => setDocumentTypeFilter(e.target.value || null)}
+                  aria-label={t('Loại đơn')}
+                  className={`${FILTER_SELECT_CLS} w-full`}
+                >
+                  <option value="">{t('Tất cả loại đơn')}</option>
+                  {documentTypes.map((dt) => (
+                    <option key={dt.id} value={dt.id}>
+                      {t(dt.name)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Nút xoá nhanh bộ lọc */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                {(search || departmentFilter) && (
+                <button
+                  onClick={() => { setUsePagination(!usePagination); setPage(1); }}
+                  className="text-xs font-medium text-primary hover:underline whitespace-nowrap cursor-pointer"
+                  title={usePagination ? 'Chuyển sang cuộn vô hạn' : 'Chuyển sang phân trang'}
+                >
+                  {usePagination ? t('Cuộn vô hạn') : t('Phân trang')}
+                </button>
+                {(search || departmentFilter || documentTypeFilter) && (
                   <button
                     type="button"
-                    onClick={() => { setSearch(''); setDepartmentFilter(null); }}
+                    onClick={() => { setSearch(''); setDepartmentFilter(null); setDocumentTypeFilter(null); }}
                     className="text-xs font-medium text-primary hover:underline whitespace-nowrap cursor-pointer"
                   >
                     {t('Xoá bộ lọc')}
@@ -308,14 +355,52 @@ export default function PersonalRequests({ mode = 'sent' }) {
                   </div>
                 ))}
                 
-                {/* Loader element for intersection observer */}
-                {page * itemsPerPage < filtered.length && (
+                {/* Loader element for intersection observer or pagination */}
+                {usePagination ? (
+                  <div className="flex items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-secondary">{t('Hiển thị')}</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                        className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
+                      >
+                        <option value={5}>{t('5 dòng')}</option>
+                        <option value={10}>{t('10 dòng')}</option>
+                        <option value={20}>{t('20 dòng')}</option>
+                        <option value={50}>{t('50 dòng')}</option>
+                      </select>
+                      <span className="text-xs text-secondary">
+                        {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1} - {Math.min(page * pageSize, filtered.length)} {t('trong tổng số')} {filtered.length}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                        className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface disabled:opacity-40 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                      </button>
+                      <span className="text-xs text-secondary px-2">
+                        {t('Trang {v0} / {v1}', { v0: page, v1: Math.max(1, Math.ceil(filtered.length / pageSize)) })}
+                      </span>
+                      <button
+                        onClick={() => setPage(p => Math.min(Math.ceil(filtered.length / pageSize), p + 1))}
+                        disabled={page >= Math.ceil(filtered.length / pageSize)}
+                        className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface disabled:opacity-40 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : page * itemsPerPage < filtered.length && (
                   <div ref={loaderRef} className="w-full py-4 flex justify-center items-center text-secondary">
                     <span className="material-symbols-outlined animate-spin text-[24px]">progress_activity</span>
                     <span className="ml-2 text-sm font-medium">{t('Đang tải thêm...')}</span>
                   </div>
                 )}
-              </>
+                </>
             )}
           </div>
         </div>

@@ -22,4 +22,9 @@ export const notificationService = {
     const response = await apiClient.put('/notifications/read-all');
     return response.data;
   },
+
+  /** Xóa một thông báo. */
+  remove: async (id) => {
+    await apiClient.delete(`/notifications/${id}`);
+  },
 };

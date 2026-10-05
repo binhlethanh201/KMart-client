@@ -12,6 +12,7 @@ import SystemConfig from "./features/system-config/pages/SystemConfig";
 import PersonalRequests from "./features/requests/pages/PersonalRequests";
 import RequestDetail from "./features/requests/pages/RequestDetail";
 import ReportsPage from "./features/reports/pages/ReportsPage";
+import DelegationsTab from "./features/system-config/components/DelegationsTab";
 
 import ToastHost from "./components/ToastHost";
 import LoginPage from "./features/auth/pages/LoginPage";
@@ -133,6 +134,12 @@ function App() {
                 <Route path="reports" element={
                   <ProtectedRoute requiredPermissions={[PERMISSIONS.APPLICATION_VIEW]}>
                     <ReportsPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="delegations" element={
+                  <ProtectedRoute requiredPermissions={[PERMISSIONS.APPLICATION_APPROVE]}>
+                    <div className="p-6 h-full flex flex-col"><DelegationsTab /></div>
                   </ProtectedRoute>
                 } />
 

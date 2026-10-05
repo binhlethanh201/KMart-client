@@ -142,6 +142,7 @@ export default function FormTemplatesTab() {
   const [selectedForm, setSelectedForm] = useState(() => Object.keys(fields)[0] || '');
 
   const [isAddingType, setIsAddingType] = useState(false);
+  const [editingDocType, setEditingDocType] = useState(null);
   const [newTypeName, setNewTypeName] = useState('');
   const [selectedCatIdForNewType, setSelectedCatIdForNewType] = useState('cat1');
 
@@ -176,9 +177,8 @@ export default function FormTemplatesTab() {
     const name = newTypeName.trim();
     if (!name) return;
 
-    // BE-84: chặn trùng tên trên TOÀN BỘ danh mục. Trước đây trùng thì popup tự đóng im lặng, người
-    // dùng không biết vì sao không tạo được; còn nếu lọt qua thì mẫu đơn bị nhân đôi ở nhiều danh mục.
-    const existedCat = categories.find((c) => c.items.some((it) => it.trim().toLowerCase() === name.toLowerCase()));
+    // BE-84: chặn trùng tên trên TOÀN BỘ danh mục (trừ khi đang sửa chính nó).
+    const existedCat = categories.find((c) => c.items.some((it) => it.trim().toLowerCase() === name.toLowerCase() && (!editingDocType || it !== editingDocType.name)));
     if (existedCat) {
       pushToast(t('Mẫu đơn "{v0}" đã tồn tại trong danh mục "{v1}". Vui lòng dùng tên khác.', {
         v0: name,
@@ -187,30 +187,57 @@ export default function FormTemplatesTab() {
       return;
     }
 
-    // Tạo luôn mẫu đơn trên BE kèm nhóm đã chọn (category thật, không chỉ lưu ở FE).
     const cat = categories.find((c) => c.id === newTypeCatId);
-    documentTypeService.create({
-      name,
-      code: 'AUTO_' + Date.now(),
-      category: cat?.name || t('Khác'),
-    }).then(created => {
-      // Nhóm lại theo dữ liệu server trả về thay vì tự chèn tay vào một nhóm — tự chèn tay là nguồn gốc
-      // của việc mẫu đơn hiện sai/nhảy sang danh mục khác.
-      const nextTypes = [...documentTypesRef.current, created];
-      documentTypesRef.current = nextTypes;
-      setDocumentTypes(nextTypes);
-      setCategories((prev) => mergeServerCategories(buildCategories(nextTypes), prev));
-      setFields(prev => ({ ...prev, [name]: [] }));
-      setSelectedForm(name);
-      setIsAddingType(false);
-      setNewTypeName('');
-      pushToast(t('Đã thêm mẫu đơn "{v0}".', { v0: name }), 'success');
-    }).catch(err => {
-      console.error(err);
-      // BE-84: ưu tiên thông báo cụ thể từ server (VD "Mẫu đơn ... đã tồn tại") thay vì câu chung chung.
-      const serverMessage = err?.response?.data?.message;
-      pushToast(serverMessage || t('Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
-    });
+    
+    if (editingDocType) {
+      documentTypeService.update(editingDocType.id, {
+        name,
+        category: cat?.name || t('Khác'),
+      }).then(updated => {
+        const nextTypes = documentTypesRef.current.map(d => d.id === updated.id ? updated : d);
+        documentTypesRef.current = nextTypes;
+        setDocumentTypes(nextTypes);
+        setCategories((prev) => mergeServerCategories(buildCategories(nextTypes), prev));
+        // Nếu tên bị đổi, cập nhật fields key và selectedForm
+        if (name !== editingDocType.name) {
+          setFields(prev => {
+            const next = { ...prev };
+            next[name] = next[editingDocType.name] || [];
+            delete next[editingDocType.name];
+            return next;
+          });
+          if (selectedForm === editingDocType.name) setSelectedForm(name);
+        }
+        setIsAddingType(false);
+        setEditingDocType(null);
+        setNewTypeName('');
+        pushToast(t('Đã cập nhật mẫu đơn "{v0}".', { v0: name }), 'success');
+      }).catch(err => {
+        console.error(err);
+        const serverMessage = err?.response?.data?.error || err?.response?.data?.message;
+        pushToast(serverMessage || t('Lỗi khi cập nhật mẫu đơn "{v0}"', { v0: name }), 'error');
+      });
+    } else {
+      documentTypeService.create({
+        name,
+        code: 'AUTO_' + Date.now(),
+        category: cat?.name || t('Khác'),
+      }).then(created => {
+        const nextTypes = [...documentTypesRef.current, created];
+        documentTypesRef.current = nextTypes;
+        setDocumentTypes(nextTypes);
+        setCategories((prev) => mergeServerCategories(buildCategories(nextTypes), prev));
+        setFields(prev => ({ ...prev, [name]: [] }));
+        setSelectedForm(name);
+        setIsAddingType(false);
+        setNewTypeName('');
+        pushToast(t('Đã thêm mẫu đơn "{v0}".', { v0: name }), 'success');
+      }).catch(err => {
+        console.error(err);
+        const serverMessage = err?.response?.data?.error || err?.response?.data?.message;
+        pushToast(serverMessage || t('Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
+      });
+    }
   };
 
   const handleAddCategory = () => {
@@ -482,16 +509,35 @@ export default function FormTemplatesTab() {
                               <span className="material-symbols-outlined text-[16px]">{active ? 'description' : 'draft'}</span>
                               <span className="truncate">{t(f)}</span>
                             </button>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteForm(cat.id, f);
-                              }}
-                              className="absolute right-1 opacity-0 group-hover/item:opacity-100 text-secondary hover:text-error transition-all p-1.5 rounded hover:bg-error-container/30 cursor-pointer flex-shrink-0"
-                              title={t('Xóa mẫu đơn')}
-                            >
-                              <span className="material-symbols-outlined text-[14px]">delete</span>
-                            </button>
+                            <div className="absolute right-1 opacity-0 group-hover/item:opacity-100 flex items-center transition-all bg-surface">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const docType = documentTypes.find(d => d.name === f);
+                                  if (docType) {
+                                    setEditingDocType(docType);
+                                    setNewTypeName(docType.name);
+                                    const cat = categories.find(c => c.name === docType.category);
+                                    if (cat) setSelectedCatIdForNewType(cat.id);
+                                    setIsAddingType(true);
+                                  }
+                                }}
+                                className="text-secondary hover:text-primary transition-all p-1.5 rounded hover:bg-primary-container/30 cursor-pointer flex-shrink-0"
+                                title={t('Sửa mẫu đơn')}
+                              >
+                                <span className="material-symbols-outlined text-[14px]">edit</span>
+                              </button>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteForm(cat.id, f);
+                                }}
+                                className="text-secondary hover:text-error transition-all p-1.5 rounded hover:bg-error-container/30 cursor-pointer flex-shrink-0"
+                                title={t('Xóa mẫu đơn')}
+                              >
+                                <span className="material-symbols-outlined text-[14px]">delete</span>
+                              </button>
+                            </div>
                           </li>
                         );
                       })}
@@ -504,7 +550,11 @@ export default function FormTemplatesTab() {
         </div>
         <div className="p-2 border-t border-outline-variant/50">
           <button
-            onClick={() => setIsAddingType(true)}
+            onClick={() => {
+              setEditingDocType(null);
+              setNewTypeName('');
+              setIsAddingType(true);
+            }}
             className="w-full text-center px-3 py-2 rounded-md text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-primary hover:bg-primary-container/30 border border-dashed border-primary/50"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
@@ -654,9 +704,9 @@ export default function FormTemplatesTab() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-4 border-b border-outline-variant/30">
-              <h3 className="font-headline-sm text-on-surface">{t('Thêm mẫu đơn mới')}</h3>
+              <h3 className="font-headline-sm text-on-surface">{editingDocType ? t('Sửa mẫu đơn') : t('Thêm mẫu đơn mới')}</h3>
               <button 
-                onClick={() => setIsAddingType(false)}
+                onClick={() => { setIsAddingType(false); setEditingDocType(null); }}
                 className="text-on-surface-variant hover:text-on-surface transition-colors p-1 rounded-full hover:bg-surface-variant cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
@@ -699,7 +749,7 @@ export default function FormTemplatesTab() {
             
             <div className="p-4 bg-surface-container-lowest border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-lg">
               <button 
-                onClick={() => setIsAddingType(false)}
+                onClick={() => { setIsAddingType(false); setEditingDocType(null); }}
                 className="text-on-surface-variant text-sm font-medium px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
               >
                 {t('Hủy')}
@@ -708,7 +758,7 @@ export default function FormTemplatesTab() {
                 onClick={handleAddFormType}
                 className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center shadow-sm cursor-pointer"
               >
-                {t('Thêm mẫu đơn')}
+                {editingDocType ? t('Cập nhật') : t('Thêm mẫu đơn')}
               </button>
             </div>
           </div>

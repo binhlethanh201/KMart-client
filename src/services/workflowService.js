@@ -32,4 +32,22 @@ export const workflowService = {
     const response = await apiClient.put(`/workflows/${id}`, data);
     return response.data;
   },
+
+  // Clone workflow
+  clone: async (id) => {
+    const response = await apiClient.post(`/workflows/${id}/clone`);
+    return response.data;
+  },
+
+  // Set workflow as default
+  setDefault: async (id) => {
+    const response = await apiClient.put(`/workflows/${id}/default`);
+    return response.data;
+  },
+
+  // Delete workflow
+  remove: async (id) => {
+    const response = await apiClient.delete(`/workflows/${id}`);
+    return response.data;
+  },
 };

@@ -165,6 +165,12 @@ const NAV_ITEMS = [
     permission: 'APPLICATION_VIEW',
   },
   {
+    name: 'Ủy quyền',
+    icon: 'assignment_ind',
+    path: '/delegations',
+    permission: 'APPLICATION_APPROVE',
+  },
+  {
     name: 'Cấu hình',
     icon: 'settings',
     subPanel: 'settings',

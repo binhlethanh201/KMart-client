@@ -283,12 +283,16 @@ export default function EmployeeDetail() {
                    <span className="material-symbols-outlined text-[18px]">{isActive ? 'lock' : 'lock_open'}</span>
                    {isActive ? t('Khóa tài khoản') : t('Mở khóa')}
                 </button>
-                {/* BE-87: xoá nhân sự */}
-                <div className="h-px bg-outline-variant/50 my-1 w-full" />
-                <button onClick={() => { handleDelete(); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error-container/30 flex items-center gap-2 cursor-pointer">
-                   <span className="material-symbols-outlined text-[18px]">delete</span>
-                   {t('Xóa nhân sự')}
-                </button>
+                {/* BE-87: xoá nhân sự — chỉ hiện khi có quyền. */}
+                {canDeleteEmployee && (
+                  <>
+                    <div className="h-px bg-outline-variant/50 my-1 w-full" />
+                    <button onClick={() => { handleDelete(); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error-container/30 flex items-center gap-2 cursor-pointer">
+                       <span className="material-symbols-outlined text-[18px]">delete</span>
+                       {t('Xóa nhân sự')}
+                    </button>
+                  </>
+                )}
              </div>
           </div>
         </div>
