@@ -165,7 +165,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))]">
         <div className="bg-surface rounded-xl p-5 border border-outline-variant shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-success/10 text-success flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-[24px]">task_alt</span>
@@ -292,7 +292,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
           </div>
         ) : (
           <>
-            <div key={memberPage} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 items-start animate-slide-fade">
+            <div key={memberPage} className="grid gap-5 items-start animate-slide-fade grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))]">
               {pagedRows.map(row => (
           <div key={row.id} className="bg-surface border border-outline-variant rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col group">
             {/* Header */}

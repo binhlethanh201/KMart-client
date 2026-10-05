@@ -17,6 +17,27 @@ import RosterTable from '../components/RosterTable';
 import ExportModal from '../components/ExportModal';
 import { useI18n } from '../../../i18n/I18nProvider';
 
+/**
+ * BE-136: khối "đang tải" dùng chung cho các khu vực dữ liệu của trang Báo cáo.
+ * Trước đây trong lúc chờ API (DB remote có thể mất vài giây) các khung biểu đồ/bảng
+ * để TRỐNG hoặc hiện "Không có dữ liệu" khiến người dùng tưởng mất số liệu.
+ */
+function LoadingBlock({ label, dark = false }) {
+  const { t } = useI18n();
+  return (
+    <div
+      className={`flex flex-col items-center justify-center gap-3 py-12 ${dark ? 'text-white/60' : 'text-gray-500'}`}
+      role="status"
+      aria-live="polite"
+    >
+      <span className={`material-symbols-outlined text-[30px] animate-spin ${dark ? 'text-white/70' : 'text-primary'}`}>
+        progress_activity
+      </span>
+      <span className="text-xs font-medium">{label || t('Đang tải dữ liệu...')}</span>
+    </div>
+  );
+}
+
 export default function ReportsPage() {
   const { t } = useI18n();
   useDocumentTitle(t('Báo cáo & Thống kê'));
@@ -194,13 +215,13 @@ export default function ReportsPage() {
 
       {/* Số liệu tổng quan */}
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))]">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-36 bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] animate-pulse" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))]">
           <StatCard title={t('Tổng đơn đã duyệt')} value={total} icon="verified" accent="green" />
           <StatCard
             title={t('Phòng ban nhiều nhất')}
@@ -238,7 +259,7 @@ export default function ReportsPage() {
       )}
 
       {/* Phân bổ theo loại đơn & phòng ban — đặt TRƯỚC xu hướng để nhìn tổng quan trước */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))]">
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8 flex flex-col h-[420px]">
           <div className="flex items-start justify-between gap-3 mb-6">
             <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
@@ -247,12 +268,16 @@ export default function ReportsPage() {
             <ExportTableButton table="byType" filters={query} filePrefix="DonDaDuyet_TheoLoaiDon" />
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto pr-4 custom-scrollbar">
-            <BarChart
-              data={byType.map((tp) => ({
-                name: t(tp.documentType || 'Không rõ'),
-                value: tp.count || 0,
-              }))}
-            />
+            {loading ? (
+              <LoadingBlock />
+            ) : (
+              <BarChart
+                data={byType.map((tp) => ({
+                  name: t(tp.documentType || 'Không rõ'),
+                  value: tp.count || 0,
+                }))}
+              />
+            )}
           </div>
         </div>
 
@@ -264,12 +289,16 @@ export default function ReportsPage() {
             <ExportTableButton table="byDepartment" filters={query} filePrefix="DonDaDuyet_TheoPhongBan" />
           </div>
           <div className="flex-1 min-h-0">
-            <PieChart
-              data={byDepartment.map((d) => ({
-                name: t(d.departmentName || 'Chưa phân bổ'),
-                value: d.totalApplications ?? d.approved ?? 0,
-              }))}
-            />
+            {loading ? (
+              <LoadingBlock />
+            ) : (
+              <PieChart
+                data={byDepartment.map((d) => ({
+                  name: t(d.departmentName || 'Chưa phân bổ'),
+                  value: d.totalApplications ?? d.approved ?? 0,
+                }))}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -340,31 +369,39 @@ export default function ReportsPage() {
           </div>
         )}
 
-        <TrendLineChart
-          labels={trendLabels}
-          series={trendSeries}
-          changePercents={trendMode === 'total' ? trendChange : null}
-          tooltips={trendTooltips}
-          height={300}
-        />
+        {loading ? (
+          <LoadingBlock />
+        ) : (
+          <TrendLineChart
+            labels={trendLabels}
+            series={trendSeries}
+            changePercents={trendMode === 'total' ? trendChange : null}
+            tooltips={trendTooltips}
+            height={300}
+          />
+        )}
       </div>
 
       {/* Bảng điều hành — Quản lý cấp cao (BE-64: tách riêng để tìm kiếm không vẽ lại cả trang) */}
       <div className="bg-[#1d1d1f] rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
-        <RosterTable
-          managers={managers}
-          rosterMode={rosterMode}
-          total={total}
-          query={query}
-          onPickDepartment={(patch) => {
-            if (patch.rosterMode) setRosterMode(patch.rosterMode);
-            else handleFilterChange(patch);
-          }}
-        />
+        {loading ? (
+          <LoadingBlock dark />
+        ) : (
+          <RosterTable
+            managers={managers}
+            rosterMode={rosterMode}
+            total={total}
+            query={query}
+            onPickDepartment={(patch) => {
+              if (patch.rosterMode) setRosterMode(patch.rosterMode);
+              else handleFilterChange(patch);
+            }}
+          />
+        )}
       </div>
 
       {/* So sánh theo phòng ban & chức vụ */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))]">
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
           <div className="flex items-start justify-between gap-3 mb-6">
             <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
@@ -373,6 +410,7 @@ export default function ReportsPage() {
             <ExportTableButton table="byDepartment" filters={query} filePrefix="SoSanh_PhongBan" />
           </div>
           <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+            {loading && <LoadingBlock />}
             {byDepartment.map((d, index) => {
               const value = d.totalApplications ?? d.approved ?? 0;
               const volumePercent = (value / maxDeptTotal) * 100;
@@ -410,7 +448,7 @@ export default function ReportsPage() {
                 </div>
               );
             })}
-            {byDepartment.length === 0 && (
+            {!loading && byDepartment.length === 0 && (
               <div className="py-10 text-center text-gray-500 font-medium">{t('Không có dữ liệu phòng ban')}</div>
             )}
           </div>
@@ -424,6 +462,7 @@ export default function ReportsPage() {
             <ExportTableButton table="byPosition" filters={query} filePrefix="SoSanh_ChucVu" />
           </div>
           <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+            {loading && <LoadingBlock />}
             {byPosition.map((p, index) => {
               const share = total > 0 ? ((p.total ?? 0) / total) * 100 : 0;
               return (
@@ -456,7 +495,7 @@ export default function ReportsPage() {
                 </div>
               );
             })}
-            {byPosition.length === 0 && (
+            {!loading && byPosition.length === 0 && (
               <div className="py-10 text-center text-gray-500 font-medium">{t('Không có dữ liệu chức vụ')}</div>
             )}
           </div>

@@ -189,7 +189,7 @@ export default function EmployeeDetail() {
       pushToast(t('Đã xóa nhân sự "{v0}".', { v0: employee.name }), 'success');
       navigate('/personnel');
     } else {
-      pushToast(result?.message || t('Không xóa được nhân sự'), 'error');
+      pushToast(t(result?.message) || t('Không xóa được nhân sự'), 'error');
     }
   };
 
@@ -294,7 +294,7 @@ export default function EmployeeDetail() {
         </div>
 
         {/* Info Grid (4 columns) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))]">
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
                  <span className="material-symbols-outlined text-[16px]">badge</span>

@@ -8,7 +8,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 
 /* ─── Sub-panel: chỉ 2 link điều hướng ──────────────────────── */
 
-function RequestsSubPanel({ pendingCount, supplementCount }) {
+function RequestsSubPanel({ pendingCount, supplementCount, onClose }) {
   const location = useLocation();
   const { t } = useI18n();
 
@@ -34,10 +34,19 @@ function RequestsSubPanel({ pendingCount, supplementCount }) {
   return (
     <div className="flex flex-col h-full bg-[#162032] border-l border-white/10 w-[200px] flex-shrink-0">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">
           {t('Đơn từ')}
         </span>
+        <button
+          type="button"
+          onClick={onClose}
+          title={t('Đóng bảng')}
+          aria-label={t('Đóng bảng')}
+          className="text-slate-500 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[16px] leading-none">close</span>
+        </button>
       </div>
 
       {/* nav links */}
@@ -58,7 +67,7 @@ function RequestsSubPanel({ pendingCount, supplementCount }) {
                   <span className="material-symbols-outlined text-[18px] flex-shrink-0">
                     {item.icon}
                   </span>
-                  <span className="text-sm font-medium truncate">{t(item.label)}</span>
+                  <span className="text-sm font-medium break-words text-left min-w-0">{t(item.label)}</span>
                 </span>
                 {item.badge > 0 && (
                   <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none flex-shrink-0 ml-2">
@@ -76,7 +85,7 @@ function RequestsSubPanel({ pendingCount, supplementCount }) {
 
 /* ─── Sub-panel: Cấu hình ────────────────────────────────────── */
 
-function SettingsSubPanel() {
+function SettingsSubPanel({ onClose }) {
   const location = useLocation();
   const { t } = useI18n();
 
@@ -106,10 +115,19 @@ function SettingsSubPanel() {
   return (
     <div className="flex flex-col h-full bg-[#162032] border-l border-white/10 w-[200px] flex-shrink-0">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">
           {t('Cấu hình')}
         </span>
+        <button
+          type="button"
+          onClick={onClose}
+          title={t('Đóng bảng')}
+          aria-label={t('Đóng bảng')}
+          className="text-slate-500 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[16px] leading-none">close</span>
+        </button>
       </div>
 
       {/* nav links */}
@@ -130,7 +148,7 @@ function SettingsSubPanel() {
                   <span className="material-symbols-outlined text-[18px] flex-shrink-0">
                     {item.icon}
                   </span>
-                  <span className="text-sm font-medium truncate">{t(item.label)}</span>
+                  <span className="text-sm font-medium break-words text-left min-w-0">{t(item.label)}</span>
                 </span>
               </Link>
             </li>
@@ -173,9 +191,17 @@ const NAV_ITEMS = [
   },
 ];
 
-/** BE-82: thời gian trễ trước khi bảng con bắt đầu thu, và thời gian chạy hiệu ứng thu. */
-const SIDEBAR_PANEL_CLOSE_DELAY_MS = 420; // trước đây 180ms -> cảm giác bị đẩy về ngay
-const SIDEBAR_PANEL_COLLAPSE_MS = 380; // phải khớp `duration-[380ms]` của khung bảng con
+/**
+ * BE-135: bảng con (Đơn từ / Cấu hình) THÒI RA khi rê chuột vào mục cha và bắt đầu thu khi
+ * chuột rời khỏi thanh điều hướng + bảng con — NHƯNG giữ lại ~2 giây (hold) rồi mới thu,
+ * và hiệu ứng thu chạy chậm (~2/3 giây, đường cong giảm tốc) để không còn cảm giác
+ * "bỏ tay ra là bị đẩy về liền". Người dùng vẫn chủ động đóng ngay bằng nút tắt ✕ ở đầu
+ * bảng con hoặc bấm lại mục cha.
+ *
+ * BE-82: nội dung vẫn giữ trong DOM tới khi khung thu xong mới gỡ, nhờ đó thấy trọn hiệu ứng.
+ */
+const SIDEBAR_PANEL_CLOSE_DELAY_MS = 2000; // thời gian "giữ" sau khi chuột rời đi trước khi bắt đầu thu
+const SIDEBAR_PANEL_COLLAPSE_MS = 650; // phải khớp `duration-[650ms]` của khung bảng con
 
 export default function UnifiedSidebar({
   isOpen,
@@ -188,7 +214,27 @@ export default function UnifiedSidebar({
   const [openSubPanel, setOpenSubPanel] = useState(null); // 'requests' | 'settings' | null
   /** BE-82: bảng con vẫn được giữ trong DOM trong lúc thu để chạy hết hiệu ứng trượt ra. */
   const [renderedSubPanel, setRenderedSubPanel] = useState(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+
+  /**
+   * BE-138: thanh điều hướng LUÔN hiện (không bao giờ trượt mất khỏi màn hình).
+   * Trên màn < md nó tự thu thành rail icon 72px nằm trong luồng bố cục; nút menu trên
+   * topbar chỉ MỞ RỘNG rail ra 240px (đẩy nội dung dần dần) chứ không ẩn/hiện cả thanh.
+   * Cần biết khổ màn hình để chọn trạng thái thu/mở mặc định nên dùng matchMedia ở đây
+   * (hành vi trạng thái, không phải đo width để tính toán bố cục thủ công).
+   */
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const onChange = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  const railCollapsed = isDesktop ? desktopCollapsed : !isOpen;
+  /** Alias cho phần render: trạng thái thu của rail ở khổ màn hình hiện tại. */
+  const isCollapsed = railCollapsed;
 
   /**
    * BE-61: bảng con (Đơn từ / Cấu hình) THÒI RA khi rê chuột vào, không cần bấm.
@@ -223,12 +269,29 @@ export default function UnifiedSidebar({
     setOpenSubPanel((prev) => (prev === key ? prev : key));
   }, [cancelClose]);
 
+  /**
+   * BE-135: hẹn giờ đóng SAU KHI GIỮ 2 giây (không đóng tức thì). Chuột quay lại
+   * thanh điều hướng / bảng con trong thời gian giữ thì hủy hẹn giờ (cancelClose).
+   */
   const scheduleClose = useCallback(() => {
     cancelClose();
     closeTimer.current = setTimeout(() => {
-      setOpenSubPanel(null); // khung bắt đầu thu
+      closeTimer.current = null;
+      setOpenSubPanel(null); // khung bắt đầu thu chậm
       unmountTimer.current = setTimeout(() => setRenderedSubPanel(null), SIDEBAR_PANEL_COLLAPSE_MS);
     }, SIDEBAR_PANEL_CLOSE_DELAY_MS);
+  }, [cancelClose]);
+
+  /**
+   * BE-135: bảng con CHỈ đóng khi người dùng chủ động bấm nút tắt (hoặc bấm lại mục cha).
+   * Không còn hẹn giờ tự đóng khi rê chuột ra ngoài — tránh bảng cụp lại oan lúc bôi đen
+   * chữ hoặc với chuột ra khỏi sidebar.
+   */
+  const closePanel = useCallback(() => {
+    cancelClose();
+    setOpenSubPanel(null); // khung bắt đầu thu chậm
+    clearTimeout(unmountTimer.current);
+    unmountTimer.current = setTimeout(() => setRenderedSubPanel(null), SIDEBAR_PANEL_COLLAPSE_MS);
   }, [cancelClose]);
 
   useEffect(() => cancelClose, [cancelClose]);
@@ -267,10 +330,7 @@ export default function UnifiedSidebar({
 
   const toggleSubPanel = (key) => {
     if (openSubPanel === key) {
-      // Đóng: giữ nội dung lại cho tới khi khung thu xong rồi mới gỡ (BE-82)
-      setOpenSubPanel(null);
-      clearTimeout(unmountTimer.current);
-      unmountTimer.current = setTimeout(() => setRenderedSubPanel(null), SIDEBAR_PANEL_COLLAPSE_MS);
+      closePanel();
       return;
     }
     cancelClose();
@@ -280,23 +340,16 @@ export default function UnifiedSidebar({
 
   return (
     <>
-      {/* Mobile overlay */}
-      <div
-        className={`fixed inset-0 bg-black/50 z-40 md:hidden ${isOpen ? 'block' : 'hidden'}`}
-        onClick={onClose}
-      />
-
-      {/* Sidebar shell: rail + optional flyout side-by-side */}
+      {/* BE-138: không còn overlay + thanh trượt mất hút — sidebar luôn nằm trong luồng bố cục.
+          Khung bao (rail + bảng con) luôn hiện; rail tự thu thành 72px trên màn hẹp. */}
       <div
         onMouseEnter={cancelClose}
         onMouseLeave={scheduleClose}
-        className={`fixed md:static z-50 h-full flex flex-row transform ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 transition-transform duration-300 relative`}
+        className="z-50 h-full flex flex-row relative"
       >
         {/* ── Rail ── */}
         <nav
-          className={`relative bg-[#0F172A] ${isCollapsed ? 'w-[72px]' : 'w-[240px]'} h-full flex-shrink-0 flex flex-col justify-between shadow-sm transition-all duration-300`}
+          className={`relative bg-[#0F172A] ${railCollapsed ? 'w-[72px]' : 'w-[240px]'} h-full flex-shrink-0 flex flex-col justify-between shadow-sm transition-all duration-300`}
           id="sidebar"
         >
           {/* BE-85: nút thu gọn / mở rộng nằm TRONG rail.
@@ -312,9 +365,9 @@ export default function UnifiedSidebar({
                 - nâng lên z-[70] để không bị bảng con che mất. */}
           <button
             type="button"
-            onPointerDown={(e) => { e.preventDefault(); setIsCollapsed((v) => !v); }}
+            onPointerDown={(e) => { e.preventDefault(); setDesktopCollapsed((v) => !v); }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsCollapsed((v) => !v); }
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDesktopCollapsed((v) => !v); }
             }}
             className="hidden md:flex absolute top-1/2 -right-[22px] -translate-y-1/2 w-11 h-11 items-center justify-center z-[70] cursor-pointer group"
             title={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
@@ -348,7 +401,7 @@ export default function UnifiedSidebar({
                 </div>
                 {!isCollapsed && (
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-white text-sm font-semibold truncate leading-tight">
+                    <h2 className="text-white text-sm font-semibold break-words leading-tight min-w-0">
                       {currentUser?.name || t('Nguyễn Văn A')}
                     </h2>
                     <div className="flex flex-col gap-1 mt-1">
@@ -396,7 +449,7 @@ export default function UnifiedSidebar({
                   item.subPanel === 'requests' ? pendingCount : item.badge;
 
                 if (item.subPanel) {
-                  /* Sub-panel trigger: rê chuột vào là thòi ra, bấm vẫn được (cảm ứng) */
+                  /* BE-135: rê chuột vào là thòi ra; bấm vẫn mở/đóng được (cảm ứng). */
                   return (
                     <li key={item.name} onMouseEnter={() => openPanel(item.subPanel)}>
                       <button
@@ -415,7 +468,7 @@ export default function UnifiedSidebar({
                               <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
                             )}
                           </span>
-                          {!isCollapsed && <span className="text-sm truncate">{t(item.name)}</span>}
+                          {!isCollapsed && <span className="text-sm break-words text-left min-w-0">{t(item.name)}</span>}
                         </div>
                         {!isCollapsed && badge > 0 && (
                           <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none mr-1">
@@ -437,10 +490,10 @@ export default function UnifiedSidebar({
                 }
 
                 return (
-                  <li key={item.name} onMouseEnter={() => openPanel(null)}>
+                  <li key={item.name} onMouseEnter={scheduleClose}>
                     <Link
                       to={item.path}
-                      onClick={() => setOpenSubPanel(null)}
+                      onClick={closePanel}
                       title={isCollapsed ? t(item.name) : undefined}
                       className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
                         isActive
@@ -455,7 +508,7 @@ export default function UnifiedSidebar({
                             <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
                           )}
                         </span>
-                        {!isCollapsed && <span className="text-sm truncate">{t(item.name)}</span>}
+                        {!isCollapsed && <span className="text-sm break-words text-left min-w-0">{t(item.name)}</span>}
                       </div>
                       {!isCollapsed && badge > 0 && (
                         <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
@@ -491,18 +544,18 @@ export default function UnifiedSidebar({
             khung thu, nhờ đó thấy được hiệu ứng trượt ra thay vì biến mất tức thì. */}
         <div
           onMouseEnter={cancelClose}
-          className={`h-full overflow-hidden flex transition-[width,opacity] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          className={`h-full overflow-hidden flex transition-[width,opacity] duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] max-md:absolute max-md:top-0 max-md:left-full max-md:z-40 max-md:shadow-2xl ${
             openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
           }`}
         >
           {renderedSubPanel === 'requests' && (
-            <div className={`h-full flex-shrink-0 transition-transform duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${openSubPanel === 'requests' ? 'translate-x-0' : '-translate-x-4'}`}>
-              <RequestsSubPanel pendingCount={pendingCount} supplementCount={supplementCount} />
+            <div className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === 'requests' ? 'translate-x-0' : '-translate-x-4'}`}>
+              <RequestsSubPanel pendingCount={pendingCount} supplementCount={supplementCount} onClose={closePanel} />
             </div>
           )}
           {renderedSubPanel === 'settings' && (
-            <div className={`h-full flex-shrink-0 transition-transform duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${openSubPanel === 'settings' ? 'translate-x-0' : '-translate-x-4'}`}>
-              <SettingsSubPanel />
+            <div className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === 'settings' ? 'translate-x-0' : '-translate-x-4'}`}>
+              <SettingsSubPanel onClose={closePanel} />
             </div>
           )}
         </div>

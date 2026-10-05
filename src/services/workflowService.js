@@ -32,4 +32,21 @@ export const workflowService = {
     const response = await apiClient.put(`/workflows/${id}`, data);
     return response.data;
   },
+  getAll: async () => {
+    const response = await apiClient.get('/workflows');
+    return response.data;
+  },
+  getById: async (id) => {
+    const response = await apiClient.get(`/workflows/${id}`);
+    return response.data;
+  },
+  delete: async (id) => {
+    const response = await apiClient.delete(`/workflows/${id}`);
+    return response.data;
+  },
+  /** BE-134: đặt luồng duyệt làm mặc định cho loại đơn (BE trả PUT, xem WorkflowsController). */
+  setDefault: async (id) => {
+    const response = await apiClient.put(`/workflows/${id}/set-default`);
+    return response.data;
+  },
 };

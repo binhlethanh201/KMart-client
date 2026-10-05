@@ -1033,6 +1033,22 @@ export const en = {
   // BE-121: hướng dẫn chọn phòng khi quy tắc duyệt là "đồng thời".
   'Chọn phòng ban nhận đơn trong số các phòng ban bạn là thành viên (chính hoặc kiêm nhiệm).': 'Choose the receiving department among those you belong to (primary or secondary).',
 
+  // ── BE-136: thông báo trạng thái / hộp thoại thêm mới (dịch tay, giữ ngoài khối auto) ──
+  'Đang tải dữ liệu...': 'Loading data...',
+  'Đang tải danh sách phòng ban...': 'Loading department list...',
+  'Đóng bảng': 'Close panel',
+  'Xóa mẫu đơn này?': 'Delete this form template?',
+  'Mẫu đơn sẽ bị xóa khỏi danh mục. Thao tác này không thể hoàn tác.': 'The form template will be removed from the category. This action cannot be undone.',
+  'Mẫu đơn "{v0}" đã tồn tại. Vui lòng dùng tên khác.': 'The form template "{v0}" already exists. Please use a different name.',
+  'Không kết nối được tới máy chủ. Kiểm tra lại kết nối mạng rồi thử lại.': 'Cannot reach the server. Check your network connection and try again.',
+  'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.': 'Your session has expired. Please sign in again.',
+  'Bạn không có quyền thực hiện thao tác này.': 'You do not have permission to perform this action.',
+  'Dữ liệu không còn tồn tại trên máy chủ. Hãy tải lại trang rồi thử lại.': 'The data no longer exists on the server. Reload the page and try again.',
+  'Thao tác không được máy chủ hỗ trợ. Vui lòng tải lại trang phiên bản mới nhất.': 'This action is not supported by the server. Reload the page to get the latest version.',
+  'Dữ liệu vừa bị thay đổi bởi người khác. Hãy tải lại rồi thử lại.': 'The data was just changed by someone else. Reload and try again.',
+  'Bạn thao tác quá nhanh. Vui lòng chờ một chút rồi thử lại.': 'You are acting too quickly. Please wait a moment and try again.',
+  'Máy chủ đang gặp sự cố ({v0}). Vui lòng thử lại sau ít phút.': 'The server is having issues ({v0}). Please try again in a few minutes.',
+  'Máy chủ trả về lỗi {v0}. Vui lòng thử lại.': 'The server returned error {v0}. Please try again.',
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- Select order type --',
   '(để trống)': '(blank)',

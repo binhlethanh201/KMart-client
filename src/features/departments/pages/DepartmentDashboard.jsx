@@ -13,7 +13,7 @@ import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 export default function DepartmentDashboard() {
   const { t } = useI18n();
   useDocumentTitle(t('Cơ cấu tổ chức & Siêu thị'));
-  const { departments, toggleDepartmentStatus, deleteDepartment, currentUser, hasPermission } = useApproval();
+  const { departments, departmentsLoading, toggleDepartmentStatus, deleteDepartment, currentUser, hasPermission } = useApproval();
 
   // Use hasPermission if available, fallback to role check
   const canManageDepts = hasPermission ? hasPermission('DEPARTMENT_MANAGE') : currentUser?.role === 'ADMIN';
@@ -151,7 +151,7 @@ export default function DepartmentDashboard() {
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary text-[24px]">account_tree</span>
               </div>
-              <h1 className={`${PAGE_TITLE_CLS} truncate`}>{t('Cơ cấu tổ chức & Siêu thị')}</h1>
+              <h1 className={`${PAGE_TITLE_CLS} break-words min-w-0`}>{t('Cơ cấu tổ chức & Siêu thị')}</h1>
             </div>
             <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
               {canEdit && (
@@ -224,7 +224,13 @@ export default function DepartmentDashboard() {
           </div>
 
           {/* Department Grid */}
-          {filteredDepartments.length === 0 ? (
+          {departmentsLoading && filteredDepartments.length === 0 ? (
+            /* BE-136: đang tải thì hiện spinner, tránh nhấp nháy "không có dữ liệu" khi mạng chậm */
+            <div className="py-12 text-center text-secondary border border-dashed border-outline-variant rounded-lg bg-surface-container-lowest" role="status">
+              <span className="material-symbols-outlined text-[48px] mb-3 animate-spin text-primary">progress_activity</span>
+              <p className="text-sm">{t('Đang tải danh sách phòng ban...')}</p>
+            </div>
+          ) : filteredDepartments.length === 0 ? (
             <div className="py-12 text-center text-secondary border border-dashed border-outline-variant rounded-lg bg-surface-container-lowest">
               <span className="material-symbols-outlined text-[48px] opacity-20 mb-3">account_tree</span>
               <p className="text-sm">{t('Không tìm thấy đơn vị nào phù hợp với bộ lọc.')}</p>
@@ -245,7 +251,7 @@ export default function DepartmentDashboard() {
               }}
             />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,240px),1fr))]">
               {paginatedDepartments.map((dept) => (
                 <DepartmentCard
                   key={dept.id}

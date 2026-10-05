@@ -178,7 +178,6 @@ export default function EmployeeModal({ employee, departments = [], positions = 
   return createPortal(
     <div
       className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
     >

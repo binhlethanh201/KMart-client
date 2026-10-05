@@ -1018,6 +1018,22 @@ export const ko = {
   // BE-121: hướng dẫn chọn phòng khi quy tắc duyệt là "đồng thời".
   'Chọn phòng ban nhận đơn trong số các phòng ban bạn là thành viên (chính hoặc kiêm nhiệm).': '본인이 소속된 부서(주 부서 또는 겸임) 중에서 신청서를 받을 부서를 선택하세요.',
 
+  // ── BE-136: thông báo trạng thái / hộp thoại thêm mới (dịch tay, giữ ngoài khối auto) ──
+  'Đang tải dữ liệu...': '데이터를 불러오는 중...',
+  'Đang tải danh sách phòng ban...': '부서 목록을 불러오는 중...',
+  'Đóng bảng': '패널 닫기',
+  'Xóa mẫu đơn này?': '이 양식 템플릿을 삭제할까요?',
+  'Mẫu đơn sẽ bị xóa khỏi danh mục. Thao tác này không thể hoàn tác.': '양식 템플릿이 목록에서 삭제됩니다. 이 작업은 되돌릴 수 없습니다.',
+  'Mẫu đơn "{v0}" đã tồn tại. Vui lòng dùng tên khác.': '양식 템플릿 "{v0}"이(가) 이미 존재합니다. 다른 이름을 사용하세요.',
+  'Không kết nối được tới máy chủ. Kiểm tra lại kết nối mạng rồi thử lại.': '서버에 연결할 수 없습니다. 네트워크 연결을 확인한 후 다시 시도하세요.',
+  'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.': '세션이 만료되었습니다. 다시 로그인하세요.',
+  'Bạn không có quyền thực hiện thao tác này.': '이 작업을 수행할 권한이 없습니다.',
+  'Dữ liệu không còn tồn tại trên máy chủ. Hãy tải lại trang rồi thử lại.': '데이터가 서버에 더 이상 존재하지 않습니다. 페이지를 새로 고친 후 다시 시도하세요.',
+  'Thao tác không được máy chủ hỗ trợ. Vui lòng tải lại trang phiên bản mới nhất.': '서버가 지원하지 않는 작업입니다. 최신 버전을 위해 페이지를 새로 고치세요.',
+  'Dữ liệu vừa bị thay đổi bởi người khác. Hãy tải lại rồi thử lại.': '데이터가 다른 사람에 의해 방금 변경되었습니다. 새로 고친 후 다시 시도하세요.',
+  'Bạn thao tác quá nhanh. Vui lòng chờ một chút rồi thử lại.': '요청이 너무 빠릅니다. 잠시 후 다시 시도하세요.',
+  'Máy chủ đang gặp sự cố ({v0}). Vui lòng thử lại sau ít phút.': '서버에 문제가 발생했습니다({v0}). 몇 분 후 다시 시도하세요.',
+  'Máy chủ trả về lỗi {v0}. Vui lòng thử lại.': '서버가 오류 {v0}을(를) 반환했습니다. 다시 시도하세요.',
   // ── i18n:auto:start ── (do scripts/i18n-sync.mjs sinh ra, đừng sửa tay)
   '-- Chọn loại đơn --': '-- 주문 유형 선택 --',
   '(để trống)': '(공백)',

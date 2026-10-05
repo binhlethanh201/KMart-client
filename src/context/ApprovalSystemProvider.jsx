@@ -35,6 +35,8 @@ export function ApprovalSystemProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [requests, setRequests] = useState([]); // Fetch from API
   const [departments, setDepartments] = useState([]); // Fetch from API
+  /** BE-136: cờ "đang tải danh sách phòng ban" để màn Phòng ban hiện spinner thay vì "không có dữ liệu". */
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
   const [employees, setEmployees] = useState([]);
   const [formFields, setFormFields] = useState(init.formFields);
   const [toasts, setToasts] = useState([]);
@@ -52,7 +54,8 @@ export function ApprovalSystemProvider({ children }) {
   useEffect(() => {
     departmentService.getAll()
       .then(data => setDepartments(data))
-      .catch(err => console.error('Failed to load departments', err));
+      .catch(err => console.error('Failed to load departments', err))
+      .finally(() => setDepartmentsLoading(false));
   }, []);
 
   // Load employees from API (dùng cho EmployeeSelect trong Add/Edit Department)
@@ -134,7 +137,7 @@ export function ApprovalSystemProvider({ children }) {
           await applicationService.uploadAttachment(applicationId, file);
         } catch (err) {
           console.error('Failed to upload attachment', file?.name, err);
-          const msg = err.response?.data?.error || t('Không tải lên được "{v0}"', { v0: file?.name || 'file' });
+          const msg = describeApiError(err, t, 'Không tải lên được "{v0}"', { v0: file?.name || 'file' });
           pushToast(msg, 'error');
         }
       }
@@ -184,7 +187,7 @@ export function ApprovalSystemProvider({ children }) {
         loadRequests();
         return true;
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi phê duyệt');
+        const errorMsg = describeApiError(err, t, 'Lỗi khi phê duyệt');
         pushToast(errorMsg, 'error');
         console.error('Approve error:', err);
         // BE-75: đơn có thể đã bị người khác duyệt / quá hạn. Tải lại để nút "Duyệt nhanh"
@@ -208,7 +211,7 @@ export function ApprovalSystemProvider({ children }) {
         pushToast(t('Đã bổ sung và gửi lại đơn'), 'success');
         return submitted.id;
       } catch (err) {
-        const msg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi cập nhật đơn');
+        const msg = describeApiError(err, t, 'Lỗi khi cập nhật đơn');
         pushToast(msg, 'error');
         console.error(err);
       }
@@ -223,7 +226,7 @@ export function ApprovalSystemProvider({ children }) {
         setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: false } : r)));
         pushToast(t('Đã từ chối yêu cầu'), 'success');
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi từ chối');
+        const errorMsg = describeApiError(err, t, 'Lỗi khi từ chối');
         pushToast(errorMsg, 'error');
         console.error('Reject error:', err);
       }
@@ -247,7 +250,7 @@ export function ApprovalSystemProvider({ children }) {
         loadRequests();
         return true;
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi hủy đơn');
+        const errorMsg = describeApiError(err, t, 'Lỗi khi hủy đơn');
         pushToast(errorMsg, 'error');
         console.error('Cancel error:', err);
         // Trạng thái trên máy chủ đã đổi -> đồng bộ lại để nút Hủy biến mất.
@@ -272,13 +275,8 @@ export function ApprovalSystemProvider({ children }) {
         loadRequests();
         return { ok: true };
       } catch (err) {
-        // Câu lỗi chi tiết của máy chủ nằm trong `errors` (FluentValidation), `message` chỉ là
-        // "Dữ liệu không hợp lệ" nên phải đọc `errors` trước.
-        const errors = err.response?.data?.errors;
-        const errorMsg = (Array.isArray(errors) && errors[0])
-          || err.response?.data?.error
-          || err.response?.data?.message
-          || t('Lỗi khi yêu cầu bổ sung');
+        // BE-136: câu lỗi chi tiết (FluentValidation) và ngôn ngữ hiển thị do describeApiError lo.
+        const errorMsg = describeApiError(err, t, 'Lỗi khi yêu cầu bổ sung');
         pushToast(errorMsg, 'error');
         console.error('Supplement error:', err);
         loadRequests();
@@ -297,7 +295,7 @@ export function ApprovalSystemProvider({ children }) {
         const updated = await applicationService.getById(reqId);
         setRequests((list) => list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r)));
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Lỗi khi thêm bình luận');
+        const errorMsg = describeApiError(err, t, 'Lỗi khi thêm bình luận');
         pushToast(errorMsg, 'error');
         console.error('Add comment error:', err);
       }
@@ -318,9 +316,9 @@ export function ApprovalSystemProvider({ children }) {
         setRequests((list) =>
           list.map((r) => (r.id === reqId ? { ...updated, _isPendingReq: r._isPendingReq } : r))
         );
-        pushToast(result?.message || t('Đã xử lý quá hạn cho đơn này'), 'warning');
+        pushToast(t(result?.message) || t('Đã xử lý quá hạn cho đơn này'), 'warning');
       } catch (err) {
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || t('Không giả lập được quá hạn');
+        const errorMsg = describeApiError(err, t, 'Không giả lập được quá hạn');
         pushToast(errorMsg, 'error');
         console.error('Simulate timeout error:', err);
       }
@@ -399,7 +397,7 @@ export function ApprovalSystemProvider({ children }) {
       try {
         const res = await departmentService.toggleStatus(id);
         setDepartments((list) => list.map((d) => (d.id === id ? { ...d, status: res.department?.isActive ? 'Active' : 'Inactive' } : d)));
-        pushToast(res.message || t('Thay đổi trạng thái thành công'), 'success');
+        pushToast(t(res.message) || t('Thay đổi trạng thái thành công'), 'success');
       } catch (err) {
         pushToast(t('Lỗi khi đổi trạng thái'), 'error');
       }
@@ -443,6 +441,7 @@ export function ApprovalSystemProvider({ children }) {
       canApprove,
       hasPermission,
       departments,
+      departmentsLoading,
       employees,
       addDepartment,
       updateDepartment,
@@ -454,7 +453,7 @@ export function ApprovalSystemProvider({ children }) {
       pushToast,
       dismissToast,
     }),
-    [currentUser, currentUserId, requests, createRequest, updateRequest, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
+    [currentUser, currentUserId, requests, createRequest, updateRequest, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, departmentsLoading, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
   );
 
   return <ApprovalSystemContext.Provider value={value}>{children}</ApprovalSystemContext.Provider>;

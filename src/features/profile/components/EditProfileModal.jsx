@@ -88,6 +88,12 @@ export default function EditProfileModal({ user, onClose, onSave }) {
       }
     }
 
+    // BE-137: chặn địa chỉ quá dài làm vỡ bố cục trang cá nhân / báo cáo.
+    const address = String(form.profileData?.address || '').trim();
+    if (address.length > 200) {
+      newErrors.address = t('Địa chỉ không được vượt quá 200 ký tự');
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -118,7 +124,7 @@ export default function EditProfileModal({ user, onClose, onSave }) {
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        className="bg-surface rounded-lg shadow-xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden"
+        className="bg-surface rounded-lg shadow-xl w-full max-w-lg md:max-w-2xl flex flex-col max-h-[92vh] overflow-hidden"
       >
         <div className="flex justify-between items-start p-6 border-b border-outline-variant/30">
           <div>
@@ -130,19 +136,19 @@ export default function EditProfileModal({ user, onClose, onSave }) {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-outline-variant/30 px-6">
+        {/* Tabs — BE-137: cuộn ngang trên màn hẹp để không mất tab */}
+        <div className="flex overflow-x-auto border-b border-outline-variant/30 px-4 sm:px-6">
           <button
             type="button"
             onClick={() => setActiveTab('basic')}
-            className={`pb-3 pt-4 px-2 mr-6 font-label-md transition-colors border-b-2 ${activeTab === 'basic' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-on-surface'}`}
+            className={`pb-3 pt-4 px-2 mr-6 font-label-md transition-colors border-b-2 whitespace-nowrap ${activeTab === 'basic' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-on-surface'}`}
           >
             {t('Thông tin cơ bản')}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
-            className={`pb-3 pt-4 px-2 font-label-md transition-colors border-b-2 ${activeTab === 'profile' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-on-surface'}`}
+            className={`pb-3 pt-4 px-2 font-label-md transition-colors border-b-2 whitespace-nowrap ${activeTab === 'profile' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-on-surface'}`}
           >
             {t('Hồ sơ năng lực')}
           </button>
@@ -153,7 +159,7 @@ export default function EditProfileModal({ user, onClose, onSave }) {
             <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="flex flex-col gap-2">
                 <label className={labelCls}>{t('Ảnh đại diện')}</label>
-                <div className="flex items-center gap-5">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-outline-variant/50 shadow-sm shrink-0 bg-white">
                     <img 
                       src={getFullAvatarUrl(form.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(form.name || 'User')}&background=random&color=fff&size=128`} 
@@ -234,11 +240,13 @@ export default function EditProfileModal({ user, onClose, onSave }) {
               <div className="flex flex-col gap-2">
                 <label className={labelCls}>{t('Địa chỉ')}</label>
                 <input 
-                  className={fieldCls} 
+                  className={`${fieldCls} min-w-0 ${errors.address ? 'border-error focus:border-error focus:ring-error/20' : ''}`} 
+                  maxLength={200}
                   value={form.profileData?.address || ''} 
                   onChange={(e) => setForm(f => ({ ...f, profileData: { ...(f.profileData || {}), address: e.target.value } }))} 
                   placeholder={t('Nhập địa chỉ hiện tại...')} 
                 />
+                {errors.address && <span className="text-error text-xs font-medium">{errors.address}</span>}
               </div>
             </div>
           )}
@@ -252,6 +260,7 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                   value={form.profileData?.education || ''} 
                   onChange={(e) => setForm(f => ({ ...f, profileData: { ...(f.profileData || {}), education: e.target.value } }))} 
                   placeholder={t('Ví dụ:\n- Đại học Bách Khoa (2018 - 2022) - Kỹ sư phần mềm\n- Chứng chỉ IELTS 7.5')} 
+                  maxLength={1000}
                 />
               </div>
 
@@ -262,6 +271,7 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                   value={form.profileData?.experience || ''} 
                   onChange={(e) => setForm(f => ({ ...f, profileData: { ...(f.profileData || {}), experience: e.target.value } }))} 
                   placeholder={t('Ví dụ:\n- Công ty XYZ (2022 - Nay) - Frontend Developer\n  + Phát triển UI/UX cho ứng dụng web\n  + Tối ưu hóa hiệu suất React')} 
+                  maxLength={1000}
                 />
               </div>
 
@@ -272,13 +282,14 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                   value={form.profileData?.awards || ''} 
                   onChange={(e) => setForm(f => ({ ...f, profileData: { ...(f.profileData || {}), awards: e.target.value } }))} 
                   placeholder={t('Ví dụ:\n- Nhân viên xuất sắc năm 2023\n- Giải nhất Hackathon ABC')} 
+                  maxLength={1000}
                 />
               </div>
             </div>
           )}
         </div>
 
-        <div className="p-6 border-t border-outline-variant/30 bg-surface flex justify-end items-center gap-3 rounded-b-lg shrink-0">
+        <div className="p-4 sm:p-6 border-t border-outline-variant/30 bg-surface flex flex-wrap justify-end items-center gap-2 sm:gap-3 rounded-b-lg shrink-0">
           <button type="button" onClick={onClose} className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer">
             {t('Hủy bỏ')}
           </button>

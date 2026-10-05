@@ -89,7 +89,6 @@ function PositionModal({ position, onClose, onSaved }) {
   return createPortal(
     <div
       className="fixed inset-0 z-[110] bg-black/50 flex items-center justify-center p-4"
-      onClick={() => !saving && onClose()}
       role="dialog"
       aria-modal="true"
     >
@@ -307,7 +306,9 @@ export default function PositionsTab() {
       </div>
 
       <div className="bg-white border border-outline-variant rounded-lg overflow-hidden">
-        <table className="w-full text-left">
+        {/* BE-137: cuộn ngang trên màn hẹp thay vì cắt mất cột */}
+        <div className="overflow-x-auto">
+        <table className="w-full text-left min-w-[560px]">
           <thead>
             <tr className="bg-[#f6f6f4] text-[12px] uppercase tracking-wide text-secondary">
               <th className="px-4 py-3 font-semibold">{t('Tên chức vụ')}</th>
@@ -366,6 +367,7 @@ export default function PositionsTab() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="flex items-start gap-2 text-[12px] text-secondary bg-[#f6f6f4] border border-outline-variant rounded-lg px-3 py-2.5">

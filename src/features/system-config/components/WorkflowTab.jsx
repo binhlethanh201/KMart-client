@@ -8,6 +8,7 @@ import { workflowService } from '../services/workflowService';
 import { roleService } from '../../hr/services/roleService';
 import { roleLabel } from '../../../utils/roleLabels';
 import { useI18n, translate } from '../../../i18n/I18nProvider';
+import describeApiError from '../../../utils/apiError';
 
 const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
@@ -422,7 +423,6 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
   return createPortal(
     <div
       className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
@@ -1379,7 +1379,8 @@ export default function WorkflowTab() {
     if (invalid.length > 0) {
       // Hiển thị ĐỦ mọi lỗi: trước đây chỉ hiện lỗi đầu tiên nên khi lỗi nằm ở khối khác
       // người dùng tưởng "khối đang sửa không lưu được".
-      pushToast(invalid.join(' • '), 'error');
+      // BE-136: dịch từng câu kiểm tra theo ngôn ngữ đang dùng trước khi ghép hiển thị.
+      pushToast(invalid.map((m) => t(m)).join(' • '), 'error');
       console.error('Luồng duyệt chưa hợp lệ:', invalid);
       return;
     }
@@ -1523,16 +1524,8 @@ export default function WorkflowTab() {
       );
     } catch (err) {
       console.error(t('Không lưu được luồng duyệt:'), err);
-      // Hiển thị thông báo lỗi từ backend (validator trả về mảng errors)
-      const data = err?.response?.data;
-      const status = err?.response?.status;
-      const detail = Array.isArray(data?.errors)
-        ? data.errors.join(' • ')
-        : (data?.message || data?.error
-          || (status ? t('Máy chủ trả về lỗi {v0}', { v0: status }) : null)
-          || (err?.request ? t('Không kết nối được tới máy chủ. Kiểm tra lại kết nối rồi thử lưu lại.') : null)
-          || (typeof data === 'string' && data.trim() ? data.trim().slice(0, 200) : null));
-      pushToast(detail || t('Không lưu được luồng duyệt'), 'error');
+      // BE-136: mô tả lỗi theo ngôn ngữ đang dùng (validator, mã trạng thái, mất kết nối...).
+      pushToast(describeApiError(err, t, 'Không lưu được luồng duyệt'), 'error');
     }
   };
 
@@ -1978,7 +1971,7 @@ export default function WorkflowTab() {
                       )}
 
                       {/* Hàng dưới cùng - Cấu hình nâng cao */}
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-4 border-t border-outline-variant/50 pt-4">
+                      <div className="grid gap-x-6 gap-y-4 border-t border-outline-variant/50 pt-4 grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))]">
                         {/* Cột trái - Xử lý quá hạn */}
                         <div>
                           <GroupHeader icon="schedule" label={t('Xử lý quá hạn')} />

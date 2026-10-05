@@ -125,7 +125,7 @@ const LandingPage = () => {
                     scripts/i18n-sync.mjs quét được và tự sinh bản dịch. Trước đây truyền
                     biến `t(stat.label)` nên tool không thấy khoá -> nhãn đứng nguyên tiếng Việt
                     khi chuyển sang EN/KO. */}
-                <dl className="grid grid-cols-3 gap-4 border-t border-outline-variant pt-6">
+                <dl className="grid gap-4 border-t border-outline-variant pt-6 grid-cols-[repeat(auto-fit,minmax(min(100%,110px),1fr))]">
                   <div>
                     <dt className="text-[22px] font-bold leading-tight text-primary">100%</dt>
                     <dd className="mt-0.5 text-[12px] uppercase tracking-wide text-secondary">
@@ -212,7 +212,7 @@ const LandingPage = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))]">
                 {HR_SOLUTIONS.map((feature, idx) => (
                   <div
                     key={idx}

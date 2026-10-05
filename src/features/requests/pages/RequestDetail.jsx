@@ -601,7 +601,9 @@ export default function RequestDetail() {
                 <span className="material-symbols-outlined text-[18px] text-secondary">feed</span>
                 <h2 className="text-sm text-on-surface uppercase tracking-wide font-semibold">{t('Chi tiết Đề xuất')}</h2>
               </div>
-              <table className="w-full text-left text-sm">
+              {/* BE-137: cuộn ngang trên màn hẹp thay vì tràn vỡ bố cục */}
+              <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[560px]">
                 <tbody className="divide-y divide-outline-variant">
                   <tr>
                     <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest w-1/3 align-top border-r border-outline-variant">{t('Người đề xuất')}</th>
@@ -697,6 +699,7 @@ export default function RequestDetail() {
                   </tr>
                 </tbody>
               </table>
+              </div>
             </section>
 
             {/* Comment thread */}

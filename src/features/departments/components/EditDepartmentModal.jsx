@@ -191,7 +191,6 @@ export default function EditDepartmentModal({ department, onClose }) {
   return createPortal(
     <div
       className="fixed inset-0 z-[110] bg-black/50 flex items-center justify-center p-4"
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
     >

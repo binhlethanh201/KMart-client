@@ -48,7 +48,7 @@ function describeDepartmentNotEmpty(data, translate) {
   return [head, tail, note].filter(Boolean).join(' ');
 }
 
-export function describeApiError(err, t, fallbackKey) {
+export function describeApiError(err, t, fallbackKey, fallbackParams) {
   const translate = typeof t === 'function' ? t : (s) => s;
   const data = err?.response?.data;
 
@@ -76,7 +76,27 @@ export function describeApiError(err, t, fallbackKey) {
   // Axios báo "Request failed with status code 400" — vô nghĩa với người dùng cuối.
   if (parts.length === 0 && err?.message && !/status code/i.test(err.message)) push(err.message);
 
-  return parts.length > 0 ? parts.map(translate).join(' • ') : translate(fallbackKey);
+  // BE-136: không để người dùng thấy mã trần trần — nếu máy chủ chỉ trả mã lỗi / mã trạng thái
+  // thì dựng câu giải thích theo ngôn ngữ đang dùng.
+  if (parts.length === 0 && err?.request && !err?.response) {
+    return translate('Không kết nối được tới máy chủ. Kiểm tra lại kết nối mạng rồi thử lại.');
+  }
+  if (parts.length === 0 && err?.response?.status) {
+    const status = err.response.status;
+    const byStatus = {
+      401: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+      403: 'Bạn không có quyền thực hiện thao tác này.',
+      404: 'Dữ liệu không còn tồn tại trên máy chủ. Hãy tải lại trang rồi thử lại.',
+      405: 'Thao tác không được máy chủ hỗ trợ. Vui lòng tải lại trang phiên bản mới nhất.',
+      409: 'Dữ liệu vừa bị thay đổi bởi người khác. Hãy tải lại rồi thử lại.',
+      429: 'Bạn thao tác quá nhanh. Vui lòng chờ một chút rồi thử lại.',
+    };
+    if (byStatus[status]) return translate(byStatus[status]);
+    if (status >= 500) return translate('Máy chủ đang gặp sự cố ({v0}). Vui lòng thử lại sau ít phút.', { v0: status });
+    return translate('Máy chủ trả về lỗi {v0}. Vui lòng thử lại.', { v0: status });
+  }
+
+  return parts.length > 0 ? parts.map(translate).join(' • ') : translate(fallbackKey, fallbackParams);
 }
 
 export default describeApiError;

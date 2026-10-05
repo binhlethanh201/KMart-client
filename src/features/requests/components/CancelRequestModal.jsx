@@ -35,7 +35,6 @@ export default function CancelRequestModal({ requestId, requestTitle, onClose, o
   return createPortal(
     <div
       className="fixed inset-0 z-[110] bg-black/50 flex items-center justify-center p-4"
-      onClick={() => !saving && onClose()}
       role="dialog"
       aria-modal="true"
       aria-label={t('Hủy đơn')}

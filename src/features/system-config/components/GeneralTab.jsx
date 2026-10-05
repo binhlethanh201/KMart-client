@@ -88,7 +88,7 @@ export default function GeneralTab() {
     setZalo((z) => ({ ...z, templates: z.templates.map((t) => (t.id === id ? { ...t, enabled: !t.enabled } : t)) }));
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))]">
       {/* Zalo OA Integration */}
       <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-outline-variant flex items-center justify-between">

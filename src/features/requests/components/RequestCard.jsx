@@ -203,7 +203,7 @@ export default function RequestCard({ request: r }) {
             </div>
             
             {/* Title */}
-            <h3 className="text-base text-on-surface font-bold group-hover:text-primary transition-colors truncate mb-2" title={t(r.title)}>
+            <h3 className="text-base text-on-surface font-bold group-hover:text-primary transition-colors break-words mb-2" title={t(r.title)}>
               {t(r.title)}
             </h3>
             
@@ -244,10 +244,10 @@ export default function RequestCard({ request: r }) {
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-error">{summaryText}</span>
-                  <span className="text-[13px] font-bold text-on-surface truncate w-full" title={rejectedByUser?.name}>
+                  <span className="text-[13px] font-bold text-on-surface break-words w-full" title={rejectedByUser?.name}>
                     {rejectedByUser?.name || currentActorName}
                   </span>
-                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5">
+                  <span className="text-[10px] text-secondary break-words w-full uppercase tracking-wide font-medium mt-0.5">
                     {rejectedByUser ? `${roleLabel(rejectedByUser)}${rejectedStepOrder ? t(' · Bước {v0}', { v0: rejectedStepOrder }) : ''}` : currentActorRole}
                   </span>
                 </div>
@@ -268,10 +268,10 @@ export default function RequestCard({ request: r }) {
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-supplement">{t('Yêu cầu bổ sung')}</span>
-                  <span className="text-[13px] font-bold text-on-surface truncate w-full" title={suppByUser?.name || creatorName}>
+                  <span className="text-[13px] font-bold text-on-surface break-words w-full" title={suppByUser?.name || creatorName}>
                     {suppByUser?.name || t('Người duyệt')}
                   </span>
-                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5">
+                  <span className="text-[10px] text-secondary break-words w-full uppercase tracking-wide font-medium mt-0.5">
                     {suppByUser ? `${roleLabel(suppByUser)}${suppStepOrder ? t(' · Bước {v0}', { v0: suppStepOrder }) : ''}` : t('Yêu cầu người gửi bổ sung')}
                   </span>
                 </div>
@@ -298,10 +298,10 @@ export default function RequestCard({ request: r }) {
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${summaryColor}`}>{summaryText}</span>
-                  <span className="text-[13px] font-bold text-on-surface truncate w-full">
+                  <span className="text-[13px] font-bold text-on-surface break-words w-full">
                     {actorApprovers.length} {t('người')} {isApproved ? t('đồng ý') : t('duyệt')}
                   </span>
-                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5" title={actorApprovers.map(u => u.name).join(', ')}>
+                  <span className="text-[10px] text-secondary break-words w-full uppercase tracking-wide font-medium mt-0.5" title={actorApprovers.map(u => u.name).join(', ')}>
                     {actorApprovers[0]?.name}, ...
                   </span>
                 </div>
@@ -324,8 +324,8 @@ export default function RequestCard({ request: r }) {
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${summaryColor}`}>{summaryText}</span>
-                  <span className="text-[13px] font-bold text-on-surface truncate w-full" title={currentActorName}>{currentActorName}</span>
-                  <span className="text-[10px] text-secondary truncate w-full uppercase tracking-wide font-medium mt-0.5">{currentActorRole}</span>
+                  <span className="text-[13px] font-bold text-on-surface break-words w-full" title={currentActorName}>{currentActorName}</span>
+                  <span className="text-[10px] text-secondary break-words w-full uppercase tracking-wide font-medium mt-0.5">{currentActorRole}</span>
                 </div>
               </>
             )}
@@ -366,10 +366,10 @@ export default function RequestCard({ request: r }) {
                   </div>
                 )}
                 <div className="flex flex-col items-center w-full mt-1.5 gap-0.5">
-                  <span className="text-[11px] font-bold text-on-surface text-center w-full truncate leading-tight" title={creatorName}>
+                  <span className="text-[11px] font-bold text-on-surface text-center w-full break-words leading-tight" title={creatorName}>
                     {creatorName}
                   </span>
-                  <span className="text-[9px] text-secondary text-center w-full truncate uppercase font-medium tracking-wide">
+                  <span className="text-[9px] text-secondary text-center w-full break-words uppercase font-medium tracking-wide">
                     {t('NGƯỜI GỬI')}
                   </span>
                 </div>
@@ -453,8 +453,8 @@ export default function RequestCard({ request: r }) {
                       </div>
                     </div>
                     <div className="flex flex-col items-center w-full mt-1.5 gap-0.5">
-                      <span className="text-[11px] font-bold text-on-surface text-center w-full truncate leading-tight" title={nm}>{nm}</span>
-                      <span className="text-[9px] text-primary text-center w-full truncate uppercase font-medium tracking-wide">{role}</span>
+                      <span className="text-[11px] font-bold text-on-surface text-center w-full break-words leading-tight" title={nm}>{nm}</span>
+                      <span className="text-[9px] text-primary text-center w-full break-words uppercase font-medium tracking-wide">{role}</span>
                     </div>
                   </div>
                 );

@@ -42,7 +42,8 @@ export default function MainLayout() {
         <header className="md:hidden sticky top-0 w-full z-30 bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-4 h-16 shadow-sm">
           <button
             className="text-on-surface-variant p-2 -ml-2 rounded-full hover:bg-surface-container-high transition-colors"
-            onClick={() => setIsMobileMenuOpen(true)}
+            onClick={() => setIsMobileMenuOpen((v) => !v)}
+            aria-label="Menu"
           >
             <span className="material-symbols-outlined">menu</span>
           </button>

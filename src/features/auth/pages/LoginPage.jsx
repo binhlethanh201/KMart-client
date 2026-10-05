@@ -223,8 +223,10 @@ const LoginPage = ({ onLoginSuccess }) => {
                   <button
                     type="button"
                     onClick={startReset}
-                    className="text-label-sm text-primary hover:underline focus:outline-none cursor-pointer"
+                    title={t('Đặt lại mật khẩu')}
+                    className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-4 text-primary/75 transition-colors hover:bg-primary/5 hover:text-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 cursor-pointer"
                   >
+                    <span className="material-symbols-outlined text-[13px] leading-none">lock_reset</span>
                     {t('Đặt lại mật khẩu')}
                   </button>
                 </div>

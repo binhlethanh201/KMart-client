@@ -3,6 +3,7 @@ import { templateFileStore } from '../data/templateFileStore';
 import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { useI18n } from '../../../i18n/I18nProvider';
+import describeApiError from '../../../utils/apiError';
 
 function Toggle({ checked, onChange, label, disabled }) {
   return (
@@ -33,6 +34,8 @@ export default function FormTemplatesTab() {
 
   const [documentTypes, setDocumentTypes] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  /** BE-134: mẫu đơn đang chờ xác nhận xóa trong hộp thoại (thay window.confirm). */
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   /**
    * BE-84: bản sao mới nhất của `documentTypes` để dùng trong callback bất đồng bộ (sau khi tạo mẫu
@@ -207,9 +210,14 @@ export default function FormTemplatesTab() {
       pushToast(t('Đã thêm mẫu đơn "{v0}".', { v0: name }), 'success');
     }).catch(err => {
       console.error(err);
-      // BE-84: ưu tiên thông báo cụ thể từ server (VD "Mẫu đơn ... đã tồn tại") thay vì câu chung chung.
-      const serverMessage = err?.response?.data?.message;
-      pushToast(serverMessage || t('Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
+      // BE-136: thông báo lỗi phải theo ngôn ngữ đang dùng. Lỗi trùng tên có chứa tên mẫu đơn
+      // (chuỗi động) nên không tra từ điển nguyên câu được — dựng câu dịch sẵn rồi nội suy tên.
+      const serverMessage = err?.response?.data?.message || err?.response?.data?.error || '';
+      if (/đã tồn tại/i.test(serverMessage)) {
+        pushToast(t('Mẫu đơn "{v0}" đã tồn tại. Vui lòng dùng tên khác.', { v0: name }), 'error');
+      } else {
+        pushToast(describeApiError(err, t, 'Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
+      }
     });
   };
 
@@ -245,7 +253,13 @@ export default function FormTemplatesTab() {
   };
 
   const handleDeleteForm = async (catId, formName) => {
-    if (!window.confirm(t('Bạn có chắc muốn xóa mẫu đơn này không?'))) return;
+    // BE-134: thay `window.confirm` bằng hộp thoại của ứng dụng cho đồng bộ với các màn khác.
+    setDeleteTarget({ catId, formName });
+  };
+
+  const confirmDeleteForm = async () => {
+    if (!deleteTarget) return false;
+    const { formName } = deleteTarget;
     try {
       const target = documentTypes.find(d => d.name === formName);
       if (target) {
@@ -273,9 +287,11 @@ export default function FormTemplatesTab() {
         setSelectedForm('');
       }
       pushToast(t('Đã xóa mẫu đơn thành công!'), 'success');
+      return true;
     } catch (err) {
       console.error(err);
       pushToast(t('Lỗi khi xóa mẫu đơn'), 'error');
+      return false;
     }
   };
 
@@ -382,7 +398,7 @@ export default function FormTemplatesTab() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] gap-4">
       {/* Form templates list */}
       <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden flex flex-col max-h-[800px]">
         <div className="px-4 py-3 border-b border-outline-variant bg-surface-container-lowest flex-shrink-0 flex items-center justify-between">
@@ -647,7 +663,6 @@ export default function FormTemplatesTab() {
       {isAddingType && (
         <div 
           className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setIsAddingType(false)}
         >
           <div 
             className="bg-surface rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-fade-in"
@@ -719,7 +734,6 @@ export default function FormTemplatesTab() {
       {isAddingCat && (
         <div 
           className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setIsAddingCat(false)}
         >
           <div 
             className="bg-surface rounded-lg shadow-xl w-full max-w-sm overflow-hidden animate-fade-in"
@@ -775,7 +789,6 @@ export default function FormTemplatesTab() {
       {editingTypeIdx !== null && (
         <div 
           className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setEditingTypeIdx(null)}
         >
           <div 
             className="bg-surface rounded-lg shadow-xl w-full max-w-lg overflow-hidden animate-fade-in flex flex-col max-h-[90vh]"
@@ -992,6 +1005,54 @@ export default function FormTemplatesTab() {
                 className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center shadow-sm cursor-pointer"
               >
                 {t('Lưu cấu hình')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BE-134: hộp thoại xác nhận xóa mẫu đơn (thay window.confirm cho đồng bộ toàn app) */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-[110] bg-black/50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('Xóa mẫu đơn')}
+        >
+          <div
+            className="bg-surface rounded-lg shadow-xl w-full max-w-sm overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5 flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-error-container text-error flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined">delete</span>
+              </div>
+              <div>
+                <h2 className="font-headline-sm text-headline-sm text-on-surface">{t('Xóa mẫu đơn này?')}</h2>
+                <p className="text-xs text-secondary mt-0.5">{deleteTarget.formName}</p>
+                <p className="text-sm text-on-surface mt-2">
+                  {t('Mẫu đơn sẽ bị xóa khỏi danh mục. Thao tác này không thể hoàn tác.')}
+                </p>
+              </div>
+            </div>
+            <div className="p-5 pt-0 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
+              >
+                {t('Hủy')}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await confirmDeleteForm();
+                  if (ok) setDeleteTarget(null);
+                }}
+                className="font-label-md text-on-error bg-error px-5 py-2 rounded-md hover:bg-error/90 transition-colors shadow-sm cursor-pointer flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+                {t('Xóa mẫu đơn')}
               </button>
             </div>
           </div>

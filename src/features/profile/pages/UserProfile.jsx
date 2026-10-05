@@ -5,6 +5,7 @@ import EditProfileModal from './../components/EditProfileModal';
 import { userService } from '../../hr/services/userService';
 import { roleLabel } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
+import describeApiError from '../../../utils/apiError';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 
 export default function UserProfile({ userId, onClose }) {
@@ -29,16 +30,16 @@ export default function UserProfile({ userId, onClose }) {
       value: user?.allPositions && user.allPositions.length > 0
         ? <div className="flex flex-col gap-3 w-full max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
             {[...user.allPositions].sort((a, b) => b.isPrimary - a.isPrimary).map((pos, idx) => (
-              <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${pos.isPrimary ? 'border-primary/20 bg-primary/5' : 'border-outline-variant/50 bg-surface-container-lowest'}`}>
-                <div className="flex items-center gap-3">
+              <div key={idx} className={`flex items-center justify-between gap-2 p-3 rounded-lg border min-w-0 ${pos.isPrimary ? 'border-primary/20 bg-primary/5' : 'border-outline-variant/50 bg-surface-container-lowest'}`}>
+                <div className="flex items-center gap-3 min-w-0">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${pos.isPrimary ? 'bg-primary/10 text-primary' : 'bg-surface-variant text-secondary'}`}>
                     <span className="material-symbols-outlined text-lg">
                       {pos.isPrimary ? 'stars' : 'work'}
                     </span>
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-medium text-on-surface truncate">{t(pos.departmentName) || t('Chưa phân bổ')}</span>
-                    <span className="text-secondary text-sm truncate">{t(pos.positionName) || t('Nhân viên')}</span>
+                    <span className="font-medium text-on-surface break-words">{t(pos.departmentName) || t('Chưa phân bổ')}</span>
+                    <span className="text-secondary text-sm break-words">{t(pos.positionName) || t('Nhân viên')}</span>
                   </div>
                 </div>
                 {pos.isPrimary ? (
@@ -63,7 +64,7 @@ export default function UserProfile({ userId, onClose }) {
         window.location.reload();
       }, 1000);
     } catch (err) {
-      pushToast(err.response?.data?.error || t('Có lỗi xảy ra khi lưu'), 'error');
+      pushToast(describeApiError(err, t, 'Có lỗi xảy ra khi lưu'), 'error');
       throw err;
     }
   };
@@ -82,15 +83,15 @@ export default function UserProfile({ userId, onClose }) {
   return (
     <div className="flex-1 overflow-y-auto bg-background flex flex-col relative z-10 w-full h-full">
       {/* Header / Breadcrumbs — BE-97: nền ấm cho đồng tông với các trang khác */}
-      <header className="h-[56px] bg-[#f6f6f4] border-b border-outline-variant flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
-        <div className="flex items-center text-on-surface-variant font-body-sm flex-wrap">
+      <header className="min-h-[56px] bg-[#f6f6f4] border-b border-outline-variant flex items-center justify-between gap-2 px-4 sm:px-6 py-2 sticky top-0 z-20">
+        <div className="flex items-center text-on-surface-variant font-body-sm flex-wrap min-w-0">
           <span className="uppercase tracking-wider font-semibold text-xs text-secondary hidden sm:inline">{t('Tài khoản')}</span>
           <span className="material-symbols-outlined text-[16px] mx-1 sm:mx-2 text-outline hidden sm:inline">chevron_right</span>
-          <span className="font-medium text-on-surface">{user.name}</span>
+          <span className="font-medium text-on-surface break-words min-w-0" title={user.name}>{user.name}</span>
           <span className="mx-1 sm:mx-2 text-outline-variant">•</span>
-          <span className="text-secondary">{roleLabel(user.role)}</span>
+          <span className="text-secondary truncate">{roleLabel(user.role)}</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {(!userId || userId === currentUser.id) && (
             <button 
               onClick={() => setShowEditModal(true)}
@@ -119,28 +120,29 @@ export default function UserProfile({ userId, onClose }) {
               src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=random&color=fff&size=128`} 
             />
           </div>
-          <div className="flex-1 pt-1 sm:pt-2">
-            <h1 className={`${PAGE_TITLE_CLS} mb-1`}>{user.name}</h1>
+          <div className="flex-1 min-w-0 pt-1 sm:pt-2">
+            <h1 className={`${PAGE_TITLE_CLS} mb-1 break-words`}>{user.name}</h1>
             <p className="font-body-md text-secondary mb-4 sm:mb-6">{roleLabel(user.role)}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 sm:gap-y-4 gap-x-4 text-sm">
+            {/* BE-137: lưới tự chia cột theo không gian thật (không cố định 1/2 cột theo breakpoint) */}
+            <div className="grid gap-y-3 sm:gap-y-4 gap-x-4 text-sm grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))]">
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-outline text-[20px]">mail</span>
                 <span className="text-on-surface break-all">{user.personalEmail || user.email || t('Chưa cập nhật')}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-outline text-[20px]">call</span>
-                <span className="text-on-surface">{user.phone || <span className="text-secondary italic">{t('Chưa cập nhật số điện thoại')}</span>}</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="material-symbols-outlined text-outline text-[20px] shrink-0">call</span>
+                <span className="text-on-surface min-w-0 break-words">{user.phone || <span className="text-secondary italic">{t('Chưa cập nhật số điện thoại')}</span>}</span>
               </div>
-              <div className="flex items-center gap-3 sm:col-span-2">
-                <span className="material-symbols-outlined text-outline text-[20px]">location_on</span>
-                <span className="text-on-surface">{user.profileData?.address || <span className="text-secondary italic">{t('Chưa cập nhật địa chỉ')}</span>}</span>
+              <div className="flex items-center gap-3 sm:col-span-2 min-w-0">
+                <span className="material-symbols-outlined text-outline text-[20px] shrink-0">location_on</span>
+                <span className="text-on-surface min-w-0 break-words">{user.profileData?.address || <span className="text-secondary italic">{t('Chưa cập nhật địa chỉ')}</span>}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Content Sections Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Content Sections Grid — BE-137: auto-fit để số cột tự theo chiều rộng container */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))]">
           {sections.map((section, idx) => (
             <div key={idx} className="bg-white rounded border border-outline-variant flex flex-col shadow-sm">
               <div className="px-4 sm:px-5 border-b border-slate-100 flex justify-between items-center bg-surface-bright rounded-t py-2.5">
