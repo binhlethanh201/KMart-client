@@ -411,6 +411,8 @@ export default function ApprovalFlowTree({
       avatar: u.avatarUrl,
       role: [u.departmentName, u.positionName].filter(Boolean).join(' - ') || t('Người duyệt'),
       isStep: true,
+      // BE-146: người được ủy quyền duyệt thay — ghi rõ duyệt thay cho ai
+      onBehalfOfName: u.isDelegate ? (u.onBehalfOfName || null) : null,
     });
 
     const missingBranch = (stepNo) => ({
@@ -513,6 +515,16 @@ export default function ApprovalFlowTree({
             <span className="text-[12px] font-semibold text-on-surface truncate" title={node.name}>{node.name}</span>
           </div>
           <span className={`text-[10px] truncate font-medium ${node.hasManager ? 'text-secondary' : 'text-warning'}`} title={node.role}>{node.role}</span>
+          {/* BE-146: nhãn "duyệt thay cho ..." khi người này nhận ủy quyền */}
+          {node.onBehalfOfName && (
+            <span
+              className="inline-flex items-center gap-0.5 mt-0.5 px-1.5 py-px rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide w-fit max-w-full"
+              title={t('Người được ủy quyền duyệt thay cho {v0}', { v0: node.onBehalfOfName })}
+            >
+              <span className="material-symbols-outlined text-[10px]">assignment_ind</span>
+              <span className="truncate">{t('Duyệt thay cho')} {node.onBehalfOfName}</span>
+            </span>
+          )}
         </div>
       </div>
     );

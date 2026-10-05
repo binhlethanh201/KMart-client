@@ -32,6 +32,7 @@ export default function EditProfileModal({ user, onClose, onSave }) {
     name: '',
     phone: '',
     personalEmail: '',
+    telegramChatId: '',
     avatar: '',
     profileData: {}
   });
@@ -44,6 +45,7 @@ export default function EditProfileModal({ user, onClose, onSave }) {
       setForm({
         name: user.name || '',
         phone: user.phone || '',
+        telegramChatId: user.telegramChatId || '',
         personalEmail: user.personalEmail || '',
         avatar: user.avatar || '',
         profileData: user.profileData || {}
@@ -234,6 +236,12 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                   <label className={labelCls}>{t('Email cá nhân')}</label>
                   <input className={`${fieldCls} ${errors.personalEmail ? 'border-error focus:border-error focus:ring-error/20' : ''}`} type="email" value={form.personalEmail} onChange={set('personalEmail')} />
                   {errors.personalEmail && <span className="text-error text-xs font-medium">{errors.personalEmail}</span>}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className={labelCls}>{t('Telegram Chat ID')}</label>
+                  <input className={`${fieldCls} ${errors.telegramChatId ? 'border-error focus:border-error focus:ring-error/20' : ''}`} type="text" value={form.telegramChatId} onChange={set('telegramChatId')} placeholder={t('Nhập Chat ID từ Telegram')} />
+                  {errors.telegramChatId && <span className="text-error text-xs font-medium">{errors.telegramChatId}</span>}
                 </div>
               </div>
 

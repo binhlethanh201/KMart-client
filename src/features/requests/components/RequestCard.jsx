@@ -400,8 +400,8 @@ export default function RequestCard({ request: r }) {
                   : s.status === 'pending' ? 'warning'
                     : (s.status === 'rejected' || s.status === 'canceled') ? 'error'
                       : 'muted';
-              const badgeClass = nodeBadge === 'success' ? 'bg-success' : nodeBadge === 'warning' ? 'bg-warning' : nodeBadge === 'error' ? 'bg-error' : 'bg-outline-variant';
-              const badgeIcon = nodeBadge === 'success' ? 'check' : nodeBadge === 'warning' ? 'schedule' : nodeBadge === 'error' ? 'close' : 'more_horiz';
+              // Badge hiển thị được tính RIÊNG cho từng người trong renderPerson (theo lịch sử
+              // duyệt của người đó), nên không khai báo badge cấp bước ở đây nữa.
 
               const renderPerson = (aid, aidx) => {
                 const u = employees.find((x) => x.id === aid);

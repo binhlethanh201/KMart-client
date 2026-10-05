@@ -8,7 +8,6 @@ const HISTORY_META = {
   submitted: { type: 'create', text: 'Gửi đơn để phê duyệt' },
   approved: { type: 'approve', text: 'Đã phê duyệt' },
   rejected: { type: 'reject', text: 'Đã từ chối đơn' },
-  rejected: { type: 'reject', text: 'Đã từ chối đơn' },
   canceled: { type: 'timeout', text: 'Đã hủy đơn' },
   cancelled: { type: 'timeout', text: 'Đã hủy đơn' },
   supplement_requested: { type: 'supplement', text: 'Yêu cầu bổ sung thông tin' },
@@ -94,7 +93,19 @@ const mapToFrontendModel = (a) => {  const rawData = (typeof a.data === 'string'
       comment: h.comment,
       at: h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : null,
       // BE-30: giữ mốc thời gian THÔ để sắp thứ tự duyệt trong cùng một bước
-      atRaw: h.createdAt || null
+      atRaw: h.createdAt || null,
+      // BE-146: khi hành động được thực hiện QUA ỦY QUYỀN -> ai là người đã ủy quyền
+      onBehalfOfUserId: h.onBehalfOfUserId || null,
+      onBehalfOfUserName: h.onBehalfOfUserName || null
+    })),
+    // BE-146: ủy quyền đang hiệu lực của người duyệt trong đơn -> "B sẽ duyệt thay A"
+    delegations: (a.delegations || []).map(d => ({
+      delegatorId: d.delegatorId,
+      delegatorName: d.delegatorName,
+      delegateId: d.delegateId,
+      delegateName: d.delegateName,
+      startDate: d.startDate,
+      endDate: d.endDate
     })),
     history: (a.histories || []).map(h => {
       // BE-15: dịch Action -> nhãn tiếng Việt, kèm tên người thực hiện và lý do (nếu có)
@@ -103,6 +114,12 @@ const mapToFrontendModel = (a) => {  const rawData = (typeof a.data === 'string'
       const actor = h.userName ? `${h.userName}` : '';
       let text = t(meta.text);
       if (actor) text += ` - ${actor}`;
+      // BE-146: ghi rõ người nào được ủy quyền duyệt hộ đơn
+      if (h.onBehalfOfUserId) {
+        text += h.onBehalfOfUserName
+          ? ` (${t('duyệt thay cho')} ${h.onBehalfOfUserName})`
+          : ` (${t('duyệt thay')})`;
+      }
       if (h.comment && !['supplement_requested'].includes(key)) text += `: ${h.comment}`;
       return {
         at: new Date(h.createdAt).toLocaleString('vi-VN'),

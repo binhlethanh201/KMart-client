@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { clearSessionStorage } from '../utils/session';
 import NotificationBell from '../components/NotificationBell';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import SidebarDelegationCard from '../components/SidebarDelegationCard';
 
 /* ─── Sub-panel: chỉ 2 link điều hướng ──────────────────────── */
 
@@ -530,6 +531,8 @@ export default function UnifiedSidebar({
 
           {/* Footer */}
           <div>
+            {/* BE-146: thẻ ủy quyền tạm thời + thời gian hết hạn, kèm nút tạo nhanh */}
+            <SidebarDelegationCard isCollapsed={isCollapsed} />
             {/* Chuyển ngôn ngữ VI | EN | KO */}
             <LanguageSwitcher isCollapsed={isCollapsed} />
             <div className="p-3 border-t border-white/10">

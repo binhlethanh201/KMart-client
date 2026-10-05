@@ -29,7 +29,7 @@ const getSystemRoleInfo = (roles) => {
 export default function DepartmentDetail() {
   const { t } = useI18n();
   const { id } = useParams();
-  const { requests, currentUser, canApprove, approveRequest, pushToast, departments } = useApproval();
+  const { requests, currentUser, canApprove, approveRequest, departments } = useApproval();
   const { employees } = useHr();
   const dept = departments.find((d) => String(d.id) === String(id));
   useDocumentTitle(dept ? dept.name : t('Phòng ban'));

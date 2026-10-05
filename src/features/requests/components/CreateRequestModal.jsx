@@ -4,6 +4,7 @@ import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { workflowService } from '../../../services/workflowService';
+import { delegationService } from '../../../services/delegationService';
 import ApprovalFlowTree from './ApprovalFlowTree';
 import DocumentTypeSelect from './DocumentTypeSelect';
 import { buildDynamicFromRaw, fieldLabel, resolveFieldKey, sortFields } from '../formFieldMapping';
@@ -96,6 +97,33 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
   const [saving, setSaving] = useState(false);
 
   /*
+   * BE-146: ủy quyền ĐANG HIỆU LỰC của người tạo đơn (nếu có).
+   * Khi đã ủy quyền cho ai rồi thì trường "Người duyệt thay" CHỈ được chọn đúng người đó —
+   * không hiện bừa toàn bộ nhân viên. Chỉ khi chưa có ủy quyền mới được chọn tự do.
+   */
+  const [myActiveDelegation, setMyActiveDelegation] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    delegationService.getMine()
+      .then((list) => {
+        if (cancelled || !Array.isArray(list)) return;
+        const now = new Date();
+        const active = list.find((d) => d.isActive
+          && new Date(d.startDate) <= now
+          && new Date(d.endDate) >= now);
+        setMyActiveDelegation(active || null);
+      })
+      .catch(() => { /* không xem được ủy quyền thì giữ lựa chọn tự do */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  /** Trường "Người duyệt thay" của mẫu đơn hiện tại (nếu có). */
+  const isDelegatePickerField = useCallback((f) => (
+    f.type === 'Người duyệt thay'
+    || /duyệt thay/i.test(String(f.name || f.fieldName || f.label || ''))
+  ), []);
+
+  /*
    * BE-89: lỗi hiển thị ngay dưới từng ô nhập. BE-92: xoá lỗi của một ô ngay khi người dùng sửa
    * ô đó, không bắt họ bấm Gửi lần nữa mới thấy lỗi cũ biến mất.
    */
@@ -139,10 +167,32 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
   const currentFields = useMemo(() => {
     let list = selectedDocType?.fields || [];
     if (typeof list === 'string') {
-      try { list = JSON.parse(list); } catch (e) { list = []; }
+      try { list = JSON.parse(list); } catch { list = []; }
     }
     return sortFields(Array.isArray(list) ? list : []);
   }, [selectedDocType]);
+
+  /*
+   * BE-146: khi đã có ủy quyền hiệu lực, GIÁ TRỊ gửi lên của trường "Người duyệt thay"
+   * cũng phải đúng bằng người được ủy quyền (select bị khoá, người dùng không tự đổi được).
+   */
+  useEffect(() => {
+    if (!myActiveDelegation) return;
+    const delegateFields = currentFields.filter(isDelegatePickerField);
+    if (delegateFields.length === 0) return;
+    setForm((f) => {
+      let changed = false;
+      const dynamic = { ...f.dynamic };
+      delegateFields.forEach((fld) => {
+        const key = resolveFieldKey(fld);
+        if (dynamic[key] !== myActiveDelegation.delegateId) {
+          dynamic[key] = myActiveDelegation.delegateId;
+          changed = true;
+        }
+      });
+      return changed ? { ...f, dynamic } : f;
+    });
+  }, [myActiveDelegation, currentFields, isDelegatePickerField]);
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -849,6 +899,8 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             if (f.type === 'USER' || f.type === 'Người duyệt thay') {
               const labelKey = fieldLabel(f);
               const fieldId = resolveFieldKey(f);
+              // BE-146: đã ủy quyền cho ai thì trường "Người duyệt thay" chỉ hiện đúng người đó
+              const lockedDelegate = isDelegatePickerField(f) ? myActiveDelegation : null;
               return (
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
                   <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
@@ -856,14 +908,27 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                   <select
                     className={fieldCls}
                     required={f.required}
-                    value={form.dynamic[fieldId] || ''}
+                    disabled={Boolean(lockedDelegate)}
+                    value={lockedDelegate ? lockedDelegate.delegateId : (form.dynamic[fieldId] || '')}
                     onChange={(e) => setDynamic(fieldId, e.target.value)}
                   >
-                    <option value="">{t('-- Chọn người --')}</option>
-                    {employees?.map((emp) => (
-                      <option key={emp.id} value={emp.id}>{emp.name} ({t(emp.position) || t('Nhân viên')})</option>
-                    ))}
+                    {!lockedDelegate && <option value="">{t('-- Chọn người --')}</option>}
+                    {lockedDelegate ? (
+                      <option value={lockedDelegate.delegateId}>
+                        {lockedDelegate.delegateName || lockedDelegate.delegateId} ({t('được ủy quyền duyệt thay')})
+                      </option>
+                    ) : (
+                      employees?.map((emp) => (
+                        <option key={emp.id} value={emp.id}>{emp.name} ({t(emp.position) || t('Nhân viên')})</option>
+                      ))
+                    )}
                   </select>
+                  {lockedDelegate && (
+                    <p className="text-[11px] text-secondary flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px] text-primary">assignment_ind</span>
+                      {t('Bạn đã ủy quyền cho {v0} — đơn này chỉ có thể chọn người được ủy quyền duyệt thay.', { v0: lockedDelegate.delegateName || '' })}
+                    </p>
+                  )}
                 </div>
               );
             }
