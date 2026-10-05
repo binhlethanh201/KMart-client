@@ -31,7 +31,11 @@ export default function DepartmentDashboard() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
+  // Số thẻ mỗi trang được tính lại theo số CỘT thực tế của lưới × 3 hàng, để mỗi trang luôn là
+  // các hàng ĐẦY đủ — tránh hàng cuối lẻ thẻ gây khoảng trống lệch một bên.
+  const ROWS_PER_PAGE = 3;
+  const [gridColumns, setGridColumns] = useState(1);
+  const gridRef = React.useRef(null);
   // BE-98: 'grid' = lưới thẻ (mặc định), 'tree' = sơ đồ tổ chức theo cấp trên – cấp dưới.
   const [viewMode, setViewMode] = useState('grid');
 
@@ -127,6 +131,29 @@ export default function DepartmentDashboard() {
       .map((d) => ({ ...d, isFilterMatch: matchedIds.has(d.id) }));
   }, [visibleDepartments, filteredDepartments, viewMode]);
 
+  // Đo số cột thực tế của lưới (đếm số thẻ nằm trên hàng đầu tiên) để chọn số thẻ mỗi trang.
+  React.useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return undefined;
+    const measure = () => {
+      const kids = Array.from(el.children).map((c) => c.getBoundingClientRect());
+      if (!kids.length) return;
+      const firstTop = Math.round(kids[0].top);
+      const cols = kids.filter((k) => Math.abs(Math.round(k.top) - firstTop) <= 2).length;
+      setGridColumns((prev) => (prev === Math.max(1, cols) ? prev : Math.max(1, cols)));
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [viewMode, departmentsLoading, filteredDepartments.length]);
+
+  const ITEMS_PER_PAGE = Math.max(1, gridColumns * ROWS_PER_PAGE);
+
   // Calculate pagination
   const totalPages = Math.ceil(filteredDepartments.length / ITEMS_PER_PAGE) || 1;
 
@@ -142,8 +169,8 @@ export default function DepartmentDashboard() {
 
   return (
     <>
-      <div className="p-4 md:p-6 flex-1 overflow-y-auto min-h-0 bg-background">
-        <div className="w-full space-y-4">
+      <div className="p-3 md:p-4 flex-1 overflow-y-auto min-h-0 bg-background">
+        <div className="w-full space-y-3">
           {/* Compact Action Header — BE-81: trước đây dùng `bg-surface-container-low` (#f8fafc, ngả
               xanh) nên thẻ tiêu đề lệch tông với nền ấm #f6f6f4 của trang; nay dùng đúng tông ấm. */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#f6f6f4] p-4 rounded-lg border border-outline-variant shadow-sm">
@@ -251,42 +278,52 @@ export default function DepartmentDashboard() {
               }}
             />
           ) : (
-            <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,240px),1fr))]">
-              {paginatedDepartments.map((dept) => (
-                <DepartmentCard
-                  key={dept.id}
-                  id={dept.id}
-                  icon={dept.icon}
-                  iconImage={dept.iconImage}
-                  status={dept.status}
-                  name={dept.name}
-                  code={dept.code}
-                  leaders={dept.leaders}
-                  members={dept.members}
-                  memberNames={dept.memberNames}
-                  extraCount={dept.extraCount}
-                  memberCount={dept.memberCount}
-                  canEdit={canEdit}
-                  onEdit={() => setEditDept(dept)}
-                  onToggleStatus={() => toggleDepartmentStatus(dept.id)}
-                  onDelete={() => {
-                    if (window.confirm(`Bạn có chắc muốn xóa đơn vị "${dept.name}" không? Thao tác này không thể hoàn tác.`)) {
-                      deleteDepartment(dept.id);
-                    }
-                  }}
-                />
-              ))}
-            </div>
-          )}
+            /* Lưới thẻ + phân trang nằm trong CÙNG một khối (nền + viền + phân cách) để trang
+               không bị rời rạc thành nhiều mảnh và đỡ khoảng trắng thừa. */
+            <div className="bg-surface border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+              <div className="p-3 md:p-4">
+                {/* Thẻ tự giãn để LẤP KÍN hàng: hàng đầy giữ nguyên, hàng cuối (thiếu thẻ) sẽ
+                    phóng to vừa đủ phủ hết bề ngang -> không còn khoảng trống lệch một bên. */}
+                <div ref={gridRef} className="flex flex-wrap gap-3">
+                  {paginatedDepartments.map((dept) => (
+                    <div key={dept.id} className="flex flex-1 min-w-[min(240px,100%)]">
+                      <DepartmentCard
+                        id={dept.id}
+                        className="w-full h-full"
+                        icon={dept.icon}
+                        iconImage={dept.iconImage}
+                        status={dept.status}
+                        name={dept.name}
+                        code={dept.code}
+                        leaders={dept.leaders}
+                        members={dept.members}
+                        memberNames={dept.memberNames}
+                        extraCount={dept.extraCount}
+                        memberCount={dept.memberCount}
+                        canEdit={canEdit}
+                        onEdit={() => setEditDept(dept)}
+                        onToggleStatus={() => toggleDepartmentStatus(dept.id)}
+                        onDelete={() => {
+                          if (window.confirm(`Bạn có chắc muốn xóa đơn vị "${dept.name}" không? Thao tác này không thể hoàn tác.`)) {
+                            deleteDepartment(dept.id);
+                          }
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          {/* Footer Pagination — chỉ áp dụng cho lưới thẻ (sơ đồ cây hiển thị toàn bộ) */}
-          {viewMode === 'grid' && totalPages > 1 && (
-            <div className="pt-4 mt-4 border-t border-outline-variant">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              {/* Phân trang nằm TRONG khối nội dung (chỉ áp dụng cho lưới thẻ) */}
+              {totalPages > 1 && (
+                <div className="px-3 md:px-4 py-2.5 border-t border-outline-variant/60 bg-surface-container-lowest">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

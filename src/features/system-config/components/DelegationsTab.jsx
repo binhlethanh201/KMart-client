@@ -196,10 +196,22 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
     setSaving(true);
     setSubmitError('');
     try {
+      /*
+       * BE-147: input type="date" chỉ có NGÀY, không có giờ. Nếu dùng `new Date('2026-10-06')`
+       * thì JS hiểu là nửa đêm theo UTC — ở múi giờ +07 người dùng chọn "bắt đầu hôm nay" nhưng
+       * ủy quyền lại chỉ có hiệu lực từ 07:00 sáng, và "kết thúc ngày X" thì lại hết hạn từ 07:00
+       * sáng ngày X. Nay hiểu đúng theo giờ địa phương: bắt đầu từ 00:00 ngày bắt đầu, kết thúc
+       * vào cuối ngày (23:59:59) của ngày kết thúc.
+       */
+      const [sy, sm, sd] = String(startDate).split('-').map(Number);
+      const [ey, em, ed] = String(endDate).split('-').map(Number);
+      const startInstant = new Date(sy, sm - 1, sd, 0, 0, 0);
+      const endInstant = new Date(ey, em - 1, ed, 23, 59, 59);
+
       const created = await delegationService.create({
         delegateId,
-        startDate: new Date(startDate).toISOString(),
-        endDate: new Date(endDate).toISOString(),
+        startDate: startInstant.toISOString(),
+        endDate: endInstant.toISOString(),
         reason: reason.trim() || undefined,
       });
       // BE-143: máy chủ chỉ cho phép MỘT người được ủy quyền tại một thời điểm, nên khi tạo cái mới
@@ -406,6 +418,104 @@ function StatusBadge({ isActive, startDate, endDate }) {
   );
 }
 
+/* ─── Chip thông tin người (dùng chung, khai báo ngoài component để không tạo lại mỗi lần render) ── */
+function PersonAvatar({ name, tone = 'primary', size = 'md' }) {
+  return (
+    <div
+      className={`${size === 'sm' ? 'w-9 h-9 text-sm' : 'w-11 h-11 text-base'} rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
+        tone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface'
+      }`}
+    >
+      {(name || '?').trim().split(' ').pop()?.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+/** Một mắt xích trong chuỗi "ai ủy quyền ai". */
+function PersonChip({ label, name, tone, fallback = '—' }) {
+  return (
+    <div className="flex items-center gap-2.5 min-w-0">
+      <PersonAvatar name={name} tone={tone} size="sm" />
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-wide text-secondary leading-tight">{label}</div>
+        <div className="text-sm font-semibold text-on-surface truncate">{name || fallback}</div>
+      </div>
+    </div>
+  );
+}
+
+/** Hình minh họa "ai duyệt thay ai" — SVG nội bộ, không cần tải ảnh từ ngoài. */
+function DelegationIllustration() {
+  return (
+    <svg viewBox="0 0 320 132" className="w-full h-auto max-h-[132px]" role="img" aria-hidden="true">
+      {/* người ủy quyền */}
+      <circle cx="58" cy="56" r="26" className="fill-primary/10" />
+      <circle cx="58" cy="46" r="10" className="fill-primary/60" />
+      <path d="M40 74c4-10 10-15 18-15s14 5 18 15z" className="fill-primary/60" />
+      <rect x="30" y="90" width="56" height="8" rx="4" className="fill-primary/20" />
+      <rect x="38" y="102" width="40" height="7" rx="3.5" className="fill-primary/10" />
+
+      {/* mũi tên chuyển quyền */}
+      <path d="M108 58h36" strokeWidth="2.5" strokeLinecap="round" className="stroke-primary/50" strokeDasharray="5 5" />
+      <path d="M146 58l-8-5v10z" className="fill-primary/60" />
+      <rect x="112" y="24" width="36" height="22" rx="5" className="fill-primary/10" />
+      <path d="M118 35l5 5 9-9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="stroke-primary" fill="none" />
+
+      {/* người được ủy quyền */}
+      <circle cx="212" cy="56" r="26" className="fill-primary/10" />
+      <circle cx="212" cy="46" r="10" className="fill-primary/60" />
+      <path d="M194 74c4-10 10-15 18-15s14 5 18 15z" className="fill-primary/60" />
+      <rect x="184" y="90" width="56" height="8" rx="4" className="fill-primary/20" />
+      <rect x="192" y="102" width="40" height="7" rx="3.5" className="fill-primary/10" />
+
+      {/* lá chắn + lịch */}
+      <path d="M268 30l16 6v14c0 10-7 17-16 21-9-4-16-11-16-21V36z" className="fill-primary/10" />
+      <path d="M262 50l5 5 10-11" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="stroke-primary" fill="none" />
+    </svg>
+  );
+}
+
+/** Một bước trong quy trình ủy quyền. */
+function StepCard({ index, icon, title, desc }) {
+  return (
+    <div className="flex gap-3 rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-3.5 py-3 h-full">
+      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+        <span className="w-7 h-7 rounded-full bg-primary text-on-primary text-xs font-bold flex items-center justify-center">
+          {index}
+        </span>
+        <span className="material-symbols-outlined text-[18px] text-primary">{icon}</span>
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-on-surface">{title}</div>
+        <p className="text-xs text-secondary leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Một dòng hỏi–đáp gọn trong khối FAQ. */
+function FaqRow({ q, a }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0 mt-px">quiz</span>
+      <div className="min-w-0">
+        <div className="text-xs font-semibold text-on-surface">{q}</div>
+        <p className="text-xs text-secondary leading-relaxed">{a}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Dòng ghi chú ngắn trong panel phụ. */
+function TipRow({ icon, text }) {
+  return (
+    <p className="flex items-start gap-2 text-xs text-on-surface-variant">
+      <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">{icon}</span>
+      <span>{text}</span>
+    </p>
+  );
+}
+
 /* ─── DelegationsTab ────────────────────────────────────────────────────────── */
 export default function DelegationsTab() {
   const { t } = useI18n();
@@ -460,65 +570,44 @@ export default function DelegationsTab() {
   const current = myDelegations.find(isLive) || null;
   const received = toMeDelegations.filter(isLive);
 
-  const Avatar = ({ name, tone = 'primary' }) => (
-    <div
-      className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${
-        tone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface'
-      }`}
-    >
-      {(name || '?').trim().split(' ').pop()?.charAt(0).toUpperCase()}
-    </div>
-  );
-
   return (
-    <section className="flex flex-col gap-4 max-w-3xl">
-      {/* Ủy quyền của tôi */}
-      <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant/50">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">swap_horiz</span>
-            <h2 className="text-base font-semibold text-on-surface">{t('Ủy quyền của tôi')}</h2>
-          </div>
-          {current && (
-            <StatusBadge isActive={current.isActive} startDate={current.startDate} endDate={current.endDate} />
-          )}
-        </div>
-
-        {loading ? (
-          <div className="px-5 py-12 text-center text-secondary text-sm">
-            <span className="material-symbols-outlined text-[28px] block mb-2 animate-spin">progress_activity</span>
-            {t('Đang tải...')}
-          </div>
-        ) : current ? (
-          <div className="p-5 flex flex-col gap-5">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <Avatar name={t('Bạn')} tone="neutral" />
-                <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-wide text-secondary">{t('Người ủy quyền')}</div>
-                  <div className="text-sm font-semibold text-on-surface">{t('Bạn')}</div>
-                </div>
-              </div>
-              <div className="flex-1 flex items-center gap-2 text-primary">
-                <div className="flex-1 h-px bg-primary/30" />
-                <span className="material-symbols-outlined">arrow_forward</span>
-                <div className="flex-1 h-px bg-primary/30" />
-              </div>
-              <div className="flex items-center gap-3 min-w-0">
-                <Avatar name={current.delegateName} />
-                <div className="min-w-0">
-                  <div className="text-[11px] uppercase tracking-wide text-secondary">{t('Người được ủy quyền')}</div>
-                  <div className="text-sm font-semibold text-on-surface truncate">{current.delegateName || '—'}</div>
-                </div>
-              </div>
+    <section className="flex flex-col gap-3 w-full max-w-[1280px] mx-auto flex-1 min-h-full">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-stretch">
+        {/* Ủy quyền của tôi */}
+        <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-outline-variant/50">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-[20px]">swap_horiz</span>
+              <h2 className="text-sm font-semibold text-on-surface">{t('Ủy quyền của tôi')}</h2>
             </div>
+            {current && (
+              <StatusBadge isActive={current.isActive} startDate={current.startDate} endDate={current.endDate} />
+            )}
+          </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-container-lowest border border-outline-variant/60 rounded-lg px-4 py-3">
-              <div className="flex items-center gap-2 text-sm text-on-surface">
-                <span className="material-symbols-outlined text-[18px] text-secondary">event</span>
-                {FORMAT_DATE(current.startDate)} — {FORMAT_DATE(current.endDate)}
+          {loading ? (
+            <div className="px-4 py-8 text-center text-secondary text-sm">
+              <span className="material-symbols-outlined text-[24px] block mb-1.5 animate-spin">progress_activity</span>
+              {t('Đang tải...')}
+            </div>
+          ) : current ? (
+            /* Gọn trong MỘT hàng: ai ủy quyền ai · thời gian · thao tác */
+            <div className="px-4 py-3.5 flex flex-wrap items-center gap-x-3 gap-y-3">
+              <PersonChip label={t('Người ủy quyền')} name={t('Bạn')} tone="neutral" />
+
+              <div className="flex items-center gap-1 text-primary flex-shrink-0">
+                <span className="w-6 h-px bg-primary/30" />
+                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                <span className="w-6 h-px bg-primary/30" />
               </div>
-              <div className="flex items-center gap-2">
+
+              <PersonChip label={t('Người được ủy quyền')} name={current.delegateName} />
+
+              <div className="flex items-center gap-2 ml-auto flex-wrap">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-on-surface bg-surface-container-lowest border border-outline-variant/60 rounded-full px-3 py-1.5 whitespace-nowrap">
+                  <span className="material-symbols-outlined text-[15px] text-secondary">event</span>
+                  {FORMAT_DATE(current.startDate)} — {FORMAT_DATE(current.endDate)}
+                </span>
                 <button
                   onClick={() => setShowCreate(true)}
                   className="text-sm font-medium text-primary hover:bg-primary/10 px-3 py-1.5 rounded-md transition-colors cursor-pointer"
@@ -533,56 +622,194 @@ export default function DelegationsTab() {
                   {revokingId === current.id ? t('Đang thu hồi...') : t('Thu hồi')}
                 </button>
               </div>
+
+              {current.reason && (
+                <p className="w-full text-xs text-secondary truncate" title={current.reason}>
+                  {t('Lý do')}: {current.reason}
+                </p>
+              )}
             </div>
-            {current.reason && (
-              <p className="text-xs text-secondary -mt-2">{t('Lý do')}: {current.reason}</p>
-            )}
-          </div>
-        ) : (
-          <div className="px-5 py-10 flex flex-col items-center text-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-[28px]">person_add</span>
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-on-surface">{t('Chưa ủy quyền cho ai')}</div>
-              <div className="text-xs text-secondary mt-1">
-                {t('Chọn một người duyệt đơn thay bạn trong khoảng thời gian bạn vắng mặt.')}
+          ) : (
+            <div className="px-4 py-3.5 flex flex-wrap items-center gap-3">
+              <span className="material-symbols-outlined text-primary text-[22px]">person_add</span>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-on-surface">{t('Chưa ủy quyền cho ai')}</div>
+                <div className="text-xs text-secondary">
+                  {t('Chọn một người duyệt đơn thay bạn trong khoảng thời gian bạn vắng mặt.')}
+                </div>
               </div>
+              <button
+                onClick={() => setShowCreate(true)}
+                className="ml-auto bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
+              >
+                <span className="material-symbols-outlined text-[18px]">add</span>
+                {t('Tạo ủy quyền')}
+              </button>
             </div>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              {t('Tạo ủy quyền')}
-            </button>
+          )}
+        </div>
+
+        {/* Phạm vi ủy quyền — nói rõ đây CHỈ là duyệt đơn thay, không phải nâng quyền */}
+        <aside className="bg-primary-container/15 border border-primary/20 rounded-xl px-4 py-3.5 flex flex-col gap-2.5">
+          <div className="flex items-center gap-2 text-primary">
+            <span className="material-symbols-outlined text-[18px]">policy</span>
+            <h3 className="text-sm font-semibold">{t('Phạm vi ủy quyền')}</h3>
           </div>
-        )}
+          <p className="flex items-start gap-2 text-xs text-on-surface-variant">
+            <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">check_circle</span>
+            {t('Chỉ áp dụng cho việc DUYỆT ĐƠN thay bạn trong khoảng thời gian trên.')}
+          </p>
+          <p className="flex items-start gap-2 text-xs text-on-surface-variant">
+            <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">shield_person</span>
+            {t('Người được ủy quyền KHÔNG được cấp thêm quyền, không đổi vai trò, không vào được Cấu hình hệ thống.')}
+          </p>
+          <p className="flex items-start gap-2 text-xs text-on-surface-variant">
+            <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">history</span>
+            {t('Lịch sử ủy quyền do bộ phận Nhân sự ghi nhận.')}
+          </p>
+        </aside>
       </div>
 
       {/* Đang duyệt thay người khác (chỉ hiện khi có) */}
       {!loading && received.length > 0 && (
         <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-outline-variant/50">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant/50">
             <span className="material-symbols-outlined text-primary text-[20px]">assignment_ind</span>
             <h3 className="text-sm font-semibold text-on-surface">{t('Bạn đang duyệt thay')}</h3>
+            <span className="text-[11px] text-secondary ml-auto">{received.length}</span>
           </div>
           <div className="divide-y divide-outline-variant/40">
             {received.map((d) => (
-              <div key={d.id} className="flex items-center gap-3 px-5 py-3">
-                <Avatar name={d.delegatorName} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-on-surface truncate">{d.delegatorName || '—'}</div>
-                  <div className="text-xs text-secondary">
-                    {FORMAT_DATE(d.startDate)} — {FORMAT_DATE(d.endDate)}
-                  </div>
-                </div>
+              <div key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+                <PersonChip label={t('Người ủy quyền')} name={d.delegatorName} />
+                <span className="material-symbols-outlined text-[18px] text-secondary">arrow_forward</span>
+                <PersonChip label={t('Người được ủy quyền')} name={t('Bạn')} tone="neutral" />
+                <span className="inline-flex items-center gap-1.5 text-xs text-secondary bg-surface-container-lowest border border-outline-variant/60 rounded-full px-3 py-1.5 whitespace-nowrap ml-auto">
+                  <span className="material-symbols-outlined text-[15px]">event</span>
+                  {FORMAT_DATE(d.startDate)} — {FORMAT_DATE(d.endDate)}
+                </span>
                 <StatusBadge isActive={d.isActive} startDate={d.startDate} endDate={d.endDate} />
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Hướng dẫn 3 bước */}
+      <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-outline-variant/50">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[20px]">route</span>
+            <h3 className="text-sm font-semibold text-on-surface">{t('Ủy quyền hoạt động thế nào?')}</h3>
+          </div>
+          <span className="text-[11px] text-secondary">{t('3 bước')}</span>
+        </div>
+        <div className="grid gap-3 p-4 md:grid-cols-3 items-stretch">
+          <StepCard
+            index={1}
+            icon="person_search"
+            title={t('Chọn người duyệt thay')}
+            desc={t('Chọn một nhân sự đủ thẩm quyền duyệt đơn của bạn trong khoảng thời gian bạn vắng mặt.')}
+          />
+          <StepCard
+            index={2}
+            icon="swap_horiz"
+            title={t('Người đó duyệt đơn thay bạn')}
+            desc={t('Đơn của bạn được chuyển đúng cho người nhận ủy quyền; lịch sử ghi rõ "duyệt thay".')}
+          />
+          <StepCard
+            index={3}
+            icon="event_busy"
+            title={t('Tự động hết hiệu lực')}
+            desc={t('Hết khoảng thời gian đã đặt, quyền duyệt thay tự chấm dứt, không cần thao tác thêm.')}
+          />
+        </div>
+      </div>
+
+      {/* Câu hỏi thường gặp · Giới hạn quyền hạn */}
+      <div className="grid gap-3 lg:grid-cols-2 items-stretch">
+        <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant/50">
+            <span className="material-symbols-outlined text-primary text-[20px]">help</span>
+            <h3 className="text-sm font-semibold text-on-surface">{t('Câu hỏi thường gặp')}</h3>
+          </div>
+          <div className="flex-1 flex flex-col justify-center gap-3 px-4 py-3.5">
+            <FaqRow
+              q={t('Ai có thể được ủy quyền?')}
+              a={t('Một nhân sự đủ thẩm quyền duyệt đơn của bạn — không thể chọn chính bạn.')}
+            />
+            <FaqRow
+              q={t('Đơn đang chờ duyệt có tự chuyển cho người nhận ủy quyền?')}
+              a={t('Có. Đơn phát sinh trong khoảng thời gian ủy quyền sẽ do người được ủy quyền xử lý.')}
+            />
+            <FaqRow
+              q={t('Ủy quyền xong tôi có mất quyền duyệt?')}
+              a={t('Không. Bạn vẫn duyệt đơn của mình bình thường trong thời gian ủy quyền.')}
+            />
+            <FaqRow
+              q={t('Khi nào nên thu hồi?')}
+              a={t('Khi bạn trở lại sớm hơn dự kiến hoặc muốn đổi người duyệt thay.')}
+            />
+          </div>
+        </div>
+
+        <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant/50">
+            <span className="material-symbols-outlined text-primary text-[20px]">fact_check</span>
+            <h3 className="text-sm font-semibold text-on-surface">{t('Người nhận ủy quyền được làm gì?')}</h3>
+          </div>
+          <div className="flex-1 grid sm:grid-cols-2 gap-4 px-4 py-3.5 items-center">
+            <div className="flex flex-col gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-success flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                {t('Được phép')}
+              </span>
+              {[
+                t('Duyệt hoặc từ chối đơn thay bạn'),
+                t('Yêu cầu bổ sung thông tin'),
+                t('Xem các đơn cần duyệt thay bạn'),
+              ].map((s) => (
+                <span key={s} className="flex items-start gap-2 text-xs text-on-surface-variant">
+                  <span className="material-symbols-outlined text-[15px] text-success flex-shrink-0 mt-px">done</span>
+                  {s}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-error flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px]">block</span>
+                {t('Không được phép')}
+              </span>
+              {[
+                t('Cấp thêm quyền hoặc đổi vai trò'),
+                t('Vào Cấu hình hệ thống'),
+                t('Tạo đơn mới thay bạn'),
+              ].map((s) => (
+                <span key={s} className="flex items-start gap-2 text-xs text-on-surface-variant">
+                  <span className="material-symbols-outlined text-[15px] text-error flex-shrink-0 mt-px">close</span>
+                  {s}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Khối cuối giãn theo chiều cao còn lại để trang không hở mảng trắng lớn */}
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch flex-1 min-h-[150px]">
+        <aside className="bg-primary-container/15 border border-primary/20 rounded-xl px-4 py-3.5 flex flex-col items-center justify-center gap-2.5 text-center">
+          <DelegationIllustration />
+          <p className="text-xs text-on-surface-variant max-w-[260px]">
+            {t('Ủy quyền chỉ chuyển quyền DUYỆT ĐƠN, không chuyển vai trò hay quyền hệ thống.')}
+          </p>
+        </aside>
+        <div className="bg-surface border border-outline-variant rounded-xl shadow-sm px-4 py-3.5 flex flex-col justify-center gap-2.5">
+          <TipRow icon="schedule" text={t('Thời hạn ủy quyền không vượt quá ngày kết thúc bạn đặt.')} />
+          <TipRow icon="looks_one" text={t('Mỗi thời điểm chỉ một người duyệt thay; tạo mới sẽ tự thu hồi ủy quyền cũ.')} />
+          <TipRow icon="verified_user" text={t('Mọi thao tác duyệt thay đều được ghi vào nhật ký hệ thống.')} />
+          <TipRow icon="support_agent" text={t('Cần đổi người hoặc thu hồi gấp? Liên hệ bộ phận Nhân sự.')} />
+        </div>
+      </div>
 
       {showCreate && (
         <CreateDelegationModal

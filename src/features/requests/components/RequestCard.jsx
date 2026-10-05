@@ -316,7 +316,7 @@ export default function RequestCard({ request: r }) {
                       {getInitials(currentActorName)}
                     </div>
                   )}
-                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'approved' ? 'bg-success' : r.status === 'returned_timeout' ? 'bg-error' : (r.status === 'pending' || r.status === 'needssupplement') ? 'bg-warning' : 'bg-error'}`}>
+                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'approved' ? 'bg-success' : r.status === 'returned_timeout' ? 'bg-error' : (isPending || r.status === 'needssupplement') ? 'bg-warning' : 'bg-error'}`}>
                     <span className="material-symbols-outlined text-white text-[10px] font-bold">
                       {statusIcon}
                     </span>

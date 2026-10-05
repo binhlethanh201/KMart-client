@@ -33,9 +33,9 @@ export const roleService = {
     const response = await apiClient.get(`/admin/roles/${id}`);
     return response.data;
   },
-  /** Lấy tất cả permissions */
+  /** Lấy tất cả permissions (route của BE có version: /api/v1/admin/permissions) */
   getPermissions: async () => {
-    const response = await apiClient.get('/admin/permissions');
+    const response = await apiClient.get('/v1/admin/permissions');
     return response.data;
   },
 };

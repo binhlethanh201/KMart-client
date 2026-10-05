@@ -19,17 +19,25 @@ import LoginPage from "./features/auth/pages/LoginPage";
 import LandingPage from "./features/landing/pages/LandingPage";
 import { useState, useEffect } from "react";
 import { useApproval } from "./context/useApproval";
-import { PERMISSIONS } from "./constants/permissions";
+import { PERMISSIONS, ROLES } from "./constants/permissions";
 import { useI18n } from "./i18n/I18nProvider";
 
-/** Route guard: kiểm tra permission. Wildcard "*" bypasses all. */
-function ProtectedRoute({ requiredPermissions = [], children }) {
+/**
+ * Route guard: kiểm tra quyền (permission) và/hoặc vai trò (role). Wildcard "*" bypasses all.
+ * `requiredRoles` dùng cho các trang mà backend chặn theo POLICY VAI TRÒ (ví dụ báo cáo chỉ cho
+ * HR/ADMIN) — cần khớp cả menu sidebar, nếu không người dùng vào thẳng URL sẽ thấy trang rỗng.
+ */
+function ProtectedRoute({ requiredPermissions = [], requiredRoles = [], children }) {
   const { t } = useI18n();
   const { currentUser, hasPermission } = useApproval();
   if (!currentUser) return null;
   const perms = currentUser.permissions || [];
   if (perms.includes(PERMISSIONS.WILDCARD)) return children;
-  const hasAccess = requiredPermissions.every(p => hasPermission(p));
+  const userRoles = (currentUser.roles?.length ? currentUser.roles : [currentUser.role])
+    .filter(Boolean)
+    .map((r) => String(r).toUpperCase());
+  const roleOk = requiredRoles.length === 0 || requiredRoles.some((r) => userRoles.includes(String(r).toUpperCase()));
+  const hasAccess = roleOk && requiredPermissions.every(p => hasPermission(p));
   if (!hasAccess) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6">
@@ -130,16 +138,20 @@ function App() {
 
                 <Route path="requests/:id" element={<RequestDetail />} />
 
-                {/* Reports page */}
+                {/* Reports page — BE chặn theo policy vai trò "HR" (HR/ADMIN), khớp với menu sidebar */}
                 <Route path="reports" element={
-                  <ProtectedRoute requiredPermissions={[PERMISSIONS.APPLICATION_VIEW]}>
+                  <ProtectedRoute requiredRoles={[ROLES.ADMIN, ROLES.HR]}>
                     <ReportsPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="delegations" element={
                   <ProtectedRoute requiredPermissions={[PERMISSIONS.APPLICATION_APPROVE]}>
-                    <div className="p-6 h-full flex flex-col"><DelegationsTab /></div>
+                    {/* Cuộn được + cho nội dung cao tối thiểu bằng khung nhìn để trang ủy quyền
+                        luôn được căn giữa và không hở một mảng trắng lớn phía dưới. */}
+                    <div className="p-3 flex-1 flex flex-col min-h-0 overflow-y-auto">
+                      <DelegationsTab />
+                    </div>
                   </ProtectedRoute>
                 } />
 

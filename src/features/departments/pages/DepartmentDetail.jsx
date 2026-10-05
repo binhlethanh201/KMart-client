@@ -102,9 +102,16 @@ export default function DepartmentDetail() {
         r.title.toLowerCase().includes(query) ||
         (creatorName && creatorName.toLowerCase().includes(query));
       const matchT = typeF === 'all' || r.type === typeF;
+      /*
+       * "Đang chờ duyệt" phải khớp MỌI trạng thái đang chờ: máy chủ trả 'pending' hoặc
+       * 'pendingapproval' (và mapper dùng 'submitted'). Trước đây bộ lọc chỉ so sánh
+       * `r.status === 'pending'` nên đơn đang chờ (status 'pendingapproval') bị lọc mất —
+       * dù trong danh sách vẫn hiện nhãn "Đang chờ duyệt".
+       */
+      const waiting = ['pending', 'submitted', 'pendingapproval'].includes(r.status);
       const matchS =
         statusF === 'all' ||
-        (statusF === 'pending' && r.status === 'pending') ||
+        (statusF === 'pending' && waiting) ||
         (statusF === 'approved' && r.status === 'approved') ||
         ((statusF === 'rejected' && (r.status === 'rejected' || r.status === 'returned_timeout')));
       return matchQ && matchT && matchS;
