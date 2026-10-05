@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../services/notificationService';
 import { useI18n, translate } from '../i18n/I18nProvider';
+import { useApproval } from '../context/useApproval';
 
 // BE-22: chuông thông báo. Backend đã ghi thông báo (ApplicationService/NotificationService)
 // nhưng FE chưa hiển thị. Component này lấy danh sách + số chưa đọc, cho phép đọc và điều hướng.
@@ -32,6 +33,7 @@ const timeAgo = (iso) => {
 export default function NotificationBell({ variant = 'sidebar' }) {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const { pushToast } = useApproval();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -95,6 +97,20 @@ export default function NotificationBell({ variant = 'sidebar' }) {
     } catch { /* ignore */ }
   };
 
+  /** Xóa một thông báo. */
+  const handleDelete = async (e, n) => {
+    e.stopPropagation();
+    if (!window.confirm(t('Xóa thông báo này?'))) return;
+    try {
+      await notificationService.remove(n.id);
+      setItems((l) => l.filter((x) => x.id !== n.id));
+      if (!n.isRead) setUnread((c) => Math.max(0, c - 1));
+      pushToast(t('Đã xóa thông báo'), 'success');
+    } catch {
+      pushToast(t('Không xóa được thông báo'), 'error');
+    }
+  };
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -151,11 +167,10 @@ export default function NotificationBell({ variant = 'sidebar' }) {
             {items.map((n) => {
               const meta = TYPE_META[n.type] || { icon: 'info', color: 'text-secondary', bg: 'bg-surface-container' };
               return (
-                <button
+                <div
                   key={n.id}
-                  type="button"
+                  className={`relative px-4 py-3 border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors flex gap-3 cursor-pointer group ${n.isRead ? '' : 'bg-primary/[0.035]'}`}
                   onClick={() => handleOpenItem(n)}
-                  className={`w-full text-left px-4 py-3 border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors flex gap-3 cursor-pointer group ${n.isRead ? '' : 'bg-primary/[0.035]'}`}
                 >
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${meta.bg}`}>
                     <span className={`material-symbols-outlined text-[18px] ${meta.color}`}>{meta.icon}</span>
@@ -174,7 +189,16 @@ export default function NotificationBell({ variant = 'sidebar' }) {
                   {(n.referenceType === 'Application' && n.referenceId) && (
                     <span className="material-symbols-outlined text-[16px] text-outline opacity-0 group-hover:opacity-100 transition-opacity self-center flex-shrink-0">chevron_right</span>
                   )}
-                </button>
+                  <button
+                    type="button"
+                    title={t('Xóa thông báo')}
+                    onClick={(e) => handleDelete(e, n)}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full text-secondary hover:bg-error-container hover:text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                    aria-label={t('Xóa thông báo')}
+                  >
+                    <span className="material-symbols-outlined text-[14px]">delete</span>
+                  </button>
+                </div>
               );
             })}
           </div>

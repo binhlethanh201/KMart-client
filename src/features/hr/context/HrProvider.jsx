@@ -35,7 +35,7 @@ export function HrProvider({ children }) {
         userService.getAll(),
         departmentService.getAll(),
         positionService.getAll(),
-        roleService.getAll()
+        roleService.getAll().catch(() => ({ data: [] }))
       ]);
       setEmployees(empData);
       setDepartments(deptData);

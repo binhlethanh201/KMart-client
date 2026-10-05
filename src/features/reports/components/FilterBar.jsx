@@ -115,14 +115,28 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
           </select>
         </div>
 
-        {/* Trạng thái — đã bỏ: báo cáo chỉ thống kê ĐƠN ĐÃ DUYỆT nên lọc trạng thái
-            không làm số liệu thay đổi, gây hiểu nhầm là bộ lọc hỏng. */}
+        {/* TC-REP-003: Thêm lại bộ lọc trạng thái */}
+        <div className="flex flex-col gap-2">
+          <label className={labelClass}>{t('Trạng thái')}</label>
+          <select
+            className={selectClass}
+            value={filters.status || ''}
+            onChange={(e) => onChange({ status: e.target.value || null })}
+          >
+            <option value="">{t('Tất cả trạng thái')}</option>
+            <option value="pendingapproval">{t('Chờ duyệt')}</option>
+            <option value="approved">{t('Đã duyệt')}</option>
+            <option value="rejected">{t('Từ chối')}</option>
+            <option value="needssupplement">{t('Cần bổ sung')}</option>
+            <option value="canceled">{t('Đã hủy')}</option>
+          </select>
+        </div>
 
         {/* Reset */}
-        {(filters.from || filters.to || filters.block || filters.departmentId || filters.documentTypeId || filters.positionId) && (
+        {(filters.from || filters.to || filters.block || filters.departmentId || filters.documentTypeId || filters.positionId || filters.status) && (
           <button
             className={`${FILTER_GHOST_BUTTON_CLS} ml-auto mt-[26px]`}
-            onClick={() => onChange({ from: null, to: null, block: null, departmentId: null, documentTypeId: null, positionId: null })}
+            onClick={() => onChange({ from: null, to: null, block: null, departmentId: null, documentTypeId: null, positionId: null, status: null })}
           >
             {t('Đặt lại')}
           </button>

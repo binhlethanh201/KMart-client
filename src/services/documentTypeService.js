@@ -29,6 +29,11 @@ export const documentTypeService = {
     return response.data;
   },
 
+  update: async (id, data) => {
+    const response = await apiClient.put(`/document-types/${id}`, data);
+    return response.data;
+  },
+
   updateFields: async (id, fields) => {
     try {
       const response = await apiClient.put(`/document-types/${id}/fields`, { 
