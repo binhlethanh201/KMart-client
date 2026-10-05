@@ -93,7 +93,7 @@ export default function RequestDetail() {
         if (cancelled) return;
         let list = dt?.fields || [];
         if (typeof list === 'string') {
-          try { list = JSON.parse(list); } catch (e) { list = []; }
+          try { list = JSON.parse(list); } catch { list = []; }
         }
         setDocFields(Array.isArray(list) ? list : []);
       })
@@ -252,9 +252,17 @@ export default function RequestDetail() {
   const actedAtOf = {};
   // BE-30: giữ cả mốc thô để sắp thứ tự duyệt trong cùng 1 bước
   const actedAtRawOf = {};
+  /** BE-146: ai đã thao tác HỘ (duyệt thay qua ủy quyền) cho từng người ở từng bước. */
+  const actedViaOf = {};
   histories.forEach((h) => {
-    if (h.action === 'approved' && h.at) actedAtOf[`${h.stepOrder}:${h.userId}`] = h.at;
-    if (h.atRaw) actedAtRawOf[`${h.stepOrder}:${h.userId}`] = h.atRaw;
+    // BE-146: mốc của người DUYỆT THAY (onBehalfOfUserId) quy về người được assign ở bước đó,
+    // nếu không dòng của người ủy quyền sẽ hiện mãi "Đang chờ xử lý" dù đã được duyệt thay xong.
+    const personId = h.onBehalfOfUserId || h.userId;
+    if (h.action === 'approved' && h.at) actedAtOf[`${h.stepOrder}:${personId}`] = h.at;
+    if (h.atRaw) actedAtRawOf[`${h.stepOrder}:${personId}`] = h.atRaw;
+    if (h.onBehalfOfUserId) {
+      actedViaOf[`${h.stepOrder}:${personId}`] = { actorId: h.userId, actorName: h.userName };
+    }
   });
   // BE-30: trạng thái RIÊNG của từng người trong bước (để mỗi người một màu:
   // đã duyệt = xanh lá, từ chối = đỏ, đã yêu cầu bổ sung = hồng).
@@ -263,7 +271,8 @@ export default function RequestDetail() {
   const actedByOf = {};
   histories.forEach((h) => {
     if (!h.at) return;
-    const key = `${h.stepOrder}:${h.userId}`;
+    // BE-146: quy mốc của người duyệt thay về người được đại diện
+    const key = `${h.stepOrder}:${h.onBehalfOfUserId || h.userId}`;
     const stepStatus = (request.steps || []).find(x => (x.stepOrder ?? 0) === h.stepOrder)?.status;
     // BE-31: bước đã duyệt xong thì bỏ qua mốc "yêu cầu bổ sung" cũ (tránh hiện mãi hành động đã qua)
     if (stepStatus === 'approved' && h.action === 'supplement_requested') return;
@@ -1052,6 +1061,12 @@ export default function RequestDetail() {
                     const isMe = pendingStep?.approverId === approverId && actionable;
                     // người đã thao tác (duyệt / từ chối / yêu cầu bổ sung) -> chấm to có icon
                     const done = ['approved', 'rejected', 'supplement_requested'].includes(actedBy) || isTimedOut;
+                    // BE-146: người này được duyệt THAY (đã có người duyệt hộ) hoặc SẼ được duyệt thay
+                    // (đang có ủy quyền hiệu lực) — ghi rõ ai là người được ủy quyền.
+                    const via = actedViaOf[stepKey];
+                    const pendingDelegate = !actedBy
+                      ? (request.delegations || []).find((d) => d.delegatorId === approverId)
+                      : null;
 
                     return (
                       <li key={item.key} className="flex items-center gap-3">
@@ -1066,6 +1081,24 @@ export default function RequestDetail() {
                         <div className="flex items-baseline justify-between gap-2 flex-1 min-w-0 py-0.5">
                           <span className={`text-[13px] font-medium truncate ${done ? 'text-on-surface' : 'text-secondary'}`} title={person?.name}>
                             {person?.name || 'User'}{isMe ? t(' (Bạn)') : ''}
+                            {via && (
+                              <span
+                                className="ml-1.5 inline-flex items-center gap-0.5 align-middle text-[10px] font-bold text-primary"
+                                title={t('{v0} đã được ủy quyền duyệt thay cho {v1}', { v0: via.actorName || nameOf(via.actorId), v1: person?.name || '' })}
+                              >
+                                <span className="material-symbols-outlined text-[11px]">assignment_ind</span>
+                                {via.actorName || nameOf(via.actorId)} {t('duyệt thay')}
+                              </span>
+                            )}
+                            {!via && pendingDelegate && (
+                              <span
+                                className="ml-1.5 inline-flex items-center gap-0.5 align-middle text-[10px] font-bold text-primary"
+                                title={t('Người được ủy quyền sẽ duyệt thay đến hết ngày {v0}', { v0: pendingDelegate.endDate ? new Date(pendingDelegate.endDate).toLocaleDateString('vi-VN') : '' })}
+                              >
+                                <span className="material-symbols-outlined text-[11px]">assignment_ind</span>
+                                {pendingDelegate.delegateName} {t('sẽ duyệt thay')}
+                              </span>
+                            )}
                           </span>
                           {/* người đã thao tác chỉ hiện giờ (màu đã thể hiện trạng thái); người chưa thao tác hiện trạng thái ngắn */}
                           <span className={`text-[11px] font-medium flex-shrink-0 ${personTone.text}`}>

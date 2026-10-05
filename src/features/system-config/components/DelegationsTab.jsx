@@ -96,6 +96,7 @@ function UserSelect({ value, onChange, excludeId }) {
               onChange={(e) => setSearch(e.target.value)}
             />
             <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); setOpen(false); setSearch(''); }}
               className="text-secondary hover:text-error p-0.5 rounded cursor-pointer"
               aria-label={t('Đóng')}
@@ -110,7 +111,8 @@ function UserSelect({ value, onChange, excludeId }) {
               filtered.map((u) => (
                 <button
                   key={u.id}
-                  onClick={() => { onChange(u.id); setOpen(false); setSearch(''); }}
+                  type="button"
+                  onClick={() => { onChange(u.id, u); setOpen(false); setSearch(''); }}
                   className={`flex items-center gap-2.5 p-2 rounded text-left transition-colors cursor-pointer ${
                     value === u.id ? 'bg-primary-container/40' : 'hover:bg-surface-container-low'
                   }`}
@@ -139,7 +141,7 @@ function UserSelect({ value, onChange, excludeId }) {
 }
 
 /* ─── Create Delegation Modal ────────────────────────────────────────────────── */
-function CreateDelegationModal({ onClose, onSuccess, pushToast }) {
+export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultStartDate = null }) {
   const { t } = useI18n();
   const { currentUser } = useApproval();
 
@@ -157,7 +159,10 @@ function CreateDelegationModal({ onClose, onSuccess, pushToast }) {
   }, []);
 
   const [delegateId, setDelegateId] = useState('');
-  const [startDate, setStartDate] = useState(tomorrow);
+  /** BE-143: giữ luôn TÊN người được ủy quyền để thông báo kết quả nêu đúng người vừa chọn. */
+  const [delegateName, setDelegateName] = useState('');
+  /* BE-146: "ủy quyền tạm thời" tạo nhanh từ sidebar bắt đầu NGAY HÔM NAY (defaultStartDate). */
+  const [startDate, setStartDate] = useState(defaultStartDate || tomorrow);
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
   const [errors, setErrors] = useState({});
@@ -191,13 +196,21 @@ function CreateDelegationModal({ onClose, onSuccess, pushToast }) {
     setSaving(true);
     setSubmitError('');
     try {
-      await delegationService.create({
+      const created = await delegationService.create({
         delegateId,
         startDate: new Date(startDate).toISOString(),
         endDate: new Date(endDate).toISOString(),
         reason: reason.trim() || undefined,
       });
-      pushToast(t('Đã tạo ủy quyền thành công.'), 'success');
+      // BE-143: máy chủ chỉ cho phép MỘT người được ủy quyền tại một thời điểm, nên khi tạo cái mới
+      // thì ủy quyền cũ (nếu có) đã bị thu hồi tự động — báo rõ để người dùng không bị bất ngờ.
+      const superseded = Number(created?.supersededCount) || 0;
+      pushToast(
+        superseded > 0
+          ? t('Đã tạo ủy quyền mới cho "{v0}". {v1} ủy quyền trước đó đã được thu hồi (mỗi lúc chỉ có một người được ủy quyền).', { v0: delegateName, v1: superseded })
+          : t('Đã tạo ủy quyền thành công.'),
+        'success'
+      );
       onSuccess();
       onClose();
     } catch (err) {
@@ -256,8 +269,9 @@ function CreateDelegationModal({ onClose, onSuccess, pushToast }) {
             </label>
             <UserSelect
               value={delegateId}
-              onChange={(id) => {
+              onChange={(id, user) => {
                 setDelegateId(id);
+                setDelegateName(user?.name || '');
                 setErrors((e) => ({ ...e, delegateId: null, submit: null }));
               }}
               excludeId={currentUser?.id}
@@ -395,7 +409,7 @@ function StatusBadge({ isActive, startDate, endDate }) {
 /* ─── DelegationsTab ────────────────────────────────────────────────────────── */
 export default function DelegationsTab() {
   const { t } = useI18n();
-  const { currentUser, pushToast } = useApproval();
+  const { pushToast } = useApproval();
 
   const [tab, setTab] = useState('mine');
   const [myDelegations, setMyDelegations] = useState([]);

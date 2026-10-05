@@ -62,12 +62,15 @@ export default function HumanResources() {
     return employees.filter((e) => {
       // 0. Role-based visibility
       if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') {
-        const userDeptIds = currentUser?.allPositions?.map(p => p.departmentId) || [];
-        // Match by department ID (if available) or department name
-        const empDeptNames = [e.department, ...(e.secondary?.map(s => s.department) || [])];
-        const userDeptNames = currentUser?.allPositions?.map(p => p.departmentName) || [];
-        const hasOverlap = empDeptNames.some(name => userDeptNames.includes(name));
-        if (!hasOverlap) return false;
+        const userDeptIds = currentUser?.allPositions?.map(p => p.departmentId).filter(Boolean) || [];
+        const userDeptNames = currentUser?.allPositions?.map(p => p.departmentName).filter(Boolean) || [];
+        // BE-141: khớp theo ID phòng ban TRƯỚC (ổn định, không phụ thuộc tên), tên chỉ là
+        // phương án dự phòng cho hồ sơ cũ chưa có departmentId — đúng như chú thích ở đây.
+        const empDeptIds = [e.departmentId, ...(e.secondary?.map(s => s.departmentId) || [])].filter(Boolean);
+        const byId = empDeptIds.some(id => userDeptIds.includes(id));
+        const empDeptNames = [e.department, ...(e.secondary?.map(s => s.department) || [])].filter(Boolean);
+        const byName = empDeptNames.some(name => userDeptNames.includes(name));
+        if (!byId && !byName) return false;
       }
 
       const matchQ =

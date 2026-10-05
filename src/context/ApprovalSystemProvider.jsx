@@ -23,7 +23,7 @@ function load() {
         };
       }
     }
-  } catch (e) { }
+  } catch { }
   return {
     formFields: {}
   };
@@ -398,7 +398,7 @@ export function ApprovalSystemProvider({ children }) {
         const res = await departmentService.toggleStatus(id);
         setDepartments((list) => list.map((d) => (d.id === id ? { ...d, status: res.department?.isActive ? 'Active' : 'Inactive' } : d)));
         pushToast(t(res.message) || t('Thay đổi trạng thái thành công'), 'success');
-      } catch (err) {
+      } catch {
         pushToast(t('Lỗi khi đổi trạng thái'), 'error');
       }
     },

@@ -131,7 +131,10 @@ export default function DepartmentCard({
             </div>
           )}
         </div>
-        <span className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors">{memberCount} {t('nhân sự')}</span>
+        <span
+          className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors cursor-help"
+          title={tooltipText}
+        >{memberCount} {t('nhân sự')}</span>
       </div>
       
       <Link

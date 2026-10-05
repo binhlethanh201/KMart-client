@@ -11,7 +11,7 @@ import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 export default function UserProfile({ userId, onClose }) {
   const { t } = useI18n();
   const { currentUser, pushToast } = useApproval();
-  const { employees, getEmployee } = useHr();
+  const { getEmployee } = useHr();
   const [showEditModal, setShowEditModal] = useState(false);
   
   // Decide which user to display

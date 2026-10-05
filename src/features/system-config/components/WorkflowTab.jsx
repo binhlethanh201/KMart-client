@@ -872,8 +872,6 @@ export default function WorkflowTab() {
   const [advancedStepId, setAdvancedStepId] = useState(null);
 
   const [categories, setCategories] = useState([]);
-  const [expandedCats, setExpandedCats] = useState({});
-  const toggleCat = (id) => setExpandedCats(prev => ({...prev, [id]: !prev[id]}));
 
   const [workflows, setWorkflows] = useState({});
   const [workflowIds, setWorkflowIds] = useState({});
@@ -1023,7 +1021,8 @@ export default function WorkflowTab() {
       items,
     }));
     setCategories(built);
-    setExpandedCats(built.reduce((acc, c) => ({ ...acc, [c.id]: true }), {}));
+    // BE-141: trước đây còn ghi `setExpandedCats(...)` nhưng giá trị đó KHÔNG nơi nào đọc
+    // (không có UI thu/mở danh mục) nên chỉ gây thêm một lần render vô ích — đã bỏ.
   }, [documentTypes]);
 
   useEffect(() => {
@@ -1064,7 +1063,7 @@ export default function WorkflowTab() {
               try {
                 stepData.sequentialOrder = JSON.parse(stepData.sequentialOrder);
                 stepData.approvers = stepData.sequentialOrder;
-              } catch(e) {
+              } catch {
                 stepData.sequentialOrder = null;
                 stepData.approvers = [];
               }
@@ -1090,7 +1089,7 @@ export default function WorkflowTab() {
             if (stepData.approvalType === 'chain') {
               let list = stepData.chainList;
               if (typeof list === 'string') {
-                 try { list = JSON.parse(list); } catch (e) { list = []; }
+                 try { list = JSON.parse(list); } catch { list = []; }
               }
               if (!Array.isArray(list)) list = [];
               if (list.length === 0) {
@@ -1231,19 +1230,8 @@ export default function WorkflowTab() {
       },
     }));
 
-  // BE-35: đổi CHỨC DANH thì phải xoá người duyệt đã chọn trước đó.
-  // Người cũ thuộc chức danh khác nên sẽ không còn trong danh sách ứng viên mới ->
-  // giữ lại sẽ gây "specificUserId" mâu thuẫn, đơn có thể không ai duyệt được.
-  const changeRole = (id, role) =>
-    setWorkflows((prev) => ({
-      ...prev,
-      [formType]: {
-        ...prev[formType],
-        [block]: stepsOf(prev, formType, block).map((s) =>
-          s.id === id ? { ...s, role, roleName: role, specificUser: null, specificUserId: null, approvers: null, sequentialOrder: null, arrangementMode: 'role' } : s
-        ),
-      },
-    }));
+  // BE-35: việc xoá người duyệt đã chọn khi ĐỔI CHỨC DANH nay nằm trong luồng cấu hình
+  // bước duyệt (arrangementMode) — hàm changeRole cũ không còn nơi gọi nên đã bỏ.
   const removeStep = (id) => {
     setWorkflows((prev) => ({
       ...prev,

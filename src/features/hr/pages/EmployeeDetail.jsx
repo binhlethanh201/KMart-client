@@ -5,14 +5,13 @@ import UserProfile from '../../profile/pages/UserProfile';
 import { useHr } from '../context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
-import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
+import { STATUS_STYLES } from '../data/constants';
 import { userService } from '../services/userService';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 
 const pad = (n) => String(n).padStart(2, '0');
-const DAY = 24 * 60 * 60 * 1000;
 
 const formatDate = (value) => {
   if (!value) return '—';
@@ -21,36 +20,8 @@ const formatDate = (value) => {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 };
 
-function InfoCell({ label, children }) {
-  return (
-    <div className="min-w-0">
-      <label className="block text-[11px] font-semibold text-secondary uppercase tracking-wider mb-1">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function ActionButton({ icon, label, onClick, tone = 'default', title }) {
-  const tones = {
-    default: 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface',
-    danger: 'text-secondary hover:bg-error-container/40 hover:text-error',
-    warning: 'text-secondary hover:bg-warning-container/40 hover:text-warning',
-    success: 'text-secondary hover:bg-success-container/40 hover:text-success',
-    primary: 'bg-primary text-on-primary hover:bg-on-primary-fixed-variant',
-  };
-  return (
-    <button
-      onClick={onClick}
-      title={title || label}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${tones[tone]}`}
-    >
-      <span className="material-symbols-outlined text-[18px]">{icon}</span>
-      <span className="hidden sm:inline">{label}</span>
-    </button>
-  );
-}
+// BE-141: hai component InfoCell / ActionButton trước đây không còn nơi dùng (UI đã đổi sang
+// khối thông tin dạng lưới + menu "Thao tác") nên đã loại bỏ để tránh code chết.
 
 export default function EmployeeDetail() {
   const { t } = useI18n();
@@ -63,6 +34,8 @@ export default function EmployeeDetail() {
   const canDeleteEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_DELETE) : true;
   const canResetPassword = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_RESET_PASSWORD) : true;
   const canLockEmployee = hasPermission ? hasPermission(PERMISSIONS.PERSONNEL_LOCK) : true;
+  /** BE-141: chỉ hiện nút "Thao tác" khi có ÍT NHẤT một quyền — tránh menu rỗng. */
+  const canPerformAnyAction = canEditEmployee || canResetPassword || canLockEmployee || canDeleteEmployee;
 
   const employee = useMemo(() => getEmployee(id), [getEmployee, id]);
   const [log, setLog] = useState([]);
@@ -126,7 +99,6 @@ export default function EmployeeDetail() {
   }, [employee?.id]);
 
   const [editOpen, setEditOpen] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -135,17 +107,6 @@ export default function EmployeeDetail() {
   const totalPages = Math.max(1, Math.ceil(log.length / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);
   const pagedLog = log.slice((safePage - 1) * pageSize, safePage * pageSize);
-
-  // Group log entries by date label (DD/MM/YYYY), newest first.
-  const groups = useMemo(() => {
-    const map = new Map();
-    for (const entry of log) {
-      const key = `${pad(entry.date.getDate())}/${pad(entry.date.getMonth() + 1)}/${entry.date.getFullYear()}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push(entry);
-    }
-    return Array.from(map, ([label, items]) => ({ label, items }));
-  }, [log]);
 
   if (!employee) {
     return (
@@ -162,7 +123,6 @@ export default function EmployeeDetail() {
     );
   }
 
-  const roleStyle = ROLE_STYLES[employee.role];
   const status = STATUS_STYLES[employee.status];
   const isActive = employee.status === 'active';
 
@@ -252,7 +212,9 @@ export default function EmployeeDetail() {
             </div>
           </div>
           
-          {/* Action Button Dropdown wrapper */}
+          {/* Action Button Dropdown wrapper — BE-141: ẩn cả nút khi không có quyền nào
+              (trước đây vẫn hiện nút "Thao tác" nhưng menu rỗng). */}
+          {canPerformAnyAction && (
           <div className="flex-shrink-0 relative w-full md:w-auto mt-4 md:mt-0">
              <button 
                onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -270,19 +232,30 @@ export default function EmployeeDetail() {
 
              {/* Dropdown Menu */}
              <div className={`absolute right-0 top-full mt-1 w-48 bg-white border border-outline-variant shadow-lg rounded-md py-1 transition-all z-50 transform origin-top-right ${dropdownOpen ? 'opacity-100 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95'}`}>
-                <button onClick={() => { setEditOpen(true); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2 cursor-pointer">
-                   <span className="material-symbols-outlined text-[18px]">edit</span>
-                   {t('Chỉnh sửa thông tin')}
-                </button>
-                <button onClick={() => { handleResetPassword(); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-warning hover:bg-warning-container/30 flex items-center gap-2 cursor-pointer">
-                   <span className="material-symbols-outlined text-[18px]">lock_reset</span>
-                   {t('Đặt lại mật khẩu')}
-                </button>
-                <div className="h-px bg-outline-variant/50 my-1 w-full" />
-                <button onClick={() => { handleToggleLock(); setDropdownOpen(false); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 cursor-pointer ${isActive ? 'text-error hover:bg-error-container/30' : 'text-success hover:bg-success-container/30'}`}>
-                   <span className="material-symbols-outlined text-[18px]">{isActive ? 'lock' : 'lock_open'}</span>
-                   {isActive ? t('Khóa tài khoản') : t('Mở khóa')}
-                </button>
+                {/* BE-141: ẩn theo QUYỀN như mục "Xóa nhân sự" — trước đây 3 nút này luôn hiện
+                    dù đã khai báo canEditEmployee/canResetPassword/canLockEmployee, nên người
+                    không có quyền vẫn thấy nút rồi bấm vào chỉ nhận lỗi 403 từ máy chủ. */}
+                {canEditEmployee && (
+                  <button onClick={() => { setEditOpen(true); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2 cursor-pointer">
+                     <span className="material-symbols-outlined text-[18px]">edit</span>
+                     {t('Chỉnh sửa thông tin')}
+                  </button>
+                )}
+                {canResetPassword && (
+                  <button onClick={() => { handleResetPassword(); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-warning hover:bg-warning-container/30 flex items-center gap-2 cursor-pointer">
+                     <span className="material-symbols-outlined text-[18px]">lock_reset</span>
+                     {t('Đặt lại mật khẩu')}
+                  </button>
+                )}
+                {canLockEmployee && (
+                  <>
+                    <div className="h-px bg-outline-variant/50 my-1 w-full" />
+                    <button onClick={() => { handleToggleLock(); setDropdownOpen(false); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 cursor-pointer ${isActive ? 'text-error hover:bg-error-container/30' : 'text-success hover:bg-success-container/30'}`}>
+                       <span className="material-symbols-outlined text-[18px]">{isActive ? 'lock' : 'lock_open'}</span>
+                       {isActive ? t('Khóa tài khoản') : t('Mở khóa')}
+                    </button>
+                  </>
+                )}
                 {/* BE-87: xoá nhân sự — chỉ hiện khi có quyền. */}
                 {canDeleteEmployee && (
                   <>
@@ -295,6 +268,7 @@ export default function EmployeeDetail() {
                 )}
              </div>
           </div>
+          )}
         </div>
 
         {/* Info Grid (4 columns) */}

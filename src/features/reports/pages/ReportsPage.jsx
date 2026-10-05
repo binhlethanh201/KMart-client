@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { reportService } from '../services/reportService';
 import { departmentService } from '../../departments/services/departmentService';
 import { documentTypeService } from '../../../services/documentTypeService';
@@ -41,7 +40,6 @@ function LoadingBlock({ label, dark = false }) {
 export default function ReportsPage() {
   const { t } = useI18n();
   useDocumentTitle(t('Báo cáo & Thống kê'));
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -61,15 +59,7 @@ export default function ReportsPage() {
     status: null,
   });
   
-  // TC-REP-003: Add status filter
-  const STATUS_OPTIONS = [
-    { id: null, label: 'Tất cả trạng thái' },
-    { id: 'pendingapproval', label: 'Chờ duyệt' },
-    { id: 'approved', label: 'Đã duyệt' },
-    { id: 'rejected', label: 'Từ chối' },
-    { id: 'needssupplement', label: 'Cần bổ sung' },
-    { id: 'canceled', label: 'Đã hủy' },
-  ];
+  // Bộ lọc "Trạng thái" do FilterBar tự dựng (đúng nguồn duy nhất) — không khai báo lại ở đây.
 
   const [departments, setDepartments] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
