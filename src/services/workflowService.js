@@ -44,6 +44,10 @@ export const workflowService = {
     const response = await apiClient.delete(`/workflows/${id}`);
     return response.data;
   },
+  remove: async (id) => {
+    const response = await apiClient.delete(`/workflows/${id}`);
+    return response.data;
+  },
   /** BE-134: đặt luồng duyệt làm mặc định cho loại đơn (BE trả PUT, xem WorkflowsController). */
   setDefault: async (id) => {
     const response = await apiClient.put(`/workflows/${id}/set-default`);

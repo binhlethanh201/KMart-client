@@ -411,7 +411,6 @@ export default function DelegationsTab() {
   const { t } = useI18n();
   const { pushToast } = useApproval();
 
-  const [tab, setTab] = useState('mine');
   const [myDelegations, setMyDelegations] = useState([]);
   const [toMeDelegations, setToMeDelegations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -456,162 +455,134 @@ export default function DelegationsTab() {
     }
   };
 
-  const COLS = [
-    { key: 'person',    label: tab === 'mine' ? t('Người được ủy quyền') : t('Người ủy quyền') },
-    { key: 'startDate', label: t('Ngày bắt đầu') },
-    { key: 'endDate',   label: t('Ngày kết thúc') },
-    { key: 'reason',    label: t('Lý do') },
-    { key: 'status',    label: t('Trạng thái') },
-    { key: 'actions',   label: t('Thao tác') },
-  ];
+  // Chỉ quan tâm ủy quyền CÒN HIỆU LỰC (đang chạy hoặc sắp tới). Lịch sử/log do bên Nhân sự ghi nhận.
+  const isLive = (d) => d?.isActive && (!d.endDate || new Date(d.endDate) >= new Date());
+  const current = myDelegations.find(isLive) || null;
+  const received = toMeDelegations.filter(isLive);
 
-  const data = tab === 'mine' ? myDelegations : toMeDelegations;
-
-  const TABLE_ROWS = data.map((d) => ({
-    id: d.id,
-    person: tab === 'mine' ? d.delegateName : d.delegatorName,
-    startDate: d.startDate,
-    endDate: d.endDate,
-    reason: d.reason,
-    isActive: d.isActive,
-    delegation: d,
-  }));
+  const Avatar = ({ name, tone = 'primary' }) => (
+    <div
+      className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0 ${
+        tone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-container-high text-on-surface'
+      }`}
+    >
+      {(name || '?').trim().split(' ').pop()?.charAt(0).toUpperCase()}
+    </div>
+  );
 
   return (
-    <section className="flex flex-col gap-4">
-      {/* Tab header */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex bg-surface-container-lowest border border-outline-variant rounded-md overflow-hidden">
-          {[
-            { id: 'mine', label: t('Ủy quyền đã tạo'), count: myDelegations.length },
-            { id: 'to-me', label: t('Ủy quyền nhận được'), count: toMeDelegations.length },
-          ].map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => setTab(opt.id)}
-              className={`px-4 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-2 ${
-                tab === opt.id
-                  ? 'bg-primary text-on-primary'
-                  : 'text-secondary hover:text-on-surface hover:bg-surface-container-low'
-              }`}
-            >
-              {opt.label}
-              {opt.count > 0 && (
-                <span
-                  className={`inline-flex items-center justify-center min-w-[20px] h-5 rounded-full text-[11px] font-bold px-1.5 ${
-                    tab === opt.id
-                      ? 'bg-on-primary/20 text-on-primary'
-                      : 'bg-primary/10 text-primary'
-                  }`}
-                >
-                  {opt.count}
-                </span>
-              )}
-            </button>
-          ))}
+    <section className="flex flex-col gap-4 max-w-3xl">
+      {/* Ủy quyền của tôi */}
+      <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-outline-variant/50">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">swap_horiz</span>
+            <h2 className="text-base font-semibold text-on-surface">{t('Ủy quyền của tôi')}</h2>
+          </div>
+          {current && (
+            <StatusBadge isActive={current.isActive} startDate={current.startDate} endDate={current.endDate} />
+          )}
         </div>
 
-        <div className="ml-auto">
-          <button
-            onClick={() => setShowCreate(true)}
-            className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            {t('Tạo ủy quyền')}
-          </button>
-        </div>
+        {loading ? (
+          <div className="px-5 py-12 text-center text-secondary text-sm">
+            <span className="material-symbols-outlined text-[28px] block mb-2 animate-spin">progress_activity</span>
+            {t('Đang tải...')}
+          </div>
+        ) : current ? (
+          <div className="p-5 flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar name={t('Bạn')} tone="neutral" />
+                <div className="min-w-0">
+                  <div className="text-[11px] uppercase tracking-wide text-secondary">{t('Người ủy quyền')}</div>
+                  <div className="text-sm font-semibold text-on-surface">{t('Bạn')}</div>
+                </div>
+              </div>
+              <div className="flex-1 flex items-center gap-2 text-primary">
+                <div className="flex-1 h-px bg-primary/30" />
+                <span className="material-symbols-outlined">arrow_forward</span>
+                <div className="flex-1 h-px bg-primary/30" />
+              </div>
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar name={current.delegateName} />
+                <div className="min-w-0">
+                  <div className="text-[11px] uppercase tracking-wide text-secondary">{t('Người được ủy quyền')}</div>
+                  <div className="text-sm font-semibold text-on-surface truncate">{current.delegateName || '—'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-container-lowest border border-outline-variant/60 rounded-lg px-4 py-3">
+              <div className="flex items-center gap-2 text-sm text-on-surface">
+                <span className="material-symbols-outlined text-[18px] text-secondary">event</span>
+                {FORMAT_DATE(current.startDate)} — {FORMAT_DATE(current.endDate)}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="text-sm font-medium text-primary hover:bg-primary/10 px-3 py-1.5 rounded-md transition-colors cursor-pointer"
+                >
+                  {t('Đổi người')}
+                </button>
+                <button
+                  onClick={() => handleRevoke(current)}
+                  disabled={revokingId === current.id}
+                  className="text-sm font-medium text-error hover:bg-error-container/30 px-3 py-1.5 rounded-md transition-colors cursor-pointer disabled:opacity-40"
+                >
+                  {revokingId === current.id ? t('Đang thu hồi...') : t('Thu hồi')}
+                </button>
+              </div>
+            </div>
+            {current.reason && (
+              <p className="text-xs text-secondary -mt-2">{t('Lý do')}: {current.reason}</p>
+            )}
+          </div>
+        ) : (
+          <div className="px-5 py-10 flex flex-col items-center text-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+              <span className="material-symbols-outlined text-[28px]">person_add</span>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-on-surface">{t('Chưa ủy quyền cho ai')}</div>
+              <div className="text-xs text-secondary mt-1">
+                {t('Chọn một người duyệt đơn thay bạn trong khoảng thời gian bạn vắng mặt.')}
+              </div>
+            </div>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              {t('Tạo ủy quyền')}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Info note */}
-      {tab === 'mine' && (
-        <div className="flex items-start gap-2 text-xs text-secondary bg-primary-container/20 border border-primary/20 rounded-lg px-3 py-2.5">
-          <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0 mt-px">info</span>
-          <span>
-            {t('Bạn chỉ có thể có một ủy quyền đang hoạt động tại một thời điểm. Ủy quyền mới sẽ ghi đè ủy quyền cũ nếu có thời gian chồng chéo.')}
-          </span>
+      {/* Đang duyệt thay người khác (chỉ hiện khi có) */}
+      {!loading && received.length > 0 && (
+        <div className="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-outline-variant/50">
+            <span className="material-symbols-outlined text-primary text-[20px]">assignment_ind</span>
+            <h3 className="text-sm font-semibold text-on-surface">{t('Bạn đang duyệt thay')}</h3>
+          </div>
+          <div className="divide-y divide-outline-variant/40">
+            {received.map((d) => (
+              <div key={d.id} className="flex items-center gap-3 px-5 py-3">
+                <Avatar name={d.delegatorName} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-on-surface truncate">{d.delegatorName || '—'}</div>
+                  <div className="text-xs text-secondary">
+                    {FORMAT_DATE(d.startDate)} — {FORMAT_DATE(d.endDate)}
+                  </div>
+                </div>
+                <StatusBadge isActive={d.isActive} startDate={d.startDate} endDate={d.endDate} />
+              </div>
+            ))}
+          </div>
         </div>
       )}
-
-      {/* Table */}
-      <div className="bg-surface border border-outline-variant rounded-lg overflow-hidden">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-surface-container-lowest text-[12px] uppercase tracking-wide text-secondary border-b border-outline-variant/60">
-              {COLS.map((c) => (
-                <th key={c.key} className="px-4 py-3 font-semibold">{c.label}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={COLS.length} className="px-4 py-16 text-center text-secondary">
-                  <span className="material-symbols-outlined text-[28px] block mb-2 animate-spin">progress_activity</span>
-                  {t('Đang tải danh sách ủy quyền...')}
-                </td>
-              </tr>
-            ) : TABLE_ROWS.length === 0 ? (
-              <tr>
-                <td colSpan={COLS.length} className="px-4 py-16 text-center text-secondary">
-                  <span className="material-symbols-outlined text-[28px] block mb-2 opacity-40">assignment</span>
-                  {tab === 'mine'
-                    ? t('Bạn chưa tạo ủy quyền nào.')
-                    : t('Bạn chưa nhận được ủy quyền nào.')}
-                </td>
-              </tr>
-            ) : (
-              TABLE_ROWS.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-t border-outline-variant/60 hover:bg-surface-container-low/40 transition-colors"
-                >
-                  <td className="px-4 py-3">
-                    <div className="text-sm font-medium text-on-surface">{row.person || '—'}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-on-surface">{FORMAT_DATE(row.startDate)}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-on-surface">{FORMAT_DATE(row.endDate)}</div>
-                  </td>
-                  <td className="px-4 py-3 max-w-[200px]">
-                    <div className="text-sm text-secondary truncate" title={row.reason}>
-                      {row.reason || '—'}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge
-                      isActive={row.isActive}
-                      startDate={row.startDate}
-                      endDate={row.endDate}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    {tab === 'mine' && (
-                      <div className="flex items-center justify-end">
-                        <button
-                          onClick={() => handleRevoke(row.delegation)}
-                          disabled={revokingId === row.id}
-                          title={row.isActive ? t('Thu hồi ủy quyền') : t('Xóa bản ghi')}
-                          className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                            revokingId === row.id
-                              ? 'text-outline opacity-40 cursor-not-allowed'
-                              : 'text-secondary hover:text-error hover:bg-error-container/30'
-                          }`}
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
-                            {revokingId === row.id ? 'progress_activity' : 'delete'}
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
 
       {showCreate && (
         <CreateDelegationModal
