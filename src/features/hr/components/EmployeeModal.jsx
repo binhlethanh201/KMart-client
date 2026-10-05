@@ -10,6 +10,7 @@ const EMPTY_EMPLOYEE = {
   phone: '',
   password: '',
   personalEmail: '',
+  telegramChatId: '',
   dateOfBirth: '',
   departmentId: '',
   positionId: '',
@@ -254,6 +255,18 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                   placeholder="nguyenvana@gmail.com"
                 />
                 {errors.personalEmail && <p className="text-xs text-error mt-1">{errors.personalEmail}</p>}
+              </div>
+              <div>
+                <label className={labelCls}>{t('Telegram Chat ID')}</label>
+                <input
+                  data-field="telegramChatId"
+                  className={errors.telegramChatId ? fieldErrCls : fieldCls}
+                  type="text"
+                  value={form.telegramChatId || ''}
+                  onChange={set('telegramChatId')}
+                  placeholder={t('Nhập Chat ID từ Telegram')}
+                />
+                {errors.telegramChatId && <p className="text-xs text-error mt-1">{errors.telegramChatId}</p>}
               </div>
               <div>
                 <label className={labelCls}>{t('Số điện thoại')}</label>

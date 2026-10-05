@@ -32,7 +32,6 @@ export const workflowService = {
     const response = await apiClient.put(`/workflows/${id}`, data);
     return response.data;
   },
-<<<<<<< HEAD
   getAll: async () => {
     const response = await apiClient.get('/workflows');
     return response.data;
@@ -45,30 +44,17 @@ export const workflowService = {
     const response = await apiClient.delete(`/workflows/${id}`);
     return response.data;
   },
+  remove: async (id) => {
+    const response = await apiClient.delete(`/workflows/${id}`);
+    return response.data;
+  },
   /** BE-134: đặt luồng duyệt làm mặc định cho loại đơn (BE trả PUT, xem WorkflowsController). */
   setDefault: async (id) => {
     const response = await apiClient.put(`/workflows/${id}/set-default`);
     return response.data;
   },
-};
-=======
-
-  // Clone workflow
   clone: async (id) => {
     const response = await apiClient.post(`/workflows/${id}/clone`);
     return response.data;
   },
-
-  // Set workflow as default
-  setDefault: async (id) => {
-    const response = await apiClient.put(`/workflows/${id}/default`);
-    return response.data;
-  },
-
-  // Delete workflow
-  remove: async (id) => {
-    const response = await apiClient.delete(`/workflows/${id}`);
-    return response.data;
-  },
 };
->>>>>>> 41dc5b137c6674e8621d3b952cd3772d3954ba3d

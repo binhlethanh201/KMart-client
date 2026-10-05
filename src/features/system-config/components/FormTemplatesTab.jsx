@@ -191,36 +191,6 @@ export default function FormTemplatesTab() {
     }
 
     const cat = categories.find((c) => c.id === newTypeCatId);
-<<<<<<< HEAD
-    documentTypeService.create({
-      name,
-      code: 'AUTO_' + Date.now(),
-      category: cat?.name || t('Khác'),
-    }).then(created => {
-      // Nhóm lại theo dữ liệu server trả về thay vì tự chèn tay vào một nhóm — tự chèn tay là nguồn gốc
-      // của việc mẫu đơn hiện sai/nhảy sang danh mục khác.
-      const nextTypes = [...documentTypesRef.current, created];
-      documentTypesRef.current = nextTypes;
-      setDocumentTypes(nextTypes);
-      setCategories((prev) => mergeServerCategories(buildCategories(nextTypes), prev));
-      setFields(prev => ({ ...prev, [name]: [] }));
-      setSelectedForm(name);
-      setIsAddingType(false);
-      setNewTypeName('');
-      pushToast(t('Đã thêm mẫu đơn "{v0}".', { v0: name }), 'success');
-    }).catch(err => {
-      console.error(err);
-      // BE-136: thông báo lỗi phải theo ngôn ngữ đang dùng. Lỗi trùng tên có chứa tên mẫu đơn
-      // (chuỗi động) nên không tra từ điển nguyên câu được — dựng câu dịch sẵn rồi nội suy tên.
-      const serverMessage = err?.response?.data?.message || err?.response?.data?.error || '';
-      if (/đã tồn tại/i.test(serverMessage)) {
-        pushToast(t('Mẫu đơn "{v0}" đã tồn tại. Vui lòng dùng tên khác.', { v0: name }), 'error');
-      } else {
-        pushToast(describeApiError(err, t, 'Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
-      }
-    });
-=======
-    
     if (editingDocType) {
       documentTypeService.update(editingDocType.id, {
         name,
@@ -246,8 +216,12 @@ export default function FormTemplatesTab() {
         pushToast(t('Đã cập nhật mẫu đơn "{v0}".', { v0: name }), 'success');
       }).catch(err => {
         console.error(err);
-        const serverMessage = err?.response?.data?.error || err?.response?.data?.message;
-        pushToast(serverMessage || t('Lỗi khi cập nhật mẫu đơn "{v0}"', { v0: name }), 'error');
+        const serverMessage = err?.response?.data?.error || err?.response?.data?.message || '';
+        if (/đã tồn tại/i.test(serverMessage)) {
+          pushToast(t('Mẫu đơn "{v0}" đã tồn tại. Vui lòng dùng tên khác.', { v0: name }), 'error');
+        } else {
+          pushToast(describeApiError(err, t, 'Lỗi khi cập nhật mẫu đơn "{v0}"', { v0: name }), 'error');
+        }
       });
     } else {
       documentTypeService.create({
@@ -266,11 +240,14 @@ export default function FormTemplatesTab() {
         pushToast(t('Đã thêm mẫu đơn "{v0}".', { v0: name }), 'success');
       }).catch(err => {
         console.error(err);
-        const serverMessage = err?.response?.data?.error || err?.response?.data?.message;
-        pushToast(serverMessage || t('Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
+        const serverMessage = err?.response?.data?.error || err?.response?.data?.message || '';
+        if (/đã tồn tại/i.test(serverMessage)) {
+          pushToast(t('Mẫu đơn "{v0}" đã tồn tại. Vui lòng dùng tên khác.', { v0: name }), 'error');
+        } else {
+          pushToast(describeApiError(err, t, 'Lỗi khi tạo mẫu đơn "{v0}"', { v0: name }), 'error');
+        }
       });
     }
->>>>>>> 41dc5b137c6674e8621d3b952cd3772d3954ba3d
   };
 
   const handleAddCategory = () => {
