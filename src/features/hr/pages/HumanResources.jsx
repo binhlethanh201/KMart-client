@@ -10,6 +10,7 @@ import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
 import PageHeader from '../../../components/PageHeader';
+import Select from '../../../components/Select';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
 // BE-77/79: dùng đúng style ô lọc của trang Báo cáo để các trang nhìn đồng bộ.
@@ -155,23 +156,34 @@ export default function HumanResources() {
             />
           </div>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">
-            <select className={`${selectCls} w-full sm:w-auto`} value={dept} onChange={(e) => setDept(e.target.value)}>
-              <option value="all">{t('Tất cả phòng ban')}</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.name}>{t(d.name)}</option>
-              ))}
-            </select>
-            <select className={`${selectCls} w-full sm:w-auto`} value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="all">{t('Tất cả vai trò')}</option>
-              {roles.map((r) => (
-                <option key={r.id} value={r.roleName}>{roleStyle(r.roleName).label}</option>
-              ))}
-            </select>
-            <select className={`${selectCls} w-full sm:w-auto`} value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="all">{t('Tất cả trạng thái')}</option>
-              <option value="active">{t('Đang hoạt động')}</option>
-              <option value="inactive">{t('Ngừng hoạt động')}</option>
-            </select>
+            <Select
+              className={`${selectCls} w-full sm:w-auto`}
+              value={dept}
+              onChange={setDept}
+              options={[
+                { value: 'all', label: t('Tất cả phòng ban') },
+                ...departments.map((d) => ({ value: d.name, label: t(d.name) })),
+              ]}
+            />
+            <Select
+              className={`${selectCls} w-full sm:w-auto`}
+              value={role}
+              onChange={setRole}
+              options={[
+                { value: 'all', label: t('Tất cả vai trò') },
+                ...roles.map((r) => ({ value: r.roleName, label: roleStyle(r.roleName).label })),
+              ]}
+            />
+            <Select
+              className={`${selectCls} w-full sm:w-auto`}
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: 'all', label: t('Tất cả trạng thái') },
+                { value: 'active', label: t('Đang hoạt động') },
+                { value: 'inactive', label: t('Ngừng hoạt động') },
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -354,19 +366,20 @@ export default function HumanResources() {
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
                 <span className="text-xs text-secondary flex items-center gap-2">
                   {t('Hiển thị')}
-                  <select
+                  <Select
                     value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
+                    onChange={(v) => {
+                      setPageSize(Number(v));
                       setPage(1); // Reset page on page size change
                     }}
                     className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
-                  >
-                    <option value={5}>{t('5 dòng')}</option>
-                    <option value={10}>{t('10 dòng')}</option>
-                    <option value={20}>{t('20 dòng')}</option>
-                    <option value={50}>{t('50 dòng')}</option>
-                  </select>
+                    options={[
+                      { value: 5, label: t('5 dòng') },
+                      { value: 10, label: t('10 dòng') },
+                      { value: 20, label: t('20 dòng') },
+                      { value: 50, label: t('50 dòng') },
+                    ]}
+                  />
                   <span>
                     {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)} {t('trong tổng số')} {filtered.length} {t('nhân sự')}
                   </span>

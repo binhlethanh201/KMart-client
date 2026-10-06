@@ -206,6 +206,15 @@ export default function RequestDetail() {
     };
   })();
   const isTimeoutWorkflow = request.status === 'returned_timeout';
+  /**
+   * BE-67: nút "Giả lập quá hạn" chỉ có ý nghĩa với đơn ĐANG chờ duyệt và chỉ ADMIN/HR gọi được
+   * (backend trả 400/403 nếu khác) — trước đây nút hiện cả trên đơn đã kết thúc nên bấm vào chỉ
+   * nhận lỗi.
+   */
+  const canSimulateTimeout = import.meta.env.DEV && isPendingWorkflow
+    && (currentUser?.roles?.length ? currentUser.roles : [currentUser?.role])
+      .filter(Boolean)
+      .some((r) => ['ADMIN', 'HR'].includes(String(r).toUpperCase()));
   const timeoutStepIndex = (() => {
     if (!request.steps?.length) return Math.max(0, Number(request.currentStep) || 0);
 
@@ -478,7 +487,7 @@ export default function RequestDetail() {
               </>
             ) : (
               <>
-                {import.meta.env.DEV && (
+                {canSimulateTimeout && (
                   <button
                     onClick={() => simulateTimeout(request.id)}
                     className="px-3 py-1.5 rounded text-sm font-medium border border-warning text-warning hover:bg-warning-container transition-colors flex items-center gap-2 bg-surface cursor-pointer"

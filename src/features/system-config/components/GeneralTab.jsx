@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TIME_RULES } from '../data/mockData';
 import apiClient from '../../../services/apiClient';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { describeApiError } from '../../../utils/apiError';
 
 const fieldCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary';
@@ -14,10 +15,12 @@ export default function GeneralTab() {
     botToken: ''
   });
   const [timeRule, setTimeRule] = useState('business');
-  const [showSecret, setShowSecret] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  /* SET-05: giờ hành chính — trước đây 2 ô giờ chỉ hiển thị (defaultValue), không lưu được gì. */
+  const [businessHoursStart, setBusinessHoursStart] = useState('08:00');
+  const [businessHoursEnd, setBusinessHoursEnd] = useState('17:30');
+  const [savingGeneral, setSavingGeneral] = useState(false);
   const [message, setMessage] = useState(null);
+  const [generalError, setGeneralError] = useState('');
 
   // Fetch settings & Telegram config from BE
   useEffect(() => {
@@ -29,6 +32,12 @@ export default function GeneralTab() {
       if (settingsRes.data?.timeCalculationMode) {
         setTimeRule(settingsRes.data.timeCalculationMode);
       }
+      if (settingsRes.data?.businessHoursStart) {
+        setBusinessHoursStart(settingsRes.data.businessHoursStart);
+      }
+      if (settingsRes.data?.businessHoursEnd) {
+        setBusinessHoursEnd(settingsRes.data.businessHoursEnd);
+      }
 
       // Map Telegram config
       if (telegramRes.data) {
@@ -39,6 +48,30 @@ export default function GeneralTab() {
       }
     });
   }, []);
+
+  /* SET-04 + SET-05: lưu cách tính quá hạn và khung giờ hành chính xuống máy chủ. */
+  const handleSaveGeneral = async () => {
+    setGeneralError('');
+    if (businessHoursEnd <= businessHoursStart) {
+      setGeneralError(t('Giờ kết thúc phải sau giờ bắt đầu.'));
+      return;
+    }
+    setSavingGeneral(true);
+    try {
+      const res = await apiClient.put('/settings', {
+        timeCalculationMode: timeRule,
+        businessHoursStart,
+        businessHoursEnd,
+      });
+      setTimeRule(res.data?.timeCalculationMode || timeRule);
+      setMessage({ type: 'success', text: t('Đã lưu cấu hình chung.') });
+    } catch (err) {
+      console.error('Failed to save general settings:', err);
+      setGeneralError(describeApiError(err, t, 'Không lưu được cấu hình chung.'));
+    } finally {
+      setSavingGeneral(false);
+    }
+  };
 
   const handleSaveTelegram = async () => {
     try {
@@ -147,12 +180,38 @@ export default function GeneralTab() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>{t('Giờ bắt đầu')}</label>
-                <input className={fieldCls} defaultValue="08:00" type="time" />
+                <input
+                  className={fieldCls}
+                  type="time"
+                  value={businessHoursStart}
+                  onChange={(e) => { setBusinessHoursStart(e.target.value); setGeneralError(''); }}
+                />
               </div>
               <div>
                 <label className={labelCls}>{t('Giờ kết thúc')}</label>
-                <input className={fieldCls} defaultValue="17:30" type="time" />
+                <input
+                  className={fieldCls}
+                  type="time"
+                  value={businessHoursEnd}
+                  onChange={(e) => { setBusinessHoursEnd(e.target.value); setGeneralError(''); }}
+                />
               </div>
+            </div>
+            {generalError && (
+              <p className="mt-2 text-xs text-error flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">error</span>
+                {generalError}
+              </p>
+            )}
+            <div className="flex justify-end pt-3">
+              <button
+                onClick={handleSaveGeneral}
+                disabled={savingGeneral}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span className="material-symbols-rounded text-[20px]">save</span>
+                <span>{savingGeneral ? t('Đang lưu...') : t('Lưu cấu hình')}</span>
+              </button>
             </div>
           </div>
         </div>

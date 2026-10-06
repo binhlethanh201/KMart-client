@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { reportService } from '../services/reportService';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { useI18n } from '../../../i18n/I18nProvider';
+import Select from '../../../components/Select';
 
 export default function ExportModal({ open, onClose, documentTypes, filters }) {
   const { t } = useI18n();
@@ -99,16 +100,16 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {t('Loại đơn')} <span className="text-red-500">*</span>
             </label>
-            <select
-              className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            <Select
+              className="w-full border rounded px-3 py-2 bg-surface border-outline-variant text-on-surface text-sm"
               value={selectedDocType || ''}
-              onChange={(e) => setSelectedDocType(e.target.value || null)}
-            >
-              <option value="">{t('-- Chọn loại đơn --')}</option>
-              {documentTypes.map(dt => (
-                <option key={dt.id} value={dt.id}>{t(dt.name)}</option>
-              ))}
-            </select>
+              onChange={(v) => setSelectedDocType(v || null)}
+              placeholder={t('-- Chọn loại đơn --')}
+              options={[
+                { value: '', label: t('-- Chọn loại đơn --') },
+                ...documentTypes.map((dt) => ({ value: dt.id, label: t(dt.name) })),
+              ]}
+            />
             <p className="text-xs text-gray-500 mt-1">
               {t('Chỉ xuất các trường được đánh dấu "Lưu trữ" trong cấu hình mẫu đơn')}
             </p>

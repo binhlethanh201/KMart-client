@@ -7,6 +7,7 @@ import { STATUS_META } from '../../requests/data/constants';
 import { documentTypeService } from '../../../services/documentTypeService';
 import UserInfoModal from '../../requests/components/UserInfoModal';
 import DepartmentReport from '../components/DepartmentReport';
+import Select from '../../../components/Select';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { roleStyle } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -102,9 +103,16 @@ export default function DepartmentDetail() {
         r.title.toLowerCase().includes(query) ||
         (creatorName && creatorName.toLowerCase().includes(query));
       const matchT = typeF === 'all' || r.type === typeF;
+      /*
+       * "Đang chờ duyệt" phải khớp MỌI trạng thái đang chờ: máy chủ trả 'pending' hoặc
+       * 'pendingapproval' (và mapper dùng 'submitted'). Trước đây bộ lọc chỉ so sánh
+       * `r.status === 'pending'` nên đơn đang chờ (status 'pendingapproval') bị lọc mất —
+       * dù trong danh sách vẫn hiện nhãn "Đang chờ duyệt".
+       */
+      const waiting = ['pending', 'submitted', 'pendingapproval'].includes(r.status);
       const matchS =
         statusF === 'all' ||
-        (statusF === 'pending' && r.status === 'pending') ||
+        (statusF === 'pending' && waiting) ||
         (statusF === 'approved' && r.status === 'approved') ||
         ((statusF === 'rejected' && (r.status === 'rejected' || r.status === 'returned_timeout')));
       return matchQ && matchT && matchS;
@@ -250,20 +258,26 @@ export default function DepartmentDetail() {
                     type="text"
                   />
                 </div>
-                <select value={typeF} onChange={(e) => setTypeF(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
-                  <option value="all">{t('Loại: Tất cả')}</option>
-                  {documentTypes.map((d) => (
-                    <option key={d.id} value={d.name}>
-                      {t(d.name)}
-                    </option>
-                  ))}
-                </select>
-                <select value={statusF} onChange={(e) => setStatusF(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
-                  <option value="all">{t('Trạng thái: Tất cả')}</option>
-                  <option value="pending">{t('Đang chờ duyệt')}</option>
-                  <option value="approved">{t('Đã phê duyệt')}</option>
-                  <option value="rejected">{t('Từ chối / Trả về')}</option>
-                </select>
+                <Select
+                  value={typeF}
+                  onChange={setTypeF}
+                  className={`${selectCls} w-full sm:w-auto`}
+                  options={[
+                    { value: 'all', label: t('Loại: Tất cả') },
+                    ...documentTypes.map((d) => ({ value: d.name, label: t(d.name) })),
+                  ]}
+                />
+                <Select
+                  value={statusF}
+                  onChange={setStatusF}
+                  className={`${selectCls} w-full sm:w-auto`}
+                  options={[
+                    { value: 'all', label: t('Trạng thái: Tất cả') },
+                    { value: 'pending', label: t('Đang chờ duyệt') },
+                    { value: 'approved', label: t('Đã phê duyệt') },
+                    { value: 'rejected', label: t('Từ chối / Trả về') },
+                  ]}
+                />
                 <span className="ml-auto text-xs text-secondary">
                   {filtered.length} / {deptRequests.length} {t('đơn từ')}
                 </span>
@@ -391,16 +405,17 @@ export default function DepartmentDetail() {
               <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   {t('Hiển thị')}
-                  <select
+                  <Select
                     value={reqPageSize}
-                    onChange={(e) => { setReqPageSize(Number(e.target.value)); setReqPage(1); }}
+                    onChange={(v) => { setReqPageSize(Number(v)); setReqPage(1); }}
                     className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
-                  >
-                    <option value={5}>{t('5 dòng')}</option>
-                    <option value={10}>{t('10 dòng')}</option>
-                    <option value={20}>{t('20 dòng')}</option>
-                    <option value={50}>{t('50 dòng')}</option>
-                  </select>
+                    options={[
+                      { value: 5, label: t('5 dòng') },
+                      { value: 10, label: t('10 dòng') },
+                      { value: 20, label: t('20 dòng') },
+                      { value: 50, label: t('50 dòng') },
+                    ]}
+                  />
                   <span>
                     {filtered.length === 0 ? 0 : (reqSafePage - 1) * reqPageSize + 1} - {Math.min(reqSafePage * reqPageSize, filtered.length)} {t('trong tổng số')} {filtered.length} {t('đơn từ')}
                   </span>
@@ -579,16 +594,17 @@ export default function DepartmentDetail() {
               <div className="p-3 border-t border-outline-variant bg-surface-container-lowest text-xs text-secondary flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   {t('Hiển thị')}
-                  <select
+                  <Select
                     value={memPageSize}
-                    onChange={(e) => { setMemPageSize(Number(e.target.value)); setMemPage(1); }}
+                    onChange={(v) => { setMemPageSize(Number(v)); setMemPage(1); }}
                     className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
-                  >
-                    <option value={5}>{t('5 dòng')}</option>
-                    <option value={10}>{t('10 dòng')}</option>
-                    <option value={20}>{t('20 dòng')}</option>
-                    <option value={50}>{t('50 dòng')}</option>
-                  </select>
+                    options={[
+                      { value: 5, label: t('5 dòng') },
+                      { value: 10, label: t('10 dòng') },
+                      { value: 20, label: t('20 dòng') },
+                      { value: 50, label: t('50 dòng') },
+                    ]}
+                  />
                   <span>
                     {members.length === 0 ? 0 : (memSafePage - 1) * memPageSize + 1} - {Math.min(memSafePage * memPageSize, members.length)} {t('trong tổng số')} {members.length} {t('nhân sự')}
                   </span>

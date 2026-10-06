@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
+import Select from '../../../components/Select';
 import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { useI18n } from '../../../i18n/I18nProvider';
 
@@ -329,30 +330,28 @@ export default function AddDepartmentModal({ onClose }) {
 
             <div>
               <label className={labelCls}>{t('Loại đơn vị')}</label>
-              <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
-                {TYPES.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
+              <Select
+                value={type}
+                onChange={setType}
+                className={inputCls}
+                options={TYPES.map((tp) => ({ value: tp, label: t(tp) }))}
+              />
             </div>
 
             {/* BE-98: đơn vị cấp trên — dựng sơ đồ tổ chức nhiều cấp (VD: Ban → Phòng → Nhóm).
                 Bộ duyệt cũng dựa vào cấp trên để leo cấp khi duyệt đơn. */}
             <div>
               <label className={labelCls}>{t('Đơn vị cấp trên')}</label>
-              <select
+              <Select
                 data-field="dept-parent"
                 value={parentId}
-                onChange={(e) => setParentId(e.target.value)}
+                onChange={setParentId}
                 className={errors.parent ? inputErrCls : inputCls}
-              >
-                <option value="">{t('— Không có (đơn vị cấp cao nhất) —')}</option>
-                {(departments || []).map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {t(d.name)} ({d.code})
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: t('— Không có (đơn vị cấp cao nhất) —') },
+                  ...(departments || []).map((d) => ({ value: d.id, label: `${t(d.name)} (${d.code})` })),
+                ]}
+              />
               {errors.parent
                 ? <p className="text-xs text-error mt-1">{errors.parent}</p>
                 : <p className="text-xs text-secondary mt-1">{t('Để trống nếu đây là đơn vị cấp cao nhất.')}</p>}

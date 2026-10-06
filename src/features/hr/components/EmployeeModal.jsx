@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { roleStyle } from '../../../utils/roleLabels';
+import Select from '../../../components/Select';
 import { useI18n } from '../../../i18n/I18nProvider';
 import SearchableSelect from '../../../components/SearchableSelect';
 
@@ -367,10 +368,16 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </div>
               <div>
                 <label className={labelCls}>{t('Trạng thái')}</label>
-                <select className={fieldCls} value={form.status} onChange={set('status')} disabled={isEdit}>
-                  <option value="active">{t('Đang hoạt động')}</option>
-                  <option value="inactive">{t('Ngừng hoạt động')}</option>
-                </select>
+                <Select
+                  className={fieldCls}
+                  value={form.status}
+                  onChange={(v) => set('status')({ target: { value: v } })}
+                  disabled={isEdit}
+                  options={[
+                    { value: 'active', label: t('Đang hoạt động') },
+                    { value: 'inactive', label: t('Ngừng hoạt động') },
+                  ]}
+                />
               </div>
 
               <div className="border-t border-outline-variant pt-4 mt-1">

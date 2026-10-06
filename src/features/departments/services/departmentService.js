@@ -18,12 +18,15 @@ const mapToFrontendModel = (d) => ({
   managerName: d.managerName || null,
   deputyManagerId: d.deputyManagerId || null,
   deputyManagerName: d.deputyManagerName || null,
-  members: d.memberAvatars || [],
+  // BE-97/BE-119: ảnh thành viên do API trả về có thể ở dạng ĐƯỜNG DẪN tương đối
+  // ("/api/users/avatar/..."). Nếu dùng thẳng trong <img> thì trình duyệt sẽ trỏ vào máy chủ
+  // giao diện (cổng 5173) và bị 404 -> ảnh vỡ. Phải ghép host API như các chỗ khác.
+  members: (d.memberAvatars || []).map((a) => getFullAvatarUrl(a) || a).filter(Boolean),
   memberNames: d.memberNames || [],
   memberCount: d.memberCount || 0,
   extraCount: d.memberCount > 5 ? d.memberCount - 5 : 0,
   icon: d.icon || 'campaign',
-  iconImage: d.iconImage || null,
+  iconImage: getFullAvatarUrl(d.iconImage) || d.iconImage || null,
   createdAt: new Date(d.createdAt).toLocaleDateString('vi-VN'),
   staff: []
 });

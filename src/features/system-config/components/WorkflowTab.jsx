@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { APPROVAL_TYPES, MULTI_RULES, CONDITION_FIELDS, CONDITION_OPS, TIME_RULES } from '../data/mockData';
+import { APPROVAL_TYPES, MULTI_RULES, TIME_RULES } from '../data/mockData';
 import { useHr } from '../../hr/context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
@@ -9,6 +9,7 @@ import { roleService } from '../../hr/services/roleService';
 import { roleLabel } from '../../../utils/roleLabels';
 import { useI18n, translate } from '../../../i18n/I18nProvider';
 import describeApiError from '../../../utils/apiError';
+import Select from '../../../components/Select';
 
 const selectCls =
   'w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer';
@@ -478,18 +479,15 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
               </div>
               {arrangementMode === 'role' && (
                 <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                  <select
+                  <Select
                     value={role}
-                    onChange={(e) => setRole(e.target.value)}
+                    onChange={setRole}
                     className={`${selectCls} bg-surface w-full max-w-sm`}
-                  >
-                    <option value="" disabled>-- {t('Chọn chức vụ')} --</option>
-                    {positions.map((p) => (
-                      <option key={p} value={p}>
-                        {t(p)}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: '', label: `-- ${t('Chọn chức vụ')} --`, disabled: true },
+                      ...positions.map((p) => ({ value: p, label: t(p) })),
+                    ]}
+                  />
                 </div>
               )}
             </div>
@@ -529,30 +527,24 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
                   className="flex-1 bg-transparent text-sm text-on-surface outline-none"
                 />
               </div>
-              <select
+              <Select
                 className={`${selectCls} max-w-[150px]`}
                 value={dept}
-                onChange={(e) => setDept(e.target.value)}
-              >
-                <option value="all">{t('Phòng ban')}</option>
-                {departments.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-              <select
+                onChange={setDept}
+                options={[
+                  { value: 'all', label: t('Phòng ban') },
+                  ...departments.map((d) => ({ value: d, label: d })),
+                ]}
+              />
+              <Select
                 className={`${selectCls} max-w-[150px]`}
                 value={pos}
-                onChange={(e) => setPos(e.target.value)}
-              >
-                <option value="all">{t('Chức vụ')}</option>
-                {positions.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
+                onChange={setPos}
+                options={[
+                  { value: 'all', label: t('Chức vụ') },
+                  ...positions.map((p) => ({ value: p, label: p })),
+                ]}
+              />
               <button
                 type="button"
                 onClick={selectAllVisible}
@@ -1662,64 +1654,6 @@ export default function WorkflowTab() {
 
                     {/* Body - Grid 2 cột trên màn rộng */}
                     <div className="p-4 flex flex-col gap-4">
-                      {/* Điều kiện rẽ nhánh (Conditional Routing) — full width */}
-                      <div className="bg-surface-container-lowest border border-outline-variant/50 rounded-md p-2.5">
-                        <label className="flex items-center gap-2 cursor-pointer mb-2">
-                          <input
-                            type="checkbox"
-                            checked={!!step.condition}
-                            onChange={(e) =>
-                              updateStep(step.id, {
-                                condition: e.target.checked
-                                  ? { field: CONDITION_FIELDS[0].id, op: '>', value: '' }
-                                  : null,
-                              })
-                            }
-                            className="text-primary focus:ring-primary rounded cursor-pointer"
-                          />
-                          <span className="material-symbols-outlined text-primary text-[16px]">alt_route</span>
-                          <span className="text-sm font-semibold text-on-surface">{t('Áp dụng bước này khi')}</span>
-                        </label>
-                        {step.condition && (
-                          <div className="flex flex-wrap items-center gap-2 pl-6">
-                            <select
-                              className={`${selectCls} max-w-[180px]`}
-                              value={step.condition.field}
-                              onChange={(e) =>
-                                updateStep(step.id, { condition: { ...step.condition, field: e.target.value } })
-                              }
-                            >
-                              {CONDITION_FIELDS.map((f) => (
-                                <option key={f.id} value={f.id}>
-                                  {t(f.label)}
-                                </option>
-                              ))}
-                            </select>
-                            <select
-                              className={`${selectCls} w-[70px]`}
-                              value={step.condition.op}
-                              onChange={(e) =>
-                                updateStep(step.id, { condition: { ...step.condition, op: e.target.value } })
-                              }
-                            >
-                              {CONDITION_OPS.map((o) => (
-                                <option key={o.id} value={o.id}>
-                                  {o.label}
-                                </option>
-                              ))}                            </select>
-                            <input
-                              type="text"
-                              placeholder={t('giá trị')}
-                              value={step.condition.value}
-                              onChange={(e) =>
-                                updateStep(step.id, { condition: { ...step.condition, value: e.target.value } })
-                              }
-                              className="bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary max-w-[140px]"
-                            />
-                          </div>
-                        )}
-                      </div>
-
                       {/* Hàng trên - Hình thức duyệt (Full width) */}
                       <div className="w-full">
                         <div>
@@ -1738,21 +1672,12 @@ export default function WorkflowTab() {
                           {/* Cấu hình theo hình thức duyệt */}
                           <div className="mt-2.5">
                             {step.approvalType === 'hierarchy' && (
-                              <select
+                              <Select
                                 className={`${selectCls} max-w-md`}
                                 value={step.hierarchyOption}
-                                onChange={(e) => updateStep(step.id, { hierarchyOption: e.target.value })}
-                              >
-                                {HIERARCHY_GROUPS.map((g) => (
-                                  <optgroup key={g} label={t(g)}>
-                                    {HIERARCHY_OPTIONS.filter((o) => o.group === g).map((o) => (
-                                      <option key={o.id} value={o.id}>
-                                        {t(o.label)}
-                                      </option>
-                                    ))}
-                                  </optgroup>
-                                ))}
-                              </select>
+                                onChange={(v) => updateStep(step.id, { hierarchyOption: v })}
+                                options={HIERARCHY_OPTIONS.map((o) => ({ value: o.id, label: t(o.label), group: t(o.group) }))}
+                              />
                             )}
                             {step.approvalType === 'role' && (
                               <div className="flex flex-col gap-2 w-full">
@@ -1864,26 +1789,30 @@ export default function WorkflowTab() {
                                         <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-[13px] font-bold text-primary">
                                           {index + 1}
                                         </span>
-                                        <select
-                                          className={`${selectCls} flex-1 border-none shadow-none bg-transparent hover:bg-surface-container-lowest focus:ring-0 px-2 py-1.5 font-medium`}
+                                        <Select
+                                          className={`${selectCls} flex-1 border-none shadow-none bg-transparent hover:bg-surface-container-lowest px-2 py-1.5 font-medium`}
                                           value={levelId}
-                                          onChange={(e) => {
+                                          onChange={(v) => {
                                             const newList = [...(step.chainList || [])];
-                                            newList[index] = e.target.value;
+                                            newList[index] = v;
                                             updateStep(step.id, { chainList: newList });
                                           }}
-                                        >
-                                          <optgroup label={t('Cấp quản lý (Hierarchy)')}>
-                                            {HIERARCHY_OPTIONS.map((o) => (
-                                              <option key={o.id} value={o.id} disabled={step.chainList?.includes(o.id) && o.id !== levelId}>{t(o.label)}</option>
-                                            ))}
-                                          </optgroup>
-                                          <optgroup label={t('Chức danh (Role)')}>
-                                            {approvalRoles.map((r) => (
-                                              <option key={r.id} value={r.name} disabled={step.chainList?.includes(r.name) && r.name !== levelId}>{t(r.label || r.name)}</option>
-                                            ))}
-                                          </optgroup>
-                                        </select>
+                                          dropdownClassName="min-w-[280px]"
+                                          options={[
+                                            ...HIERARCHY_OPTIONS.map((o) => ({
+                                              value: o.id,
+                                              label: t(o.label),
+                                              group: t('Cấp quản lý (Hierarchy)'),
+                                              disabled: step.chainList?.includes(o.id) && o.id !== levelId,
+                                            })),
+                                            ...approvalRoles.map((r) => ({
+                                              value: r.name,
+                                              label: t(r.label || r.name),
+                                              group: t('Chức danh (Role)'),
+                                              disabled: step.chainList?.includes(r.name) && r.name !== levelId,
+                                            })),
+                                          ]}
+                                        />
                                         <button
                                           type="button"
                                           onClick={() => {
@@ -1992,47 +1921,27 @@ export default function WorkflowTab() {
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-secondary whitespace-nowrap w-[70px]">{t('Chế độ:')}</span>
-                                <select
+                                <Select
                                   className={`${selectCls} max-w-[200px]`}
                                   value={step.timeoutMode || 'continuous'}
-                                  onChange={(e) => updateStep(step.id, { timeoutMode: e.target.value })}
-                                >
-                                  {TIME_RULES.map((tr) => (
-                                    <option key={tr.id} value={tr.id}>
-                                      {t(tr.label)}
-                                    </option>
-                                  ))}
-                                </select>
+                                  onChange={(v) => updateStep(step.id, { timeoutMode: v })}
+                                  options={TIME_RULES.map((tr) => ({ value: tr.id, label: t(tr.label) }))}
+                                />
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-secondary whitespace-nowrap w-[70px]">{t('Hành động:')}</span>
-                                <select
+                                <Select
                                   className={`${selectCls} max-w-[200px]`}
                                   value={step.timeoutAction || 'return'}
-                                  onChange={(e) => updateStep(step.id, { timeoutAction: e.target.value })}
-                                >
-                                  <option value="return">{t('Trả đơn về nơi khởi tạo')}</option>
-                                  <option value="escalate">{t('Tự động chuyển lên cấp trên')}</option>
-                                </select>
+                                  onChange={(v) => updateStep(step.id, { timeoutAction: v })}
+                                  options={[
+                                    { value: 'return', label: t('Trả đơn về nơi khởi tạo') },
+                                    { value: 'escalate', label: t('Tự động chuyển lên cấp trên') },
+                                  ]}
+                                />
                               </div>
                             </div>
                           )}
-                        </div>
-
-                        {/* Cột phải - Hành động từ chối */}
-                        <div>
-                          <GroupHeader icon="block" label={t('Hành động từ chối')} />
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={step.rejectReasonRequired !== false}
-                              onChange={(e) => updateStep(step.id, { rejectReasonRequired: e.target.checked })}
-                              className="text-primary focus:ring-primary rounded cursor-pointer"
-                            />
-                            <span className="text-sm text-on-surface">
-                              {t('Bắt buộc nhập lý do khi từ chối đơn')}
-                            </span>
-                          </label>
                         </div>
                       </div>
                     </div>
