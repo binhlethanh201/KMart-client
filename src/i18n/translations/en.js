@@ -285,6 +285,9 @@ export const en = {
   '5 phòng ban': '5 departments',
   '10 phòng ban': '10 departments',
   '20 phòng ban': '20 departments',
+  '5 nhân sự': '5 staff',
+  '10 nhân sự': '10 staff',
+  '20 nhân sự': '20 staff',
 
   // ── Cấu hình luồng duyệt ───────────────────────────────────
   'Cấu hình luồng duyệt cho:': 'Configure workflow for:',

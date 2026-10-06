@@ -284,6 +284,9 @@ export const ko = {
   '5 phòng ban': '부서 5개',
   '10 phòng ban': '부서 10개',
   '20 phòng ban': '부서 20개',
+  '5 nhân sự': '인원 5명',
+  '10 nhân sự': '인원 10명',
+  '20 nhân sự': '인원 20명',
 
   // ── Cấu hình luồng duyệt ───────────────────────────────────
   'Cấu hình luồng duyệt cho:': '결재 흐름 설정 대상:',

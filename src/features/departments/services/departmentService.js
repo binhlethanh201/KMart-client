@@ -24,7 +24,6 @@ const mapToFrontendModel = (d) => ({
   members: (d.memberAvatars || []).map((a) => getFullAvatarUrl(a) || a).filter(Boolean),
   memberNames: d.memberNames || [],
   memberCount: d.memberCount || 0,
-  extraCount: d.memberCount > 5 ? d.memberCount - 5 : 0,
   icon: d.icon || 'campaign',
   iconImage: getFullAvatarUrl(d.iconImage) || d.iconImage || null,
   createdAt: new Date(d.createdAt).toLocaleDateString('vi-VN'),

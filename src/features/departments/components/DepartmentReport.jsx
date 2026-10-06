@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { STATUS_META } from '../../requests/data/constants';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { FILTER_CONTROL_CLS, FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
 import Select from '../../../components/Select';
+import Pagination from '../../../components/Pagination';
 
 // BE-43: nhân viên chỉ xem báo cáo của CHÍNH MÌNH; trưởng/phó phòng xem toàn phòng.
 export default function DepartmentReport({ deptRequests, members, employees, isDeptManager = true, currentUserId }) {
@@ -14,9 +15,9 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
   const [searchQueries, setSearchQueries] = useState({});
   // 'all' la hang so trung tinh (KHONG dung chuoi da dich) de doi ngon ngu khong lam sai bo loc.
   const [chartFilter, setChartFilter] = useState('all');
-  const [memberPage, setMemberPage] = useState(1);
   const [memberSearch, setMemberSearch] = useState('');
-  const [isHoveringMembers, setIsHoveringMembers] = useState(false);
+  const [memberPage, setMemberPage] = useState(1);
+  const [memberPageSize, setMemberPageSize] = useState(10);
 
   // Nhân viên: chỉ thống kê trên đơn của bản thân, và bảng thành viên chỉ còn chính họ.
   const scopedRequests = useMemo(
@@ -102,20 +103,11 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
     return result;
   }, [stats.rows, memberSearch]);
 
-  const itemsPerPage = 3;
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / itemsPerPage));
-  const safePage = Math.min(Math.max(1, memberPage), totalPages);
-  const pagedRows = filteredRows.slice((safePage - 1) * itemsPerPage, safePage * itemsPerPage);
-
-  useEffect(() => {
-    if (totalPages <= 1 || isHoveringMembers) return;
-    
-    const interval = setInterval(() => {
-      setMemberPage(p => p >= totalPages ? 1 : p + 1);
-    }, 6000);
-    
-    return () => clearInterval(interval);
-  }, [totalPages, isHoveringMembers]);
+  // Lưới auto-fill (số cột tự co giãn theo bề rộng khung) + phân trang giống
+  // trang Phòng ban & Nhóm: chọn số thẻ/trang, dãy hiển thị và nút số trang.
+  const memberTotalPages = Math.max(1, Math.ceil(filteredRows.length / memberPageSize));
+  const safeMemberPage = Math.min(Math.max(1, memberPage), memberTotalPages);
+  const pagedRows = filteredRows.slice((safeMemberPage - 1) * memberPageSize, safeMemberPage * memberPageSize);
 
   if (scopedMembers.length === 0) {
     return (
@@ -265,10 +257,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
       )}
 
       {/* Individual Cards Section */}
-      <div 
-        onMouseEnter={() => setIsHoveringMembers(true)}
-        onMouseLeave={() => setIsHoveringMembers(false)}
-      >
+      <div>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
           <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">groups</span>
@@ -293,7 +282,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
           </div>
         ) : (
           <>
-            <div key={memberPage} className="grid gap-5 items-start animate-slide-fade grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))]">
+          <div className="grid gap-5 items-start grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))]">
               {pagedRows.map(row => (
           <div key={row.id} className="bg-surface border border-outline-variant rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col group">
             {/* Header */}
@@ -420,28 +409,41 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
         ))}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-6 mt-8">
-          <button
-            onClick={() => setMemberPage(p => p === 1 ? totalPages : p - 1)}
-            className="p-2 rounded-full text-secondary bg-surface hover:bg-surface-container hover:text-on-surface shadow-sm border border-outline-variant transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-          </button>
-          
-          <div className="text-sm font-medium text-secondary">
-            <span className="text-primary font-bold">{safePage}</span> / {totalPages}
-          </div>
-
-          <button
-            onClick={() => setMemberPage(p => p === totalPages ? 1 : p + 1)}
-            className="p-2 rounded-full text-secondary bg-surface hover:bg-surface-container hover:text-on-surface shadow-sm border border-outline-variant transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">chevron_right</span>
-          </button>
-        </div>
-      )}
-      </>
+            {/* Thanh phân trang cùng kiểu với trang Phòng ban & Nhóm */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4 px-3 md:px-4 py-2.5 border border-outline-variant/60 rounded-lg bg-surface-container-lowest">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-secondary">
+                <span>{t('Hiển thị')}</span>
+                <Select
+                  value={memberPageSize}
+                  onChange={(value) => {
+                    setMemberPageSize(Number(value));
+                    setMemberPage(1);
+                  }}
+                  className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
+                  options={[
+                    { value: 5, label: t('5 nhân sự') },
+                    { value: 10, label: t('10 nhân sự') },
+                    { value: 20, label: t('20 nhân sự') },
+                  ]}
+                />
+                <span className="whitespace-nowrap">
+                  {filteredRows.length === 0 ? 0 : (safeMemberPage - 1) * memberPageSize + 1}
+                  {' - '}
+                  {Math.min(safeMemberPage * memberPageSize, filteredRows.length)}
+                  {' '}
+                  {t('trong tổng số')} {filteredRows.length} {t('nhân sự')}
+                </span>
+              </div>
+              {memberTotalPages > 1 && (
+                <Pagination
+                  currentPage={safeMemberPage}
+                  totalPages={memberTotalPages}
+                  onPageChange={setMemberPage}
+                  className="w-auto py-0 flex justify-end items-center gap-1.5 flex-nowrap"
+                />
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

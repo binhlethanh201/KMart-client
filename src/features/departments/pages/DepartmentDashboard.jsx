@@ -311,7 +311,6 @@ export default function DepartmentDashboard() {
                         leaders={dept.leaders}
                         members={dept.members}
                         memberNames={dept.memberNames}
-                        extraCount={dept.extraCount}
                         memberCount={dept.memberCount}
                         canEdit={canEdit}
                         onEdit={() => setEditDept(dept)}
