@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TIME_RULES } from '../data/mockData';
-import apiClient from '../../../services/apiClient';
+import apiClient, { API_URL } from '../../../services/apiClient';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { describeApiError } from '../../../utils/apiError';
 
@@ -83,8 +83,22 @@ export default function GeneralTab() {
       });
       
       if (testResult.data.success) {
+        let webhookSuccess = true;
+        try {
+          await apiClient.post('/telegram/register-webhook', {
+            url: `${API_URL}/api/telegram/webhook`
+          });
+        } catch (webhookErr) {
+          console.error('Không đăng ký được webhook:', webhookErr);
+          webhookSuccess = false;
+        }
+
         setTelegram(prev => ({ ...prev, status: 'connected' }));
-        setMessage({ type: 'success', text: t('Kết nối Telegram Bot thành công!') });
+        if (webhookSuccess) {
+          setMessage({ type: 'success', text: t('Kết nối Telegram Bot thành công!') });
+        } else {
+          setMessage({ type: 'error', text: t('Kết nối Bot thành công nhưng lỗi Webhook (Cần HTTPS public domain). Tính năng tự động sẽ không hoạt động.') });
+        }
       } else {
         setTelegram(prev => ({ ...prev, status: 'disconnected' }));
         setMessage({ type: 'error', text: testResult.data.message || t('Lỗi khi kết nối Telegram.') });
