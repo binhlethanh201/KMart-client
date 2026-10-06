@@ -109,7 +109,7 @@ function SettingsSubPanel({ onClose }) {
     {
       to: '/settings/general',
       icon: 'settings',
-      label: t('Chung & Zalo'),
+      label: t('Chung & Telegram'),
     },
   ];
 
