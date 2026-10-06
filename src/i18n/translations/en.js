@@ -218,6 +218,7 @@ export const en = {
   'Nhấn để chọn file tải lên': 'Click to choose a file',
   'Tải file': 'Upload file',
   'Tải biểu mẫu': 'Download template',
+  'File mẫu chưa sẵn sàng để tải xuống': 'The template file is not ready to download',
   'Không tải được tài liệu này': 'Could not download this attachment',
   'Không tải được tài liệu': 'Could not download the attachment',
   'Gửi đến tôi': 'Sent to me',

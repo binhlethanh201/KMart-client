@@ -217,6 +217,7 @@ export const ko = {
   'Nhấn để chọn file tải lên': '클릭하여 파일 선택',
   'Tải file': '파일 업로드',
   'Tải biểu mẫu': '양식 다운로드',
+  'File mẫu chưa sẵn sàng để tải xuống': '템플릿 파일을 다운로드할 준비가 되지 않았습니다',
   'Không tải được tài liệu này': '이 문서를 다운로드할 수 없습니다',
   'Không tải được tài liệu': '문서를 다운로드할 수 없습니다',
   'Gửi đến tôi': '나에게 온 요청',

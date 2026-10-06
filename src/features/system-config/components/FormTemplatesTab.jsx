@@ -64,16 +64,22 @@ export default function FormTemplatesTab() {
       data.forEach(dt => {
         if (dt.fields && dt.fields.length > 0) {
           // transform from backend format (id, name, type, label, etc) to local format
-          newFields[dt.name] = dt.fields.map(f => ({
-            id: f.name, // The backend fieldName maps to id in frontend
-            label: f.label || f.name,
-            type: f.type,
-            required: f.required,
-            sortOrder: f.sortOrder,
-            options: f.options || [],
-            dynamic: '', // Not fully mapped to backend yet
-            isPersisted: f.isPersisted !== undefined ? f.isPersisted : true
-          }));
+          newFields[dt.name] = dt.fields.map(f => {
+            // BE không lưu file mẫu nên giữ lại bản cấu hình đang có trong phiên
+            // (nếu field trùng id), nếu không nút tải file mẫu bên tạo đơn sẽ mất.
+            const prev = (fields[dt.name] || []).find(p => p.id === f.name);
+            return {
+              id: f.name, // The backend fieldName maps to id in frontend
+              label: f.label || f.name,
+              type: f.type,
+              required: f.required,
+              sortOrder: f.sortOrder,
+              options: f.options || [],
+              dynamic: '', // Not fully mapped to backend yet
+              isPersisted: f.isPersisted !== undefined ? f.isPersisted : true,
+              templateFile: prev?.templateFile || null
+            };
+          });
         } else if (!newFields[dt.name]) {
           newFields[dt.name] = [];
         }
@@ -376,7 +382,9 @@ export default function FormTemplatesTab() {
       const keepTemplate = tempType === 'Tải file' ? tempTemplateFile : null;
       // Đồng bộ in-memory store (data URL) theo field id.
       if (keepTemplate) {
-        templateFileStore.set(f.id, { name: keepTemplate.name, dataUrl: keepTemplate.dataUrl });
+        // dataUrl có thể null (mở lại modal sau reload) — vẫn ghi để cache tên file,
+        // bản data URL thật đã được mirror sẵn trong templateFileStore.
+        templateFileStore.set(f.id, { name: keepTemplate.name, dataUrl: keepTemplate.dataUrl ?? templateFileStore.get(f.id)?.dataUrl ?? null });
       } else {
         templateFileStore.remove(f.id);
       }

@@ -8,6 +8,7 @@ import { delegationService } from '../../../services/delegationService';
 import ApprovalFlowTree from './ApprovalFlowTree';
 import DocumentTypeSelect from './DocumentTypeSelect';
 import { buildDynamicFromRaw, fieldLabel, resolveFieldKey, sortFields } from '../formFieldMapping';
+import { templateFileStore } from '../../system-config/data/templateFileStore';
 import { checkNumberValue, isNumberField } from '../formFieldValidation';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { describeApiError } from '../../../utils/apiError';
@@ -44,7 +45,7 @@ function validateAttachment(file, t) {
 
 export default function CreateRequestModal({ onClose, existingRequest = null, onSubmitted }) {
   const { t } = useI18n();
-  const { createRequest, updateRequest, departments, currentUser, pushToast } = useApproval();
+  const { createRequest, updateRequest, departments, currentUser, pushToast, formFields } = useApproval();
   const { employees } = useHr();
 
   // Chế độ bổ sung: mở lại đơn đang ở trạng thái "Yêu cầu bổ sung" để sửa rồi gửi lại
@@ -840,28 +841,53 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             if (f.type === 'FILE' || f.type === 'Tải file') {
               const labelKey = fieldLabel(f);
               const fieldId = resolveFieldKey(f);
-              
-              // Recover templateFile from localStorage since backend doesn't save it
+
+              // BE không lưu file mẫu nên dò bản cấu hình trong phiên (context formFields,
+              // khoá theo tên mẫu đơn) để lấy tên file mẫu và field id nội bộ dùng đọc store.
               let templateFile = f.templateFile;
-              if (!templateFile && selectedDocType) {
-                try {
-                  const stored = JSON.parse(localStorage.getItem('kmart.form.fields') || '{}');
-                  const localFields = stored[selectedDocType.name] || [];
-                  const localF = localFields.find(x => x.id === f.name || x.label === f.label || x.id === labelKey);
-                  if (localF && localF.templateFile) templateFile = localF.templateFile;
-                } catch {}
+              let localFieldId = null;
+              if (selectedDocType) {
+                const localFields = formFields?.[selectedDocType.name] || [];
+                const localF = localFields.find(
+                  (x) => x.id === fieldId || x.id === f.name || x.label === f.label || x.label === labelKey
+                );
+                if (localF) {
+                  localFieldId = localF.id;
+                  if (!templateFile && localF.templateFile) templateFile = localF.templateFile;
+                }
               }
+              const templateData = localFieldId ? templateFileStore.get(localFieldId) : null;
+
+              const downloadTemplate = () => {
+                if (!templateData?.dataUrl) {
+                  pushToast(t('File mẫu chưa sẵn sàng để tải xuống'), 'error');
+                  return;
+                }
+                const a = document.createElement('a');
+                a.href = templateData.dataUrl;
+                a.download = templateData.name || templateFile?.name || 'template';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+              };
 
               return (
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
-                  <div className="flex justify-between items-end">
-                    <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
-                  {renderFieldError(fieldId)}
+                  <div className="flex justify-between items-end gap-2">
+                    <div className="min-w-0">
+                      <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                      {renderFieldError(fieldId)}
+                    </div>
                     {templateFile && templateFile.name && (
-                      <a href="#" className="flex items-center gap-1 text-xs text-primary font-medium hover:underline bg-primary/5 px-2 py-1 rounded">
+                      <button
+                        type="button"
+                        onClick={downloadTemplate}
+                        title={templateFile.name}
+                        className="flex items-center gap-1 text-xs text-primary font-medium hover:underline bg-primary/5 px-2 py-1 rounded shrink-0"
+                      >
                         <span className="material-symbols-outlined text-[14px]">download</span>
                         {t('Tải biểu mẫu')}
-                      </a>
+                      </button>
                     )}
                   </div>
                   <label className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-outline-variant rounded-lg bg-surface hover:bg-surface-container-lowest hover:border-primary/50 transition-colors cursor-pointer group">

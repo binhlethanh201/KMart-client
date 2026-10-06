@@ -7,6 +7,7 @@ const SESSION_STORAGE_KEYS = [
   'kmart.approval.v3',
   'kmart.form.fields',
   'kmart.form.categories',
+  'kmart.form.templateFiles',
 ];
 
 export function clearSessionStorage() {
