@@ -9,7 +9,12 @@ import React from 'react';
 const SIBLINGS = 1;
 const SLOT = 'w-8 h-8';
 
-export default function Pagination({ currentPage = 1, totalPages = 1, onPageChange }) {
+export default function Pagination({
+  currentPage = 1,
+  totalPages = 1,
+  onPageChange,
+  className = 'w-full py-3 flex justify-center items-center gap-1.5 flex-wrap',
+}) {
   if (totalPages <= 1) return null;
 
   const pages = [];
@@ -31,7 +36,7 @@ export default function Pagination({ currentPage = 1, totalPages = 1, onPageChan
   if (totalPages > 1) pages.push(totalPages);
 
   return (
-    <div className="w-full py-3 flex justify-center items-center gap-1.5 flex-wrap">
+    <div className={className}>
       <button 
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}

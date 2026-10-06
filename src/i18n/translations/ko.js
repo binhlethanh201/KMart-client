@@ -280,6 +280,10 @@ export const ko = {
   'Hiển thị': '표시',
   'Trang': '페이지',
   'trong tổng số': '/',
+  'phòng ban': '부서',
+  '5 phòng ban': '부서 5개',
+  '10 phòng ban': '부서 10개',
+  '20 phòng ban': '부서 20개',
 
   // ── Cấu hình luồng duyệt ───────────────────────────────────
   'Cấu hình luồng duyệt cho:': '결재 흐름 설정 대상:',

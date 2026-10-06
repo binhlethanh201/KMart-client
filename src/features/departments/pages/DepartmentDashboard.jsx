@@ -32,9 +32,7 @@ export default function DepartmentDashboard() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  // Số thẻ mỗi trang được tính lại theo số CỘT thực tế của lưới × 3 hàng, để mỗi trang luôn là
-  // các hàng ĐẦY đủ — tránh hàng cuối lẻ thẻ gây khoảng trống lệch một bên.
-  const ROWS_PER_PAGE = 3;
+  const [pageSize, setPageSize] = useState(10);
   const [gridColumns, setGridColumns] = useState(1);
   const gridRef = React.useRef(null);
   // BE-98: 'grid' = lưới thẻ (mặc định), 'tree' = sơ đồ tổ chức theo cấp trên – cấp dưới.
@@ -132,35 +130,8 @@ export default function DepartmentDashboard() {
       .map((d) => ({ ...d, isFilterMatch: matchedIds.has(d.id) }));
   }, [visibleDepartments, filteredDepartments, viewMode]);
 
-  // Đo số cột theo BỀ RỘNG khung lưới (không phụ thuộc số thẻ đang hiển thị) rồi chọn số thẻ mỗi
-  // trang = số cột × 3 hàng. Cách đo theo items đang render trước đây gây VÒNG LẶP: chuyển trang →
-  // còn ít thẻ → "số cột" đo sai → số thẻ/trang đổi → danh sách nhảy loạn (18 → 8 → 5 thẻ).
-  // CARD_MIN_WIDTH PHẢI khớp `min-w-[min(250px,100%)]` của thẻ bên dưới.
-  const CARD_MIN_WIDTH = 250;
-  React.useEffect(() => {
-    const el = gridRef.current;
-    if (!el) return undefined;
-    const measure = () => {
-      const width = el.clientWidth;
-      if (!width) return;
-      const gap = parseFloat(window.getComputedStyle(el).columnGap) || 12;
-      const cols = Math.max(1, Math.floor((width + gap) / (CARD_MIN_WIDTH + gap)));
-      setGridColumns((prev) => (prev === cols ? prev : cols));
-    };
-    measure();
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', measure);
-      return () => window.removeEventListener('resize', measure);
-    }
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [viewMode, departmentsLoading, filteredDepartments.length]);
-
-  const ITEMS_PER_PAGE = Math.max(1, gridColumns * ROWS_PER_PAGE);
-
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredDepartments.length / ITEMS_PER_PAGE) || 1;
+  const totalPages = Math.max(1, Math.ceil(filteredDepartments.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
 
   // Ensure current page is valid after filtering
   React.useEffect(() => {
@@ -168,9 +139,33 @@ export default function DepartmentDashboard() {
   }, [totalPages, currentPage]);
 
   const paginatedDepartments = filteredDepartments.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (safePage - 1) * pageSize,
+    safePage * pageSize
   );
+
+  React.useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid || !paginatedDepartments.length) return undefined;
+
+    const updateColumns = () => {
+      const width = grid.clientWidth;
+      if (!width) return;
+
+      const gap = 12;
+      const minCardWidth = 200;
+      const maxColumns = Math.max(1, Math.floor((width + gap) / (minCardWidth + gap)));
+      let balancedColumns = Math.min(paginatedDepartments.length, maxColumns);
+      while (balancedColumns > 1 && paginatedDepartments.length % balancedColumns !== 0) {
+        balancedColumns -= 1;
+      }
+      setGridColumns((current) => current === balancedColumns ? current : balancedColumns);
+    };
+
+    updateColumns();
+    const observer = new ResizeObserver(updateColumns);
+    observer.observe(grid);
+    return () => observer.disconnect();
+  }, [paginatedDepartments.length, viewMode]);
 
   return (
     <>
@@ -205,7 +200,10 @@ export default function DepartmentDashboard() {
                 <span className={FILTER_SEARCH_ICON_CLS}>search</span>
                 <input
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className={FILTER_SEARCH_CLS}
                   placeholder={t('Tìm kiếm mã, tên đơn vị...')}
                   type="text"
@@ -213,7 +211,10 @@ export default function DepartmentDashboard() {
               </div>
               <Select
                 value={filterType}
-                onChange={setFilterType}
+                onChange={(value) => {
+                  setFilterType(value);
+                  setCurrentPage(1);
+                }}
                 className={FILTER_SELECT_CLS}
                 options={[
                   { value: 'all', label: t('Loại đơn vị: Tất cả') },
@@ -224,7 +225,10 @@ export default function DepartmentDashboard() {
               />
               <Select
                 value={filterStatus}
-                onChange={setFilterStatus}
+                onChange={(value) => {
+                  setFilterStatus(value);
+                  setCurrentPage(1);
+                }}
                 className={FILTER_SELECT_CLS}
                 options={[
                   { value: 'all', label: t('Trạng thái: Tất cả') },
@@ -289,11 +293,13 @@ export default function DepartmentDashboard() {
                không bị rời rạc thành nhiều mảnh và đỡ khoảng trắng thừa. */
             <div className="bg-surface border border-outline-variant rounded-lg overflow-hidden shadow-sm">
               <div className="p-3 md:p-4">
-                {/* Thẻ tự giãn để LẤP KÍN hàng: hàng đầy giữ nguyên, hàng cuối (thiếu thẻ) sẽ
-                    phóng to vừa đủ phủ hết bề ngang -> không còn khoảng trống lệch một bên. */}
-                <div ref={gridRef} className="flex flex-wrap gap-3">
+                <div
+                  ref={gridRef}
+                  className="grid auto-rows-fr gap-3"
+                  style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }}
+                >
                   {paginatedDepartments.map((dept) => (
-                    <div key={dept.id} className="flex flex-1 min-w-[min(250px,100%)]">
+                    <div key={dept.id} className="min-w-0">
                       <DepartmentCard
                         id={dept.id}
                         className="w-full h-full"
@@ -322,15 +328,39 @@ export default function DepartmentDashboard() {
               </div>
 
               {/* Phân trang nằm TRONG khối nội dung (chỉ áp dụng cho lưới thẻ) */}
-              {totalPages > 1 && (
-                <div className="px-3 md:px-4 py-2.5 border-t border-outline-variant/60 bg-surface-container-lowest">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 md:px-4 py-2.5 border-t border-outline-variant/60 bg-surface-container-lowest">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-secondary">
+                  <span>{t('Hiển thị')}</span>
+                  <Select
+                    value={pageSize}
+                    onChange={(value) => {
+                      setPageSize(Number(value));
+                      setCurrentPage(1);
+                    }}
+                    className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
+                    options={[
+                      { value: 5, label: t('5 phòng ban') },
+                      { value: 10, label: t('10 phòng ban') },
+                      { value: 20, label: t('20 phòng ban') },
+                    ]}
+                  />
+                  <span className="whitespace-nowrap">
+                    {filteredDepartments.length === 0 ? 0 : (safePage - 1) * pageSize + 1}
+                    {' - '}
+                    {Math.min(safePage * pageSize, filteredDepartments.length)}
+                    {' '}
+                    {t('trong tổng số')} {filteredDepartments.length} {t('phòng ban')}
+                  </span>
+                </div>
+                {totalPages > 1 && (
                   <Pagination
-                    currentPage={currentPage}
+                    currentPage={safePage}
                     totalPages={totalPages}
                     onPageChange={setCurrentPage}
+                    className="w-auto py-0 flex justify-end items-center gap-1.5 flex-nowrap"
                   />
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>

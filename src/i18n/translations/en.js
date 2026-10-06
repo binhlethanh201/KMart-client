@@ -281,6 +281,10 @@ export const en = {
   'Hiển thị': 'Show',
   'Trang': 'Page',
   'trong tổng số': 'of',
+  'phòng ban': 'departments',
+  '5 phòng ban': '5 departments',
+  '10 phòng ban': '10 departments',
+  '20 phòng ban': '20 departments',
 
   // ── Cấu hình luồng duyệt ───────────────────────────────────
   'Cấu hình luồng duyệt cho:': 'Configure workflow for:',
