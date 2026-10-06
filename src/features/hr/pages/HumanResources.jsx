@@ -6,7 +6,6 @@ import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { ROLE_STYLES, STATUS_STYLES } from '../data/constants';
 import { roleStyle } from '../../../utils/roleLabels';
-import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
 import PageHeader from '../../../components/PageHeader';
@@ -238,8 +237,7 @@ export default function HumanResources() {
                               <div className="font-semibold text-on-surface truncate">{e.name}</div>
                               <div className="text-xs text-secondary" title={e.id}>
                                 {e.id.substring(0, 8).toUpperCase()}
-                                {/* BE-74: hiện ngày sinh để phân biệt hai nhân sự trùng họ tên. */}
-                                {e.dateOfBirth && ` · ${t('Sinh')} ${formatDateOfBirth(e.dateOfBirth)}`}
+                                {/* BE-163: ngày sinh CHỈ hiển thị ở trang chi tiết nhân sự. */}
                               </div>
                             </div>
                           </div>

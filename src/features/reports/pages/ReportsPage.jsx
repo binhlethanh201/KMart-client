@@ -47,7 +47,6 @@ export default function ReportsPage() {
   const [trend, setTrend] = useState([]);
   const [managers, setManagers] = useState([]);
   const [byPosition, setByPosition] = useState([]);
-  const [approvalTimeStats, setApprovalTimeStats] = useState(null);
 
   const [filters, setFilters] = useState({
     from: '',
@@ -93,16 +92,14 @@ export default function ReportsPage() {
       reportService.getTrend(query, 12).then((r) => r.data?.points || r.data || []).catch(() => []),
       reportService.getManagers(query, rosterMode).then((r) => r.data || []).catch(() => []),
       reportService.getByPosition(query).then((r) => r.data || []).catch(() => []),
-      reportService.getApprovalTimes(query).then((r) => r.data).catch(() => null),
     ])
-      .then(([overviewData, statsData, trendData, managerData, positionData, approvalTimeData]) => {
+      .then(([overviewData, statsData, trendData, managerData, positionData]) => {
         if (cancelled) return;
         setOverview(overviewData);
         setStats(statsData);
         setTrend(Array.isArray(trendData) ? trendData : []);
         setManagers(Array.isArray(managerData) ? managerData : []);
         setByPosition(Array.isArray(positionData) ? positionData : []);
-        setApprovalTimeStats(approvalTimeData);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -261,56 +258,8 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* TC-REP-005: Thời gian duyệt trung bình */}
-      {approvalTimeStats && (
-        <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38] mb-6">
-            {t('Thời gian duyệt trung bình')}
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-1">
-                {approvalTimeStats.totalProcessed === 0 
-                  ? '—'
-                  : (approvalTimeStats.averageTimeHours || approvalTimeStats.averageTimeHours === 0 
-                      ? approvalTimeStats.averageTimeHours.toFixed(1)
-                      : '—')}
-              </div>
-              <div className="text-sm text-secondary">{t('Giờ trung bình')}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-emerald-500 mb-1">
-                {approvalTimeStats.totalProcessed === 0 
-                  ? '—'
-                  : (approvalTimeStats.averageTimeHours 
-                      ? (approvalTimeStats.averageTimeHours / 24).toFixed(1) 
-                      : '—')}
-              </div>
-              <div className="text-sm text-secondary">{t('Ngày trung bình')}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-amber-500 mb-1">
-                {approvalTimeStats.totalProcessed === 0 
-                  ? '—'
-                  : (approvalTimeStats.minTimeHours || approvalTimeStats.minTimeHours === 0 
-                      ? approvalTimeStats.minTimeHours.toFixed(1) 
-                      : '—')}
-              </div>
-              <div className="text-sm text-secondary">{t('Nhanh nhất (giờ)')}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-red-500 mb-1">
-                {approvalTimeStats.totalProcessed === 0 
-                  ? '—'
-                  : (approvalTimeStats.maxTimeHours || approvalTimeStats.maxTimeHours === 0 
-                      ? approvalTimeStats.maxTimeHours.toFixed(1) 
-                      : '—')}
-              </div>
-              <div className="text-sm text-secondary">{t('Chậm nhất (giờ)')}</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* BE-162: bỏ khối "Thời gian duyệt trung bình" theo yêu cầu vận hành —
+          các chỉ số giờ/ngày trung bình, nhanh nhất, chậm nhất không còn hiển thị. */}
 
       {/* Phân bổ theo loại đơn & phòng ban — đặt TRƯỚC xu hướng để nhìn tổng quan trước */}
       <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))]">
