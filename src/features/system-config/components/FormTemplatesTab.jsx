@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { templateFileStore } from '../data/templateFileStore';
 import { useApproval } from '../../../context/useApproval';
 import { documentTypeService } from '../../../services/documentTypeService';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -64,22 +63,18 @@ export default function FormTemplatesTab() {
       data.forEach(dt => {
         if (dt.fields && dt.fields.length > 0) {
           // transform from backend format (id, name, type, label, etc) to local format
-          newFields[dt.name] = dt.fields.map(f => {
-            // BE không lưu file mẫu nên giữ lại bản cấu hình đang có trong phiên
-            // (nếu field trùng id), nếu không nút tải file mẫu bên tạo đơn sẽ mất.
-            const prev = (fields[dt.name] || []).find(p => p.id === f.name);
-            return {
-              id: f.name, // The backend fieldName maps to id in frontend
-              label: f.label || f.name,
-              type: f.type,
-              required: f.required,
-              sortOrder: f.sortOrder,
-              options: f.options || [],
-              dynamic: '', // Not fully mapped to backend yet
-              isPersisted: f.isPersisted !== undefined ? f.isPersisted : true,
-              templateFile: prev?.templateFile || null
-            };
-          });
+          newFields[dt.name] = dt.fields.map(f => ({
+            id: f.name, // The backend fieldName maps to id in frontend
+            label: f.label || f.name,
+            type: f.type,
+            required: f.required,
+            sortOrder: f.sortOrder,
+            options: f.options || [],
+            dynamic: '', // Not fully mapped to backend yet
+            isPersisted: f.isPersisted !== undefined ? f.isPersisted : true,
+            // File mẫu đã lưu trên BE — tên lấy thẳng từ API, không cần giữ bản trong phiên.
+            templateFile: f.templateFileName ? { name: f.templateFileName } : null
+          }));
         } else if (!newFields[dt.name]) {
           newFields[dt.name] = [];
         }
@@ -140,6 +135,33 @@ export default function FormTemplatesTab() {
     setIsSaving(true);
     try {
       await documentTypeService.updateFields(currentDocType.id, payload);
+
+      // Field đã tồn tại trên BE — thực hiện các thao tác file mẫu đang chờ:
+      // upload file mới chọn / gỡ file mẫu mà HR đã xoá trong modal cấu hình.
+      for (const f of localFields) {
+        if (f.type !== 'Tải file' || (!f.pendingTemplateFile && !f.pendingTemplateDelete)) continue;
+        try {
+          if (f.pendingTemplateFile) {
+            await documentTypeService.uploadTemplateFile(currentDocType.id, f.id, f.pendingTemplateFile);
+          } else {
+            await documentTypeService.deleteTemplateFile(currentDocType.id, f.id);
+          }
+        } catch (err) {
+          pushToast(describeApiError(err, t, 'Lỗi khi lưu file mẫu của trường "{v0}"', { v0: f.label || f.id }), 'error');
+          return; // giữ cờ pending để HR bấm lưu lần nữa là thử lại
+        }
+      }
+
+      // File mẫu đã chốt trên BE — gỡ cờ pending khỏi state cục bộ.
+      setFields((prev) => ({
+        ...prev,
+        [selectedForm]: (Array.isArray(prev[selectedForm]) ? prev[selectedForm] : []).map(f => ({
+          ...f,
+          pendingTemplateFile: null,
+          pendingTemplateDelete: false,
+        })),
+      }));
+
       pushToast(t('Đã lưu cấu hình lên Server thành công!'), 'success');
     } catch (err) {
       console.error(err);
@@ -366,10 +388,10 @@ export default function FormTemplatesTab() {
 
     setTempDisplayStyle(f.displayStyle || defaultStyle);
 
-    // File mẫu (chỉ áp dụng cho kiểu "Tải file"). dataUrl lấy từ in-memory store.
+    // File mẫu (chỉ áp dụng cho kiểu "Tải file"). file=null: bản gốc đang nằm trên BE,
+    // chỉ file MỚI chọn (có object File) mới cần upload khi bấm "Lưu lên Server".
     if (f.type === 'Tải file' && f.templateFile?.name) {
-      const cached = templateFileStore.get(f.id);
-      setTempTemplateFile({ name: f.templateFile.name, dataUrl: cached?.dataUrl || null });
+      setTempTemplateFile({ name: f.templateFile.name, file: f.pendingTemplateFile || null });
     } else {
       setTempTemplateFile(null);
     }
@@ -380,20 +402,16 @@ export default function FormTemplatesTab() {
       const f = current[editingTypeIdx];
       // Chỉ giữ file mẫu khi kiểu dữ liệu còn là "Tải file".
       const keepTemplate = tempType === 'Tải file' ? tempTemplateFile : null;
-      // Đồng bộ in-memory store (data URL) theo field id.
-      if (keepTemplate) {
-        // dataUrl có thể null (mở lại modal sau reload) — vẫn ghi để cache tên file,
-        // bản data URL thật đã được mirror sẵn trong templateFileStore.
-        templateFileStore.set(f.id, { name: keepTemplate.name, dataUrl: keepTemplate.dataUrl ?? templateFileStore.get(f.id)?.dataUrl ?? null });
-      } else {
-        templateFileStore.remove(f.id);
-      }
+      // Không dùng localStorage nữa: file mới chọn (keepTemplate.file) sẽ được upload
+      // lên BE ở handleSaveToServer; việc gỡ file mẫu cũng thực hiện phía server.
       updateField(editingTypeIdx, {
         label: tempLabel,
         type: tempType,
         options: tempOptions,
         displayStyle: tempDisplayStyle,
         templateFile: keepTemplate ? { name: keepTemplate.name } : null,
+        pendingTemplateFile: keepTemplate?.file || null,
+        pendingTemplateDelete: !keepTemplate && !!f.templateFile?.name,
         isPersisted: tempType === 'Tải file' ? false : (f.isPersisted !== undefined ? f.isPersisted : true),
       });
       setEditingTypeIdx(null);
@@ -411,14 +429,30 @@ export default function FormTemplatesTab() {
     setTempOptions(tempOptions.filter((_, i) => i !== idx));
   };
 
-  // Đọc file mẫu thành data URL (in-memory, không persist) để nhân viên download khi tạo đơn.
+  // #4/#7: không đọc data URL nhét localStorage nữa — giữ object File, validate
+  // (rỗng / kích thước / đuôi) ngay khi chọn, rồi upload thẳng lên BE lúc "Lưu lên Server".
+  // BE còn một lớp chặn nữa: magic bytes + whitelist (chặn .exe đổi đuôi).
+  const TEMPLATE_ALLOWED_EXT = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
+  const TEMPLATE_MAX_SIZE = 10 * 1024 * 1024; // khớp trần 10MB phía BE
+
   const handleTemplateFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setTempTemplateFile({ name: file.name, dataUrl: reader.result });
-    reader.readAsDataURL(file);
     e.target.value = '';
+    if (!file) return;
+    if (file.size === 0) {
+      pushToast(t('File rỗng không được chấp nhận'), 'error');
+      return;
+    }
+    if (file.size > TEMPLATE_MAX_SIZE) {
+      pushToast(t('File mẫu vượt quá giới hạn 10MB'), 'error');
+      return;
+    }
+    const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
+    if (!TEMPLATE_ALLOWED_EXT.includes(ext)) {
+      pushToast(t('File mẫu chỉ chấp nhận: .pdf, .doc, .docx, .xls, .xlsx'), 'error');
+      return;
+    }
+    setTempTemplateFile({ name: file.name, file });
   };
   const removeTemplateFile = () => setTempTemplateFile(null);
 
@@ -1045,7 +1079,7 @@ export default function FormTemplatesTab() {
                     <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-md border border-dashed border-primary/50 text-primary hover:bg-primary-container/20 transition-colors cursor-pointer text-sm font-medium">
                       <span className="material-symbols-outlined text-[18px]">upload_file</span>
                       {t('Tải lên file mẫu')}
-                      <input type="file" className="sr-only" onChange={handleTemplateFileChange} />
+                      <input type="file" className="sr-only" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleTemplateFileChange} />
                     </label>
                   )}
                 </div>

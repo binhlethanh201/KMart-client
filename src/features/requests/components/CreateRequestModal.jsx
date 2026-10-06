@@ -8,7 +8,6 @@ import { delegationService } from '../../../services/delegationService';
 import ApprovalFlowTree from './ApprovalFlowTree';
 import DocumentTypeSelect from './DocumentTypeSelect';
 import { buildDynamicFromRaw, fieldLabel, resolveFieldKey, sortFields } from '../formFieldMapping';
-import { templateFileStore } from '../../system-config/data/templateFileStore';
 import { checkNumberValue, isNumberField } from '../formFieldValidation';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { describeApiError } from '../../../utils/apiError';
@@ -45,7 +44,7 @@ function validateAttachment(file, t) {
 
 export default function CreateRequestModal({ onClose, existingRequest = null, onSubmitted }) {
   const { t } = useI18n();
-  const { createRequest, updateRequest, departments, currentUser, pushToast, formFields } = useApproval();
+  const { createRequest, updateRequest, departments, currentUser, pushToast } = useApproval();
   const { employees } = useHr();
 
   // Chế độ bổ sung: mở lại đơn đang ở trạng thái "Yêu cầu bổ sung" để sửa rồi gửi lại
@@ -842,33 +841,26 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               const labelKey = fieldLabel(f);
               const fieldId = resolveFieldKey(f);
 
-              // BE không lưu file mẫu nên dò bản cấu hình trong phiên (context formFields,
-              // khoá theo tên mẫu đơn) để lấy tên file mẫu và field id nội bộ dùng đọc store.
-              let templateFile = f.templateFile;
-              let localFieldId = null;
-              if (selectedDocType) {
-                const localFields = formFields?.[selectedDocType.name] || [];
-                const localF = localFields.find(
-                  (x) => x.id === fieldId || x.id === f.name || x.label === f.label || x.label === labelKey
-                );
-                if (localF) {
-                  localFieldId = localF.id;
-                  if (!templateFile && localF.templateFile) templateFile = localF.templateFile;
-                }
-              }
-              const templateData = localFieldId ? templateFileStore.get(localFieldId) : null;
+              // #5: file mẫu nằm trên BE — tên lấy thẳng từ API (templateFileName), tải qua
+              // GET /document-types/{id}/fields/{name}/template. Máy nào / trình duyệt nào /
+              // tài khoản nào cũng tải được, không còn phụ thuộc localStorage của người cấu hình
+              // (fix UF-08, KB2/KB2b).
+              const templateFileName = f.templateFileName;
 
-              const downloadTemplate = () => {
-                if (!templateData?.dataUrl) {
+              const downloadTemplate = async () => {
+                try {
+                  const blob = await documentTypeService.downloadTemplateFile(selectedDocType.id, f.name);
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = templateFileName || 'template';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                } catch {
                   pushToast(t('File mẫu chưa sẵn sàng để tải xuống'), 'error');
-                  return;
                 }
-                const a = document.createElement('a');
-                a.href = templateData.dataUrl;
-                a.download = templateData.name || templateFile?.name || 'template';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
               };
 
               return (
@@ -878,11 +870,11 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                       <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
                       {renderFieldError(fieldId)}
                     </div>
-                    {templateFile && templateFile.name && (
+                    {templateFileName && (
                       <button
                         type="button"
                         onClick={downloadTemplate}
-                        title={templateFile.name}
+                        title={templateFileName}
                         className="flex items-center gap-1 text-xs text-primary font-medium hover:underline bg-primary/5 px-2 py-1 rounded shrink-0"
                       >
                         <span className="material-symbols-outlined text-[14px]">download</span>
