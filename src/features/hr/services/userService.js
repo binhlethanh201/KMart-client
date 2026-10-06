@@ -221,6 +221,15 @@ export const userService = {
     return response.data.tempPassword;
   },
 
+  /**
+   * AUTH-11/AUTH-10: đổi mật khẩu của CHÍNH mình.
+   * Dùng cho màn "đổi mật khẩu bắt buộc" khi tài khoản còn mật khẩu tạm do HR cấp.
+   */
+  changePassword: async (currentPassword, newPassword) => {
+    const response = await apiClient.put('/users/change-password', { currentPassword, newPassword });
+    return response.data;
+  },
+
   getActivityLog: async (userId, page = 1, pageSize = 50) => {
     const response = await apiClient.get(`/admin/audit-logs?userId=${userId}&page=${page}&pageSize=${pageSize}`);
     return response.data;
