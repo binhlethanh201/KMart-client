@@ -62,4 +62,21 @@ export const delegationService = {
     notifyDelegationsChanged();
     return response.data;
   },
+
+  /**
+   * BE-164: người duyệt thay MẶC ĐỊNH của tôi khi đơn tôi duyệt bị quá hạn.
+   * Trả về { delegateId, delegateName } (delegateId = null nếu chưa cài).
+   */
+  getTimeoutDelegate: async () => {
+    const response = await apiClient.get('/delegations/timeout-delegate');
+    return response.data;
+  },
+
+  /**
+   * BE-164: cài (hoặc xoá khi delegateId = null) người duyệt thay mặc định khi quá hạn.
+   */
+  setTimeoutDelegate: async (delegateId) => {
+    const response = await apiClient.put('/delegations/timeout-delegate', { delegateId: delegateId || null });
+    return response.data;
+  },
 };

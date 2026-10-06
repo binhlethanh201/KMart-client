@@ -61,6 +61,13 @@ export function isApproverOfCurrentStep(request, userId) {
 export function canUserApprove(request, userId) {
   if (!request || !userId) return false;
   if (!PENDING_STATUSES.includes(String(request.status || '').toLowerCase())) return false;
+  // BE-164: đơn đang ở pha "duyệt thay do quá hạn" thì CHỈ người duyệt thay được duyệt —
+  // kể cả khi họ không nằm trong danh sách người duyệt gốc của bước.
+  if (request.timeoutDelegateUserId) {
+    if (String(request.timeoutDelegateUserId) !== String(userId)) return false;
+    if (hasActedOnCurrentStep(request, userId)) return false;
+    return true;
+  }
   if (!isApproverOfCurrentStep(request, userId)) return false;
   if (hasActedOnCurrentStep(request, userId)) return false;
   return true;

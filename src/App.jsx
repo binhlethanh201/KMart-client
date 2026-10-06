@@ -13,6 +13,7 @@ import PersonalRequests from "./features/requests/pages/PersonalRequests";
 import RequestDetail from "./features/requests/pages/RequestDetail";
 import ReportsPage from "./features/reports/pages/ReportsPage";
 import DelegationsTab from "./features/system-config/components/DelegationsTab";
+import TimeoutDelegatePage from "./features/system-config/components/TimeoutDelegatePage";
 
 import ToastHost from "./components/ToastHost";
 import LoginPage from "./features/auth/pages/LoginPage";
@@ -175,6 +176,13 @@ function App() {
                      Nút tạo ủy quyền trong trang tự ẩn với tài khoản không phải cấp duyệt. */
                   <div className="flex-1 flex flex-col min-h-0 min-w-0">
                     <DelegationsTab />
+                  </div>
+                } />
+
+                {/* BE-165: trang riêng cài người duyệt thay mặc định khi quá hạn. */}
+                <Route path="timeout-delegate" element={
+                  <div className="flex-1 flex flex-col min-h-0 min-w-0">
+                    <TimeoutDelegatePage />
                   </div>
                 } />
 
