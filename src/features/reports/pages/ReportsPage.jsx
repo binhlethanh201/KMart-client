@@ -56,10 +56,9 @@ export default function ReportsPage() {
     departmentId: null,
     documentTypeId: null,
     positionId: null,
-    status: null,
   });
-  
-  // Bộ lọc "Trạng thái" do FilterBar tự dựng (đúng nguồn duy nhất) — không khai báo lại ở đây.
+
+  // BE-152: không còn bộ lọc Trạng thái — báo cáo chỉ tính đơn đã duyệt (máy chủ lọc sẵn).
 
   const [departments, setDepartments] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
@@ -81,7 +80,6 @@ export default function ReportsPage() {
     departmentId: filters.departmentId || undefined,
     documentTypeId: filters.documentTypeId || undefined,
     positionId: filters.positionId || undefined,
-    status: filters.status || undefined,
   }), [filters]);
 
 
