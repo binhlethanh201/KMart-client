@@ -14,7 +14,6 @@ export default function DepartmentCard({
   members,
   memberNames,
   memberCount,
-  extraCount,
   canEdit = false,
   className = '',
   onEdit,
@@ -28,6 +27,14 @@ export default function DepartmentCard({
   const tooltipText = memberNames && memberNames.length > 0 
     ? t('Nhân sự trong phòng:\n{v0}{v1}', { v0: memberNames.join('\n'), v1: memberCount > memberNames.length ? '\n...' : '' })
     : t('Chưa có nhân sự');
+
+  // Chỉ hiển thị tối đa 5 avatar; phần còn lại gom vào ô "+N" để hàng avatar
+  // không tràn chiều ngang thẻ. Số "+N" suy ra từ memberCount nên tổng
+  // (avatar hiện + N) luôn khớp đúng số thành viên thực tế.
+  const MAX_VISIBLE_AVATARS = 5;
+  const visibleMembers = (members || []).slice(0, MAX_VISIBLE_AVATARS);
+  const totalMembers = memberCount ?? (members || []).length;
+  const overflowCount = Math.max(0, totalMembers - visibleMembers.length);
 
   return (
     <div className={`bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/50 hover:shadow-md hover:border-outline-variant transition-all flex flex-col p-6 group relative ${className}`}>
@@ -109,7 +116,7 @@ export default function DepartmentCard({
       </div>
       
       <div 
-        className="border-t border-outline-variant/30 pt-4 flex justify-between items-center mb-4 cursor-pointer hover:bg-surface-container-low transition-colors -mx-6 px-6 pb-2 -mb-2"
+        className="border-t border-outline-variant/30 pt-4 flex flex-wrap justify-between items-center gap-x-2 gap-y-2 mb-4 cursor-pointer hover:bg-surface-container-low transition-colors -mx-6 px-6 pb-2 -mb-2"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -117,25 +124,25 @@ export default function DepartmentCard({
         }}
         title={t('Nhấn để xem danh sách nhân sự')}
       >
-        <div className="flex -space-x-2">
-          {members.map((memberAvatar, idx) => (
+        <div className="flex -space-x-2 min-w-0">
+          {visibleMembers.map((memberAvatar, idx) => (
             <img 
               key={idx}
-              className="w-8 h-8 rounded-full border-2 border-white object-cover" 
+              className="w-8 h-8 rounded-full border-2 border-white object-cover shrink-0" 
               src={memberAvatar} 
               alt="Member avatar" 
             />
           ))}
-          {extraCount > 0 && (
-            <div className="w-8 h-8 rounded-full border-2 border-white bg-primary-container/20 flex items-center justify-center text-xs font-semibold text-primary">
-              +{extraCount}
+          {overflowCount > 0 && (
+            <div className="w-8 h-8 rounded-full border-2 border-white bg-primary-container/20 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
+              +{overflowCount}
             </div>
           )}
         </div>
         <span
-          className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors cursor-help"
+          className="text-sm font-medium text-on-surface-variant hover:text-primary transition-colors cursor-help whitespace-nowrap"
           title={tooltipText}
-        >{memberCount} {t('nhân sự')}</span>
+        >{totalMembers} {t('nhân sự')}</span>
       </div>
       
       <Link
