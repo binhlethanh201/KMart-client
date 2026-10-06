@@ -206,6 +206,10 @@ export default function PositionsTab() {
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState('all');
   const [modal, setModal] = useState(null); // { position } | { position: null } để thêm mới
+  // BE-159: phân trang giống màn Phòng ban & Nhân sự — danh sách chức vụ dài (30+) nên
+  // mặc định 10 dòng/trang để bảng không dài vô tận.
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const load = () => {
     setLoading(true);
@@ -235,6 +239,18 @@ export default function PositionsTab() {
       return matchQ && matchLevel;
     }).sort((a, b) => a.level - b.level || a.name.localeCompare(b.name, 'vi'));
   }, [positions, search, levelFilter]);
+
+  // BE-159: số trang theo bộ lọc hiện tại; kẹp trang hiện tại khi danh sách co lại
+  // (xoá/chức vụ bị lọc bớt) để không rơi vào trang trống.
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+  const paged = useMemo(
+    () => filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filtered, safePage, pageSize]
+  );
 
   const save = async (payload) => {
     try {
@@ -277,7 +293,7 @@ export default function PositionsTab() {
           <span className={FILTER_SEARCH_ICON_CLS}>search</span>
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className={FILTER_SEARCH_CLS}
             placeholder={t('Tìm theo tên hoặc mã chức vụ...')}
             type="text"
@@ -285,7 +301,7 @@ export default function PositionsTab() {
         </div>
         <Select
           value={levelFilter}
-          onChange={setLevelFilter}
+          onChange={(v) => { setLevelFilter(v); setCurrentPage(1); }}
           className={FILTER_SELECT_CLS}
           options={[
             { value: 'all', label: t('Cấp bậc: Tất cả') },
@@ -327,7 +343,7 @@ export default function PositionsTab() {
               <tr><td colSpan={5} className="px-4 py-12 text-center text-error">{error}</td></tr>
             ) : filtered.length === 0 ? (
               <tr><td colSpan={5} className="px-4 py-12 text-center text-secondary">{t('Không có chức vụ nào phù hợp.')}</td></tr>
-            ) : filtered.map((p) => {
+            ) : paged.map((p) => {
               const used = userCountByPosition[p.id] || 0;
               return (
                 <tr key={p.id} className="border-t border-outline-variant/60 hover:bg-surface-container-low/50">
@@ -366,6 +382,53 @@ export default function PositionsTab() {
             })}
           </tbody>
         </table>
+        </div>
+
+        {/* BE-160: thanh phân trang ĐÚNG KIỂU màn Nhân sự — trái: cỡ trang + khoảng dòng;
+            phải: nút ‹ › kèm "Trang x / y" (không dùng dãy số trang). */}
+        <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant gap-3">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 w-full sm:w-auto text-xs text-secondary">
+            <span>{t('Hiển thị')}</span>
+            <Select
+              value={pageSize}
+              onChange={(value) => {
+                setPageSize(Number(value));
+                setCurrentPage(1);
+              }}
+              className="filter-control filter-select h-[34px] w-[100px] py-0 pl-2.5 pr-8 text-xs"
+              options={[
+                { value: 5, label: t('5 dòng') },
+                { value: 10, label: t('10 dòng') },
+                { value: 20, label: t('20 dòng') },
+                { value: 50, label: t('50 dòng') },
+              ]}
+            />
+            <span className="whitespace-nowrap">
+              {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)} {t('trong tổng số')} {filtered.length} {t('chức vụ')}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1 bg-transparent">
+            <button
+              onClick={() => setCurrentPage((pg) => Math.max(1, pg - 1))}
+              disabled={safePage <= 1}
+              className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+              aria-label={t('Trang trước')}
+            >
+              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+            </button>
+            <div className="px-2 flex items-center justify-center min-w-[4rem]">
+              <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: safePage, v1: totalPages })}</span>
+            </div>
+            <button
+              onClick={() => setCurrentPage((pg) => Math.min(totalPages, pg + 1))}
+              disabled={safePage >= totalPages}
+              className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+              aria-label={t('Trang sau')}
+            >
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+            </button>
+          </div>
         </div>
       </div>
 

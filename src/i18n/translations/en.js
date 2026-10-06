@@ -1085,6 +1085,7 @@ export const en = {
   'Chưa ủy quyền cho ai': 'Haven\'t authorized anyone yet',
   'Chưa xác định được người duyệt': 'The reviewer has not been identified',
   'Chức danh (Role)': 'Position (Role)',
+  'chức vụ': 'position',
   'Chức vụ "{v0}" đang được gán cho {v1} nhân sự — chuyển họ sang chức vụ khác trước khi xoá.': 'The position "{v0}" is currently assigned to {v1} personnel — move them to another position before deleting.',
   'Có. Đơn phát sinh trong khoảng thời gian ủy quyền sẽ do người được ủy quyền xử lý.': 'Have. Applications arising during the authorization period will be processed by the authorized person.',
   'Cố định sẵn những người sẽ duyệt bước này.': 'Determine who will approve this step.',

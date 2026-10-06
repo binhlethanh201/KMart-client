@@ -1080,6 +1080,7 @@ export const ko = {
   'Chưa ủy quyền cho ai': '아직 승인한 사람이 없습니다.',
   'Chưa xác định được người duyệt': '리뷰어가 확인되지 않았습니다.',
   'Chức danh (Role)': '직위(역할)',
+  'chức vụ': '위치',
   'Chức vụ "{v0}" đang được gán cho {v1} nhân sự — chuyển họ sang chức vụ khác trước khi xoá.': '"{v0}" 직위는 현재 {v1} 직원에게 할당되어 있습니다. 삭제하기 전에 해당 직원을 다른 직위로 이동하세요.',
   'Có. Đơn phát sinh trong khoảng thời gian ủy quyền sẽ do người được ủy quyền xử lý.': '가지다. 승인 기간 동안 발생한 신청서는 승인된 담당자가 처리합니다.',
   'Cố định sẵn những người sẽ duyệt bước này.': '이 단계를 승인할 사람을 결정합니다.',
