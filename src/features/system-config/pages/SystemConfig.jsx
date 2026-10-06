@@ -13,7 +13,7 @@ const TABS = [
   { id: 'forms', label: 'Cấu hình Mẫu đơn & Form động', icon: 'description' },
   { id: 'workflow', label: 'Cấu hình Luồng duyệt', icon: 'account_tree' },
   { id: 'positions', label: 'Chức vụ & cấp bậc', icon: 'badge' },
-  { id: 'general', label: 'Cấu hình Chung & Zalo', icon: 'settings' },
+  { id: 'general', label: 'Cấu hình Chung & Telegram', icon: 'settings' },
 ];
 
 export default function SystemConfig({ defaultActive = 'workflow' }) {
