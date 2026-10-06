@@ -218,6 +218,7 @@ export const en = {
   'Nhấn để chọn file tải lên': 'Click to choose a file',
   'Tải file': 'Upload file',
   'Tải biểu mẫu': 'Download template',
+  'File mẫu chưa sẵn sàng để tải xuống': 'The template file is not ready to download',
   'Không tải được tài liệu này': 'Could not download this attachment',
   'Không tải được tài liệu': 'Could not download the attachment',
   'Gửi đến tôi': 'Sent to me',
@@ -280,6 +281,10 @@ export const en = {
   'Hiển thị': 'Show',
   'Trang': 'Page',
   'trong tổng số': 'of',
+  'phòng ban': 'departments',
+  '5 phòng ban': '5 departments',
+  '10 phòng ban': '10 departments',
+  '20 phòng ban': '20 departments',
 
   // ── Cấu hình luồng duyệt ───────────────────────────────────
   'Cấu hình luồng duyệt cho:': 'Configure workflow for:',
@@ -1154,6 +1159,9 @@ export const en = {
   'Email không hợp lệ': 'Invalid email',
   'Excel': 'Excel',
   'File đính kèm — tách riêng, không xuất Excel': 'Attached files — separate, do not export to Excel',
+  'File mẫu chỉ chấp nhận: .pdf, .doc, .docx, .xls, .xlsx': 'Sample files only accept: .pdf, .doc, .docx, .xls, .xlsx',
+  'File mẫu vượt quá giới hạn 10MB': 'The sample file exceeds the 10MB limit',
+  'File rỗng không được chấp nhận': 'Empty files are not accepted',
   'Giả lập đơn quá hạn để thử luồng xử lý quá hạn (chỉ ADMIN/HR)': 'Simulate an overdue order to test the overdue processing flow (ADMIN/HR only)',
   'Giả lập quá hạn': 'Overdue simulation',
   'Giải quyết triệt để sự cồng kềnh của giấy tờ. Tự động hóa luồng phê duyệt từ nhân viên đến ban giám đốc, tích hợp biểu mẫu động và thông báo tức thì.': 'Completely solve the cumbersomeness of paperwork. Automate the approval flow from employees to management, with dynamic form integration and instant notifications.',

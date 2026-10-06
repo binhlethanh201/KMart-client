@@ -840,28 +840,46 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             if (f.type === 'FILE' || f.type === 'Tải file') {
               const labelKey = fieldLabel(f);
               const fieldId = resolveFieldKey(f);
-              
-              // Recover templateFile from localStorage since backend doesn't save it
-              let templateFile = f.templateFile;
-              if (!templateFile && selectedDocType) {
+
+              // #5: file mẫu nằm trên BE — tên lấy thẳng từ API (templateFileName), tải qua
+              // GET /document-types/{id}/fields/{name}/template. Máy nào / trình duyệt nào /
+              // tài khoản nào cũng tải được, không còn phụ thuộc localStorage của người cấu hình
+              // (fix UF-08, KB2/KB2b).
+              const templateFileName = f.templateFileName;
+
+              const downloadTemplate = async () => {
                 try {
-                  const stored = JSON.parse(localStorage.getItem('kmart.form.fields') || '{}');
-                  const localFields = stored[selectedDocType.name] || [];
-                  const localF = localFields.find(x => x.id === f.name || x.label === f.label || x.id === labelKey);
-                  if (localF && localF.templateFile) templateFile = localF.templateFile;
-                } catch {}
-              }
+                  const blob = await documentTypeService.downloadTemplateFile(selectedDocType.id, f.name);
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = templateFileName || 'template';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                } catch {
+                  pushToast(t('File mẫu chưa sẵn sàng để tải xuống'), 'error');
+                }
+              };
 
               return (
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
-                  <div className="flex justify-between items-end">
-                    <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
-                  {renderFieldError(fieldId)}
-                    {templateFile && templateFile.name && (
-                      <a href="#" className="flex items-center gap-1 text-xs text-primary font-medium hover:underline bg-primary/5 px-2 py-1 rounded">
+                  <div className="flex justify-between items-end gap-2">
+                    <div className="min-w-0">
+                      <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                      {renderFieldError(fieldId)}
+                    </div>
+                    {templateFileName && (
+                      <button
+                        type="button"
+                        onClick={downloadTemplate}
+                        title={templateFileName}
+                        className="flex items-center gap-1 text-xs text-primary font-medium hover:underline bg-primary/5 px-2 py-1 rounded shrink-0"
+                      >
                         <span className="material-symbols-outlined text-[14px]">download</span>
                         {t('Tải biểu mẫu')}
-                      </a>
+                      </button>
                     )}
                   </div>
                   <label className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-outline-variant rounded-lg bg-surface hover:bg-surface-container-lowest hover:border-primary/50 transition-colors cursor-pointer group">

@@ -54,5 +54,30 @@ export const documentTypeService = {
   delete: async (id) => {
     const response = await apiClient.delete(`/document-types/${id}`);
     return response.data;
+  },
+
+  // ===== File mẫu của trường "Tải file" — lưu server-side (bỏ localStorage) =====
+
+  uploadTemplateFile: async (id, fieldName, file) => {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await apiClient.post(
+      `/document-types/${id}/fields/${encodeURIComponent(fieldName)}/template`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  },
+
+  downloadTemplateFile: async (id, fieldName) => {
+    const response = await apiClient.get(
+      `/document-types/${id}/fields/${encodeURIComponent(fieldName)}/template`,
+      { responseType: 'blob' }
+    );
+    return response.data;
+  },
+
+  deleteTemplateFile: async (id, fieldName) => {
+    await apiClient.delete(`/document-types/${id}/fields/${encodeURIComponent(fieldName)}/template`);
   }
 };

@@ -362,27 +362,25 @@ export default function HumanResources() {
               </table>
             </div>
             {/* Table footer */}
-            <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant gap-4">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
-                <span className="text-xs text-secondary flex items-center gap-2">
-                  {t('Hiển thị')}
-                  <Select
-                    value={pageSize}
-                    onChange={(v) => {
-                      setPageSize(Number(v));
-                      setPage(1); // Reset page on page size change
-                    }}
-                    className="filter-control filter-select h-[34px] py-0 pl-2.5 pr-8 text-xs"
-                    options={[
-                      { value: 5, label: t('5 dòng') },
-                      { value: 10, label: t('10 dòng') },
-                      { value: 20, label: t('20 dòng') },
-                      { value: 50, label: t('50 dòng') },
-                    ]}
-                  />
-                  <span>
-                    {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)} {t('trong tổng số')} {filtered.length} {t('nhân sự')}
-                  </span>
+            <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-surface-container-lowest border-t border-outline-variant gap-3">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 w-full sm:w-auto text-xs text-secondary">
+                <span>{t('Hiển thị')}</span>
+                <Select
+                  value={pageSize}
+                  onChange={(v) => {
+                    setPageSize(Number(v));
+                    setPage(1);
+                  }}
+                  className="filter-control filter-select h-[34px] w-[100px] py-0 pl-2.5 pr-8 text-xs"
+                  options={[
+                    { value: 5, label: t('5 dòng') },
+                    { value: 10, label: t('10 dòng') },
+                    { value: 20, label: t('20 dòng') },
+                    { value: 50, label: t('50 dòng') },
+                  ]}
+                />
+                <span className="whitespace-nowrap">
+                  {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)} {t('trong tổng số')} {filtered.length} {t('nhân sự')}
                 </span>
               </div>
               

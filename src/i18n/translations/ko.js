@@ -217,6 +217,7 @@ export const ko = {
   'Nhấn để chọn file tải lên': '클릭하여 파일 선택',
   'Tải file': '파일 업로드',
   'Tải biểu mẫu': '양식 다운로드',
+  'File mẫu chưa sẵn sàng để tải xuống': '템플릿 파일을 다운로드할 준비가 되지 않았습니다',
   'Không tải được tài liệu này': '이 문서를 다운로드할 수 없습니다',
   'Không tải được tài liệu': '문서를 다운로드할 수 없습니다',
   'Gửi đến tôi': '나에게 온 요청',
@@ -279,6 +280,10 @@ export const ko = {
   'Hiển thị': '표시',
   'Trang': '페이지',
   'trong tổng số': '/',
+  'phòng ban': '부서',
+  '5 phòng ban': '부서 5개',
+  '10 phòng ban': '부서 10개',
+  '20 phòng ban': '부서 20개',
 
   // ── Cấu hình luồng duyệt ───────────────────────────────────
   'Cấu hình luồng duyệt cho:': '결재 흐름 설정 대상:',
@@ -1149,6 +1154,9 @@ export const ko = {
   'Email không hợp lệ': '잘못된 이메일',
   'Excel': '뛰어나다',
   'File đính kèm — tách riêng, không xuất Excel': '첨부파일 — 별도, Excel로 내보내지 않음',
+  'File mẫu chỉ chấp nhận: .pdf, .doc, .docx, .xls, .xlsx': '샘플 파일은 .pdf, .doc, .docx, .xls, .xlsx만 허용됩니다.',
+  'File mẫu vượt quá giới hạn 10MB': '샘플 파일이 10MB 제한을 초과했습니다.',
+  'File rỗng không được chấp nhận': '빈 파일은 허용되지 않습니다.',
   'Giả lập đơn quá hạn để thử luồng xử lý quá hạn (chỉ ADMIN/HR)': '연체 처리 흐름을 테스트하기 위해 연체 주문 시뮬레이션(ADMIN/HR만 해당)',
   'Giả lập quá hạn': '연체 시뮬레이션',
   'Giải quyết triệt để sự cồng kềnh của giấy tờ. Tự động hóa luồng phê duyệt từ nhân viên đến ban giám đốc, tích hợp biểu mẫu động và thông báo tức thì.': '번거로운 서류작업을 완벽하게 해결하세요. 동적 양식 통합과 즉각적인 알림을 통해 직원부터 경영진까지의 승인 흐름을 자동화하세요.',

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useI18n } from '../i18n/I18nProvider';
 
 /**
@@ -35,7 +36,9 @@ export default function Select({
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [dropdownPosition, setDropdownPosition] = useState(null);
   const boxRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   const selected = options.find((o) => o.value === value) || null;
   const withSearch = searchable ?? options.length > 8;
@@ -43,22 +46,47 @@ export default function Select({
   const close = () => {
     setOpen(false);
     setQuery('');
+    setDropdownPosition(null);
   };
+
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    const updatePosition = () => {
+      const trigger = boxRef.current?.getBoundingClientRect();
+      const dropdown = dropdownRef.current;
+      if (!trigger || !dropdown) return;
+
+      const below = window.innerHeight - trigger.bottom - 8;
+      const above = trigger.top - 8;
+      const estimatedHeight = Math.min(maxHeight, options.length * 40 + 8) + (withSearch ? 56 : 0);
+      const openAbove = below < estimatedHeight && above > below;
+      const availableHeight = Math.max(0, openAbove ? above : below);
+      const height = Math.min(dropdown.scrollHeight, availableHeight);
+      const top = openAbove ? trigger.top - height - 4 : trigger.bottom + 4;
+      const width = trigger.width;
+      const left = align === 'right' ? trigger.right - width : trigger.left;
+
+      setDropdownPosition({ top, left, width, maxHeight: height });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [align, maxHeight, open, options.length, withSearch]);
 
   // Đóng khi bấm ra ngoài / nhấn Escape
   useEffect(() => {
     if (!open) return undefined;
     const onDown = (e) => {
-      if (boxRef.current && !boxRef.current.contains(e.target)) {
-        setOpen(false);
-        setQuery('');
-      }
+      if (boxRef.current?.contains(e.target) || dropdownRef.current?.contains(e.target)) return;
+      close();
     };
     const onKey = (e) => {
-      if (e.key === 'Escape') {
-        setOpen(false);
-        setQuery('');
-      }
+      if (e.key === 'Escape') close();
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -85,7 +113,15 @@ export default function Select({
         type="button"
         data-testid={testId}
         disabled={disabled}
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => {
+          if (open) {
+            close();
+            return;
+          }
+          const rect = boxRef.current.getBoundingClientRect();
+          setDropdownPosition({ top: -10000, left: 0, width: rect.width, maxHeight });
+          setOpen(true);
+        }}
         className={`${className} bg-none pr-3 flex items-center justify-between gap-2 text-left ${
           disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
         }`}
@@ -102,9 +138,17 @@ export default function Select({
         </span>
       </button>
 
-      {open && !disabled && (
+      {open && !disabled && createPortal(
         <div
-          className={`absolute z-50 ${align === 'right' ? 'right-0' : 'left-0'} min-w-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-xl overflow-hidden flex flex-col ${dropdownClassName}`}
+          ref={dropdownRef}
+          className={`fixed z-[100] bg-surface border border-outline-variant rounded-lg shadow-xl overflow-hidden flex flex-col ${dropdownClassName}`}
+          style={{
+            top: dropdownPosition?.top ?? -10000,
+            left: dropdownPosition?.left ?? 0,
+            width: dropdownPosition?.width ?? 0,
+            maxHeight: dropdownPosition?.maxHeight ?? maxHeight,
+            visibility: dropdownPosition ? 'visible' : 'hidden',
+          }}
         >
           {withSearch && (
             <div className="p-2 border-b border-outline-variant/50">
@@ -127,7 +171,10 @@ export default function Select({
             </div>
           )}
 
-          <div className="overflow-y-auto custom-scrollbar py-1" style={{ maxHeight }}>
+          <div
+            className="overflow-y-auto custom-scrollbar py-1"
+            style={{ maxHeight: Math.max(0, (dropdownPosition?.maxHeight ?? maxHeight) - (withSearch ? 56 : 0)) }}
+          >
             {visible.length === 0 ? (
               <div className="px-3 py-3 text-sm text-secondary text-center">{t('Không tìm thấy kết quả.')}</div>
             ) : (
@@ -163,7 +210,8 @@ export default function Select({
               })
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
