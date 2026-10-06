@@ -17,6 +17,7 @@ import DelegationsTab from "./features/system-config/components/DelegationsTab";
 import ToastHost from "./components/ToastHost";
 import LoginPage from "./features/auth/pages/LoginPage";
 import LandingPage from "./features/landing/pages/LandingPage";
+import ForcePasswordChange from "./features/auth/components/ForcePasswordChange";
 import { useState, useEffect } from "react";
 import { useApproval } from "./context/useApproval";
 import { PERMISSIONS, ROLES } from "./constants/permissions";
@@ -57,10 +58,32 @@ function ProtectedRoute({ requiredPermissions = [], requiredRoles = [], children
   return children;
 }
 
+/**
+ * AUTH-10: chặn TOÀN BỘ giao diện khi tài khoản còn dùng mật khẩu tạm do HR cấp.
+ *
+ * Cờ lấy từ `/auth/me` (currentUser.mustChangePassword). Ngoài ra vẫn lắng nghe sự kiện 403
+ * `PASSWORD_CHANGE_REQUIRED` từ apiClient — trường hợp HR đặt lại mật khẩu cho một tài khoản
+ * đang đăng nhập ở nơi khác thì giao diện cũng phải chuyển sang màn đổi mật khẩu ngay.
+ */
+function PasswordChangeGate({ children }) {
+  const { currentUser } = useApproval();
+  const [forced, setForced] = useState(false);
+
+  useEffect(() => {
+    const onRequired = () => setForced(true);
+    window.addEventListener('auth:password-change-required', onRequired);
+    return () => window.removeEventListener('auth:password-change-required', onRequired);
+  }, []);
+
+  if (forced || currentUser?.mustChangePassword) {
+    return <ForcePasswordChange />;
+  }
+  return children;
+}
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-
   useEffect(() => {
     const token = localStorage.getItem("kmart_token");
     if (token) {
@@ -88,6 +111,7 @@ function App() {
         {isAuthenticated ? (
           <ApprovalSystemProvider>
             <HrProvider>
+              <PasswordChangeGate>
               <Routes>
                 <Route path="/login" element={<Navigate to="/" replace />} />
               <Route path="/" element={<MainLayout />}>
@@ -163,6 +187,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             <ToastHost />
+              </PasswordChangeGate>
             </HrProvider>
           </ApprovalSystemProvider>
         ) : (

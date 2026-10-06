@@ -6,6 +6,8 @@ import { roleService } from '../services/roleService';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { describeApiError } from '../../../utils/apiError';
 import { HR_DATA_CHANGED } from '../../../utils/hrEvents';
+import { useApproval } from '../../../context/useApproval';
+import { PERMISSIONS } from '../../../constants/permissions';
 
 const HrContext = createContext(null);
 
@@ -15,12 +17,21 @@ export const useHr = () => useContext(HrContext);
 // edit / lock / reset performed from either page reflects on the other.
 export function HrProvider({ children }) {
   const { t } = useI18n();
+  const { currentUser } = useApproval();
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  /**
+   * NFR-04: chỉ tài khoản có quyền xem vai trò mới được gọi `/admin/roles`.
+   * Trước đây hàm này gọi vô điều kiện khi khởi động nên MỌI tài khoản nhân viên đều nhận 403
+   * (2 lỗi đỏ trong console mỗi lần tải trang) — và API này có bảo vệ theo quyền ROLE_VIEW.
+   */
+  const canViewRoles = (currentUser?.permissions || []).includes(PERMISSIONS.ROLE_VIEW)
+    || (currentUser?.permissions || []).includes('*');
 
   /**
    * BE-95: nạp lại toàn bộ dữ liệu nhân sự.
@@ -35,7 +46,8 @@ export function HrProvider({ children }) {
         userService.getAll(),
         departmentService.getAll(),
         positionService.getAll(),
-        roleService.getAll().catch(() => ({ data: [] }))
+        // NFR-04: không gọi khi thiếu quyền, tránh 403 trong console của tài khoản nhân viên.
+        canViewRoles ? roleService.getAll().catch(() => []) : Promise.resolve([])
       ]);
       setEmployees(empData);
       setDepartments(deptData);
@@ -48,7 +60,7 @@ export function HrProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, canViewRoles]);
 
   useEffect(() => {
     loadAll();

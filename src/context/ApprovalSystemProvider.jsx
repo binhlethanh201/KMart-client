@@ -110,6 +110,11 @@ export function ApprovalSystemProvider({ children }) {
         avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`,
         roles: parsedRoles,
         permissions: perms,
+        /*
+         * AUTH-10: HR đặt lại mật khẩu thì tài khoản nhận mật khẩu tạm và BẮT BUỘC đổi trước khi
+         * dùng hệ thống. Cờ này lấy từ /auth/me để giao diện mở màn đổi mật khẩu bắt buộc.
+         */
+        mustChangePassword: Boolean(u.mustChangePassword),
       });
     }).catch(console.error);
   }, [loadRequests]);

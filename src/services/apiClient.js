@@ -48,6 +48,17 @@ apiClient.interceptors.response.use(
       // Dispatch an event so the UI can redirect
       window.dispatchEvent(new Event('auth:unauthorized'));
     }
+
+    /*
+     * AUTH-10: tài khoản còn dùng mật khẩu tạm (HR vừa đặt lại) — backend chặn mọi API nghiệp vụ
+     * bằng mã lỗi PASSWORD_CHANGE_REQUIRED. Giao diện bắt sự kiện này để mở màn đổi mật khẩu
+     * bắt buộc thay vì để người dùng nhìn thấy lỗi khó hiểu.
+     */
+    if (error.response?.status === 403
+      && error.response?.data?.errorCode === 'PASSWORD_CHANGE_REQUIRED') {
+      window.dispatchEvent(new Event('auth:password-change-required'));
+    }
+
     return Promise.reject(error);
   }
 );
