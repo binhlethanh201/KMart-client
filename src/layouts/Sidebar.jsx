@@ -160,6 +160,76 @@ function SettingsSubPanel({ onClose }) {
   );
 }
 
+/* ─── Sub-panel: Ủy quyền ────────────────────────────────────── */
+
+/**
+ * BE-166: bảng con của mục "Ủy quyền" — cùng kiểu flyout với "Đơn từ"/"Cấu hình":
+ * ủy quyền tạm thời (có khoảng thời gian) và người duyệt thay mặc định khi quá hạn.
+ */
+function DelegationsSubPanel({ onClose }) {
+  const location = useLocation();
+  const { t } = useI18n();
+
+  const links = [
+    {
+      to: '/delegations',
+      icon: 'assignment_ind',
+      label: t('Ủy quyền tạm thời'),
+    },
+    {
+      to: '/timeout-delegate',
+      icon: 'hourglass_bottom',
+      label: t('Duyệt thay quá hạn'),
+    },
+  ];
+
+  return (
+    <div className="flex flex-col h-full bg-[#162032] border-l border-white/10 w-[200px] flex-shrink-0">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">
+          {t('Ủy quyền')}
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          title={t('Đóng bảng')}
+          aria-label={t('Đóng bảng')}
+          className="text-slate-500 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[16px] leading-none">close</span>
+        </button>
+      </div>
+
+      {/* nav links */}
+      <ul className="flex flex-col py-2 px-2">
+        {links.map((item) => {
+          const active = location.pathname === item.to;
+          return (
+            <li key={item.to}>
+              <Link
+                to={item.to}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors border-l-2 ${
+                  active
+                    ? 'border-primary bg-primary/10 text-white'
+                    : 'border-transparent text-slate-400 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-2.5 min-w-0">
+                  <span className="material-symbols-outlined text-[18px] flex-shrink-0">
+                    {item.icon}
+                  </span>
+                  <span className="text-sm font-medium break-words text-left min-w-0">{item.label}</span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 /* ─── Main sidebar rail ──────────────────────────────────────── */
 
 /**
@@ -184,9 +254,11 @@ const NAV_ITEMS = [
     permission: 'APPLICATION_VIEW',
   },
   {
+    // BE-166: mục Ủy quyền mở bảng con giống "Đơn từ": ủy quyền tạm thời + duyệt thay quá hạn.
     name: 'Ủy quyền',
     icon: 'assignment_ind',
-    path: '/delegations',
+    subPanel: 'delegations',
+    matchPaths: ['/delegations', '/timeout-delegate'],
     permission: 'APPLICATION_APPROVE',
   },
   {
@@ -565,6 +637,11 @@ export default function UnifiedSidebar({
           {renderedSubPanel === 'settings' && (
             <div className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === 'settings' ? 'translate-x-0' : '-translate-x-4'}`}>
               <SettingsSubPanel onClose={closePanel} />
+            </div>
+          )}
+          {renderedSubPanel === 'delegations' && (
+            <div className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === 'delegations' ? 'translate-x-0' : '-translate-x-4'}`}>
+              <DelegationsSubPanel onClose={closePanel} />
             </div>
           )}
         </div>
