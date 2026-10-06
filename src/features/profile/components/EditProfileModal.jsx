@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { userService, getFullAvatarUrl } from '../../hr/services/userService';
+import apiClient from '../../../services/apiClient';
+import { authService } from '../../auth/services/authService';
 
 const fieldCls = 'w-full rounded-md border border-outline-variant bg-surface-container-lowest text-on-surface text-sm h-10 px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
@@ -60,6 +62,43 @@ export default function EditProfileModal({ user, onClose, onSave }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Refresh profile when user comes back to the tab
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          const updatedUser = await authService.getCurrentUser();
+          if (updatedUser?.telegramChatId && updatedUser.telegramChatId !== form.telegramChatId) {
+            setForm(prev => ({ ...prev, telegramChatId: updatedUser.telegramChatId }));
+          }
+        } catch (err) {
+          console.error('Lỗi khi làm mới thông tin user:', err);
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [form.telegramChatId]);
+
+  const handleConnectTelegram = async () => {
+    const w = window.open('', '_blank');
+    try {
+      const res = await apiClient.get('/telegram/connect-link');
+      if (res.data && res.data.url) {
+        w.location.href = res.data.url;
+      } else {
+        w.close();
+        setErrors(prev => ({ ...prev, telegramChatId: t('Không lấy được link kết nối') }));
+      }
+    } catch (error) {
+      console.error("Không lấy được link kết nối:", error);
+      w.close();
+      const errorMsg = error.response?.data?.error || t('Lỗi kết nối Telegram. Vui lòng kiểm tra cấu hình.');
+      setErrors(prev => ({ ...prev, telegramChatId: errorMsg }));
+    }
+  };
 
   const set = (key) => (e) => {
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -240,8 +279,26 @@ export default function EditProfileModal({ user, onClose, onSave }) {
 
                 <div className="flex flex-col gap-2">
                   <label className={labelCls}>{t('Telegram Chat ID')}</label>
-                  <input className={`${fieldCls} ${errors.telegramChatId ? 'border-error focus:border-error focus:ring-error/20' : ''}`} type="text" value={form.telegramChatId} onChange={set('telegramChatId')} placeholder={t('Nhập Chat ID từ Telegram')} />
-                  {errors.telegramChatId && <span className="text-error text-xs font-medium">{errors.telegramChatId}</span>}
+                  {form.telegramChatId ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 px-4 py-2 bg-surface-container-low text-on-surface/70 rounded-lg border border-outline-variant font-mono text-sm">
+                        {form.telegramChatId}
+                      </div>
+                      <span className="text-success text-sm font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                        {t('Đã kết nối')}
+                      </span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleConnectTelegram}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-[#2481cc] text-white hover:bg-[#1d6ba8] transition-colors rounded-lg font-medium"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">send</span>
+                      {t('Kết nối tự động qua Telegram')}
+                    </button>
+                  )}
                 </div>
               </div>
 

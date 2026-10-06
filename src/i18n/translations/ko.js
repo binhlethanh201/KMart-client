@@ -1173,6 +1173,7 @@ export const ko = {
   'Hủy đơn này (chưa ai duyệt)': '이 신청을 취소하세요(아직 승인한 사람이 없습니다)',
   'Hủy đơn này?': '이 주문을 취소하시겠습니까?',
   'Kết nối Telegram Bot thành công!': '텔레그램 봇 연결 성공!',
+  'Kết nối tự động qua Telegram': '텔레그램을 통해 자동으로 연결',
   'Khi bạn trở lại sớm hơn dự kiến hoặc muốn đổi người duyệt thay.': '예정보다 일찍 복귀하거나 리뷰어를 변경하고 싶을 때.',
   'Khi nào nên thu hồi?': '언제 리콜해야 합니까?',
   'Khoá bảo mật Telegram (Secret Key)': '텔레그램 보안키(비밀키)',

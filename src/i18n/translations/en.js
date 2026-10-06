@@ -1178,6 +1178,7 @@ export const en = {
   'Hủy đơn này (chưa ai duyệt)': 'Cancel this application (no one has approved yet)',
   'Hủy đơn này?': 'Cancel this order?',
   'Kết nối Telegram Bot thành công!': 'Telegram Bot connection successful!',
+  'Kết nối tự động qua Telegram': 'Connect automatically via Telegram',
   'Khi bạn trở lại sớm hơn dự kiến hoặc muốn đổi người duyệt thay.': 'When you return earlier than expected or want to change reviewer.',
   'Khi nào nên thu hồi?': 'When should there be a recall?',
   'Khoá bảo mật Telegram (Secret Key)': 'Telegram security key (Secret Key)',
