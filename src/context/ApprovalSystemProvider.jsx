@@ -100,6 +100,7 @@ export function ApprovalSystemProvider({ children }) {
         email: u.email,
         personalEmail: u.personalEmail,
         phone: u.phone,
+        telegramChatId: u.telegramChatId,
         departmentId: primaryPos?.departmentId,
         department: primaryPos?.departmentName || t('Chưa phân bổ'),
         positionId: primaryPos?.positionId,
