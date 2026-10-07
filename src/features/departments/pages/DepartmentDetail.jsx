@@ -220,14 +220,14 @@ export default function DepartmentDetail() {
           </div>
 
           {/* Tabs */}
-          <div className="px-6 flex gap-1 -mb-px">
+          <div className="px-6 flex gap-1 -mb-px overflow-x-auto">
             {TABS.map((tabItem) => {
               const active = tab === tabItem.id;
               return (
                 <button
                   key={tabItem.id}
                   onClick={() => setTab(tabItem.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer ${active
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0 ${active
                     ? 'border-primary text-primary'
                     : 'border-transparent text-secondary hover:text-on-surface hover:bg-surface-container-low'
                     }`}

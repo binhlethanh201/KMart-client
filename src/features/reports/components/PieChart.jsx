@@ -26,7 +26,7 @@ export default function PieChart({ data }) {
   const total = rows.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="flex items-center gap-8">
+    <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
       {/* Donut */}
       <div className="relative w-40 h-40 flex-shrink-0">
         <svg viewBox="0 0 100 100" className="transform -rotate-90">
@@ -75,7 +75,7 @@ export default function PieChart({ data }) {
       </div>
 
       {/* Chú giải */}
-      <div className="flex-1 space-y-2">
+      <div className="w-full sm:flex-1 min-w-0 space-y-2">
         {rows.map((item, idx) => {
           const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
           const isHover = hoverIdx === idx;

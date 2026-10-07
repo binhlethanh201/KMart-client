@@ -91,6 +91,9 @@ export default function TrendLineChart({
   const innerW = Math.max(1, chartWidth - PAD.left - PAD.right);
   const innerH = Math.max(1, chartHeight - PAD.top - PAD.bottom);
   const stepX = labels.length > 1 ? innerW / (labels.length - 1) : 0;
+  // Màn hẹp: bước cột nhỏ hơn bề rộng nhãn (~38px) thì bỏ bớt nhãn xen kẽ
+  // để nhãn tháng không chồng lên nhau (lỗi biểu đồ xu hướng trên mobile).
+  const labelStep = stepX > 0 ? Math.max(1, Math.ceil(38 / stepX)) : 1;
 
   const toX = (i) => PAD.left + i * stepX;
   const toY = (v) => PAD.top + innerH - (v / (top || 1)) * innerH;
@@ -243,7 +246,9 @@ export default function TrendLineChart({
               )}
 
               {/* Nhãn trục X */}
-              {labels.map((lb, i) => (
+              {labels.map((lb, i) => {
+                if (i % labelStep !== 0) return null;
+                return (
                 <text
                   key={lb + i}
                   x={toX(i)}
@@ -254,11 +259,13 @@ export default function TrendLineChart({
                 >
                   {lb}
                 </text>
-              ))}
+                );
+              })}
 
               {/* % tăng/giảm dưới nhãn tháng */}
               {changePercents && labels.map((lb, i) => {
                 if (i === 0 || changePercents[i] === undefined) return null;
+                if (i % labelStep !== 0) return null;
                 const v = changePercents[i];
                 const color = v > 0 ? '#059669' : v < 0 ? '#dc2626' : '#9ca3af';
                 return (

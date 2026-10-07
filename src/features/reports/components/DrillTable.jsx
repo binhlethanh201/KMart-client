@@ -86,7 +86,7 @@ export default function DrillTable({ query }) {
 
       {/* Tìm kiếm nhanh + khoảng ngày ngay trong bảng để khỏi phải cuộn lên bộ lọc chung */}
       <div className="flex items-end gap-3 flex-wrap mb-5 pb-5 border-b border-[#f0eee9]">
-        <div className="flex flex-col gap-1.5 flex-1 min-w-[240px]">
+        <div className="flex flex-col gap-1.5 flex-1 min-w-full sm:min-w-[240px]">
           <label className={FILTER_LABEL_CLS}>{t('Tìm kiếm đơn')}</label>
           <div className="relative">
             <span className={FILTER_SEARCH_ICON_CLS}>
