@@ -3,6 +3,7 @@ import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import EditProfileModal from './../components/EditProfileModal';
 import { userService } from '../../hr/services/userService';
+import apiClient from '../../../services/apiClient';
 import { roleLabel } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
 import describeApiError from '../../../utils/apiError';
@@ -55,6 +56,23 @@ export default function UserProfile({ userId, onClose }) {
     { id: 'experience', title: t('Kinh nghiệm làm việc'), icon: 'work_history', value: user?.profileData?.experience },
     { id: 'awards', title: t('Giải thưởng & Thành tích'), icon: 'emoji_events', value: user?.profileData?.awards },
   ];
+
+  const handleConnectTelegram = async () => {
+    const w = window.open('', '_blank');
+    try {
+      const res = await apiClient.get('/telegram/connect-link');
+      if (res.data && res.data.url) {
+        w.location.href = res.data.url;
+        pushToast(t('Đã mở Telegram — bấm Start để hoàn tất kết nối.'), 'success');
+      } else {
+        w.close();
+        pushToast(t('Không lấy được link kết nối'), 'error');
+      }
+    } catch (error) {
+      w.close();
+      pushToast(describeApiError(error, t, 'Lỗi kết nối Telegram'), 'error');
+    }
+  };
 
   const handleSaveProfile = async (updatedData) => {
     try {
@@ -133,6 +151,25 @@ export default function UserProfile({ userId, onClose }) {
                 <span className="material-symbols-outlined text-outline text-[20px] shrink-0">call</span>
                 <span className="text-on-surface min-w-0 break-words">{user.phone || <span className="text-secondary italic">{t('Chưa cập nhật số điện thoại')}</span>}</span>
               </div>
+              {(!userId || userId === currentUser.id) && (
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="material-symbols-outlined text-outline text-[20px] shrink-0">send</span>
+                  {user.telegramChatId ? (
+                    <span className="flex items-center gap-1 text-success text-sm font-medium">
+                      <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                      {t('Đã kết nối Telegram')}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={handleConnectTelegram}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2481cc] text-white hover:bg-[#1d6ba8] transition-colors rounded text-sm font-medium cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">send</span>
+                      {t('Kết nối Telegram')}
+                    </button>
+                  )}
+                </div>
+              )}
               <div className="flex items-center gap-3 sm:col-span-2 min-w-0">
                 <span className="material-symbols-outlined text-outline text-[20px] shrink-0">location_on</span>
                 <span className="text-on-surface min-w-0 break-words">{user.profileData?.address || <span className="text-secondary italic">{t('Chưa cập nhật địa chỉ')}</span>}</span>
