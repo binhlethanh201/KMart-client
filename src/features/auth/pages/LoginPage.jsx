@@ -5,6 +5,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import LanguageSwitcher from '../../../components/LanguageSwitcher';
 import BrandLogo from '../../../components/BrandLogo';
 import { createLoginErrorTranslator } from '../loginErrors';
+import AuthBackground from '../components/AuthBackground';
 
 /**
  * BE-77: bố cục 2 cột — cột trái giới thiệu thương hiệu, cột phải là biểu mẫu.
@@ -154,16 +155,9 @@ const LoginPage = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0a1733] px-5 py-12">
-      {/* BE-77c: nền gradient thương hiệu nhiều lớp — nhìn chuyên nghiệp thay vì nền trắng nhạt trống trải */}
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(155deg,#0a1733_0%,#122a6b_42%,#1d4ed8_100%)]" />
-      {/* Quầng sáng tạo chiều sâu */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-[#3b82f6]/25 blur-[120px]" />
-      <div className="pointer-events-none absolute -bottom-40 -left-24 h-[420px] w-[420px] rounded-full bg-[#1d4ed8]/30 blur-[110px]" />
-      <div className="pointer-events-none absolute -right-32 top-1/3 h-[380px] w-[380px] rounded-full bg-[#60a5fa]/15 blur-[110px]" />
-      {/* Lưới mảnh + vệt sáng chéo tạo cảm giác "bản thiết kế kỹ thuật" */}
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.055)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_78%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.07)_50%,transparent_65%)]" />
+    <AuthBackground>
+      {/* AUTH-12: nền gradient/lưới lấy từ component dùng chung AuthBackground để màn
+          đăng nhập và màn đổi mật khẩu bắt buộc luôn đồng nhất. */}
 
       <div className="absolute top-6 right-6 z-20">
         <LanguageSwitcher variant="onDark" />
@@ -347,7 +341,7 @@ const LoginPage = ({ onLoginSuccess }) => {
       <div className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap text-[11px] uppercase tracking-[2px] text-white/40">
         {t('© 2026 Kmart Internal Systems. Bảo lưu mọi quyền lợi.')}
       </div>
-    </div>
+    </AuthBackground>
   );
 };
 

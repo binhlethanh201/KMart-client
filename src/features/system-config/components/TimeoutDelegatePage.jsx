@@ -92,7 +92,7 @@ export default function TimeoutDelegatePage() {
         subtitle={t('Cài người duyệt thay mặc định cho những đơn bạn duyệt khi bị quá hạn xử lý.')}
       />
 
-      <div className="p-3 flex flex-col gap-3 flex-1 min-h-0 w-full max-w-[1280px] mx-auto">
+      <div className="p-3 flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto w-full max-w-[1280px] mx-auto">
         {/* Hướng dẫn 3 bước */}
         <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden shrink-0">
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-outline-variant/50">
@@ -125,7 +125,10 @@ export default function TimeoutDelegatePage() {
         </div>
 
         {/* Khung trạng thái cỡ lớn */}
-        <div className="bg-primary-container/15 border border-primary/20 rounded-xl px-4 py-6 flex flex-col items-center justify-center gap-5 text-center flex-1 min-h-[340px]">
+        <div className="bg-primary-container/15 border border-primary/20 rounded-xl px-4 py-6 flex flex-col items-center gap-5 text-center md:flex-1 min-h-[340px] overflow-y-auto">
+          {/* my-auto: căn giữa khi khung còn chỗ trống; khi nội dung cao hơn khung thì
+              cuộn từ đầu thay vì tràn ngược lên đè lên khối bước phía trên (lỗi màn mobile). */}
+          <div className="w-full flex flex-col items-center gap-5 my-auto">
           {loading ? (
             <div className="px-4 py-6 text-center text-secondary text-sm flex items-center justify-center gap-2">
               <span className="material-symbols-outlined text-[24px] animate-spin">progress_activity</span>
@@ -238,6 +241,7 @@ export default function TimeoutDelegatePage() {
             <TipCard icon="looks_one" text={t('Mỗi người chỉ cài được một người duyệt thay; lưu mới sẽ ghi đè cấu hình cũ.')} />
             <TipCard icon="verified_user" text={t('Mọi lần chuyển đơn quá hạn và duyệt thay đều được ghi vào nhật ký hệ thống.')} />
             <TipCard icon="support_agent" text={t('Cần đổi người gấp? Lưu cấu hình mới hoặc xoá cấu hình ngay tại trang này.')} />
+          </div>
           </div>
         </div>
 

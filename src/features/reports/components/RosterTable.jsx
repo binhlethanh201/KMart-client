@@ -169,9 +169,10 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
                   return (
                     <tr
                       key={m.userId}
-                      onClick={() => m.departmentId && onPickDepartment && onPickDepartment({ departmentId: m.departmentId })}
-                      className={`border-b border-white/5 hover:bg-white/5 transition-colors ${m.departmentId ? 'cursor-pointer' : ''}`}
-                      title={m.departmentId ? t('Lọc báo cáo theo phòng ban của người này') : undefined}
+                      /* ROSTER-02: chặn bấm vào dòng nhân sự — trước đây bấm một dòng sẽ tự
+                         áp bộ lọc phòng ban khiến số liệu đổi bất ngờ, người dùng tưởng bấm nhầm
+                         vào hồ sơ nhân sự. Bảng giờ chỉ để xem; lọc vẫn dùng thanh bộ lọc chung. */
+                      className="border-b border-white/5 transition-colors"
                     >
                       <td className="py-3 pr-4">
                         <div className="flex items-center gap-2.5 min-w-0">

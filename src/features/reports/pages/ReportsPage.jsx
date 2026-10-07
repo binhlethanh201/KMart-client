@@ -7,6 +7,7 @@ import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 import StatCard from '../components/StatCard';
 import FilterBar from '../components/FilterBar';
+import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
 import BarChart from '../components/BarChart';
 import PieChart from '../components/PieChart';
 import TrendLineChart from '../components/TrendLineChart';
@@ -204,6 +205,12 @@ export default function ReportsPage() {
 
       {/* Bộ lọc */}
       <div className="bg-white rounded-[24px] p-2 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+        <CollapsibleOnMobile
+          count={
+            [filters.from, filters.to, filters.block, filters.departmentId, filters.documentTypeId, filters.positionId]
+              .filter(Boolean).length
+          }
+        >
         <FilterBar
           filters={filters}
           departments={departments}
@@ -211,6 +218,7 @@ export default function ReportsPage() {
           positions={positions}
           onChange={handleFilterChange}
         />
+        </CollapsibleOnMobile>
       </div>
 
       {/* Số liệu tổng quan */}
@@ -436,13 +444,13 @@ export default function ReportsPage() {
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-center mb-3">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[9px] uppercase font-bold text-gray-400">{t('Đơn đã duyệt')}</p>
-                      <p className="text-2xl font-black text-emerald-600">{value}</p>
+                      <p className="text-xl sm:text-2xl font-black text-emerald-600">{value}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[9px] uppercase font-bold text-gray-400">{t('Tỷ lệ trong tổng')}</p>
-                      <p className="text-2xl font-black text-[#1d1d1f]">{share.toFixed(1)}%</p>
+                      <p className="text-xl sm:text-2xl font-black text-[#1d1d1f]">{share.toFixed(1)}%</p>
                     </div>
                   </div>
                   <div className="h-1.5 bg-[#f6f6f4] rounded-full overflow-hidden w-full">
@@ -486,13 +494,13 @@ export default function ReportsPage() {
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-center">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[9px] uppercase font-bold text-gray-400">{t('Đơn đã duyệt')}</p>
-                      <p className="text-2xl font-black text-emerald-600">{p.total ?? 0}</p>
+                      <p className="text-xl sm:text-2xl font-black text-emerald-600">{p.total ?? 0}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[9px] uppercase font-bold text-gray-400">{t('Tỷ lệ trong tổng')}</p>
-                      <p className="text-2xl font-black text-[#1d1d1f]">{share.toFixed(1)}%</p>
+                      <p className="text-xl sm:text-2xl font-black text-[#1d1d1f]">{share.toFixed(1)}%</p>
                     </div>
                   </div>
                 </div>

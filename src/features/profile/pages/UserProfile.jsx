@@ -155,9 +155,20 @@ export default function UserProfile({ userId, onClose }) {
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="material-symbols-outlined text-outline text-[20px] shrink-0">notifications</span>
                   {user.telegramChatId ? (
-                    <span className="flex items-center gap-1 text-success text-sm font-medium">
-                      <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                      {t('Đã kết nối Telegram')}
+                    <span className="flex items-center gap-2 min-w-0 flex-wrap">
+                      <span className="flex items-center gap-1 text-success text-sm font-medium">
+                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                        {t('Đã kết nối Telegram')}
+                      </span>
+                      {/* TELE-02: đã kết nối vẫn phải ĐỔI được tài khoản Telegram — bấm sẽ mở
+                          link bot lại, Start ở tài khoản mới sẽ thay thế kết nối cũ. */}
+                      <button
+                        onClick={handleConnectTelegram}
+                        title={t('Mở Telegram và bấm Start để thay bằng tài khoản mới.')}
+                        className="px-3 py-1.5 bg-[#2481cc] text-white hover:bg-[#1d6ba8] transition-colors rounded text-sm font-medium cursor-pointer whitespace-nowrap"
+                      >
+                        {t('Đổi kết nối Telegram')}
+                      </button>
                     </span>
                   ) : (
                     <button

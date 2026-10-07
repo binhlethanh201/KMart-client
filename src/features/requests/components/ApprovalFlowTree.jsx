@@ -14,6 +14,7 @@ export default function ApprovalFlowTree({
   employees = [],
   currentUser,
   selectedApproverId,
+  selectedApprover = null,
   departmentsSelected = [],
   variant = 'inline',
 }) {
@@ -461,10 +462,43 @@ export default function ApprovalFlowTree({
     return out;
   }, [resolvedSteps, stages, t]);
 
+  /*
+   * WF-07: người duyệt BƯỚC 1 do người dùng CHỈ ĐỊNH trong form ("Người duyệt (chỉ định)")
+   * phải hiện đúng tên ở cấp duyệt đầu tiên trong MỌI dạng luồng: luồng hierarchy/chain
+   * return sớm không qua đoạn nhận selectedApproverId, còn luồng máy chủ phân giải thì
+   * endpoint preview không nhận tham số người chỉ định. Ghi đè tại đây (sau flowStages)
+   * để cả sơ đồ lẫn chuỗi "Đường đi của đơn" đều hiện tên người được chọn.
+   */
+  const displayStages = useMemo(() => {
+    const designatedId = selectedApproverId || (selectedApprover && selectedApprover.id) || '';
+    if (!designatedId || !Array.isArray(flowStages) || flowStages.length === 0) return flowStages;
+    const emp = empById(designatedId)
+      || (selectedApprover && selectedApprover.id === designatedId ? selectedApprover : null);
+    if (!emp) return flowStages;
+    const [first, ...rest] = flowStages;
+    const oldBadge = first.branches?.[0]?.badge;
+    const oldBadgeTitle = first.branches?.[0]?.badgeTitle;
+    const overridden = {
+      ...first,
+      parallel: false,
+      branches: [{
+        key: `selected-${designatedId}`,
+        name: emp.name,
+        hasManager: true,
+        avatar: emp.avatar,
+        role: roleLabel(emp),
+        isStep: true,
+        badge: oldBadge,
+        badgeTitle: oldBadgeTitle,
+      }],
+    };
+    return [overridden, ...rest];
+  }, [flowStages, selectedApproverId, selectedApprover, employees]);
+
   // Chuỗi "từ ai ➔ đến ai" để đọc nhanh toàn bộ luồng (chỉ hiện ở bản đầy đủ).
   const chainPath = useMemo(() => {
     const people = [];
-    flowStages.forEach((stage) => {
+    displayStages.forEach((stage) => {
       const names = stage.branches
         .filter((b) => b.hasManager)
         .map((b) => b.name)
@@ -478,7 +512,7 @@ export default function ApprovalFlowTree({
       });
     });
     return people;
-  }, [flowStages]);
+  }, [displayStages]);
 
   const chipW = isFull ? 'w-[260px]' : 'w-[220px]';
 
@@ -575,7 +609,7 @@ export default function ApprovalFlowTree({
       </div>
 
       {/* Các tầng duyệt — có mũi tên chỉ hướng đi giữa các bước */}
-      {flowStages.map((stage, si) => (
+      {displayStages.map((stage, si) => (
         <div key={stage.key} className="flex flex-col items-center">
           <div className="flex flex-col items-center" title={t('Chuyển tiếp sang bước sau')}>
             <div className="w-px h-3 bg-outline-variant" />

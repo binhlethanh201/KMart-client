@@ -595,7 +595,7 @@ export default function DelegationsTab() {
         subtitle={t('Ủy quyền duyệt đơn tạm thời cho người khác trong khoảng thời gian bạn vắng mặt.')}
       />
 
-      <div className="p-3 flex flex-col gap-3 flex-1 min-h-0 w-full max-w-[1280px] mx-auto">
+      <div className="p-3 flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto w-full max-w-[1280px] mx-auto">
         {/* Hướng dẫn 3 bước */}
         <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden shrink-0">
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-outline-variant/50">
@@ -628,7 +628,10 @@ export default function DelegationsTab() {
         </div>
 
         {/* Khung lớn: khi CHƯA có ủy quyền thì hiện minh họa, khi CÓ thì hiện trạng thái cỡ lớn */}
-        <div className="bg-primary-container/15 border border-primary/20 rounded-xl px-4 py-6 flex flex-col items-center justify-center gap-5 text-center flex-1 min-h-[380px]">
+        <div className="bg-primary-container/15 border border-primary/20 rounded-xl px-4 py-6 flex flex-col items-center gap-5 text-center md:flex-1 min-h-[380px] overflow-y-auto">
+          {/* my-auto: căn giữa khi khung còn chỗ trống; khi nội dung cao hơn khung thì
+              cuộn từ đầu thay vì tràn ngược lên đè lên khối bước phía trên (lỗi màn mobile). */}
+          <div className="w-full flex flex-col items-center gap-5 my-auto">
           {loading ? (
             <div className="px-4 py-6 text-center text-secondary text-sm flex items-center justify-center gap-2">
               <span className="material-symbols-outlined text-[24px] animate-spin">progress_activity</span>
@@ -748,6 +751,7 @@ export default function DelegationsTab() {
           <TipCard icon="verified_user" text={t('Mọi thao tác duyệt thay đều được ghi vào nhật ký hệ thống.')} />
           <TipCard icon="support_agent" text={t('Cần đổi người hoặc thu hồi gấp? Liên hệ bộ phận Nhân sự.')} />
         </div>
+          </div>
       </div>
 
       </div>
