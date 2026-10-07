@@ -4,6 +4,10 @@ import { userService } from '../../hr/services/userService';
 import { authService } from '../services/authService';
 import { clearSessionStorage } from '../../../utils/session';
 import { describeApiError } from '../../../utils/apiError';
+import { useApproval } from '../../../context/useApproval';
+import AuthBackground from './AuthBackground';
+import BrandLogo from '../../../components/BrandLogo';
+import LanguageSwitcher from '../../../components/LanguageSwitcher';
 
 /**
  * AUTH-10: màn ĐỔI MẬT KHẨU BẮT BUỘC.
@@ -11,6 +15,11 @@ import { describeApiError } from '../../../utils/apiError';
  * Khi HR "Đặt lại mật khẩu", tài khoản nhận mật khẩu tạm và cờ `must_change_password` được bật.
  * Backend chặn mọi API nghiệp vụ cho tới khi đổi (mã lỗi PASSWORD_CHANGE_REQUIRED), nên giao diện
  * phải có một màn riêng, không thể bỏ qua: đổi mật khẩu hoặc đăng xuất.
+ *
+ * AUTH-12: nền lấy chung AuthBackground với màn đăng nhập cho đồng bộ thương hiệu.
+ * AUTH-13: nút gửi KHÔNG còn bị vô hiệu hoá im lặng — trước đây nút chỉ bấm được khi mọi điều
+ * kiện thoả, nên khi nhập lệch (VD ô nhập lại khác mật khẩu mới) người dùng thấy nút "chết" mà
+ * không hiểu vì sao. Nay nút luôn bấm được và báo lỗi cụ thể ngay dưới ô liên quan.
  */
 
 const inputCls =
@@ -28,6 +37,7 @@ const passwordRules = [
 
 export default function ForcePasswordChange() {
   const { t } = useI18n();
+  const { currentUser } = useApproval();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,9 +45,8 @@ export default function ForcePasswordChange() {
   const [loading, setLoading] = useState(false);
 
   const passed = passwordRules.filter((r) => r.test(newPassword));
-  const ready = passed.length === passwordRules.length
-    && newPassword === confirmPassword
-    && newPassword !== currentPassword;
+  const confirmMismatch = confirmPassword !== '' && confirmPassword !== newPassword;
+  const sameAsCurrent = newPassword !== '' && newPassword === currentPassword;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -58,7 +67,22 @@ export default function ForcePasswordChange() {
 
     setLoading(true);
     try {
-      await userService.changePassword(currentPassword, newPassword);
+      try {
+        await userService.changePassword(currentPassword, newPassword);
+      } catch (err) {
+        /*
+         * AUTH-13: một số bản backend chặn cả endpoint đổi mật khẩu của phiên đang đăng nhập
+         * khi cờ must_change_password còn bật (403 PASSWORD_CHANGE_REQUIRED) hoặc chưa có
+         * endpoint này (404/405). Khi đó dùng đường công khai giống màn đăng nhập:
+         * POST /auth/reset-password với mật khẩu tạm do HR cấp.
+         */
+        const status = err.response?.status;
+        if (status === 403 || status === 404 || status === 405) {
+          await authService.resetPasswordWithTemp(currentUser?.email || '', currentPassword, newPassword);
+        } else {
+          throw err;
+        }
+      }
       // Cờ must_change_password đã được backend tắt -> tải lại để vào hệ thống bình thường.
       window.location.reload();
     } catch (err) {
@@ -78,14 +102,23 @@ export default function ForcePasswordChange() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-6">
-      <div className="w-full max-w-md rounded-2xl border border-outline-variant bg-surface p-8 shadow-sm">
+    <AuthBackground>
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSwitcher variant="onDark" />
+      </div>
+
+      <div className="relative z-10 flex w-full flex-col items-center">
+        <h1 className="mb-7 flex justify-center">
+          <BrandLogo size="lg" tone="onDark" glow tagline={t('Hệ thống quản trị nội bộ')} />
+        </h1>
+
+        <div className="w-full max-w-[420px] rounded-2xl border border-white/10 bg-surface p-8 shadow-[0_28px_70px_-28px_rgba(0,0,0,0.65)]">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-full bg-primary-container flex items-center justify-center">
             <span className="material-symbols-outlined text-on-primary-container">lock_reset</span>
           </div>
           <div>
-            <h1 className="text-title-lg font-semibold text-on-surface">{t('Đổi mật khẩu bắt buộc')}</h1>
+            <h2 className="text-title-lg font-semibold text-on-surface">{t('Đổi mật khẩu bắt buộc')}</h2>
             <p className="text-body-sm text-secondary">
               {t('Tài khoản của bạn đang dùng mật khẩu tạm do Nhân sự cấp.')}
             </p>
@@ -121,6 +154,9 @@ export default function ForcePasswordChange() {
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
+            {sameAsCurrent && (
+              <p className="mt-1 text-[12px] text-error">{t('Mật khẩu mới phải khác mật khẩu hiện tại.')}</p>
+            )}
           </div>
 
           <div>
@@ -134,6 +170,9 @@ export default function ForcePasswordChange() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
+            {confirmMismatch && (
+              <p className="mt-1 text-[12px] text-error">{t('Mật khẩu xác nhận không khớp.')}</p>
+            )}
           </div>
 
           <ul className="space-y-1">
@@ -158,7 +197,7 @@ export default function ForcePasswordChange() {
 
           <button
             type="submit"
-            disabled={loading || !ready}
+            disabled={loading}
             className="w-full rounded-lg bg-primary py-2.5 text-label-md text-on-primary shadow-sm transition-colors hover:bg-on-primary-fixed-variant disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
           >
             {loading ? t('Đang xử lý...') : t('Đổi mật khẩu và tiếp tục')}
@@ -172,7 +211,12 @@ export default function ForcePasswordChange() {
             {t('Đăng xuất')}
           </button>
         </form>
+        </div>
+
+        <p className="mt-6 text-[12px] text-white/50">
+          {t('Cần hỗ trợ? Liên hệ bộ phận Nhân sự để được cấp lại quyền truy cập.')}
+        </p>
       </div>
-    </div>
+    </AuthBackground>
   );
 }
