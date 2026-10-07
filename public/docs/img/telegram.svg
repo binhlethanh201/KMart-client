@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" role="img" aria-label="Minh họa kết nối Telegram và nhận thông báo">
+  <rect width="720" height="260" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Điện thoại -->
+    <g>
+      <rect x="60" y="30" width="150" height="200" rx="20" fill="#0a1733"/>
+      <rect x="70" y="46" width="130" height="168" rx="10" fill="#eaf3fb"/>
+      <rect x="118" y="36" width="34" height="6" rx="3" fill="#1e293b"/>
+      <!-- bong bóng bot -->
+      <rect x="80" y="58" width="110" height="46" rx="10" fill="#ffffff" stroke="#dbe6f2"/>
+      <circle cx="94" cy="72" r="8" fill="#2481cc"/>
+      <text x="94" y="76" font-size="9" fill="#fff" text-anchor="middle" font-weight="700">K</text>
+      <text x="106" y="72" font-size="9" font-weight="700" fill="#111315">Kmart Bot</text>
+      <text x="86" y="88" font-size="8.5" fill="#334155">Kết nối thành công!</text>
+      <rect x="80" y="112" width="110" height="52" rx="10" fill="#ffffff" stroke="#dbe6f2"/>
+      <text x="86" y="126" font-size="8.5" font-weight="700" fill="#111315">Đơn đã được duyệt</text>
+      <text x="86" y="138" font-size="8" fill="#334155">Đơn xin nghỉ phép của bạn</text>
+      <text x="86" y="152" font-size="8" fill="#2481cc" text-decoration="underline">Xem chi tiết</text>
+      <!-- nút start -->
+      <rect x="98" y="176" width="74" height="24" rx="12" fill="#2481cc"/>
+      <text x="135" y="192" font-size="10" fill="#fff" text-anchor="middle" font-weight="700">START</text>
+    </g>
+    <!-- mũi tên sang hệ thống -->
+    <path d="M226 130 h60 m0 0 l-8 -6 m8 6 l-8 6" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Hệ thống KMart -->
+    <g>
+      <rect x="300" y="60" width="180" height="140" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="300" y="60" width="180" height="34" rx="14" fill="#1d4ed8"/>
+      <rect x="300" y="80" width="180" height="14" fill="#1d4ed8"/>
+      <text x="316" y="82" font-size="12" fill="#ffffff" font-weight="700">KMart — Hồ sơ</text>
+      <rect x="316" y="108" width="148" height="30" rx="8" fill="#ecfdf5" stroke="#059669"/>
+      <text x="326" y="127" font-size="10" fill="#047857" font-weight="700">✓ Đã kết nối Telegram</text>
+      <rect x="316" y="148" width="148" height="30" rx="8" fill="#2481cc"/>
+      <text x="390" y="167" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="700">Đổi kết nối Telegram</text>
+    </g>
+    <path d="M496 130 h60 m0 0 l-8 -6 m8 6 l-8 6" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Thông báo đẩy -->
+    <g>
+      <rect x="570" y="60" width="120" height="140" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="630" cy="92" r="18" fill="#eef4ff"/>
+      <text x="630" y="98" font-size="16" fill="#1d4ed8" text-anchor="middle">🔔</text>
+      <text x="630" y="126" font-size="10" font-weight="700" fill="#111315" text-anchor="middle">Thông báo đơn từ</text>
+      <text x="630" y="142" font-size="9" fill="#66655f" text-anchor="middle">duyệt · từ chối · bổ sung</text>
+      <text x="630" y="156" font-size="9" fill="#66655f" text-anchor="middle">quá hạn · mật khẩu tạm</text>
+      <text x="630" y="180" font-size="9" fill="#2481cc" text-anchor="middle" text-decoration="underline">Xem chi tiết →</text>
+    </g>
+    <text x="360" y="248" font-size="12" fill="#66655f" text-anchor="middle">Kết nối một lần bằng nút Start; từ đó mọi thông báo đơn từ về thẳng Telegram kèm link mở đúng trang</text>
+  </g>
+</svg>

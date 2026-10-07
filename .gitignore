@@ -34,5 +34,9 @@ dist-ssr
 
 .codegraph/
 
-docs/
+# DOCS-03: chỉ bỏ qua thư mục docs NẰM NGAY GỐC repo (ghi chú nội bộ);
+# trước đây rule `docs/` không neo gốc nên nuốt cả src/features/docs/ và public/docs/
+# khiến trang hướng dẫn (DocsPage.jsx, HUONG-DAN.md, ảnh minh họa) không bao giờ được
+# git nhìn thấy -> không commit/push được.
+/docs/
 maudon/telegram-*.md
