@@ -153,7 +153,7 @@ export default function UserProfile({ userId, onClose }) {
               </div>
               {(!userId || userId === currentUser.id) && (
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="material-symbols-outlined text-outline text-[20px] shrink-0">send</span>
+                  <span className="material-symbols-outlined text-outline text-[20px] shrink-0">notifications</span>
                   {user.telegramChatId ? (
                     <span className="flex items-center gap-1 text-success text-sm font-medium">
                       <span className="material-symbols-outlined text-[16px]">check_circle</span>
@@ -162,9 +162,8 @@ export default function UserProfile({ userId, onClose }) {
                   ) : (
                     <button
                       onClick={handleConnectTelegram}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2481cc] text-white hover:bg-[#1d6ba8] transition-colors rounded text-sm font-medium cursor-pointer"
+                      className="px-3 py-1.5 bg-[#2481cc] text-white hover:bg-[#1d6ba8] transition-colors rounded text-sm font-medium cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[16px]">send</span>
                       {t('Kết nối Telegram')}
                     </button>
                   )}
