@@ -9,6 +9,7 @@ import { roleStyle } from '../../../utils/roleLabels';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
 import PageHeader from '../../../components/PageHeader';
+import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
 import Select from '../../../components/Select';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 
@@ -143,6 +144,9 @@ export default function HumanResources() {
 
       {/* Filter Bar */}
       <div className="bg-[#f6f6f4] border-b border-outline-variant p-4 flex-shrink-0 z-10">
+        <CollapsibleOnMobile
+          count={[dept !== 'all', role !== 'all', status !== 'all', search !== ''].filter(Boolean).length}
+        >
         <div className="w-full flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1 lg:max-w-sm">
             <span className={FILTER_SEARCH_ICON_CLS}>search</span>
@@ -185,6 +189,7 @@ export default function HumanResources() {
             />
           </div>
         </div>
+        </CollapsibleOnMobile>
       </div>
 
       {/* Data Table */}

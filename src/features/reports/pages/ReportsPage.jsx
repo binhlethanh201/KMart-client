@@ -7,6 +7,7 @@ import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 import StatCard from '../components/StatCard';
 import FilterBar from '../components/FilterBar';
+import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
 import BarChart from '../components/BarChart';
 import PieChart from '../components/PieChart';
 import TrendLineChart from '../components/TrendLineChart';
@@ -204,6 +205,12 @@ export default function ReportsPage() {
 
       {/* Bộ lọc */}
       <div className="bg-white rounded-[24px] p-2 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+        <CollapsibleOnMobile
+          count={
+            [filters.from, filters.to, filters.block, filters.departmentId, filters.documentTypeId, filters.positionId]
+              .filter(Boolean).length
+          }
+        >
         <FilterBar
           filters={filters}
           departments={departments}
@@ -211,6 +218,7 @@ export default function ReportsPage() {
           positions={positions}
           onChange={handleFilterChange}
         />
+        </CollapsibleOnMobile>
       </div>
 
       {/* Số liệu tổng quan */}

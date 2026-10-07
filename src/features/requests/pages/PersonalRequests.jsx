@@ -5,6 +5,7 @@ import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useI18n } from '../../../i18n/I18nProvider';
 import PageHeader from '../../../components/PageHeader';
+import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
 import Select from '../../../components/Select';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 import { scopeDepartmentsForUser } from '../../../utils/departmentScope';
@@ -212,6 +213,9 @@ export default function PersonalRequests({ mode = 'sent' }) {
             lọc, kèm số đơn khớp và nút xoá nhanh toàn bộ điều kiện.
           */}
           <div className="rounded-lg border border-outline-variant/60 bg-surface-container-low px-3 py-2.5 mb-3">
+            <CollapsibleOnMobile
+              count={[search !== '', departmentFilter !== null, documentTypeFilter !== null].filter(Boolean).length}
+            >
             <div className="flex items-center gap-3 flex-wrap">
               {/* Search */}
               <div className="relative flex-1 min-w-[220px]">
@@ -289,6 +293,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                 )}
               </div>
             </div>
+            </CollapsibleOnMobile>
           </div>
 
           {/* ── Status filter tabs ── (BE-05: ẩn ở màn "Đơn cần bổ sung" vì chỉ có 1 trạng thái) */}
