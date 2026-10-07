@@ -107,6 +107,8 @@ const mapToFrontendModel = (a) => {  const rawData = (typeof a.data === 'string'
       startDate: d.startDate,
       endDate: d.endDate
     })),
+    // BE-164: người duyệt thay của pha "quá hạn" — bật nút Duyệt cho đúng người này.
+    timeoutDelegateUserId: a.timeoutDelegateUserId || null,
     history: (a.histories || []).map(h => {
       // BE-15: dịch Action -> nhãn tiếng Việt, kèm tên người thực hiện và lý do (nếu có)
       const key = (h.action || '').toLowerCase();

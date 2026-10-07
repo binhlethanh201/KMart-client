@@ -306,6 +306,15 @@ export default function EmployeeDetail() {
               <div className="font-bold text-on-surface text-sm">{employee.phone}</div>
            </div>
 
+           {/* BE-163: ngày sinh chỉ hiển thị ở trang chi tiết (đã bỏ khỏi danh sách nhân sự). */}
+           <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
+              <div className="flex items-center gap-1.5 text-secondary">
+                 <span className="material-symbols-outlined text-[16px]">cake</span>
+                 <span className="text-[10px] font-bold uppercase tracking-wider">{t('Ngày sinh')}</span>
+              </div>
+              <div className="font-bold text-on-surface text-sm">{formatDate(employee.dateOfBirth)}</div>
+           </div>
+
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
                  <span className="material-symbols-outlined text-[16px]">event</span>

@@ -1931,15 +1931,24 @@ export default function WorkflowTab() {
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-secondary whitespace-nowrap w-[70px]">{t('Hành động:')}</span>
                                 <Select
-                                  className={`${selectCls} max-w-[200px]`}
+                                  className={`${selectCls} max-w-[260px]`}
                                   value={step.timeoutAction || 'return'}
                                   onChange={(v) => updateStep(step.id, { timeoutAction: v })}
                                   options={[
                                     { value: 'return', label: t('Trả đơn về nơi khởi tạo') },
-                                    { value: 'escalate', label: t('Tự động chuyển lên cấp trên') },
+                                    // BE-164: thay "Tự động chuyển lên cấp trên" bằng duyệt theo
+                                    // ủy quyền quá hạn — người duyệt thay do người duyệt bước này
+                                    // cài đặt mặc định ở màn Ủy quyền.
+                                    { value: 'delegate', label: t('Duyệt theo ủy quyền quá hạn') },
                                   ]}
                                 />
                               </div>
+                              {step.timeoutAction === 'delegate' && (
+                                <p className="text-[11px] text-secondary flex items-start gap-1.5">
+                                  <span className="material-symbols-outlined text-[14px] mt-px">info</span>
+                                  {t('Khi quá hạn, đơn chuyển cho người duyệt thay mà người duyệt bước này đã cài ở màn Ủy quyền. Người duyệt thay cũng quá hạn thì đơn bị huỷ; chưa cài người duyệt thay thì đơn quá hạn sẽ bị huỷ.')}
+                                </p>
+                              )}
                             </div>
                           )}
                         </div>

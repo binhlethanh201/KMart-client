@@ -23,11 +23,16 @@ const FORMAT_DATE = (v) => {
 };
 
 /* ─── User picker ────────────────────────────────────────────────────────────── */
-function UserSelect({ value, onChange, excludeId }) {
+export function UserSelect({ value, onChange, excludeId, openSignal = 0 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
+
+  // BE-167: cho phép nút bên ngoài (VD nút tạo trong khung xanh) mở danh sách chọn.
+  useEffect(() => {
+    if (openSignal > 0) setOpen(true);
+  }, [openSignal]);
 
   useEffect(() => {
     userService.getAll().then(setUsers).catch(() => setUsers([]));
@@ -478,7 +483,7 @@ function DelegationIllustration({ className = 'w-full h-auto max-h-[132px]' }) {
 }
 
 /** Khối người cỡ lớn trong khung trạng thái ủy quyền. */
-function PersonBlock({ label, name, tone = 'primary' }) {
+export function PersonBlock({ label, name, tone = 'primary' }) {
   return (
     <div className="flex items-center gap-3">
       <div
@@ -497,7 +502,7 @@ function PersonBlock({ label, name, tone = 'primary' }) {
 }
 
 /** Một bước trong quy trình ủy quyền. */
-function StepCard({ index, icon, title, desc }) {
+export function StepCard({ index, icon, title, desc }) {
   return (
     <div className="flex gap-3 rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-3.5 py-3 h-full">
       <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
@@ -515,7 +520,7 @@ function StepCard({ index, icon, title, desc }) {
 }
 
 /** Một dòng ghi chú ngắn (icon + nội dung) nằm trong khung minh họa. */
-function TipCard({ icon, text }) {
+export function TipCard({ icon, text }) {
   return (
     <div className="flex items-center gap-2.5">
       <span className="material-symbols-outlined text-primary text-[18px] flex-shrink-0">{icon}</span>
