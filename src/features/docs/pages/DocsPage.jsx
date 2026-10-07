@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import PageHeader from '../../../components/PageHeader';
 
 /**
- * DOCS-01: trang HƯỚNG DẪN riêng trong ứng dụng.
+ * DOCS-01: trang HÆ¯á»šNG DáºªN riÃªng trong á»©ng dá»¥ng.
  *
- * Nội dung KHÔNG nhúng cứng vào component mà đọc từ file Markdown `public/docs/HUONG-DAN.md`
- * (serve tĩnh bởi Rsbuild) — nhờ vậy đội ngũ sửa tài liệu bằng cách sửa file .md mà không phải
- * đụng code React; trang này chỉ lo render.
+ * Ná»™i dung KHÃ”NG nhÃºng cá»©ng vÃ o component mÃ  Ä‘á»c tá»« file Markdown `public/docs/HUONG-DAN.md`
+ * (serve tÄ©nh bá»Ÿi Rsbuild) â€” nhá» váº­y Ä‘á»™i ngÅ© sá»­a tÃ i liá»‡u báº±ng cÃ¡ch sá»­a file .md mÃ  khÃ´ng pháº£i
+ * Ä‘á»¥ng code React; trang nÃ y chá»‰ lo render.
  *
- * Renderer Markdown cố tình tối giản (đủ heading / bold / italic / list / bảng / code block /
- * link / quote / hr) để không phải thêm dependency mới vào project. Mọi nội dung đều được
- * escape HTML trước khi chèn thẻ nên an toàn với nội dung tài liệu.
+ * Renderer Markdown cá»‘ tÃ¬nh tá»‘i giáº£n (Ä‘á»§ heading / bold / italic / list / báº£ng / code block /
+ * link / quote / hr) Ä‘á»ƒ khÃ´ng pháº£i thÃªm dependency má»›i vÃ o project. Má»i ná»™i dung Ä‘á»u Ä‘Æ°á»£c
+ * escape HTML trÆ°á»›c khi chÃ¨n tháº» nÃªn an toÃ n vá»›i ná»™i dung tÃ i liá»‡u.
  */
 
 const escapeHtml = (s) =>
@@ -25,8 +25,10 @@ const inline = (s) =>
     .replace(/\*([^*]+)\*/g, '<em>$1</em>')
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a class="text-primary underline underline-offset-2" href="$2" target="_blank" rel="noreferrer">$1</a>');
 
+// DOCS-04: slug pháº£i giá»¯ chá»¯ cÃ¡i cá»§a Má»ŒI ngÃ´n ngá»¯ (ká»ƒ cáº£ Hangul) â€” báº£n cÅ© chá»‰ giá»¯ \w + dáº£i
+// tiáº¿ng Viá»‡t nÃªn heading tiáº¿ng HÃ n bá»‹ xoÃ¡ sáº¡ch chá»¯, sinh id rá»—ng/trÃ¹ng lÃ m má»¥c lá»¥c há»ng báº¥m.
 const slug = (text) =>
-  text.toLowerCase().replace(/[^\w\u00C0-\u1EF9]+/g, '-').replace(/^-+|-+$/g, '');
+  text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
 
 function renderTable(rows) {
   const cells = (line) => line.split('|').slice(1, -1).map((c) => c.trim());
@@ -57,8 +59,8 @@ function markdownToHtml(md) {
 
   const flushPara = () => {
     if (para.length) {
-      // Các dòng liên tiếp trong cùng đoạn nối bằng khoảng trắng (chuẩn Markdown),
-      // tránh cảnh mỗi dòng xuống một hàng như bản cũ.
+      // CÃ¡c dÃ²ng liÃªn tiáº¿p trong cÃ¹ng Ä‘oáº¡n ná»‘i báº±ng khoáº£ng tráº¯ng (chuáº©n Markdown),
+      // trÃ¡nh cáº£nh má»—i dÃ²ng xuá»‘ng má»™t hÃ ng nhÆ° báº£n cÅ©.
       out.push(`<p class="my-3 leading-relaxed text-on-surface-variant">${para.map(inline).join(' ')}</p>`);
       para = [];
     }
@@ -92,7 +94,7 @@ function markdownToHtml(md) {
     }
     if (inCode) { codeBuf.push(line); i += 1; continue; }
 
-    // Bảng: dòng hiện tại bắt đầu bằng | và dòng kế là hàng phân cách |---|
+    // Báº£ng: dÃ²ng hiá»‡n táº¡i báº¯t Ä‘áº§u báº±ng | vÃ  dÃ²ng káº¿ lÃ  hÃ ng phÃ¢n cÃ¡ch |---|
     if (line.trim().startsWith('|') && lines[i + 1] && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
       flushPara(); flushList();
       const rows = [line];
@@ -136,7 +138,7 @@ function markdownToHtml(md) {
 
     if (line.trim().startsWith('>')) {
       flushPara(); flushList();
-      // Gộp các dòng `>` liên tiếp thành MỘT khối trích dẫn (trước đây mỗi dòng thành một hộp).
+      // Gá»™p cÃ¡c dÃ²ng `>` liÃªn tiáº¿p thÃ nh Má»˜T khá»‘i trÃ­ch dáº«n (trÆ°á»›c Ä‘Ã¢y má»—i dÃ²ng thÃ nh má»™t há»™p).
       const buf = [line.trim().replace(/^>\s?/, '')];
       i += 1;
       while (i < lines.length && lines[i].trim().startsWith('>')) {
@@ -172,8 +174,8 @@ export default function DocsPage() {
   const [activeId, setActiveId] = useState('');
   const scrollRef = useRef(null);
 
-  // DOCS-02: nội dung tài liệu dịch theo ngôn ngữ đang chọn (vi/en/ko).
-  // File theo ngôn ngữ không tồn tại thì tự quay về bản tiếng Việt gốc.
+  // DOCS-02: ná»™i dung tÃ i liá»‡u dá»‹ch theo ngÃ´n ngá»¯ Ä‘ang chá»n (vi/en/ko).
+  // File theo ngÃ´n ngá»¯ khÃ´ng tá»“n táº¡i thÃ¬ tá»± quay vá» báº£n tiáº¿ng Viá»‡t gá»‘c.
   useEffect(() => {
     let cancelled = false;
     const file = language && language !== 'vi' ? `/docs/HUONG-DAN.${language}.md` : '/docs/HUONG-DAN.md';
@@ -204,7 +206,7 @@ export default function DocsPage() {
       });
   }, [md]);
 
-  // Mục con (###) cho rail phải — giúp lấp khoảng trống màn rộng và nhảy nhanh tới tiểu mục.
+  // Má»¥c con (###) cho rail pháº£i â€” giÃºp láº¥p khoáº£ng trá»‘ng mÃ n rá»™ng vÃ  nháº£y nhanh tá»›i tiá»ƒu má»¥c.
   const sections = useMemo(() => {
     if (!md) return [];
     const out = [];
@@ -222,7 +224,7 @@ export default function DocsPage() {
     [sections, activeId]
   );
 
-  // Tô sáng mục lục theo vị trí cuộn: lấy mục cuối cùng có heading đã lướt qua.
+  // TÃ´ sÃ¡ng má»¥c lá»¥c theo vá»‹ trÃ­ cuá»™n: láº¥y má»¥c cuá»‘i cÃ¹ng cÃ³ heading Ä‘Ã£ lÆ°á»›t qua.
   const handleScroll = () => {
     const root = scrollRef.current;
     if (!root || toc.length === 0) return;
@@ -236,7 +238,7 @@ export default function DocsPage() {
     setActiveId((prev) => (prev === current ? prev : current));
   };
 
-  // Cuộn mượt tới một mục: trang cuộn trong khung riêng nên không dùng jump mặc định của anchor.
+  // Cuá»™n mÆ°á»£t tá»›i má»™t má»¥c: trang cuá»™n trong khung riÃªng nÃªn khÃ´ng dÃ¹ng jump máº·c Ä‘á»‹nh cá»§a anchor.
   const goTo = (event, id) => {
     event.preventDefault();
     const root = scrollRef.current;
@@ -250,24 +252,24 @@ export default function DocsPage() {
     <section className="flex-1 flex flex-col min-h-0 w-full">
       <PageHeader
         icon="menu_book"
-        title={t('Hướng dẫn sử dụng hệ thống')}
-        subtitle={t('Cẩm nang thao tác cho người dùng & quản trị viên: tạo đơn, duyệt đơn, cấu hình luồng, Telegram, ủy quyền, báo cáo.')}
+        title={t('HÆ°á»›ng dáº«n sá»­ dá»¥ng há»‡ thá»‘ng')}
+        subtitle={t('Cáº©m nang thao tÃ¡c cho ngÆ°á»i dÃ¹ng & quáº£n trá»‹ viÃªn: táº¡o Ä‘Æ¡n, duyá»‡t Ä‘Æ¡n, cáº¥u hÃ¬nh luá»“ng, Telegram, á»§y quyá»n, bÃ¡o cÃ¡o.')}
       />
       <div ref={scrollRef} onScroll={handleScroll} className="flex-1 min-h-0 overflow-y-auto">
         <div className="w-full px-4 py-6 md:px-8 xl:px-12">
-          {/* Hero giới thiệu nhanh */}
+          {/* Hero giá»›i thiá»‡u nhanh */}
           <div className="relative mb-6 overflow-hidden rounded-2xl border border-primary/20 bg-[linear-gradient(135deg,#eef4ff_0%,#f8fafc_55%,#eefbf4_100%)] px-6 py-6 md:px-8">
             <span className="pointer-events-none absolute -right-8 -top-10 text-[150px] leading-none text-primary/10 select-none material-symbols-outlined">menu_book</span>
             <div className="relative flex flex-col gap-2">
               <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary">
                 <span className="material-symbols-outlined text-[14px]">verified</span>
-                {t('Cẩm nang thao tác')}
+                {t('Cáº©m nang thao tÃ¡c')}
               </span>
               <h2 className="text-xl md:text-2xl font-bold text-on-surface">
-                {t('Đọc 5 phút là dùng được KMart')}
+                {t('Äá»c 5 phÃºt lÃ  dÃ¹ng Ä‘Æ°á»£c KMart')}
               </h2>
               <p className="max-w-[640px] text-sm leading-relaxed text-on-surface-variant">
-                {t('Trang này tổng hợp đúng các thao tác trên giao diện thật: tạo đơn, duyệt đơn, cấu hình luồng duyệt, kết nối Telegram, ủy quyền và báo cáo. Bấm mục lục bên trái để nhảy thẳng tới phần cần xem.')}
+                {t('Trang nÃ y tá»•ng há»£p Ä‘Ãºng cÃ¡c thao tÃ¡c trÃªn giao diá»‡n tháº­t: táº¡o Ä‘Æ¡n, duyá»‡t Ä‘Æ¡n, cáº¥u hÃ¬nh luá»“ng duyá»‡t, káº¿t ná»‘i Telegram, á»§y quyá»n vÃ  bÃ¡o cÃ¡o. Báº¥m má»¥c lá»¥c bÃªn trÃ¡i Ä‘á»ƒ nháº£y tháº³ng tá»›i pháº§n cáº§n xem.')}
               </p>
               <div className="mt-1 flex flex-wrap gap-2">
                 {toc.slice(0, 5).map((item) => (
@@ -288,22 +290,22 @@ export default function DocsPage() {
           {loading && (
             <div className="flex items-center justify-center gap-2 py-10 text-sm text-secondary">
               <span className="material-symbols-outlined animate-spin text-[22px]">progress_activity</span>
-              {t('Đang tải tài liệu...')}
+              {t('Äang táº£i tÃ i liá»‡u...')}
             </div>
           )}
           {error && (
             <div className="rounded-lg bg-error-container px-4 py-3 text-sm text-on-error-container">
-              {t('Không tải được file tài liệu.')} <code className="font-mono text-[12px]">{error}</code>
+              {t('KhÃ´ng táº£i Ä‘Æ°á»£c file tÃ i liá»‡u.')} <code className="font-mono text-[12px]">{error}</code>
             </div>
           )}
           {!loading && !error && (
             <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)] 2xl:grid-cols-[240px_minmax(0,1fr)_300px]">
-              {/* Mục lục cố định bên trái (ẩn trên mobile) */}
+              {/* Má»¥c lá»¥c cá»‘ Ä‘á»‹nh bÃªn trÃ¡i (áº©n trÃªn mobile) */}
               <nav className="hidden lg:block">
                 <div className="sticky top-4 rounded-xl border border-outline-variant bg-surface p-4 shadow-sm">
                   <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-secondary">
                     <span className="material-symbols-outlined text-[14px] text-primary">list</span>
-                    {t('Mục lục')}
+                    {t('Má»¥c lá»¥c')}
                   </div>
                   <ul className="space-y-0.5">
                     {toc.map((item) => (
@@ -324,11 +326,11 @@ export default function DocsPage() {
                   </ul>
                 </div>
               </nav>
-              {/* Nội dung tài liệu */}
+              {/* Ná»™i dung tÃ i liá»‡u */}
               <div className="min-w-0">
                 <article
                   className="rounded-2xl border border-outline-variant bg-surface px-5 py-6 shadow-sm md:px-8 md:py-8 text-[14px]"
-                  // Nội dung sinh từ file Markdown nội bộ; mọi chuỗi đã escape HTML ở tầng render.
+                  // Ná»™i dung sinh tá»« file Markdown ná»™i bá»™; má»i chuá»—i Ä‘Ã£ escape HTML á»Ÿ táº§ng render.
                   dangerouslySetInnerHTML={{ __html: html }}
                 />
                 <button
@@ -337,18 +339,18 @@ export default function DocsPage() {
                   className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface px-4 py-2 text-[12px] font-semibold text-on-surface-variant transition-colors hover:border-primary/40 hover:text-primary cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
-                  {t('Lên đầu trang')}
+                  {t('LÃªn Ä‘áº§u trang')}
                 </button>
               </div>
 
-              {/* Rail phải (màn rất rộng): tiểu mục của mục đang đọc + mẹo nhanh, lấp khoảng trắng */}
+              {/* Rail pháº£i (mÃ n ráº¥t rá»™ng): tiá»ƒu má»¥c cá»§a má»¥c Ä‘ang Ä‘á»c + máº¹o nhanh, láº¥p khoáº£ng tráº¯ng */}
               <aside className="hidden 2xl:block">
                 <div className="sticky top-4 space-y-4">
                   {activeSection && activeSection.subs.length > 0 && (
                     <div className="rounded-xl border border-outline-variant bg-surface p-4 shadow-sm">
                       <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-secondary">
                         <span className="material-symbols-outlined text-[14px] text-primary">format_list_numbered</span>
-                        {t('Trong mục này')}
+                        {t('Trong má»¥c nÃ y')}
                       </div>
                       <div className="mb-1 text-[13px] font-semibold text-on-surface">
                         {activeSection.text.replace(/^\d+\.\s*/, '')}
@@ -372,24 +374,24 @@ export default function DocsPage() {
                   <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
                     <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-primary">
                       <span className="material-symbols-outlined text-[14px]">lightbulb</span>
-                      {t('Mẹo nhanh')}
+                      {t('Máº¹o nhanh')}
                     </div>
                     <ul className="space-y-2 text-[12.5px] leading-relaxed text-on-surface-variant">
                       <li className="flex gap-1.5">
                         <span className="material-symbols-outlined text-[14px] text-primary flex-shrink-0 mt-0.5">bolt</span>
-                        {t('Mọi tin Telegram đều có link "Xem chi tiết" — bấm là mở đúng đơn, không phải đi tìm.')}
+                        {t('Má»i tin Telegram Ä‘á»u cÃ³ link "Xem chi tiáº¿t" â€” báº¥m lÃ  má»Ÿ Ä‘Ãºng Ä‘Æ¡n, khÃ´ng pháº£i Ä‘i tÃ¬m.')}
                       </li>
                       <li className="flex gap-1.5">
                         <span className="material-symbols-outlined text-[14px] text-primary flex-shrink-0 mt-0.5">route</span>
-                        {t('Trước khi gửi đơn, mở "Xem chi tiết luồng" để chắc chắn đơn đi đúng người duyệt.')}
+                        {t('TrÆ°á»›c khi gá»­i Ä‘Æ¡n, má»Ÿ "Xem chi tiáº¿t luá»“ng" Ä‘á»ƒ cháº¯c cháº¯n Ä‘Æ¡n Ä‘i Ä‘Ãºng ngÆ°á»i duyá»‡t.')}
                       </li>
                       <li className="flex gap-1.5">
                         <span className="material-symbols-outlined text-[14px] text-primary flex-shrink-0 mt-0.5">filter_alt</span>
-                        {t('Trên điện thoại, bấm hàng "Bộ lọc" để thu gọn khu lọc, dành chỗ cho dữ liệu.')}
+                        {t('TrÃªn Ä‘iá»‡n thoáº¡i, báº¥m hÃ ng "Bá»™ lá»c" Ä‘á»ƒ thu gá»n khu lá»c, dÃ nh chá»— cho dá»¯ liá»‡u.')}
                       </li>
                       <li className="flex gap-1.5">
                         <span className="material-symbols-outlined text-[14px] text-primary flex-shrink-0 mt-0.5">lock_reset</span>
-                        {t('Quên mật khẩu: HR đặt lại, mật khẩu tạm gửi qua Telegram, đăng nhập rồi đổi ngay.')}
+                        {t('QuÃªn máº­t kháº©u: HR Ä‘áº·t láº¡i, máº­t kháº©u táº¡m gá»­i qua Telegram, Ä‘Äƒng nháº­p rá»“i Ä‘á»•i ngay.')}
                       </li>
                     </ul>
                   </div>
@@ -402,4 +404,3 @@ export default function DocsPage() {
     </section>
   );
 }
-//ssss
