@@ -1198,6 +1198,8 @@ export const ko = {
   'Đã kết nối Telegram': '텔레그램 연결됨',
   'Đã mở Telegram — bấm Start để hoàn tất kết nối.': '텔레그램이 열렸습니다 — Start를 눌러 연결을 완료하세요.',
   'Lỗi kết nối Telegram': '텔레그램 연결 오류',
+  'Đổi kết nối Telegram': '텔레그램 연결 변경',
+  'Mở Telegram và bấm Start để thay bằng tài khoản mới.': '텔레그램을 열고 Start를 눌러 새 계정으로 교체하세요.',
   'Khi bạn trở lại sớm hơn dự kiến hoặc muốn đổi người duyệt thay.': '예정보다 일찍 복귀하거나 리뷰어를 변경하고 싶을 때.',
   'Khi đơn bạn duyệt bị quá hạn mà chưa có người duyệt thay, đơn sẽ bị huỷ và trả về người tạo.': '귀하가 승인한 신청서가 기한이 지났고 검토할 사람이 없을 경우 신청서는 취소되며 작성자에게 반환됩니다.',
   'Khi đơn bạn duyệt quá hạn và luồng bật "Duyệt theo ủy quyền quá hạn", đơn tự chuyển cho người duyệt thay với một khoảng thời gian mới.': '승인한 신청서의 기한이 지났고 스트림이 "기한이 지난 승인으로 승인"이 켜지면 신청서는 자동으로 새로운 기간의 대체 검토자에게 이전됩니다.',

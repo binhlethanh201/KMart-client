@@ -1203,6 +1203,8 @@ export const en = {
   'Đã kết nối Telegram': 'Telegram connected',
   'Đã mở Telegram — bấm Start để hoàn tất kết nối.': 'Telegram opened — press Start to complete the connection.',
   'Lỗi kết nối Telegram': 'Telegram connection error',
+  'Đổi kết nối Telegram': 'Change Telegram connection',
+  'Mở Telegram và bấm Start để thay bằng tài khoản mới.': 'Telegram opened — press Start to switch to the new account.',
   'Khi bạn trở lại sớm hơn dự kiến hoặc muốn đổi người duyệt thay.': 'When you return earlier than expected or want to change reviewer.',
   'Khi đơn bạn duyệt bị quá hạn mà chưa có người duyệt thay, đơn sẽ bị huỷ và trả về người tạo.': 'When the application you approved is overdue and there is no one to review it, the application will be canceled and returned to the creator.',
   'Khi đơn bạn duyệt quá hạn và luồng bật "Duyệt theo ủy quyền quá hạn", đơn tự chuyển cho người duyệt thay với một khoảng thời gian mới.': 'When the application you approve is overdue and the stream turns on "Approve by overdue authorization", the application is automatically transferred to a replacement reviewer with a new time period.',
