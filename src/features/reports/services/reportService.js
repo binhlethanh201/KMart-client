@@ -90,7 +90,7 @@ export const reportService = {
     const params = new URLSearchParams();
     params.append('scope', scope);
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'block'].includes(key)) {
+      if (value !== null && value !== undefined && value !== '' && ['from', 'to', 'departmentId', 'block', 'documentTypeId'].includes(key)) {
         params.append(key, value);
       }
     });
