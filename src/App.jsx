@@ -14,6 +14,7 @@ import RequestDetail from "./features/requests/pages/RequestDetail";
 import ReportsPage from "./features/reports/pages/ReportsPage";
 import DelegationsTab from "./features/system-config/components/DelegationsTab";
 import TimeoutDelegatePage from "./features/system-config/components/TimeoutDelegatePage";
+import DocsPage from "./features/docs/pages/DocsPage";
 
 import ToastHost from "./components/ToastHost";
 import LoginPage from "./features/auth/pages/LoginPage";
@@ -191,6 +192,9 @@ function App() {
                 <Route path="my-requests/approvals" element={<PersonalRequests mode="received" />} />
                 {/* BE-15: "Đơn cần bổ sung" đã gộp vào "Đơn từ cá nhân" -> chuyển hướng URL cũ */}
                 <Route path="my-requests/supplements" element={<Navigate to="/my-requests" replace />} />
+
+                {/* DOCS-01: trang hướng dẫn sử dụng hệ thống (đọc từ public/docs/HUONG-DAN.md). */}
+                <Route path="docs" element={<DocsPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

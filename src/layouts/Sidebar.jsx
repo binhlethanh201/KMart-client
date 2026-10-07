@@ -268,6 +268,12 @@ const NAV_ITEMS = [
     matchPaths: ['/settings'],
     permission: 'ROLE_VIEW',
   },
+  {
+    // DOCS-01: trang hướng dẫn sử dụng hệ thống — mở cho mọi tài khoản đã đăng nhập.
+    name: 'Hướng dẫn',
+    icon: 'menu_book',
+    path: '/docs',
+  },
 ];
 
 /**
