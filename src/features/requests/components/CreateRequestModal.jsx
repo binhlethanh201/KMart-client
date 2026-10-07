@@ -423,6 +423,18 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
     }
   }, [firstStepCandidates, selectedApproverId]);
 
+  // WF-07: truyền thẳng object người duyệt đang chỉ định cho sơ đồ luồng để sơ đồ
+  // hiện đúng tên người được chọn, không phụ thuộc danh sách nhân sự tải kịp hay không.
+  // Luồng "chỉ định 1 người" (specific_user) KHÔNG có ô chọn nên selectedApproverId luôn
+  // rỗng — khi đó lấy đúng ứng viên duy nhất mà form đang hiển thị dạng chip.
+  const selectedApprover = useMemo(() => {
+    if (selectedApproverId) {
+      return firstStepCandidates.find((c) => c.id === selectedApproverId) || null;
+    }
+    if (isSpecificFlow && firstStepCandidates.length === 1) return firstStepCandidates[0];
+    return null;
+  }, [firstStepCandidates, selectedApproverId, isSpecificFlow]);
+
   // BE-17: không bắt chọn người riêng lẻ với luồng sắp xếp; backend chốt theo phòng ban hoặc danh sách cấu hình.
   const mustPickApprover = false;
 
@@ -1011,6 +1023,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                     employees={employees}
                     currentUser={currentUser}
                     selectedApproverId={selectedApproverId}
+                    selectedApprover={selectedApprover}
                     departmentsSelected={form.departments}
                     variant="inline"
                   />
@@ -1064,6 +1077,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                     employees={employees}
                     currentUser={currentUser}
                     selectedApproverId={selectedApproverId}
+                    selectedApprover={selectedApprover}
                     departmentsSelected={form.departments}
                     variant="full"
                   />
