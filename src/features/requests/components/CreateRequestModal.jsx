@@ -44,7 +44,7 @@ function validateAttachment(file, t) {
 
 export default function CreateRequestModal({ onClose, existingRequest = null, onSubmitted }) {
   const { t } = useI18n();
-  const { createRequest, updateRequest, departments, currentUser, pushToast } = useApproval();
+  const { createRequest, updateRequest, submitDraft, retryDraftUploads, finalizePendingDraft, departments, currentUser, pushToast } = useApproval();
   const { employees } = useHr();
 
   // Chế độ bổ sung: mở lại đơn đang ở trạng thái "Yêu cầu bổ sung" để sửa rồi gửi lại
@@ -97,6 +97,12 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
   const [files, setFiles] = useState({});
   /** BE-89: đang gửi đơn bổ sung — dùng để chặn bấm gửi hai lần. */
   const [saving, setSaving] = useState(false);
+  /** PROD-UP1: upload tệp đính kèm lỗi — { draftId, failed:[{file,message}], isNew }. */
+  const [uploadIssue, setUploadIssue] = useState(null);
+  /** PROD-UP1: draft đã tạo (khi upload lỗi ở luồng tạo mới) — gửi lại phải UPDATE, không tạo trùng. */
+  const draftIdRef = useRef(null);
+  /** PROD-UP1: các File đã upload thành công — không upload lặp lại lần gửi sau. */
+  const uploadedFilesRef = useRef(new Set());
 
   /*
    * BE-146: ủy quyền ĐANG HIỆU LỰC của người tạo đơn (nếu có).
@@ -558,18 +564,34 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
     // BE-09: File thật để provider upload sau khi có applicationId
     // (applicationService.create chỉ đọc các field nó cần nên key này không lọt ra BE)
-    const pendingFiles = Object.values(files);
+    // PROD-UP1: bỏ qua các file ĐÃ upload thành công ở lần thử trước (tránh đính kèm trùng).
+    const pendingFiles = Object.values(files).filter((f) => !uploadedFilesRef.current.has(f));
     if (pendingFiles.length > 0) {
       payload.attachments = pendingFiles;
     }
+
+    // Ghi nhận file upload thành công = số file đã thử trừ đi số file lỗi provider trả về.
+    const trackUploaded = (attempted, failed) => {
+      const failedSet = new Set((failed || []).map((x) => x.file));
+      attempted.forEach((f) => { if (!failedSet.has(f)) uploadedFilesRef.current.add(f); });
+    };
 
     if (isEdit) {
       // BE-15/BE-89: chỉ đóng form khi máy chủ đã nhận. Lỗi thì giữ nguyên nội dung đã nhập để sửa.
       setSaving(true);
       try {
-        await updateRequest(existingRequest.id, payload);
-        if (onSubmitted) onSubmitted();
-        onClose();
+        const result = await updateRequest(existingRequest.id, payload);
+        // PROD-UP1: upload tệp lỗi -> hỏi người dùng, KHÔNG submit âm thầm thiếu tệp.
+        if (result?.status === 'upload_failed') {
+          trackUploaded(pendingFiles, result.failed);
+          setUploadIssue({ draftId: result.draftId, failed: result.failed, isNew: false });
+          return;
+        }
+        if (result?.status === 'submitted') {
+          if (onSubmitted) onSubmitted();
+          onClose();
+        }
+        // 'error': provider đã toast — giữ form để sửa tiếp (BE-15)
       } catch (err) {
         setFieldErrors({ __submit: describeApiError(err, t, 'Không gửi được đơn bổ sung') });
       } finally {
@@ -578,8 +600,78 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
       return;
     }
 
-    createRequest(payload);
-    onClose();
+    // PROD-UP1: luồng tạo mới — nếu lần gửi trước upload lỗi thì draft ĐÃ tồn tại,
+    // lần này UPDATE lại draft đó thay vì tạo draft mới trùng lặp.
+    setSaving(true);
+    try {
+      const result = draftIdRef.current
+        ? await finalizePendingDraft(draftIdRef.current, payload, pendingFiles)
+        : await createRequest(payload);
+      if (result?.status === 'upload_failed') {
+        trackUploaded(pendingFiles, result.failed);
+        draftIdRef.current = result.draftId;
+        setUploadIssue({ draftId: result.draftId, failed: result.failed, isNew: true });
+        return;
+      }
+      if (result?.status === 'submitted') {
+        if (onSubmitted) onSubmitted();
+        onClose();
+      }
+      // 'error': provider đã toast — giữ form để sửa tiếp
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // PROD-UP1: 3 lựa chọn trong dialog khi upload tệp đính kèm thất bại.
+  const handleRetryUploads = async () => {
+    if (!uploadIssue) return;
+    setSaving(true);
+    try {
+      const result = await retryDraftUploads(uploadIssue.draftId, uploadIssue.failed);
+      if (result.status === 'ok') {
+        uploadIssue.failed.forEach((f) => uploadedFilesRef.current.add(f.file));
+        const sub = await submitDraft(uploadIssue.draftId, {
+          isNew: uploadIssue.isNew,
+          successMessage: uploadIssue.isNew ? undefined : t('Đã bổ sung và gửi lại đơn'),
+        });
+        setUploadIssue(null);
+        if (sub.status === 'submitted') {
+          if (onSubmitted) onSubmitted();
+          onClose();
+        }
+      } else {
+        setUploadIssue(result); // vẫn lỗi -> cập nhật nội dung dialog
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSendWithoutFiles = async () => {
+    if (!uploadIssue) return;
+    setSaving(true);
+    try {
+      const names = uploadIssue.failed.map((f) => f.file?.name).filter(Boolean).join(', ');
+      const sub = await submitDraft(uploadIssue.draftId, {
+        isNew: uploadIssue.isNew,
+        successMessage: uploadIssue.isNew ? undefined : t('Đã bổ sung và gửi lại đơn'),
+      });
+      setUploadIssue(null);
+      if (sub.status === 'submitted') {
+        // Cảnh báo RÕ RÀNG (không phải toast 3s mập mờ như trước) rằng đơn đi thiếu tệp.
+        if (names) pushToast(t('Đã gửi đơn KHÔNG kèm các tệp: {v0}', { v0: names }), 'warning', { resolved: true });
+        if (onSubmitted) onSubmitted();
+        onClose();
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStayAndEdit = () => {
+    setUploadIssue(null); // giữ draftIdRef — lần bấm "Gửi yêu cầu" sau sẽ update draft đó
+    pushToast(t('Đơn đang ở trạng thái Nháp — sửa xong bấm "Gửi yêu cầu" để tiếp tục.'), 'info', { resolved: true });
   };
 
   return createPortal(
@@ -1114,6 +1206,64 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             </button>
           </div>
         </div>
+
+        {/* PROD-UP1: upload tệp đính kèm thất bại — bắt buộc hỏi người dùng trước khi gửi,
+            không còn cảnh đơn được submit âm thầm mà thiếu tài liệu. */}
+        {uploadIssue && (
+          <div
+            className="fixed inset-0 z-[110] bg-black/40 flex items-center justify-center p-4"
+            role="alertdialog"
+            aria-modal="true"
+          >
+            <div className="bg-surface rounded-lg shadow-xl w-full max-w-md p-6 flex flex-col gap-4">
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-error text-[24px]">upload_file</span>
+                <div>
+                  <h3 className="font-headline-sm text-headline-sm text-on-surface">
+                    {t('Không tải lên được tệp đính kèm')}
+                  </h3>
+                  <p className="text-sm text-on-surface-variant mt-1">
+                    {t('Đơn đã được lưu ở trạng thái Nháp. Bạn muốn xử lý thế nào?')}
+                  </p>
+                </div>
+              </div>
+              <ul className="flex flex-col gap-1.5 max-h-32 overflow-y-auto text-sm">
+                {uploadIssue.failed.map((f, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-on-error-container">
+                    <span className="material-symbols-outlined text-[16px] mt-0.5 shrink-0">error</span>
+                    <span>{f.message}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleStayAndEdit}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-md border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {t('Ở lại chỉnh sửa')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRetryUploads}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-md border border-primary text-primary hover:bg-primary-container/20 transition-colors font-medium cursor-pointer disabled:opacity-50"
+                >
+                  {t('Thử tải lại')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendWithoutFiles}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50"
+                >
+                  {saving ? t('Đang gửi...') : t('Gửi không kèm tệp')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body
