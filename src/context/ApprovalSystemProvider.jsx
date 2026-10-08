@@ -134,36 +134,100 @@ export function ApprovalSystemProvider({ children }) {
 
   // BE-09: upload file đính kèm. Backend cần applicationId để gắn file nên bắt buộc
   // phải chạy SAU khi tạo/cập nhật đơn và TRƯỚC khi submit.
-  // Một file lỗi không được chặn cả đơn -> báo lỗi rồi đi tiếp.
+  // PROD-UP1: KHÔNG tự nuốt lỗi rồi đi tiếp nữa (trước đây file lỗi chỉ hiện toast 3s,
+  // đơn vẫn được submit -> mất tài liệu âm thầm). Trả về danh sách file lỗi để caller
+  // (CreateRequestModal) hỏi người dùng: thử lại / gửi không kèm tệp / ở lại sửa.
   const uploadAttachments = useCallback(
     async (applicationId, files) => {
-      if (!files || files.length === 0) return;
-      for (const file of files) {
+      const failed = [];
+      for (const file of files || []) {
         try {
           await applicationService.uploadAttachment(applicationId, file);
         } catch (err) {
           console.error('Failed to upload attachment', file?.name, err);
-          const msg = describeApiError(err, t, 'Không tải lên được "{v0}"', { v0: file?.name || 'file' });
-          pushToast(msg, 'error');
+          failed.push({
+            file,
+            message: describeApiError(err, t, 'Không tải lên được "{v0}"', { v0: file?.name || 'file' }),
+          });
         }
       }
+      return failed;
     },
-    [pushToast]
+    [t]
+  );
+
+  // PROD-UP1: submit một draft đang chờ (sau khi người dùng chọn "Thử tải lại" thành công
+  // hoặc "Gửi không kèm tệp" trong dialog). isNew=true -> thêm vào đầu danh sách cục bộ.
+  const submitDraft = useCallback(
+    async (draftId, { isNew = true, successMessage } = {}) => {
+      try {
+        const submitted = await applicationService.submit(draftId);
+        setRequests((list) =>
+          isNew
+            ? [submitted, ...list]
+            : list.map((r) => (r.id === draftId ? { ...submitted, _isPendingReq: r._isPendingReq } : r))
+        );
+        pushToast(successMessage || t('Đã tạo đề xuất {v0}', { v0: submitted.id }), 'success');
+        return { status: 'submitted', id: submitted.id };
+      } catch (err) {
+        pushToast(describeApiError(err, t, 'Lỗi tạo đề xuất'), 'error');
+        console.error(err);
+        return { status: 'error' };
+      }
+    },
+    [pushToast, t]
+  );
+
+  // PROD-UP1: thử upload lại đúng những file đã lỗi trên draft đang giữ.
+  const retryDraftUploads = useCallback(
+    async (draftId, failed) => {
+      const failedAgain = await uploadAttachments(draftId, failed.map((f) => f.file));
+      return failedAgain.length === 0
+        ? { status: 'ok' }
+        : { status: 'upload_failed', draftId, failed: failedAgain };
+    },
+    [uploadAttachments]
+  );
+
+  // PROD-UP1: người dùng chọn "Ở lại chỉnh sửa" rồi bấm Gửi lần nữa — draft đã tồn tại
+  // nên phải UPDATE draft cũ (không tạo draft mới trùng lặp) rồi mới submit.
+  // filesToUpload chỉ chứa các file CHƯA upload thành công ở lần trước.
+  const finalizePendingDraft = useCallback(
+    async (draftId, payload, filesToUpload) => {
+      try {
+        await applicationService.update(draftId, payload);
+        const failed = await uploadAttachments(draftId, filesToUpload);
+        if (failed.length > 0) {
+          return { status: 'upload_failed', draftId, failed };
+        }
+        return await submitDraft(draftId, { isNew: true });
+      } catch (err) {
+        pushToast(describeApiError(err, t, 'Lỗi tạo đề xuất'), 'error');
+        console.error(err);
+        return { status: 'error' };
+      }
+    },
+    [uploadAttachments, submitDraft, pushToast, t]
   );
 
   // Build a fresh request from modal form data.
+  // PROD-UP1: trả về { status } thay vì id — 'upload_failed' nghĩa là đơn ĐANG Ở DRAFT,
+  // modal phải hỏi người dùng trước khi submit, KHÔNG được gửi đơn thiếu tệp âm thầm.
   const createRequest = useCallback(
     async (data) => {
       try {
         // Create draft
         const req = await applicationService.create(data);
         // BE-09: đính kèm file thật (trước đây chỉ lưu TÊN file vào form data)
-        await uploadAttachments(req.id, data.attachments);
+        const failed = await uploadAttachments(req.id, data.attachments);
+        if (failed.length > 0) {
+          return { status: 'upload_failed', draftId: req.id, failed };
+        }
         // Automatically submit
         const submitted = await applicationService.submit(req.id);
         setRequests((r) => [submitted, ...r]);
         pushToast(t('Đã tạo đề xuất {v0}', { v0: submitted.id }), 'success');
-        return submitted.id;
+        return { status: 'submitted', id: submitted.id };
       } catch (err) {
         let msg = t('Lỗi tạo đề xuất');
         if (err.response?.data?.errors) {
@@ -176,9 +240,10 @@ export function ApprovalSystemProvider({ children }) {
         }
         pushToast(msg, 'error');
         console.error(err);
+        return { status: 'error' };
       }
     },
-    [pushToast, uploadAttachments]
+    [pushToast, uploadAttachments, t]
   );
 
   const approveRequest = useCallback(
@@ -206,23 +271,28 @@ export function ApprovalSystemProvider({ children }) {
   );
 
   // Bổ sung thông tin cho đơn bị trả về (NeedsSupplement) rồi gửi lại cho người duyệt
+  // PROD-UP1: giống createRequest — upload lỗi thì dừng trước submit, trả 'upload_failed'.
   const updateRequest = useCallback(
     async (reqId, data) => {
       try {
         await applicationService.update(reqId, data);
         // BE-09: bổ sung thêm file đính kèm (nếu có) trước khi gửi lại
-        await uploadAttachments(reqId, data.attachments);
+        const failed = await uploadAttachments(reqId, data.attachments);
+        if (failed.length > 0) {
+          return { status: 'upload_failed', draftId: reqId, failed };
+        }
         const submitted = await applicationService.submit(reqId);
         setRequests((list) => list.map((r) => (r.id === reqId ? { ...submitted, _isPendingReq: r._isPendingReq } : r)));
         pushToast(t('Đã bổ sung và gửi lại đơn'), 'success');
-        return submitted.id;
+        return { status: 'submitted', id: submitted.id };
       } catch (err) {
         const msg = describeApiError(err, t, 'Lỗi khi cập nhật đơn');
         pushToast(msg, 'error');
         console.error(err);
+        return { status: 'error' };
       }
     },
-    [pushToast, uploadAttachments]
+    [pushToast, uploadAttachments, t]
   );
 
   const rejectRequest = useCallback(
@@ -438,6 +508,9 @@ export function ApprovalSystemProvider({ children }) {
       requests,
       createRequest,
       updateRequest,
+      submitDraft,
+      retryDraftUploads,
+      finalizePendingDraft,
       approveRequest,
       rejectRequest,
       cancelRequest,
@@ -459,7 +532,7 @@ export function ApprovalSystemProvider({ children }) {
       pushToast,
       dismissToast,
     }),
-    [currentUser, currentUserId, requests, createRequest, updateRequest, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, departmentsLoading, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
+    [currentUser, currentUserId, requests, createRequest, updateRequest, submitDraft, retryDraftUploads, finalizePendingDraft, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, departmentsLoading, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
   );
 
   return <ApprovalSystemContext.Provider value={value}>{children}</ApprovalSystemContext.Provider>;
