@@ -1103,6 +1103,7 @@ export const en = {
   'Chưa chọn': 'Not selected yet',
   'Chưa có bước duyệt nào để lưu. Hãy bấm "Thêm bước duyệt tiếp theo" cho khối cần cấu hình rồi lưu lại.': 'There are no steps to save yet. Click "Add next step" for the block to be configured and then save.',
   'Chưa có ủy quyền. Tạo ủy quyền tạm thời để người khác duyệt đơn thay bạn.': 'No delegation yet. Create a temporary delegation so someone else can approve requests for you.',
+  'Chưa lưu lên máy chủ': 'Not saved to the server yet',
   'Chưa ủy quyền cho ai': 'Haven\'t authorized anyone yet',
   'Chưa xác định được người duyệt': 'The reviewer has not been identified',
   'Chức danh (Role)': 'Position (Role)',
