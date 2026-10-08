@@ -109,7 +109,16 @@ export default function FormTemplatesTab() {
     return [...serverCats, ...manual];
   };
 
-  const handleSaveToServer = async () => {
+  /**
+   * Ghi cấu hình trường lên server: lưu danh sách trường, sau đó xử lý file mẫu đang chờ
+   * (upload file mới chọn / gỡ file mẫu HR đã xoá trong modal cấu hình).
+   *
+   * Nhận `fieldList` TƯỜNG MINH vì hàm này còn được gọi ngay sau khi modal "Lưu cấu hình" cập nhật
+   * state — lúc đó `fields[selectedForm]` trong closure vẫn là bản cũ (chưa có file mẫu vừa chọn).
+   */
+  const saveFieldsToServer = async (fieldList) => {
+    const localFields = Array.isArray(fieldList) ? fieldList : [];
+
     let currentDocType = documentTypes.find(d => d.name === selectedForm);
     if (!currentDocType) {
       try {
@@ -117,11 +126,10 @@ export default function FormTemplatesTab() {
         setDocumentTypes(prev => [...prev, currentDocType]);
       } catch {
         pushToast(t('Lỗi khi tạo mẫu đơn "{v0}" trên hệ thống', { v0: selectedForm }), 'error');
-        return;
+        return false;
       }
     }
 
-    const localFields = fields[selectedForm] || [];
     const payload = localFields.map((f, i) => ({
       name: f.id || `field_${i}`, // Ensure a name is set
       label: f.label,
@@ -138,19 +146,33 @@ export default function FormTemplatesTab() {
 
       // Field đã tồn tại trên BE — thực hiện các thao tác file mẫu đang chờ:
       // upload file mới chọn / gỡ file mẫu mà HR đã xoá trong modal cấu hình.
+      let hasFailedField = false;
       for (const f of localFields) {
         if (f.type !== 'Tải file' || (!f.pendingTemplateFile && !f.pendingTemplateDelete)) continue;
         try {
           if (f.pendingTemplateFile) {
-            await documentTypeService.uploadTemplateFile(currentDocType.id, f.id, f.pendingTemplateFile);
+            const savedField = await documentTypeService.uploadTemplateFile(currentDocType.id, f.id, f.pendingTemplateFile);
+            // Hiển thị đúng tên file theo dữ liệu server trả về (nguồn sự thật duy nhất).
+            if (savedField?.templateFileName) {
+              const fileName = savedField.templateFileName;
+              setFields((prev) => ({
+                ...prev,
+                [selectedForm]: (Array.isArray(prev[selectedForm]) ? prev[selectedForm] : []).map((item) => (
+                  item.id === f.id ? { ...item, templateFile: { name: fileName } } : item
+                )),
+              }));
+            }
           } else {
             await documentTypeService.deleteTemplateFile(currentDocType.id, f.id);
           }
         } catch (err) {
+          hasFailedField = true;
           pushToast(describeApiError(err, t, 'Lỗi khi lưu file mẫu của trường "{v0}"', { v0: f.label || f.id }), 'error');
-          return; // giữ cờ pending để HR bấm lưu lần nữa là thử lại
+          break; // giữ cờ pending để HR bấm lưu lần nữa là thử lại
         }
       }
+
+      if (hasFailedField) return false;
 
       // File mẫu đã chốt trên BE — gỡ cờ pending khỏi state cục bộ.
       setFields((prev) => ({
@@ -163,13 +185,18 @@ export default function FormTemplatesTab() {
       }));
 
       pushToast(t('Đã lưu cấu hình lên Server thành công!'), 'success');
+      return true;
     } catch (err) {
       console.error(err);
       pushToast(t('Lỗi khi lưu cấu hình lên Server'), 'error');
+      return false;
     } finally {
       setIsSaving(false);
     }
   };
+
+  /** Nút "Lưu đồng bộ DB": lưu đúng danh sách trường đang hiển thị. */
+  const handleSaveToServer = () => saveFieldsToServer(fields[selectedForm] || []);
 
   const [selectedForm, setSelectedForm] = useState(() => Object.keys(fields)[0] || '');
 
@@ -397,26 +424,33 @@ export default function FormTemplatesTab() {
     }
   };
 
-  const handleSaveTypeModal = () => {
-    if (editingTypeIdx !== null) {
-      const f = current[editingTypeIdx];
-      // Chỉ giữ file mẫu khi kiểu dữ liệu còn là "Tải file".
-      const keepTemplate = tempType === 'Tải file' ? tempTemplateFile : null;
-      // Không dùng localStorage nữa: file mới chọn (keepTemplate.file) sẽ được upload
-      // lên BE ở handleSaveToServer; việc gỡ file mẫu cũng thực hiện phía server.
-      updateField(editingTypeIdx, {
-        label: tempLabel,
-        type: tempType,
-        options: tempOptions,
-        displayStyle: tempDisplayStyle,
-        templateFile: keepTemplate ? { name: keepTemplate.name } : null,
-        pendingTemplateFile: keepTemplate?.file || null,
-        pendingTemplateDelete: !keepTemplate && !!f.templateFile?.name,
-        isPersisted: tempType === 'Tải file' ? false : (f.isPersisted !== undefined ? f.isPersisted : true),
-      });
-      setEditingTypeIdx(null);
-      pushToast(t('Đã cập nhật cấu hình trường'), 'success');
-    }
+  const handleSaveTypeModal = async () => {
+    if (editingTypeIdx === null) return;
+    const f = current[editingTypeIdx];
+    // Chỉ giữ file mẫu khi kiểu dữ liệu còn là "Tải file".
+    const keepTemplate = tempType === 'Tải file' ? tempTemplateFile : null;
+    const patched = {
+      label: tempLabel,
+      type: tempType,
+      options: tempOptions,
+      displayStyle: tempDisplayStyle,
+      templateFile: keepTemplate ? { name: keepTemplate.name } : null,
+      pendingTemplateFile: keepTemplate?.file || null,
+      pendingTemplateDelete: !keepTemplate && !!f.templateFile?.name,
+      isPersisted: tempType === 'Tải file' ? false : (f.isPersisted !== undefined ? f.isPersisted : true),
+    };
+    const nextFields = current.map((item, i) => (i === editingTypeIdx ? { ...item, ...patched } : item));
+    setFields((prev) => ({ ...prev, [selectedForm]: nextFields }));
+    setEditingTypeIdx(null);
+
+    /*
+     * FIX (file mẫu mất sau khi tải lại trang): trước đây "Lưu cấu hình" chỉ sửa state cục bộ,
+     * file mẫu vừa chọn chỉ được upload khi HR bấm thêm nút "Lưu đồng bộ DB". Nếu HR tải lại trang
+     * (hoặc hiểu là đã lưu xong) thì file mẫu biến mất: server không có file, nên người tạo đơn cũng
+     * không thấy nút "Tải biểu mẫu". Nay lưu cấu hình trường là ghi thẳng lên server (trường + file mẫu)
+     * — thông báo thành công/lỗi do saveFieldsToServer hiển thị.
+     */
+    await saveFieldsToServer(nextFields);
   };
 
   const addTempOption = () => setTempOptions([...tempOptions, t('Lựa chọn {v0}', { v0: tempOptions.length + 1 })]);
@@ -710,6 +744,13 @@ export default function FormTemplatesTab() {
                     {f.type === 'Tải file' && f.templateFile?.name && (
                       <div className="text-[10px] text-secondary mt-1 ml-1 truncate max-w-[180px]">
                         {t('File mẫu:')} {f.templateFile.name}
+                      </div>
+                    )}
+                    {/* File mẫu chỉ nằm trong phiên (upload lên server thất bại / chưa ghi được) —
+                        cảnh báo rõ để HR không tưởng là đã lưu rồi tải lại trang. */}
+                    {f.type === 'Tải file' && f.pendingTemplateFile && (
+                      <div className="text-[10px] text-error mt-0.5 ml-1 truncate max-w-[180px]">
+                        {t('Chưa lưu lên máy chủ')}
                       </div>
                     )}
                   </td>

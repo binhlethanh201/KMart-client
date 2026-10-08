@@ -1091,6 +1091,7 @@ export const ko = {
   'Chưa chọn': '아직 선택되지 않음',
   'Chưa có bước duyệt nào để lưu. Hãy bấm "Thêm bước duyệt tiếp theo" cho khối cần cấu hình rồi lưu lại.': '아직 저장할 단계가 없습니다. 구성할 블록에 대해 "다음 단계 추가"를 클릭한 후 저장합니다.',
   'Chưa có ủy quyền. Tạo ủy quyền tạm thời để người khác duyệt đơn thay bạn.': '위임이 없습니다. 다른 사람이 대신 결재할 수 있도록 임시 위임을 만들어 보세요.',
+  'Chưa lưu lên máy chủ': '아직 서버에 저장되지 않았습니다.',
   'Chưa ủy quyền cho ai': '아직 승인한 사람이 없습니다.',
   'Chưa xác định được người duyệt': '리뷰어가 확인되지 않았습니다.',
   'Chức danh (Role)': '직위(역할)',
