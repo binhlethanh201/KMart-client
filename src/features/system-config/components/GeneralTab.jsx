@@ -221,9 +221,11 @@ export default function GeneralTab() {
               <button
                 onClick={handleSaveGeneral}
                 disabled={savingGeneral}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-md hover:bg-primary/90 transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <span className="material-symbols-rounded text-[20px]">save</span>
+                <span className={`material-symbols-outlined text-[18px] ${savingGeneral ? 'animate-spin' : ''}`}>
+                  {savingGeneral ? 'progress_activity' : 'save'}
+                </span>
                 <span>{savingGeneral ? t('Đang lưu...') : t('Lưu cấu hình')}</span>
               </button>
             </div>
