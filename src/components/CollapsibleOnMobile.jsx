@@ -9,22 +9,23 @@ import { useI18n } from '../i18n/I18nProvider';
  * luôn hiển thị như cũ; dưới md chỉ còn một hàng nút bấm để mở/đóng khu lọc.
  *
  * - `title`: nhãn chuỗi nguồn (đã có trong bảng dịch), VD 'Bộ lọc'.
+ * - `icon`: tên icon Material Symbols hiện trước nhãn (mặc định 'tune').
  * - `count`: số điều kiện đang áp dụng, hiện cạnh nhãn để khỏi mở ra vẫn biết.
  * - `defaultOpen`: mặc định mở (mặc định đóng trên mobile).
  */
-export default function CollapsibleOnMobile({ title = 'Bộ lọc', count = 0, defaultOpen = false, children }) {
+export default function CollapsibleOnMobile({ title = 'Bộ lọc', icon = 'tune', count = 0, defaultOpen = false, className = '', children }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="w-full">
+    <div className={`w-full ${className}`}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         className="md:hidden flex items-center gap-2 w-full px-1 py-2 text-sm font-semibold text-on-surface-variant cursor-pointer"
       >
-        <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">tune</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">{icon}</span>
         <span>{t(title)}</span>
         {count > 0 && (
           <span className="text-[11px] font-bold text-primary bg-primary/10 rounded-full px-2 py-0.5">

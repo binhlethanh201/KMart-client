@@ -170,7 +170,7 @@ export default function DrillTable({ query }) {
             </span>
           </div>
         )}
-        <table className={`w-full text-left min-w-[900px] transition-opacity ${loading && items.length > 0 ? 'opacity-50' : 'opacity-100'}`}>
+        <table className={`stack-grid w-full text-left sm:min-w-[900px] transition-opacity ${loading && items.length > 0 ? 'opacity-50' : 'opacity-100'}`}>
           <thead>
             <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-[#eeece7]">
               <th className="py-3 pr-4 font-bold">{t('Mã đơn')}</th>
@@ -196,20 +196,22 @@ export default function DrillTable({ query }) {
                 onClick={() => navigate(`/requests/${a.id}`)}
                 className="border-b border-[#f4f2ee] hover:bg-[#faf9f7] cursor-pointer transition-colors"
               >
-                <td className="py-3 pr-4 text-[12px] font-mono font-semibold text-[#1d1d1f]">
+                <td data-label={t('Mã đơn')} className="py-3 pr-4 text-[12px] font-mono font-semibold text-[#1d1d1f]">
                   {(a.code || a.id || '').toString().substring(0, 8).toUpperCase()}
                 </td>
-                <td className="py-3 pr-4 text-[12px] text-[#1d1d1f]">{t(a.documentTypeName || '—')}</td>
-                <td className="py-3 pr-4 text-[12px] font-mono text-gray-500">
-                  {a.applicantCode || (a.applicantId || '').toString().substring(0, 8).toUpperCase() || '—'}
+                <td data-label={t('Loại đơn')} className="py-3 pr-4 text-[12px] text-[#1d1d1f]">{t(a.documentTypeName || '—')}</td>
+                <td data-label={t('Mã nhân sự')} className="py-3 pr-4 text-[12px] font-mono text-gray-500">
+                  {/* RPT-01: mã nhân sự do máy chủ trả về (`applicantCode`); DTO không có
+                      `applicantId` nên trước đây nhánh dự phòng đó là code chết. */}
+                  {a.applicantCode || '—'}
                 </td>
-                <td className="py-3 pr-4 text-[12px] text-gray-600">{a.applicantName || '—'}</td>
-                <td className="py-3 pr-4 text-[12px] text-gray-600">{t(a.departmentName || '—')}</td>
-                <td className="py-3 pr-4 text-[12px] text-gray-600">{t(a.positionName || '—')}</td>
-                <td className="py-3 pr-4 text-[12px] text-gray-600">
+                <td data-label={t('Người tạo')} className="py-3 pr-4 text-[12px] text-gray-600">{a.applicantName || '—'}</td>
+                <td data-label={t('Phòng ban')} className="py-3 pr-4 text-[12px] text-gray-600">{t(a.departmentName || '—')}</td>
+                <td data-label={t('Chức vụ')} className="py-3 pr-4 text-[12px] text-gray-600">{t(a.positionName || '—')}</td>
+                <td data-label={t('Bước')} className="py-3 pr-4 text-[12px] text-gray-600">
                   {a.totalSteps ? `${a.currentStepOrder || 0}/${a.totalSteps}` : '—'}
                 </td>
-                <td className="py-3 pr-4 text-right text-[12px] text-gray-600">
+                <td data-label={t('Xử lý (giờ)')} className="py-3 pr-4 text-right text-[12px] text-gray-600">
                   {a.durationHours != null ? a.durationHours.toFixed(1) : '—'}
                 </td>
               </tr>

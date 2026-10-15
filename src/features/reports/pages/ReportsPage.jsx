@@ -334,13 +334,19 @@ export default function ReportsPage() {
 
       {/* Phân bổ theo loại đơn & phòng ban — đặt TRƯỚC xu hướng để nhìn tổng quan trước */}
       <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))]">
-        <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8 flex flex-col h-[420px]">
+        <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8 flex flex-col h-auto sm:h-[420px]">
           <div className="flex items-start justify-between gap-3 mb-6">
             <h3 className="text-xs font-bold uppercase tracking-widest text-accent">
               {t('Đơn đã duyệt theo loại đơn')}
             </h3>
             <ExportTableButton table="byType" filters={query} filePrefix="DonDaDuyet_TheoLoaiDon" />
           </div>
+          {/*
+            * MOBILE-01: trên điện thoại thẻ này để chiều cao TỰ ĐỘNG (h-auto) — trước đây cố định
+            * 420px nên khi danh sách dài (hoặc tiêu đề xuống 2 dòng) nội dung tràn ra ngoài thẻ và
+            * đè lên khối bên dưới. Từ màn sm trở lên vẫn giữ 420px cho 2 thẻ cao bằng nhau, và
+            * phần danh sách tự cuộn.
+            */}
           <div className="flex-1 min-h-0 overflow-y-auto pr-4 custom-scrollbar">
             {loading ? (
               <LoadingBlock />
@@ -355,14 +361,15 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8 flex flex-col h-[420px]">
+        <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8 flex flex-col h-auto sm:h-[420px]">
           <div className="flex items-start justify-between gap-3 mb-6">
             <h3 className="text-xs font-bold uppercase tracking-widest text-accent">
               {t('Đơn đã duyệt theo phòng ban')}
             </h3>
             <ExportTableButton table="byDepartment" filters={query} filePrefix="DonDaDuyet_TheoPhongBan" />
           </div>
-          <div className="flex-1 min-h-0">
+          {/* MOBILE-01: xem chú thích ở thẻ "Đơn đã duyệt theo loại đơn" phía trên. */}
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
             {loading ? (
               <LoadingBlock />
             ) : (

@@ -688,12 +688,12 @@ export default function FormTemplatesTab() {
 
       {/* Field management table */}
       <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-        <div className="px-4 py-3 border-b border-outline-variant flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
           <div>
             <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('Quản lý trường:')} {t(selectedForm)}</h3>
             <p className="text-xs text-secondary mt-0.5">{t('Cấu hình trường dữ liệu và điều kiện hiển thị động')}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={handleSaveToServer}
               disabled={isSaving}
@@ -714,7 +714,7 @@ export default function FormTemplatesTab() {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="stack-grid w-full sm:min-w-[640px] text-sm">
             <thead>
               <tr className="bg-surface-container-low text-left border-b border-outline-variant">
                 <th className="px-4 py-3 font-label-md text-on-surface-variant font-semibold uppercase tracking-wide">{t('Tên trường')}</th>
@@ -727,7 +727,7 @@ export default function FormTemplatesTab() {
             <tbody>
               {current.map((f, idx) => (
                 <tr key={f.id} className="border-b border-outline-variant/50 last:border-0 hover:bg-surface-container-low/60 transition-colors">
-                  <td className="px-4 py-3">
+                  <td data-label={t('Tên trường')} className="px-4 py-3">
                     <input 
                       type="text" 
                       aria-label={t('Tên trường / Tiêu đề câu hỏi')}
@@ -746,7 +746,7 @@ export default function FormTemplatesTab() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label={t('Kiểu dữ liệu')} className="px-4 py-3">
                     <button 
                       onClick={() => openTypeModal(idx)}
                       className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-surface-container text-secondary border border-outline-variant hover:border-primary hover:text-primary transition-colors cursor-pointer w-full justify-between"
@@ -782,10 +782,10 @@ export default function FormTemplatesTab() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label={t('Bắt buộc')} className="px-4 py-3">
                     <Toggle checked={f.required} onChange={(v) => updateField(idx, { required: v })} label={t('Bắt buộc')} />
                   </td>
-                  <td className="px-4 py-3 max-w-[320px] flex flex-col gap-3">
+                  <td data-label={t('Thiết lập nâng cao')} className="px-4 py-3 max-w-[320px] flex flex-col gap-3">
                     <div>
                       {f.type === 'Tải file' ? (
                         <div className="flex items-center gap-2 text-xs text-secondary">
@@ -808,7 +808,7 @@ export default function FormTemplatesTab() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td data-label={t('Thao tác')} className="px-4 py-3 text-center">
                     <button
                       onClick={() => removeField(idx)}
                       className="text-secondary hover:text-error hover:bg-error-container/30 p-1.5 rounded-md transition-colors cursor-pointer inline-flex items-center justify-center"

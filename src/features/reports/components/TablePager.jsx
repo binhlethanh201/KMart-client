@@ -39,19 +39,19 @@ export default function TablePager({
 
   return (
     <div
-      className={`flex items-center justify-between gap-4 flex-wrap mt-5 pt-4 ${
+      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mt-5 pt-4 ${
         isDark ? 'border-t border-white/10' : 'border-t border-[#f0eee9]'
       }`}
     >
-      <div className={`flex items-center gap-2 text-[12px] ${textClass}`}>
-        <span>{t('Hiển thị')}</span>
+      <div className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] ${textClass}`}>
+        <span className="whitespace-nowrap">{t('Hiển thị')}</span>
         <Select
           value={pageSize}
           onChange={(v) => onPageSizeChange(Number(v))}
           className={`h-8 px-2 rounded-md border text-[12px] transition-colors ${selectClass}`}
           options={PAGE_SIZE_OPTIONS.map((size) => ({ value: size, label: `${size} ${t('dòng')}` }))}
         />
-        <span>
+        <span className="w-full sm:w-auto">
           <strong className={strongClass}>{firstRow}</strong> - <strong className={strongClass}>{lastRow}</strong>
           {' '}{t('trong tổng số')} <strong className={strongClass}>{totalCount}</strong> {unitLabel || t('dòng')}
         </span>
@@ -67,7 +67,7 @@ export default function TablePager({
         >
           <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_left</span>
         </button>
-        <span>
+        <span className="whitespace-nowrap">
           {t('Trang')} <strong className={strongClass}>{page}</strong> / {totalPages}
         </span>
         <button

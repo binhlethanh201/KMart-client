@@ -17,6 +17,7 @@ import CancelRequestModal from '../components/CancelRequestModal';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 import LoadError from '../../../components/LoadError';
+import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
 
 // BE-09: định dạng dung lượng file đính kèm
 const formatFileSize = (bytes) => {
@@ -482,7 +483,8 @@ export default function RequestDetail() {
         )}
 
         {/* Action Header */}
-        <div className="px-6 py-4 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4">
+        <div className="px-4 sm:px-6 py-4 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4">
+          <CollapsibleOnMobile title="Thông tin đơn" icon="info" defaultOpen>
           <div>
             <div className="flex items-center gap-3 mb-1 flex-wrap">
               <h1 className={PAGE_TITLE_CLS}>{request.title}</h1>
@@ -513,6 +515,7 @@ export default function RequestDetail() {
               </p>
             )}
           </div>
+          </CollapsibleOnMobile>
 
           {/* Action bar */}
           <div className="flex flex-wrap items-center gap-2">
@@ -627,9 +630,9 @@ export default function RequestDetail() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-background">
+      <main className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden overflow-y-auto bg-background">
         {/* Left: detail + discussion */}
-        <div className="flex-1 overflow-y-auto p-6 border-r border-outline-variant">
+        <div className="flex-1 lg:overflow-y-auto p-4 sm:p-6 border-r border-outline-variant">
           <div className="w-full space-y-6">
             {/* BE-15: banner lý do cần bổ sung (lấy từ comment "[Yêu cầu bổ sung] ...") */}
             {isSupplementWorkflow && (
@@ -676,9 +679,9 @@ export default function RequestDetail() {
                 <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary">feed</span>
                 <h2 className="text-sm text-on-surface uppercase tracking-wide font-semibold">{t('Chi tiết Đề xuất')}</h2>
               </div>
-              {/* BE-137: cuộn ngang trên màn hẹp thay vì tràn vỡ bố cục */}
+              {/* BE-137: màn rộng cuộn ngang thay vì tràn vỡ bố cục; điện thoại xếp dọc (MOBILE-09). */}
               <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm min-w-[560px]">
+              <table className="stack-on-mobile table-fixed w-full text-left text-sm">
                 <tbody className="divide-y divide-outline-variant">
                   <tr>
                     <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest w-1/3 align-top border-r border-outline-variant">{t('Người đề xuất')}</th>
@@ -884,7 +887,7 @@ export default function RequestDetail() {
         </div>
 
         {/* Right: workflow + audit */}
-        <div className="w-full lg:w-[360px] bg-surface flex-shrink-0 flex flex-col overflow-y-auto">
+        <div className="w-full lg:w-[360px] bg-surface flex-shrink-0 flex flex-col lg:overflow-y-auto border-t lg:border-t-0 border-outline-variant">
           {/* Action reminder */}
           <div className={`border-b p-4 ${isSupplementOwner ? 'bg-pink-50/60 border-pink-200' : actionable ? 'bg-warning-container/30 border-warning/20' : 'bg-surface-container-low border-outline-variant'}`}>
             <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1 ${isSupplementOwner ? 'text-pink-700' : actionable ? 'text-warning' : 'text-secondary'}`}>
@@ -901,9 +904,12 @@ export default function RequestDetail() {
           </div>
 
           {/* BE-26: gộp "Cấp bậc Phê duyệt" + "Nhật ký hệ thống" -> 1 dòng thời gian duy nhất,
-              mỗi mốc ghi rõ người thực hiện + thời gian; UI giữ nguyên phong cách timeline cũ. */}
-          <div className="p-6">
-            <h3 className="text-xs text-secondary uppercase tracking-widest mb-4 flex items-center gap-2 font-semibold">
+              mỗi mốc ghi rõ người thực hiện + thời gian; UI giữ nguyên phong cách timeline cũ.
+              MOBILE-13: trên điện thoại khối này dài ~790px, đẩy "Lịch sử Thảo luận" xuống rất sâu
+              -> thu gọn được, mặc định MỞ vì đây là thông tin chính của trang. */}
+          <CollapsibleOnMobile title="Tiến trình xử lý" icon="account_tree" className="flex-1 min-h-0 flex flex-col" defaultOpen>
+          <div className="p-4 sm:p-6">
+            <h3 className="hidden md:flex text-xs text-secondary uppercase tracking-widest mb-4 items-center gap-2 font-semibold">
               <span aria-hidden="true" className="material-symbols-outlined text-[16px]">account_tree</span>
               {t('Tiến trình xử lý')}
             </h3>
@@ -1148,7 +1154,12 @@ export default function RequestDetail() {
                           )}
                         </div>
                         <div className="flex items-baseline justify-between gap-2 flex-1 min-w-0 py-0.5">
-                          <span className={`text-[13px] font-medium truncate ${done ? 'text-on-surface' : 'text-secondary'}`} title={person?.name}>
+                          {/*
+                            * MOBILE-07: bỏ `truncate` — trên điện thoại (không có hover nên `title`
+                            * vô dụng với cảm ứng) tên người duyệt dài bị cắt còn "Nguyễn Văn Tuấn (B...".
+                            * Cho xuống dòng thay vì cắt.
+                            */}
+                          <span className={`text-[13px] font-medium break-words min-w-0 ${done ? 'text-on-surface' : 'text-secondary'}`}>
                             {person?.name || 'User'}{isMe ? t(' (Bạn)') : ''}
                             {via && (
                               <span
@@ -1295,6 +1306,7 @@ export default function RequestDetail() {
               </ul>
             </div>
           </div>
+          </CollapsibleOnMobile>
         </div>
       </main>
 

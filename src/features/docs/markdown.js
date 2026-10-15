@@ -53,9 +53,9 @@ function renderTable(rows) {
   const body = rows.slice(1).map(cells);
   return `
     <div class="overflow-x-auto my-4 rounded-lg border border-outline-variant">
-      <table class="w-full text-left text-sm">
+      <table class="w-full text-left text-sm break-words">
         <thead class="bg-surface-container-low text-secondary">
-          <tr>${head.map((h) => `<th class="px-3 py-2 font-semibold whitespace-nowrap">${inline(h)}</th>`).join('')}</tr>
+          <tr>${head.map((h) => `<th class="px-3 py-2 font-semibold">${inline(h)}</th>`).join('')}</tr>
         </thead>
         <tbody class="divide-y divide-outline-variant/60">
           ${body.map((r) => `<tr>${r.map((c) => `<td class="px-3 py-2 align-top">${inline(c)}</td>`).join('')}</tr>`).join('')}

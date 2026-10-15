@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import NotificationBell from '../components/NotificationBell';
 import BrandLogo from '../components/BrandLogo';
+import RotateHint from '../components/RotateHint';
 import { useApproval } from '../context/useApproval';
  
 export default function MainLayout() {
@@ -40,7 +41,12 @@ export default function MainLayout() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Mobile top bar */}
-        <header className="md:hidden sticky top-0 w-full z-30 bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-4 h-16 shadow-sm">
+        {/*
+          * MOBILE-14: z-[60] để bảng thông báo xổ xuống (z-[130] nằm TRONG khung xếp lớp của
+          * thanh này) vẽ được LÊN TRÊN rail menu bên trái — rail có z-50. Hai khối không chồng
+          * nhau về hình học (thanh này chỉ rộng từ 72px trở sang phải) nên không đổi gì khác.
+          */}
+        <header className="md:hidden sticky top-0 w-full z-[60] bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-4 h-16 shadow-sm">
           <button
             className="text-on-surface-variant p-2 -ml-2 rounded-full hover:bg-surface-container-high transition-colors"
             onClick={() => setIsMobileMenuOpen((v) => !v)}
@@ -53,6 +59,7 @@ export default function MainLayout() {
         </header>
  
         <div ref={contentRef} className="flex-1 flex flex-col min-h-0">
+          <RotateHint />
           <Outlet />
         </div>
       </main>

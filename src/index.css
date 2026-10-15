@@ -83,6 +83,110 @@
     background-color: #fffefa;
     color: #111315;
   }
+
+  /*
+   * MOBILE-09: bảng NHÃN / GIÁ TRỊ (chi tiết đơn, chi tiết nhân sự…) xếp dọc trên điện thoại.
+   *
+   * Vì sao cần: vùng nội dung trên điện thoại chỉ còn ~193–287px, mà bảng nhãn/giá trị cần
+   * 560px. Trước đây nó nằm trong `overflow-x-auto` nên phải CUỘN NGANG, và vì nhãn ở cột trái
+   * còn giá trị ở cột phải nên người dùng không bao giờ nhìn thấy nhãn và giá trị cùng lúc —
+   * đúng như ảnh chụp: một dải nội dung bị cắt ngang ở giữa.
+   *
+   * Cách xử lý:
+   *  - Dưới 640px: mỗi dòng thành khối — nhãn một dòng, giá trị một dòng bên dưới.
+   *  - Từ 640px trở lên: KHÔNG đụng tới nên giao diện máy tính giữ nguyên từng chi tiết.
+   *
+   * Dùng: thêm class `stack-on-mobile` vào <table>.
+   * Lưu ý: KHÔNG đặt `min-w-[Xpx]` trên bảng này. Từ 640px tới ~1024px cột nội dung chỉ rộng
+   * 369–473px, nên `sm:min-w-[560px]` vẫn làm bảng cuộn ngang ở đúng khoảng màn hình đó. Dùng
+   * `table-fixed` để bảng luôn vừa khung, và để giá trị dài tự xuống dòng.
+   */
+  @media (max-width: 639.98px) {
+    .stack-on-mobile,
+    .stack-on-mobile tbody,
+    .stack-on-mobile tr,
+    .stack-on-mobile th,
+    .stack-on-mobile td {
+      display: block;
+      width: auto;
+      min-width: 0;
+    }
+    /* Cột nhãn: bỏ đường kẻ dọc (giờ là dòng riêng) và thu bớt khoảng trống. */
+    .stack-on-mobile th {
+      border-right-width: 0;
+      padding-bottom: 0.25rem;
+    }
+    .stack-on-mobile td {
+      padding-top: 0.25rem;
+    }
+  }
+
+  /*
+   * MOBILE-10: bảng DỮ LIỆU nhiều cột → trên điện thoại mỗi dòng thành một thẻ.
+   *
+   * Vì sao cần: bảng Nhân sự rộng 1100px, bảng Báo cáo 900px… mà vùng nội dung trên điện thoại
+   * chỉ còn 186–287px. Kéo ngang thì không bao giờ thấy đủ một dòng: đọc tên ở cột 1 rồi phải
+   * nhớ để kéo sang cột 7.
+   *
+   * Cách dùng: thêm class `stack-grid` vào <table>, đổi `min-w-[Xpx]` thành `sm:min-w-[Xpx]`
+   * (để chiều rộng tối thiểu chỉ áp dụng từ 640px) và thêm `data-label="<tên cột>"` vào TỪNG <td>.
+   * Bảng nền sẫm (Bảng điều hành) thì thêm `stack-grid-dark` để dùng màu chữ sáng.
+   * Từ 640px trở lên KHÔNG đụng tới nên giao diện máy tính giữ nguyên từng chi tiết.
+   *
+   * <thead> được giấu bằng kỹ thuật `sr-only` (không dùng `display:none`) để trình đọc màn hình
+   * vẫn đọc được tên cột cho từng ô.
+   */
+  @media (max-width: 639.98px) {
+    .stack-grid,
+    .stack-grid tbody,
+    .stack-grid tr {
+      display: block;
+      width: auto;
+    }
+    /* Ô nào tự đặt `flex` thì giữ nguyên flex — có ô chứa nhiều khối xếp dọc kèm khoảng cách. */
+    .stack-grid td:not(.flex) {
+      display: block;
+      width: auto;
+    }
+    .stack-grid thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    /* Mỗi dòng là một thẻ: chuyển khoảng đệm của ô lên thẻ cho gọn. */
+    .stack-grid tr {
+      padding: 0.75rem 1rem;
+    }
+    .stack-grid td {
+      padding: 0;
+    }
+    /* Dòng trạng thái (đang tải / trống / lỗi) trải hết cột bằng colSpan nên vẫn cần khoảng đệm. */
+    .stack-grid td[colspan] {
+      padding: 3rem 1rem;
+    }
+    .stack-grid td + td {
+      margin-top: 0.5rem;
+    }
+    .stack-grid td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      line-height: 1.4;
+      text-transform: uppercase;
+      color: var(--stack-grid-label, #6b7280);
+    }
+    .stack-grid-dark {
+      --stack-grid-label: rgb(156 163 175);
+    }
+  }
 }
 
 @layer utilities {

@@ -88,7 +88,17 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
             {t('Tất cả nhân sự')}
           </button>
         </div>
-        <ExportTableButton table="managers" filters={query} scope={rosterMode} filePrefix="BangDieuHanh" />
+        {/*
+          * RPT-01: gửi kèm từ khoá đang tìm.
+          * Trước đây file Excel luôn chứa MỌI nhân sự dù trên màn hình chỉ đang hiện một người —
+          * vì máy chủ không nhận được từ khoá của ô tìm kiếm (ô này lọc ngay trên trình duyệt).
+          */}
+        <ExportTableButton
+          table="managers"
+          filters={{ ...query, search: query_.trim() || null }}
+          scope={rosterMode}
+          filePrefix="BangDieuHanh"
+        />
       </div>
 
       {/* Tìm kiếm + lọc chức vụ ngay trong bảng (lọc tại chỗ, không gọi lại máy chủ) */}
@@ -154,7 +164,7 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[820px]">
+            <table className="stack-grid stack-grid-dark w-full text-left sm:min-w-[820px]">
               <thead>
                 <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-white/10">
                   {/* RPT-01: mã nhân sự đứng trước tên để hai người trùng họ tên phân biệt được */}
@@ -179,23 +189,23 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
                          vào hồ sơ nhân sự. Bảng giờ chỉ để xem; lọc vẫn dùng thanh bộ lọc chung. */
                       className="border-b border-white/5 transition-colors"
                     >
-                      <td className="py-3 pr-4 text-[12px] font-mono text-gray-400">
+                      <td data-label={t('Mã nhân sự')} className="py-3 pr-4 text-[12px] font-mono text-gray-400">
                         {m.code || (m.userId || '').toString().substring(0, 8).toUpperCase() || '—'}
                       </td>
-                      <td className="py-3 pr-4">
+                      <td data-label={t('Nhân sự')} className="py-3 pr-4">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0">
                             {(m.fullName || '?').trim().split(' ').slice(-1)[0].charAt(0)}
                           </div>
-                          <p className="text-[13px] font-semibold text-white truncate">{m.fullName}</p>
+                          <p className="text-[13px] font-semibold text-white sm:truncate">{m.fullName}</p>
                         </div>
                       </td>
-                      <td className="py-3 pr-4">
+                      <td data-label={t('Phòng công tác chính')} className="py-3 pr-4">
                         <span className="text-[12px] text-gray-300">{t(m.departmentName || '—')}</span>
                       </td>
-                      <td className="py-3 pr-4 text-[12px] text-gray-300">{t(m.positionName || '—')}</td>
-                      <td className="py-3 pr-4 text-right text-[15px] font-bold text-emerald-400">{m.approvedCount}</td>
-                      <td className="py-3 pr-4 text-right">
+                      <td data-label={t('Chức vụ')} className="py-3 pr-4 text-[12px] text-gray-300">{t(m.positionName || '—')}</td>
+                      <td data-label={t('Đơn được duyệt')} className="py-3 pr-4 text-right text-[15px] font-bold text-emerald-400">{m.approvedCount}</td>
+                      <td data-label={t('Trong đó đơn nghỉ')} className="py-3 pr-4 text-right">
                         <span
                           className={`text-[13px] font-bold ${m.leaveApprovedCount > 0 ? 'text-amber-300' : 'text-gray-500'}`}
                           title={t('Số đơn nghỉ phép / làm việc tại nhà đã được duyệt — căn cứ tính lương')}
@@ -203,7 +213,7 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
                           {m.leaveApprovedCount}
                         </span>
                       </td>
-                      <td className="py-3 pr-4 w-[170px]">
+                      <td data-label={t('Tỷ trọng')} className="py-3 pr-4 w-[170px]">
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                             <div
@@ -214,7 +224,7 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
                           <span className="text-[11px] text-gray-400 w-10 text-right">{share.toFixed(0)}%</span>
                         </div>
                       </td>
-                      <td className="py-3 text-right text-[12px] text-gray-300">
+                      <td data-label={t('Lần được duyệt gần nhất')} className="py-3 text-right text-[12px] text-gray-300">
                         {m.lastActionAt ? new Date(m.lastActionAt).toLocaleDateString('vi-VN') : '—'}
                       </td>
                     </tr>

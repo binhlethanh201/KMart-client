@@ -165,6 +165,7 @@ export const en = {
   'Danh sách Nhân sự': 'Staff list',
   'Thống kê Đơn từ': 'Request analytics',
   'Tìm theo mã đơn, tên nhân viên...': 'Search by request ID or staff name...',
+  'Tìm theo mã đơn, mã nhân sự, tên nhân viên...': 'Search by request ID, staff ID or staff name...',
   'Tìm theo mã, tiêu đề...': 'Search by ID or title...',
   'Loại đơn': 'Request type',
   'Loại: Tất cả': 'Type: All',
@@ -851,6 +852,8 @@ export const en = {
   'đơn nghỉ': 'Leave request',
 
   // ── BE-58: bản dịch CHỈNH TAY — luôn thắng bản tự động ở khối dưới ──
+  // ── MOBILE-12: nhắc xoay ngang màn hình khi trang còn nội dung quá rộng ──
+  'Xoay ngang màn hình để xem đầy đủ nội dung trang này.': 'Rotate your device to landscape to see this page in full.',
   // ── UX-01: chuỗi cho trạng thái "tải dữ liệu thất bại" ──
   // (dịch vụ dịch tự động trả HTTP 429 lúc thêm, nên khai báo tay ở đây)
   'Không tải được dữ liệu. Vui lòng thử lại.': 'Could not load data. Please try again.',
@@ -873,6 +876,9 @@ export const en = {
   'Không tải được danh sách nhân sự.': 'Could not load the staff list.',
   'Không tải được danh sách nhân sự của phòng ban.': 'Could not load this department\'s staff list.',
   'Không tải được đầy đủ bình luận và nhật ký duyệt của đơn này.': 'Could not fully load this request\'s comments and approval history.',
+  'Không tải được danh sách đơn từ.': 'Could not load the request list.',
+  'Không đổi được trạng thái tài khoản {v0}.': 'Could not change the account status for {v0}.',
+  'Không đổi được trạng thái tài khoản': 'Could not change the account status',
   // RPT-01: staff code column uses the existing 'Mã nhân sự' key; only the new placeholders are added here
   'Mã đơn, mã nhân sự, người tạo, phòng ban, loại đơn...': 'Request ID, staff ID, creator, department, request type...',
   'Tên, mã nhân sự, phòng công tác, chức vụ...': 'Name, staff ID, department, position...',

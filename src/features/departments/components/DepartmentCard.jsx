@@ -108,9 +108,14 @@ export default function DepartmentCard({
       
       <div className="space-y-2 mb-6 flex-1">
         {leaders.map((leader, idx) => (
-          <div key={idx} className="flex items-center gap-2 text-sm text-on-surface-variant">
+          <div key={idx} className="flex items-start gap-2 text-sm text-on-surface-variant">
             <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">badge</span>
-            <span className="truncate font-medium">{t(leader.title)}: {leader.name}</span>
+            {/*
+              * MOBILE-04: bỏ `truncate` — trên thẻ hẹp ở điện thoại, "Trưởng phòng: Hoàng Thị Phượng"
+              * bị cắt còn "Trưởng phòng: Hoàng Thị Ph..." nên không biết ai là trưởng phòng.
+              * Cho xuống dòng thay vì cắt.
+              */}
+            <span className="min-w-0 break-words font-medium">{t(leader.title)}: {leader.name}</span>
           </div>
         ))}
       </div>

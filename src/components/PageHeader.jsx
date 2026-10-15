@@ -43,7 +43,12 @@ export default function PageHeader({
             </div>
           )}
           <div className="min-w-0">
-            <h1 className={`${PAGE_TITLE_CLS} truncate`}>
+            {/*
+              * MOBILE-03: bỏ `truncate` — trên điện thoại tiêu đề dài ("Duyệt thay khi quá hạn")
+              * bị cắt còn "Duyệt thay khi quá..." nên người dùng không đọc được tên trang. Cho phép
+              * xuống dòng; thanh tiêu đề không cố định chiều cao nên vẫn gọn.
+              */}
+            <h1 className={`${PAGE_TITLE_CLS} break-words`}>
               {typeof title === 'string' ? t(title) : title}
             </h1>
             {subtitle && <p className="text-[13px] text-[#66655F] mt-1">{subtitle}</p>}

@@ -750,7 +750,7 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
     : null;
 
   return (
-    <div className="relative w-full min-w-[280px] max-w-[320px] z-[50]">
+    <div className="relative w-full min-w-0 max-w-[320px] z-[50]">
       <div 
         onClick={() => setIsOpen(!isOpen)}
         className="bg-surface-container-lowest border border-outline-variant hover:border-primary rounded-md px-3 py-2.5 flex items-center justify-between cursor-pointer transition-all shadow-sm group"
@@ -774,7 +774,7 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-[calc(100%+6px)] left-0 min-w-full w-max max-w-[400px] bg-surface rounded-lg shadow-xl border border-outline-variant z-50 overflow-hidden animate-fade-in origin-top flex flex-col">
+          <div className="absolute top-[calc(100%+6px)] left-0 w-full sm:w-max sm:min-w-full sm:max-w-[400px] bg-surface rounded-lg shadow-xl border border-outline-variant z-50 overflow-hidden animate-fade-in origin-top flex flex-col">
             <div className="max-h-[300px] overflow-y-auto custom-scrollbar w-full pb-1">
               {categories.map((cat, idx) => {
                 const catDocs = documentTypes.filter(dt => cat.items.includes(dt.name));
@@ -1981,9 +1981,11 @@ export default function WorkflowTab() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-on-surface truncate">{t(step.name)}</div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span aria-hidden="true" className="material-symbols-outlined text-muted text-[14px]">account_tree</span>
-                        <span className="text-xs text-secondary truncate">{approvalSummary(step, EMPLOYEES)}</span>
+                      <div className="flex items-start gap-1.5 mt-0.5">
+                        <span aria-hidden="true" className="material-symbols-outlined text-muted text-[14px] flex-shrink-0">account_tree</span>
+                        {/* MOBILE-05: bỏ `truncate` — trên điện thoại dòng tóm tắt dài
+                            ("Cấp quản lý trực tiếp · Trưởng phòng") bị cắt còn nửa câu. Cho xuống dòng. */}
+                        <span className="text-xs text-secondary min-w-0 break-words">{approvalSummary(step, EMPLOYEES)}</span>
                       </div>
                     </div>
                     <span className="text-[11px] text-secondary px-2 py-0.5 bg-surface-container rounded flex-shrink-0 hidden sm:inline">

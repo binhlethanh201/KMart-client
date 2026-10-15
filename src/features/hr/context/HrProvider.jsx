@@ -102,6 +102,12 @@ export function HrProvider({ children }) {
     }
   }, [t]);
 
+  /**
+   * RPT-02: trả về kết quả thay vì nuốt lỗi.
+   * Vì sao quan trọng: người gọi hiện thông báo "Đã khóa tài khoản" NGAY sau lời gọi mà không chờ
+   * kết quả. Nếu máy chủ từ chối (thiếu quyền, lỗi mạng), quản trị viên vẫn được báo là đã khóa
+   * trong khi tài khoản VẪN ĐANG hoạt động — hiểu sai về an toàn thông tin, không chỉ là lỗi hiển thị.
+   */
   const toggleLock = useCallback(async (id) => {
     try {
       const emp = employees.find(e => e.id === id);
@@ -117,11 +123,14 @@ export function HrProvider({ children }) {
             return { ...e, dbStatus: nextDb, status: e.blockedByNoPrimary ? 'inactive' : nextDb };
           })
         );
+        return { ok: true };
       }
+      return { ok: false, message: t('Không tìm thấy nhân sự.') };
     } catch (err) {
       console.error('Failed to toggle lock', err);
+      return { ok: false, message: describeApiError(err, t, 'Không đổi được trạng thái tài khoản') };
     }
-  }, [employees]);
+  }, [employees, t]);
 
   const resetPassword = useCallback(async (id) => {
     try {

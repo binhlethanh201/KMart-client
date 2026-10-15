@@ -165,6 +165,7 @@ export const ko = {
   'Danh sách Nhân sự': '인원 목록',
   'Thống kê Đơn từ': '요청서 통계',
   'Tìm theo mã đơn, tên nhân viên...': '요청 번호 또는 기안자로 검색...',
+  'Tìm theo mã đơn, mã nhân sự, tên nhân viên...': '요청 번호, 사번 또는 기안자로 검색...',
   'Tìm theo mã, tiêu đề...': '번호 또는 제목으로 검색...',
   'Loại: Tất cả': '유형: 전체',
   'Loại đơn: Tất cả': '요청 유형: 전체',
@@ -848,6 +849,8 @@ export const ko = {
   'đơn nghỉ': '휴가 신청서',
 
   // ── BE-58: bản dịch CHỈNH TAY — luôn thắng bản tự động ở khối dưới ──
+  // ── MOBILE-12: nhắc xoay ngang màn hình khi trang còn nội dung quá rộng ──
+  'Xoay ngang màn hình để xem đầy đủ nội dung trang này.': '이 페이지를 온전히 보려면 화면을 가로로 돌려주세요.',
   // ── UX-01: chuỗi cho trạng thái "tải dữ liệu thất bại" ──
   // (dịch vụ dịch tự động trả HTTP 429 lúc thêm, nên khai báo tay ở đây)
   'Không tải được dữ liệu. Vui lòng thử lại.': '데이터를 불러오지 못했습니다. 다시 시도해 주세요.',
@@ -870,6 +873,9 @@ export const ko = {
   'Không tải được danh sách nhân sự.': '인사 목록을 불러오지 못했습니다.',
   'Không tải được danh sách nhân sự của phòng ban.': '이 부서의 인사 목록을 불러오지 못했습니다.',
   'Không tải được đầy đủ bình luận và nhật ký duyệt của đơn này.': '이 신청의 댓글과 결재 이력을 모두 불러오지 못했습니다.',
+  'Không tải được danh sách đơn từ.': '신청 목록을 불러오지 못했습니다.',
+  'Không đổi được trạng thái tài khoản {v0}.': '{v0} 계정 상태를 변경하지 못했습니다.',
+  'Không đổi được trạng thái tài khoản': '계정 상태를 변경하지 못했습니다',
   // RPT-01: 사번 열은 기존 'Mã nhân sự' 키를 사용하고, 새 안내 문구만 추가
   'Mã đơn, mã nhân sự, người tạo, phòng ban, loại đơn...': '신청 번호, 사번, 작성자, 부서, 신청 유형...',
   'Tên, mã nhân sự, phòng công tác, chức vụ...': '이름, 사번, 근무 부서, 직위...',

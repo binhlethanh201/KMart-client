@@ -199,7 +199,7 @@ export default function HumanResources() {
         <div className="w-full p-4 md:p-6">
           <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1100px] text-sm">
+              <table className="stack-grid w-full sm:min-w-[1100px] text-sm">
                 <thead>
                   <tr className="bg-surface-container-low text-left border-b border-outline-variant">
                     <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Mã & Họ tên')}</th>
@@ -237,11 +237,11 @@ export default function HumanResources() {
                         onClick={() => openView(e)}
                       >
                         {/* Mã & Họ tên */}
-                        <td className="px-4 py-3">
+                        <td data-label={t('Mã & Họ tên')} className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <img className="w-9 h-9 rounded-full object-cover flex-shrink-0" src={e.avatar} alt={e.name} />
                             <div className="min-w-0">
-                              <div className="font-semibold text-on-surface truncate">{e.name}</div>
+                              <div className="font-semibold text-on-surface sm:truncate">{e.name}</div>
                               <div className="text-xs text-secondary" title={e.id}>
                                 {e.id.substring(0, 8).toUpperCase()}
                                 {/* BE-163: ngày sinh CHỈ hiển thị ở trang chi tiết nhân sự. */}
@@ -250,7 +250,7 @@ export default function HumanResources() {
                           </div>
                         </td>
                         {/* Liên hệ */}
-                        <td className="px-4 py-3">
+                        <td data-label={t('Liên hệ')} className="px-4 py-3">
                           <div className="flex flex-col gap-0.5">
                             <span className="text-on-surface flex items-center gap-1.5">
                               <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-secondary">mail</span>
@@ -263,12 +263,12 @@ export default function HumanResources() {
                           </div>
                         </td>
                         {/* Phòng ban & Chức vụ */}
-                        <td className="px-4 py-3">
+                        <td data-label={t('Phòng ban & Chức vụ')} className="px-4 py-3">
                           <div className="text-on-surface">{t(e.department)}</div>
                           <div className="text-xs text-secondary">{t(e.position)}</div>
                         </td>
                         {/* Kiêm nhiệm */}
-                        <td className="px-4 py-3">
+                        <td data-label={t('Kiêm nhiệm')} className="px-4 py-3">
                           <div className="relative">
                             {e.secondary.length === 0 ? (
                               <span className="text-xs text-on-surface-variant italic">{t('Không')}</span>
@@ -305,14 +305,14 @@ export default function HumanResources() {
                           </div>
                         </td>
                         {/* Vai trò hệ thống */}
-                        <td className="px-4 py-3">
+                        <td data-label={t('Vai trò hệ thống')} className="px-4 py-3">
                           <Badge cls={ROLE_STYLES[e.role]?.cls || 'text-secondary'}>
                             <span className={`w-1.5 h-1.5 rounded-full ${ROLE_STYLES[e.role]?.dot || 'bg-outline'}`} />
                             {roleStyle(e.role).label}
                           </Badge>
                         </td>
                         {/* Trạng thái */}
-                        <td className="px-4 py-3">
+                        <td data-label={t('Trạng thái')} className="px-4 py-3">
                           {/* BE-119: tài khoản thiếu phòng ban công tác chính hiển thị là "Ngừng hoạt động"
                               (không đăng nhập được) — kèm chú thích để người quản lý biết lý do thật. */}
                           <span title={e.blockedByNoPrimary ? t('Chưa có phòng ban công tác chính') : undefined}>
@@ -329,7 +329,7 @@ export default function HumanResources() {
                           )}
                         </td>
                         {/* Thao tác */}
-                        <td className="px-4 py-3">
+                        <td data-label={t('Thao tác')} className="px-4 py-3">
                           {/* BE-96: danh sách chỉ giữ "Xem chi tiết" và "Chỉnh sửa" cho gọn.
                               Các thao tác còn lại (đặt lại mật khẩu / khoá tài khoản / xoá nhân sự)
                               nằm trong menu "Thao tác" ở trang chi tiết nhân sự. */}
@@ -376,7 +376,7 @@ export default function HumanResources() {
                     setPageSize(Number(v));
                     setPage(1);
                   }}
-                  className="filter-control filter-select h-[34px] w-[100px] py-0 pl-2.5 pr-8 text-xs"
+                  className="filter-control filter-select h-[34px] w-[124px] py-0 pl-2.5 pr-8 text-xs"
                   options={[
                     { value: 5, label: t('5 dòng') },
                     { value: 10, label: t('10 dòng') },

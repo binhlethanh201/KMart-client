@@ -83,20 +83,26 @@ export default function PieChart({ data }) {
           return (
             <div
               key={idx}
-              className={`flex items-center gap-3 rounded-lg px-2 py-1 transition-colors cursor-pointer ${
+              className={`flex items-start gap-2 sm:gap-3 rounded-lg px-1.5 sm:px-2 py-1 transition-colors cursor-pointer ${
                 isHover ? 'bg-[#f6f6f4]' : ''
               }`}
               onMouseEnter={() => setHoverIdx(idx)}
               onMouseLeave={() => setHoverIdx(null)}
             >
               <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
+                className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
                 style={{ backgroundColor: COLORS[idx % COLORS.length] }}
               />
-              {/* KHÔNG t() lần nữa — tên đã được dịch ở ReportsPage trước khi truyền vào (BE-108). */}
-              <span className={`text-sm flex-1 truncate ${isHover ? 'font-semibold text-[#1d1d1f]' : ''}`}>{item.label}</span>
-              <span className="text-sm font-medium">{percentage}%</span>
-              <span className="text-xs text-gray-500 w-10 text-right">{item.value}</span>
+              {/*
+                * MOBILE-08: trên điện thoại thẻ chỉ còn ~190px bề ngang nên nhãn bị bóp còn ~37px,
+                * "Phòng Kinh doanh" phải xuống 4 dòng. Thu khoảng cách và cỡ chữ phần trăm / số đếm
+                * để nhãn được ~85px — xuống 2 dòng là vừa đọc.
+                * Bỏ `truncate`: cắt còn "Ph..." thì không biết là phòng nào, mà trên điện thoại không
+                * có hover nên `title` cũng vô dụng.
+                */}
+              <span className={`text-[13px] sm:text-sm flex-1 min-w-0 break-words ${isHover ? 'font-semibold text-[#1d1d1f]' : ''}`}>{item.label}</span>
+              <span className="text-[12px] sm:text-sm font-medium flex-shrink-0 tabular-nums">{percentage}%</span>
+              <span className="text-[11px] sm:text-xs text-gray-500 w-7 sm:w-10 text-right flex-shrink-0 tabular-nums">{item.value}</span>
             </div>
           );
         })}

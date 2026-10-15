@@ -136,8 +136,18 @@ export default function NotificationBell({ variant = 'sidebar' }) {
 
       {open && (
         <div
-          className={`absolute mt-2 w-[360px] bg-surface border border-outline-variant/70 rounded-2xl shadow-2xl overflow-hidden z-[130] flex flex-col ${
-            variant === 'header' ? 'right-0' : 'left-0'
+          /*
+           * MOBILE-14: bảng thông báo rộng cố định 360px, mà trên điện thoại vùng nội dung chỉ
+           * còn 288px (rail menu 72px + lề). Bảng nằm `absolute right-0` nên tràn sang trái 88px
+           * và bị `overflow-hidden` của khung bố cục CẮT mất — tiêu đề thông báo đọc không được.
+           * Dưới 640px dùng `fixed`, neo ngay dưới thanh tiêu đề và trải hết bề ngang màn hình
+           * (thanh tiêu đề đã được nâng lên z-[60] nên bảng đè được lên rail menu); từ 640px trở
+           * lên giữ nguyên `absolute right-0 w-[360px]` như cũ.
+           */
+          className={`bg-surface border border-outline-variant/70 rounded-2xl shadow-2xl overflow-hidden z-[130] flex flex-col ${
+            variant === 'header'
+              ? 'fixed top-16 left-3 right-3 w-auto sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-[360px]'
+              : 'absolute left-0 mt-2 w-[360px]'
           }`}
           style={{ maxHeight: '480px' }}
         >

@@ -14,6 +14,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 import LoadError from '../../../components/LoadError';
+import { matchesSearchText, normalizeSearchText } from '../../../utils/searchText';
 
 const TABS = [
   { id: 'requests', label: 'Danh sách Đơn từ', icon: 'description' },
@@ -104,14 +105,25 @@ export default function DepartmentDetail() {
   );
 
   const filtered = useMemo(() => {
-    const query = q.trim().toLowerCase();
+    /*
+     * MOBILE-15: dùng chung `matchesSearchText` như trang "Đơn từ cá nhân" để gõ không dấu
+     * ("nguyen van tuan") vẫn ra kết quả, và để tra được theo MÃ NHÂN SỰ của người tạo.
+     * Mã nhân sự = 8 ký tự đầu của id nhân sự viết hoa (xem `userService.mapToFrontendModel`);
+     * đơn chỉ lưu `creatorId` nên phải tra qua danh sách nhân sự.
+     */
+    const query = normalizeSearchText(q);
+    const employeeCodes = new Map();
+    (employees || []).forEach((e) => {
+      if (e?.id) employeeCodes.set(String(e.id), e.shortId || String(e.id).substring(0, 8).toUpperCase());
+    });
+    const creatorCodeOf = (id) => (id ? employeeCodes.get(String(id)) || '' : '');
+
     return deptRequests.filter((r) => {
       const creatorName = r.creatorName || employees.find((u) => u.id === r.creatorId)?.name;
-      const matchQ =
-        !query ||
-        r.id.toLowerCase().includes(query) ||
-        r.title.toLowerCase().includes(query) ||
-        (creatorName && creatorName.toLowerCase().includes(query));
+      const matchQ = matchesSearchText(
+        [r.id, r.title, creatorCodeOf(r.creatorId), creatorName],
+        query,
+      );
       const matchT = typeF === 'all' || r.type === typeF;
       /*
        * "Đang chờ duyệt" phải khớp MỌI trạng thái đang chờ: máy chủ trả 'pending' hoặc
@@ -269,7 +281,7 @@ export default function DepartmentDetail() {
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     className={FILTER_SEARCH_CLS}
-                    placeholder={t('Tìm theo mã đơn, tên nhân viên...')}
+                    placeholder={t('Tìm theo mã đơn, mã nhân sự, tên nhân viên...')}
                     type="text"
                   />
                 </div>

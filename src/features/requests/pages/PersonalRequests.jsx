@@ -38,7 +38,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
   const { t } = useI18n();
   useDocumentTitle(t(TITLES[mode] || 'Danh sách Đơn từ'));
 
-  const { requests, currentUserId, departments, currentUser, employees } = useApproval();
+  const { requests, currentUserId, departments, currentUser, employees, requestsError, reloadRequests } = useApproval();
 
   /*
    * BE-88: chỉ hiện những phòng ban người dùng thực sự thuộc về. Trước đây ô lọc đổ ra toàn bộ phòng
@@ -372,7 +372,17 @@ export default function PersonalRequests({ mode = 'sent' }) {
             </div>
           )}
           <div className="w-full flex flex-col gap-3 pb-8">
-            {filtered.length === 0 ? (
+            {/* RPT-02: danh sách đơn KHÔNG nạp được thì nói rõ, đừng hiện "không có đơn nào
+                phù hợp" — người dùng sẽ tưởng mình không có đơn thay vì biết là máy chủ lỗi. */}
+            {requestsError && (
+              <div className="bg-surface rounded-lg border border-outline-variant p-6">
+                <LoadError
+                  message={t('Không tải được danh sách đơn từ.')}
+                  onRetry={reloadRequests}
+                />
+              </div>
+            )}
+            {!requestsError && filtered.length === 0 ? (
               <div className="bg-surface rounded-lg border border-outline-variant p-12 text-center text-secondary">
                 <span aria-hidden="true" className="material-symbols-outlined text-[40px] block mb-2 text-muted">
                   {mode === 'supplement' ? 'task_alt' : 'search_off'}

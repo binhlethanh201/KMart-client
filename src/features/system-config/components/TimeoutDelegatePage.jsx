@@ -210,7 +210,12 @@ export default function TimeoutDelegatePage() {
               <button
                 onClick={save}
                 disabled={!dirty || saving}
-                className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                /*
+                 * MOBILE-06: bỏ `whitespace-nowrap` + cho nút co giãn. Ở 320px (iPhone SE) nhãn
+                 * "Lưu người duyệt thay" bị cắt còn "Lưu người duyệt th..." nên người dùng không
+                 * biết nút làm gì; cho chữ xuống dòng và nút rộng bằng ô chọn bên trên.
+                 */
+                className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto sm:flex-shrink-0"
               >
                 <span aria-hidden="true" className="material-symbols-outlined text-[18px]">save</span>
                 {saving ? t('Đang lưu...') : t('Lưu người duyệt thay')}

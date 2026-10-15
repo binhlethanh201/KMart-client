@@ -73,13 +73,25 @@ export function describeApiError(err, t, fallbackKey, fallbackParams) {
   if (parts.length === 0) push(data?.error);
   // "Validation failed" không nói lên điều gì -> chỉ dùng khi không còn thông tin nào khác.
   if (parts.length === 0 && !/^validation failed$/i.test(String(data?.message ?? '').trim())) push(data?.message);
-  // Axios báo "Request failed with status code 400" — vô nghĩa với người dùng cuối.
-  if (parts.length === 0 && err?.message && !/status code/i.test(err.message)) push(err.message);
 
-  // BE-136: không để người dùng thấy mã trần trần — nếu máy chủ chỉ trả mã lỗi / mã trạng thái
-  // thì dựng câu giải thích theo ngôn ngữ đang dùng.
+  /*
+   * BE-136: KHÔNG để người dùng thấy chuỗi kỹ thuật của axios.
+   *
+   * Lỗi cũ: kiểm tra "không kết nối được" nằm SAU bước đẩy `err.message`, mà axios đặt
+   * `err.message = "Network Error"` (không khớp mẫu `/status code/i`) nên nó bị đẩy vào `parts`
+   * trước, khiến nhánh thông báo thân thiện bên dưới KHÔNG BAO GIỜ chạy tới. Người dùng Việt nhận
+   * đúng hai chữ tiếng Anh "Network Error" — thấy rõ trong ảnh chụp màn hình lỗi mạng.
+   * Nay xử lý mất kết nối TRƯỚC, và vẫn lọc "Network Error" khỏi phần đẩy thô để chắc chắn.
+   */
   if (parts.length === 0 && err?.request && !err?.response) {
     return translate('Không kết nối được tới máy chủ. Kiểm tra lại kết nối mạng rồi thử lại.');
+  }
+
+  // Axios báo "Request failed with status code 400" / "Network Error" — vô nghĩa với người dùng cuối.
+  if (parts.length === 0 && err?.message
+      && !/status code/i.test(err.message)
+      && !/^network error$/i.test(String(err.message).trim())) {
+    push(err.message);
   }
   if (parts.length === 0 && err?.response?.status) {
     const status = err.response.status;

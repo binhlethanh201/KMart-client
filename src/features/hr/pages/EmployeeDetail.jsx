@@ -148,9 +148,15 @@ export default function EmployeeDetail() {
     }
   };
 
-  const handleToggleLock = () => {
-    toggleLock(employee.id);
-    pushToast(isActive ? t('Đã khóa tài khoản {v0}', { v0: employee.name }) : t('Đã mở khóa tài khoản {v0}', { v0: employee.name }), isActive ? 'warning' : 'success');
+  const handleToggleLock = async () => {
+    // RPT-02: CHỜ kết quả rồi mới báo — trước đây báo "Đã khóa" ngay lập tức, nên khi máy chủ
+    // từ chối thì quản trị viên tưởng tài khoản đã bị khóa trong khi nó vẫn hoạt động.
+    const result = await toggleLock(employee.id);
+    if (result?.ok) {
+      pushToast(isActive ? t('Đã khóa tài khoản {v0}', { v0: employee.name }) : t('Đã mở khóa tài khoản {v0}', { v0: employee.name }), isActive ? 'warning' : 'success');
+    } else {
+      pushToast(result?.message || t('Không đổi được trạng thái tài khoản {v0}.', { v0: employee.name }), 'error');
+    }
   };
 
   /** BE-87: xoá nhân sự rồi quay về danh sách. */

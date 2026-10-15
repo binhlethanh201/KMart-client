@@ -98,9 +98,18 @@ export function ApprovalSystemProvider({ children }) {
 
   useEffect(() => { loadEmployees(); }, [loadEmployees]);
 
+  /**
+   * RPT-02: cờ "không nạp được danh sách đơn".
+   * Vì sao cần: trước đây `.catch()` chỉ ghi console. Khi máy chủ lỗi, `requests` giữ nguyên `[]`
+   * nên MỌI danh sách đơn trong ứng dụng đều hiện "Không có đơn từ phù hợp bộ lọc" — người dùng
+   * kết luận sai rằng không có đơn nào, trong khi thực tế chỉ là không đọc được dữ liệu.
+   */
+  const [requestsError, setRequestsError] = useState(false);
+
   // Load requests from API
   const loadRequests = useCallback(async () => {
     try {
+      setRequestsError(false);
       const [allReqs, myReqs, pendingReqs] = await Promise.all([
         applicationService.getAll(),
         applicationService.getMyRequests(),
@@ -112,6 +121,7 @@ export function ApprovalSystemProvider({ children }) {
       setRequests(unique);
     } catch (err) {
       console.error('Failed to load requests', err);
+      setRequestsError(true);
     }
   }, []);
 
@@ -556,6 +566,8 @@ export function ApprovalSystemProvider({ children }) {
       reloadCurrentUser: loadCurrentUser,
 
       requests,
+      requestsError,
+      reloadRequests: loadRequests,
       createRequest,
       updateRequest,
       submitDraft,
@@ -586,7 +598,7 @@ export function ApprovalSystemProvider({ children }) {
       pushToast,
       dismissToast,
     }),
-    [currentUser, currentUserId, authLoading, authError, loadCurrentUser, requests, createRequest, updateRequest, submitDraft, retryDraftUploads, finalizePendingDraft, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, departmentsLoading, departmentsError, loadDepartments, employees, employeesError, loadEmployees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
+    [currentUser, currentUserId, authLoading, authError, loadCurrentUser, requests, requestsError, loadRequests, createRequest, updateRequest, submitDraft, retryDraftUploads, finalizePendingDraft, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, departmentsLoading, departmentsError, loadDepartments, employees, employeesError, loadEmployees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
   );
 
   return <ApprovalSystemContext.Provider value={value}>{children}</ApprovalSystemContext.Provider>;

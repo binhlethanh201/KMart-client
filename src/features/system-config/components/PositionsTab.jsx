@@ -325,9 +325,9 @@ export default function PositionsTab() {
       </div>
 
       <div className="bg-white border border-outline-variant rounded-lg overflow-hidden">
-        {/* BE-137: cuộn ngang trên màn hẹp thay vì cắt mất cột */}
+        {/* BE-137 + MOBILE-10: dưới 640px mỗi dòng thành một thẻ, không phải kéo ngang */}
         <div className="overflow-x-auto">
-        <table className="w-full text-left min-w-[560px]">
+        <table className="stack-grid w-full text-left sm:min-w-[560px]">
           <thead>
             <tr className="bg-[#f6f6f4] text-[12px] uppercase tracking-wide text-secondary">
               <th className="px-4 py-3 font-semibold">{t('Tên chức vụ')}</th>
@@ -351,16 +351,16 @@ export default function PositionsTab() {
               const used = userCountByPosition[p.id] || 0;
               return (
                 <tr key={p.id} className="border-t border-outline-variant/60 hover:bg-surface-container-low/50">
-                  <td className="px-4 py-3 text-on-surface font-medium">{t(p.name)}</td>
-                  <td className="px-4 py-3 text-secondary font-mono text-[13px]">{p.code}</td>
-                  <td className="px-4 py-3">
+                  <td data-label={t('Tên chức vụ')} className="px-4 py-3 text-on-surface font-medium">{t(p.name)}</td>
+                  <td data-label={t('Mã')} className="px-4 py-3 text-secondary font-mono text-[13px]">{p.code}</td>
+                  <td data-label={t('Cấp bậc')} className="px-4 py-3">
                     <span className="inline-flex items-center gap-1.5 text-[13px] text-on-surface">
                       <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[12px] font-bold flex items-center justify-center">{p.level}</span>
                       {t(levelLabel(p.level))}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[13px] text-secondary">{used > 0 ? t('{v0} nhân sự', { v0: used }) : '—'}</td>
-                  <td className="px-4 py-3">
+                  <td data-label={t('Nhân sự đang giữ')} className="px-4 py-3 text-[13px] text-secondary">{used > 0 ? t('{v0} nhân sự', { v0: used }) : '—'}</td>
+                  <td data-label={canManage ? t('Thao tác') : undefined} className="px-4 py-3">
                     {canManage && (
                       <div className="flex items-center justify-end gap-1">
                         <button
@@ -399,7 +399,7 @@ export default function PositionsTab() {
                 setPageSize(Number(value));
                 setCurrentPage(1);
               }}
-              className="filter-control filter-select h-[34px] w-[100px] py-0 pl-2.5 pr-8 text-xs"
+              className="filter-control filter-select h-[34px] w-[124px] py-0 pl-2.5 pr-8 text-xs"
               options={[
                 { value: 5, label: t('5 dòng') },
                 { value: 10, label: t('10 dòng') },
