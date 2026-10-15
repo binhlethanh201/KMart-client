@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
@@ -13,6 +13,7 @@ import { roleStyle } from '../../../utils/roleLabels';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
+import LoadError from '../../../components/LoadError';
 
 const TABS = [
   { id: 'requests', label: 'Danh sách Đơn từ', icon: 'description' },
@@ -62,15 +63,24 @@ export default function DepartmentDetail() {
   const [popoverId, setPopoverId] = useState(null);
 
   // Nạp danh sách nhân sự thực của phòng ban khi vào trang.
-  useEffect(() => {
-    if (!dept) return;
-    departmentService.getMembers(dept.id)
+  // `deptId` tách riêng thay vì depend cả object `dept`: chỉ id mới quyết định lần nạp này, còn
+  // object đổi danh tính mỗi khi phòng ban được cập nhật ở nơi khác -> gọi lại API vô ích.
+  const deptId = dept?.id;
+  // RPT-02: lỗi nạp thành viên phải hiện thông báo — để trống sẽ hiện "0 thành viên" cho một phòng
+  // ban thực ra có người, và nút "Thêm nhân sự" trông như thể phòng ban đang rỗng.
+  const [membersError, setMembersError] = useState(false);
+  const loadMembers = useCallback(() => {
+    if (!deptId) return;
+    setMembersError(false);
+    departmentService.getMembers(deptId)
       .then(setMembers)
       .catch((err) => {
         console.error('Failed to load department members', err);
         setMembers([]);
+        setMembersError(true);
       });
-  }, [dept?.id]);
+  }, [deptId]);
+  useEffect(() => { loadMembers(); }, [loadMembers]);
 
   // Bộ lọc "Loại đơn" lấy từ mẫu đơn THẬT của hệ thống (không dùng danh sách cứng).
   useEffect(() => {
@@ -117,7 +127,9 @@ export default function DepartmentDetail() {
         ((statusF === 'rejected' && (r.status === 'rejected' || r.status === 'returned_timeout')));
       return matchQ && matchT && matchS;
     });
-  }, [deptRequests, q, typeF, statusF]);
+    // `employees` cần có: tên người tạo được tra từ danh sách này, mà nó nạp bất đồng bộ sau lần
+    // render đầu — thiếu dep thì tìm theo tên người tạo luôn trượt.
+  }, [deptRequests, q, typeF, statusF, employees]);
 
   // Phân trang: đổi bộ lọc thì quay về trang 1 (tránh đứng ở trang không còn dữ liệu)
   useEffect(() => { setReqPage(1); }, [q, typeF, statusF]);
@@ -134,7 +146,7 @@ export default function DepartmentDetail() {
     return (
       <div className="flex-1 flex items-center justify-center h-full bg-background p-6">
         <div className="text-center">
-          <span className="material-symbols-outlined text-[48px] text-outline block mb-2">search_off</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[48px] text-muted block mb-2">search_off</span>
           <p className="text-on-surface font-medium">{t('Không tìm thấy phòng ban.')}</p>
           <Link to="/" className="text-primary text-sm hover:underline mt-2 inline-block">
             {t('Quay lại danh sách')}
@@ -170,7 +182,7 @@ export default function DepartmentDetail() {
               to="/"
               className="inline-flex items-center gap-1 text-sm text-secondary hover:text-primary transition-colors mb-3"
             >
-              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">arrow_back</span>
               {t('Quay lại')}
             </Link>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4">
@@ -179,7 +191,7 @@ export default function DepartmentDetail() {
                   {dept.iconImage ? (
                     <img src={dept.iconImage} alt={t(dept.name)} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="material-symbols-outlined text-3xl">{dept.icon}</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-3xl">{dept.icon}</span>
                   )}
                 </div>
                 <div>
@@ -200,18 +212,21 @@ export default function DepartmentDetail() {
                   </div>
                   <p className="text-sm text-secondary">
                     {t('Mã phòng:')} <strong className="text-on-surface">{dept.code}</strong>
-                    <span className="mx-2 text-outline">•</span>
+                    <span className="mx-2 text-muted">•</span>
                     {dept.leaders.map((l, i) => (
                       <span key={i} className="inline-flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px] text-primary">badge</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-primary">badge</span>
                         {t(l.title)}: <strong className="text-on-surface">{l.name}</strong>
-                        {i < dept.leaders.length - 1 && <span className="mx-1 text-outline">,</span>}
+                        {i < dept.leaders.length - 1 && <span className="mx-1 text-muted">,</span>}
                       </span>
                     ))}
-                    <span className="mx-2 text-outline">•</span>
+                    <span className="mx-2 text-muted">•</span>
                     <span className="inline-flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px] text-secondary">group</span>
-                      <strong className="text-on-surface">{members.length}</strong> {t('thành viên')}
+                      <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-secondary">group</span>
+                      {/* RPT-02: lỗi nạp thành viên thì hiện "—", KHÔNG hiện 0 (trông như phòng ban rỗng) */}
+                      {membersError
+                        ? <strong className="text-warning">—</strong>
+                        : <strong className="text-on-surface">{members.length}</strong>} {t('thành viên')}
                     </span>
                   </p>
                 </div>
@@ -232,7 +247,7 @@ export default function DepartmentDetail() {
                     : 'border-transparent text-secondary hover:text-on-surface hover:bg-surface-container-low'
                     }`}
                 >
-                  <span className="material-symbols-outlined text-[18px]">{tabItem.icon}</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{tabItem.icon}</span>
                   {t(tabItem.label)}
                 </button>
               );
@@ -247,7 +262,7 @@ export default function DepartmentDetail() {
               {/* Filter bar */}
               <div className="p-4 border-b border-outline-variant flex flex-wrap items-center gap-3 bg-surface-container-low">
                 <div className="relative flex-1 min-w-[220px] max-w-md">
-                  <span className={FILTER_SEARCH_ICON_CLS}>
+                  <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">
                     search
                   </span>
                   <input
@@ -286,7 +301,7 @@ export default function DepartmentDetail() {
               {/* BE-43: nhân viên chỉ thấy đơn của chính mình trong phòng này */}
               {!isDeptManager && (
                 <div className="px-4 py-2.5 bg-primary/5 border-b border-outline-variant text-xs text-secondary flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-primary">visibility</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">visibility</span>
                   {t('Bạn đang xem')} <strong className="text-on-surface">{t('đơn từ của chính mình')}</strong> {t('trong phòng ban này.\n                  Chỉ trưởng phòng / phó phòng mới xem được đơn của toàn bộ nhân sự.')}
                 </div>
               )}
@@ -309,7 +324,7 @@ export default function DepartmentDetail() {
                     {filtered.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-10 px-4 text-center text-secondary">
-                          <span className="material-symbols-outlined text-[36px] block mb-2 text-outline">
+                          <span aria-hidden="true" className="material-symbols-outlined text-[36px] block mb-2 text-muted">
                             inbox
                           </span>
                           {t('Phòng ban chưa có đơn từ phù hợp bộ lọc.')}
@@ -380,7 +395,7 @@ export default function DepartmentDetail() {
                                   className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant px-3 py-1.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                   title={t('Duyệt nhanh (bước hiện tại: {v0})', { v0: currentUser.name })}
                                 >
-                                  <span className="material-symbols-outlined text-[14px]">
+                                  <span aria-hidden="true" className="material-symbols-outlined text-[14px]">
                                     {quickApprovingId === r.id ? 'hourglass_top' : 'bolt'}
                                   </span>
                                   {quickApprovingId === r.id ? t('Đang duyệt...') : t('Duyệt nhanh')}
@@ -390,7 +405,7 @@ export default function DepartmentDetail() {
                                   to={`/requests/${r.id}`}
                                   className="text-secondary hover:text-primary text-xs inline-flex items-center gap-1 transition-colors"
                                 >
-                                  <span className="material-symbols-outlined text-[14px]">visibility</span>
+                                  <span aria-hidden="true" className="material-symbols-outlined text-[14px]">visibility</span>
                                   {t('Xem chi tiết')}
                                 </Link>
                               )}
@@ -426,7 +441,7 @@ export default function DepartmentDetail() {
                     disabled={reqSafePage <= 1}
                     className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_left</span>
                   </button>
                   <div className="px-2 flex items-center justify-center min-w-[4rem]">
                     <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: reqSafePage, v1: reqTotalPages })}</span>
@@ -436,7 +451,7 @@ export default function DepartmentDetail() {
                     disabled={reqSafePage >= reqTotalPages}
                     className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_right</span>
                   </button>
                 </div>
               </div>
@@ -460,10 +475,20 @@ export default function DepartmentDetail() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant">
-                    {members.length === 0 ? (
+                    {membersError ? (
+                      <tr>
+                        <td colSpan={7} className="py-6 px-4">
+                          <LoadError
+                            compact
+                            message={t('Không tải được danh sách nhân sự của phòng ban.')}
+                            onRetry={loadMembers}
+                          />
+                        </td>
+                      </tr>
+                    ) : members.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-10 px-4 text-center text-secondary">
-                          <span className="material-symbols-outlined text-[36px] block mb-2 text-outline">
+                          <span aria-hidden="true" className="material-symbols-outlined text-[36px] block mb-2 text-muted">
                             group_off
                           </span>
                           {t('Phòng ban chưa có nhân sự trực thuộc.')}
@@ -492,11 +517,11 @@ export default function DepartmentDetail() {
                             <td className="py-3 px-4 whitespace-nowrap">
                               <div className="flex flex-col gap-1 text-secondary text-[13px]">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="material-symbols-outlined text-[14px]">mail</span>
+                                  <span aria-hidden="true" className="material-symbols-outlined text-[14px]">mail</span>
                                   {s.email}
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                  <span className="material-symbols-outlined text-[14px]">call</span>
+                                  <span aria-hidden="true" className="material-symbols-outlined text-[14px]">call</span>
                                   {s.phone || t('Chưa cập nhật')}
                                 </div>
                               </div>
@@ -516,7 +541,7 @@ export default function DepartmentDetail() {
                                     onClick={(ev) => { ev.stopPropagation(); setPopoverId(popoverId === s.id ? null : s.id); }}
                                     className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-container/40 text-primary text-xs font-medium hover:bg-primary-container/70 transition-colors cursor-pointer"
                                   >
-                                    <span className="material-symbols-outlined text-[14px]">workspaces</span>
+                                    <span aria-hidden="true" className="material-symbols-outlined text-[14px]">workspaces</span>
                                     +{extraPositions} {t('vị trí')}
                                   </button>
                                 )}
@@ -530,7 +555,7 @@ export default function DepartmentDetail() {
                                       <div className="flex flex-col gap-2 whitespace-normal">
                                         {(s.positions || []).filter(p => String(p.departmentId) !== String(dept.id)).map((p, i) => (
                                           <div key={i} className="flex items-start gap-2">
-                                            <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">badge</span>
+                                            <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary mt-0.5">badge</span>
                                             <div className="text-sm">
                                               <div className="text-on-surface font-medium">{p.departmentName || t('Phòng ban {v0}', { v0: p.departmentId })}</div>
                                               <div className="text-xs text-secondary">{p.positionName || t('Nhân sự')}</div>
@@ -581,7 +606,7 @@ export default function DepartmentDetail() {
                                 className="p-1.5 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer inline-flex"
                                 title={t('Xem thông tin chi tiết')}
                               >
-                                <span className="material-symbols-outlined text-[18px]">visibility</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">visibility</span>
                               </button>
                             </td>
                           </tr>
@@ -615,7 +640,7 @@ export default function DepartmentDetail() {
                     disabled={memSafePage <= 1}
                     className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_left</span>
                   </button>
                   <div className="px-2 flex items-center justify-center min-w-[4rem]">
                     <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: memSafePage, v1: memTotalPages })}</span>
@@ -625,7 +650,7 @@ export default function DepartmentDetail() {
                     disabled={memSafePage >= memTotalPages}
                     className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                   >
-                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_right</span>
                   </button>
                 </div>
               </div>

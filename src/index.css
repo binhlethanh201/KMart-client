@@ -69,7 +69,8 @@
   }
   .filter-search-icon {
     @apply pointer-events-none absolute left-[15px] top-1/2 -translate-y-1/2 text-[18px] leading-none;
-    color: #8a867c;
+    /* Token `warm-icon` (#6e6a61) thay hex trần #8a867c: 4.98–5.39:1 thay vì 3.36:1. */
+    color: theme('colors.warm-icon');
   }
 
   /* Nút phụ trên thanh lọc (VD "Đặt lại"). */

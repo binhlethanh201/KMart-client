@@ -121,7 +121,7 @@ export default function DocumentTypeSelect({ documentTypes = [], value, onChange
             ? t('Đang tải danh sách...')
             : (selected ? t(selected.name) : t('-- Chọn loại đề xuất --'))}
         </span>
-        <span
+        <span aria-hidden="true"
           className={`material-symbols-outlined text-secondary text-[20px] flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         >
           expand_more
@@ -143,14 +143,14 @@ export default function DocumentTypeSelect({ documentTypes = [], value, onChange
         >
           {/* Ô tìm kiếm NẰM TRONG dropdown để gõ tới đâu lọc tới đó */}
           <div className="flex items-center gap-2 px-3 py-2 border-b border-outline-variant/50 bg-surface-container-lowest">
-            <span className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">search</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">search</span>
             <input
               ref={inputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('Tìm loại đề xuất...')}
-              className="flex-1 bg-transparent text-sm text-on-surface outline-none py-1"
+              className="flex-1 bg-transparent text-sm text-on-surface outline-none py-1 border-b border-transparent focus:border-primary"
             />
             {search && (
               <button
@@ -159,7 +159,7 @@ export default function DocumentTypeSelect({ documentTypes = [], value, onChange
                 className="text-secondary hover:text-on-surface rounded-full p-0.5 cursor-pointer"
                 aria-label={t('Xoá từ khoá')}
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
               </button>
             )}
           </div>
@@ -175,7 +175,7 @@ export default function DocumentTypeSelect({ documentTypes = [], value, onChange
                     className="w-full sticky top-0 z-10 px-3 py-2 bg-surface-container-low/95 backdrop-blur text-[11px] font-bold text-primary uppercase tracking-wider flex items-center justify-between border-b border-outline-variant/30 cursor-pointer"
                   >
                     <span>{category}</span>
-                    <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`}>
+                    <span aria-hidden="true" className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`}>
                       expand_more
                     </span>
                   </button>
@@ -207,13 +207,13 @@ export default function DocumentTypeSelect({ documentTypes = [], value, onChange
                     <span className="flex items-center justify-between gap-3">
                       <span className="break-words whitespace-normal leading-tight">{t(dt.name)}</span>
                       {value === dt.id && !blocked && (
-                        <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
                         )}
                       {blocked && (
-                        <span className="material-symbols-outlined text-[16px] text-warning flex-shrink-0" title={t('Thiếu người phê duyệt')}>block</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-warning flex-shrink-0" title={t('Thiếu người phê duyệt')}>block</span>
                       )}
                       {warnMissingApprover && (
-                        <span className="material-symbols-outlined text-[16px] text-warning flex-shrink-0" title={t('Thiếu người phê duyệt')}>info</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-warning flex-shrink-0" title={t('Thiếu người phê duyệt')}>info</span>
                       )}
                     </span>
                     {blocked && (

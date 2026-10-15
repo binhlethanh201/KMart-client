@@ -87,7 +87,9 @@ export default function HumanResources() {
       const matchStatus = status === 'all' || e.status === status;
       return matchQ && matchDept && matchRole && matchStatus;
     });
-  }, [employees, search, dept, role, status]);
+    // `currentUser` phải nằm trong deps: bộ lọc theo phạm vi phòng ban đọc role và allPositions, mà
+    // /auth/me trả về SAU lần render đầu nên thiếu dep này thì danh sách bị lọc sai (hoặc rỗng).
+  }, [employees, search, dept, role, status, currentUser]);
 
   // Reset to first page whenever any filter changes.
   useEffect(() => { setPage(1); }, [search, dept, role, status, employees]);
@@ -136,7 +138,7 @@ export default function HumanResources() {
             onClick={openAdd}
             className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">person_add</span>
             {t('Tạo tài khoản nhân viên')}
           </button>
         )}
@@ -149,7 +151,7 @@ export default function HumanResources() {
         >
         <div className="w-full flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1 lg:max-w-sm">
-            <span className={FILTER_SEARCH_ICON_CLS}>search</span>
+            <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">search</span>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -215,14 +217,14 @@ export default function HumanResources() {
                   {loading && employees.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-4 py-12 text-center text-secondary">
-                        <span className="material-symbols-outlined text-[32px] block mb-2 animate-spin">progress_activity</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[32px] block mb-2 animate-spin">progress_activity</span>
                         {t('Đang tải danh sách nhân sự...')}
                       </td>
                     </tr>
                   ) : error ? (
                     <tr>
                       <td colSpan={7} className="px-4 py-12 text-center text-error">
-                        <span className="material-symbols-outlined text-[32px] block mb-2">error</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[32px] block mb-2">error</span>
                         {t(error)}
                       </td>
                     </tr>
@@ -251,11 +253,11 @@ export default function HumanResources() {
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-0.5">
                             <span className="text-on-surface flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-[14px] text-secondary">mail</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-secondary">mail</span>
                               {e.email}
                             </span>
                             <span className="text-secondary flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-[14px] text-secondary">call</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-secondary">call</span>
                               {e.phone}
                             </span>
                           </div>
@@ -275,7 +277,7 @@ export default function HumanResources() {
                                 onClick={(ev) => { ev.stopPropagation(); setPopoverId(popoverId === e.id ? null : e.id); }}
                                 className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-container/40 text-primary text-xs font-medium hover:bg-primary-container/70 transition-colors cursor-pointer"
                               >
-                                <span className="material-symbols-outlined text-[14px]">workspaces</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">workspaces</span>
                                 +{e.secondary.length} {t('vị trí')}
                               </button>
                             )}
@@ -289,7 +291,7 @@ export default function HumanResources() {
                                   <div className="flex flex-col gap-2">
                                     {e.secondary.map((s, i) => (
                                       <div key={i} className="flex items-start gap-2">
-                                        <span className="material-symbols-outlined text-[16px] text-primary mt-0.5">badge</span>
+                                        <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary mt-0.5">badge</span>
                                         <div className="text-sm">
                                           <div className="text-on-surface font-medium">{t(s.department)}</div>
                                           <div className="text-xs text-secondary">{t(s.position)}</div>
@@ -321,7 +323,7 @@ export default function HumanResources() {
                           </span>
                           {e.blockedByNoPrimary && (
                             <div className="text-[11px] text-warning mt-1 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[13px]">warning</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[13px]">warning</span>
                               {t('Chưa có phòng ban công tác chính')}
                             </div>
                           )}
@@ -337,7 +339,7 @@ export default function HumanResources() {
                               className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
                               title={t('Xem chi tiết')}
                             >
-                              <span className="material-symbols-outlined text-[18px]">visibility</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">visibility</span>
                             </button>
                             {canEdit && (
                               <button
@@ -345,7 +347,7 @@ export default function HumanResources() {
                                 className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
                                 title={t('Chỉnh sửa')}
                               >
-                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">edit</span>
                               </button>
                             )}
                           </div>
@@ -356,7 +358,7 @@ export default function HumanResources() {
                   {filtered.length === 0 && !loading && !error && (
                     <tr>
                       <td colSpan={7} className="px-4 py-12 text-center text-secondary">
-                        <span className="material-symbols-outlined text-[32px] block mb-2 text-outline">search_off</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[32px] block mb-2 text-muted">search_off</span>
                         {t('Không tìm thấy nhân sự phù hợp bộ lọc.')}
                       </td>
                     </tr>
@@ -393,7 +395,7 @@ export default function HumanResources() {
                   disabled={safePage <= 1}
                   className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_left</span>
                 </button>
                 <div className="px-2 flex items-center justify-center min-w-[4rem]">
                   <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: safePage, v1: totalPages })}</span>
@@ -403,7 +405,7 @@ export default function HumanResources() {
                   disabled={safePage >= totalPages}
                   className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_right</span>
                 </button>
               </div>
             </div>

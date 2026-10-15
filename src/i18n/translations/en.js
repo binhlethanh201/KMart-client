@@ -851,6 +851,34 @@ export const en = {
   'đơn nghỉ': 'Leave request',
 
   // ── BE-58: bản dịch CHỈNH TAY — luôn thắng bản tự động ở khối dưới ──
+  // ── UX-01: chuỗi cho trạng thái "tải dữ liệu thất bại" ──
+  // (dịch vụ dịch tự động trả HTTP 429 lúc thêm, nên khai báo tay ở đây)
+  'Không tải được dữ liệu. Vui lòng thử lại.': 'Could not load data. Please try again.',
+  'Thử lại': 'Retry',
+  'Không tải được nhật ký hoạt động.': 'Could not load the activity log.',
+  'Không tải được danh sách phòng ban / loại đơn để lọc.': 'Could not load departments / request types for filtering.',
+  'Không tải được danh sách loại đơn.': 'Could not load the request type list.',
+  'Không tải được danh sách mẫu đơn.': 'Could not load the form template list.',
+  'Không tải được thông tin tài khoản.': 'Could not load your account information.',
+  // UX-02: sidebar delegation card — says the truth instead of "no delegation" when loading fails
+  'Không tải được thông tin ủy quyền.': 'Could not load delegation information.',
+  // UX-02: request detail — say so when attachments could not be listed
+  'Không tải được danh sách tài liệu đính kèm.': 'Could not load the attachment list.',
+  // ERR-01: lưới an toàn khi lỗi render / tải gói JS thất bại
+  'Có lỗi xảy ra khi hiển thị trang này. Vui lòng tải lại trang.': 'Something went wrong while displaying this page. Please reload.',
+  // RPT-02: không hiển thị số 0 giả khi số liệu báo cáo tải thất bại
+  'Không tải được số liệu báo cáo. Chưa thể kết luận gì về kỳ này.': 'Could not load report figures. Nothing can be concluded for this period.',
+  'Không tải được danh sách đơn.': 'Could not load the request list.',
+  'Không tải được nội dung đơn này.': 'Could not load this request.',
+  'Không tải được danh sách nhân sự.': 'Could not load the staff list.',
+  'Không tải được danh sách nhân sự của phòng ban.': 'Could not load this department\'s staff list.',
+  'Không tải được đầy đủ bình luận và nhật ký duyệt của đơn này.': 'Could not fully load this request\'s comments and approval history.',
+  // RPT-01: staff code column uses the existing 'Mã nhân sự' key; only the new placeholders are added here
+  'Mã đơn, mã nhân sự, người tạo, phòng ban, loại đơn...': 'Request ID, staff ID, creator, department, request type...',
+  'Tên, mã nhân sự, phòng công tác, chức vụ...': 'Name, staff ID, department, position...',
+  'Tìm theo mã đơn, mã nhân sự, loại đơn, người tạo, nội dung...': 'Search by request ID, staff ID, request type, creator, content...',
+  // A11Y-03: label for the option-name input (previously placeholder-only, so unnamed for screen readers)
+  'Tên phương án': 'Option name',
   'Báo cáo & Thống kê': 'Reports & Statistics',
   'Đơn đã được duyệt, nhìn từ mọi góc độ.': 'Approved requests, seen from every angle.',
   'Xuất Báo Cáo': 'Export report',

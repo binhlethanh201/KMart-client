@@ -24,14 +24,14 @@ export default function CollapsibleOnMobile({ title = 'Bộ lọc', count = 0, d
         aria-expanded={open}
         className="md:hidden flex items-center gap-2 w-full px-1 py-2 text-sm font-semibold text-on-surface-variant cursor-pointer"
       >
-        <span className="material-symbols-outlined text-[18px] text-primary">tune</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">tune</span>
         <span>{t(title)}</span>
         {count > 0 && (
           <span className="text-[11px] font-bold text-primary bg-primary/10 rounded-full px-2 py-0.5">
             {count}
           </span>
         )}
-        <span
+        <span aria-hidden="true"
           className={`material-symbols-outlined text-[18px] ml-auto transition-transform duration-200 ${
             open ? 'rotate-180' : ''
           }`}

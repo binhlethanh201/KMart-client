@@ -45,6 +45,9 @@ export default function TimeoutDelegatePage() {
         pushToast(describeApiError(err, t, 'Không tải được cấu hình người duyệt thay.'), 'error');
       })
       .finally(() => setLoading(false));
+    // Nạp 1 lần khi mount (đọc bản lưu của chính người dùng). Không thêm `t`/`pushToast`: cả hai đổi
+    // danh tính khi ngôn ngữ đổi hoặc có bản dịch tự động mới, thêm vào sẽ gọi lại API vô ích.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const dirty = delegateId !== (saved?.delegateId || null);
@@ -97,7 +100,7 @@ export default function TimeoutDelegatePage() {
         <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden shrink-0">
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-outline-variant/50">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[20px]">route</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-primary text-[20px]">route</span>
               <h3 className="text-sm font-semibold text-on-surface">{t('Cơ chế hoạt động thế nào?')}</h3>
             </div>
             <span className="text-[11px] text-secondary">{t('3 bước')}</span>
@@ -131,7 +134,7 @@ export default function TimeoutDelegatePage() {
           <div className="w-full flex flex-col items-center gap-5 my-auto">
           {loading ? (
             <div className="px-4 py-6 text-center text-secondary text-sm flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-[24px] animate-spin">progress_activity</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[24px] animate-spin">progress_activity</span>
               {t('Đang tải...')}
             </div>
           ) : saved?.delegateId ? (
@@ -140,14 +143,14 @@ export default function TimeoutDelegatePage() {
                 <PersonBlock label={t('Người duyệt')} name={t('Bạn')} tone="neutral" />
                 <div className="flex items-center gap-1.5 text-primary flex-shrink-0">
                   <span className="hidden sm:block w-12 h-px bg-primary/30" />
-                  <span className="material-symbols-outlined text-[34px]">hourglass_bottom</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[34px]">hourglass_bottom</span>
                   <span className="hidden sm:block w-12 h-px bg-primary/30" />
                 </div>
                 <PersonBlock label={t('Duyệt thay khi quá hạn')} name={saved.delegateName} />
               </div>
               <div className="w-full max-w-[620px] rounded-lg bg-surface/80 border border-primary/15 px-4 py-3 flex flex-wrap items-center justify-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-on-surface bg-surface-container-lowest border border-outline-variant/60 rounded-full px-3 py-1.5 whitespace-nowrap">
-                  <span className="material-symbols-outlined text-[15px] text-success">verified</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-success">verified</span>
                   {t('Đang áp dụng cho mọi đơn bạn duyệt')}
                 </span>
                 <button
@@ -169,7 +172,7 @@ export default function TimeoutDelegatePage() {
           ) : (
             <div className="w-full flex flex-col items-center gap-4">
               <div className="w-20 h-20 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-                <span className="material-symbols-outlined text-[40px]">hourglass_bottom</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[40px]">hourglass_bottom</span>
               </div>
               <div className="flex flex-col items-center gap-1">
                 <div className="text-base font-semibold text-on-surface">{t('Chưa cài người duyệt thay')}</div>
@@ -183,7 +186,7 @@ export default function TimeoutDelegatePage() {
                   onClick={openPicker}
                   className="bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
                 >
-                  <span className="material-symbols-outlined text-[18px]">add</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
                   {t('Cài người duyệt thay')}
                 </button>
               )}
@@ -209,7 +212,7 @@ export default function TimeoutDelegatePage() {
                 disabled={!dirty || saving}
                 className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
               >
-                <span className="material-symbols-outlined text-[18px]">save</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">save</span>
                 {saving ? t('Đang lưu...') : t('Lưu người duyệt thay')}
               </button>
             </div>
@@ -221,17 +224,17 @@ export default function TimeoutDelegatePage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-on-surface-variant">
             <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[15px] text-primary">hourglass_bottom</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary">hourglass_bottom</span>
               {t('Đơn bạn duyệt quá hạn')}
             </span>
-            <span className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
             <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[15px] text-primary">person_search</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary">person_search</span>
               {t('Người duyệt thay mặc định xử lý')}
             </span>
-            <span className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
             <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[15px] text-primary">event_busy</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary">event_busy</span>
               {t('Quá hạn lần hai thì huỷ đơn')}
             </span>
           </div>

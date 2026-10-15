@@ -126,15 +126,25 @@ export default function EditProfileModal({ user, onClose, onSave }) {
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
+        /*
+         * A11Y-02 (audit): hộp thoại này trước đây là một <div> trần — không `role`, không
+         * `aria-modal`. Trình đọc màn hình không biết có hộp thoại vừa mở nên vẫn đọc tiếp trang
+         * phía sau. Khai báo đúng vai trò và trỏ tên hộp thoại vào tiêu đề <h2> bên dưới.
+         */
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-profile-title"
         className="bg-surface rounded-lg shadow-xl w-full max-w-lg md:max-w-2xl flex flex-col max-h-[92vh] overflow-hidden"
       >
         <div className="flex justify-between items-start p-6 border-b border-outline-variant/30">
           <div>
-            <h2 className="font-headline-sm text-headline-sm text-on-surface">{t('Chỉnh sửa thông tin cá nhân')}</h2>
+            <h2 id="edit-profile-title" className="font-headline-sm text-headline-sm text-on-surface">{t('Chỉnh sửa thông tin cá nhân')}</h2>
             <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">{t('Cập nhật thông tin liên hệ của bạn')}</p>
           </div>
-          <button type="button" onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer">
-            <span className="material-symbols-outlined">close</span>
+          <button
+            aria-label={t('Đóng')}
+            type="button" onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer">
+            <span aria-hidden="true" className="material-symbols-outlined">close</span>
           </button>
         </div>
 
@@ -171,12 +181,18 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                     />
                   </div>
                   <div className="flex-1 flex flex-col items-start gap-1">
-                    <label className={`cursor-pointer text-sm font-medium text-primary bg-primary-container/50 hover:bg-primary-container px-4 py-2 rounded-full transition-colors inline-block ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
+                    <label className={`cursor-pointer text-sm font-medium text-primary bg-primary-container/50 hover:bg-primary-container px-4 py-2 rounded-full transition-colors inline-block focus-within:ring-2 focus-within:ring-primary/40 focus-within:ring-offset-1 ${loading ? 'opacity-60 pointer-events-none' : ''}`}>
                       {loading ? t('Đang tải ảnh...') : t('Tải ảnh lên')}
                       <input 
                         type="file" 
                         accept="image/png,image/jpeg"
-                        className="hidden"
+                        /*
+                         * A11Y-01 (audit): trước đây `className="hidden"` (display:none) khiến ô chọn
+                         * tệp KHÔNG thể tới được bằng bàn phím — người chỉ dùng bàn phím hoặc trình
+                         * đọc màn hình không bao giờ đổi được ảnh đại diện. `sr-only` vẫn ẩn về mặt
+                         * thị giác nhưng giữ nguyên khả năng nhận tiêu điểm.
+                         */
+                        className="sr-only"
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           e.target.value = '';   // chọn lại CÙNG một tệp vẫn phải kích hoạt onChange
@@ -211,7 +227,7 @@ export default function EditProfileModal({ user, onClose, onSave }) {
                     <p className="text-xs text-secondary">{t('Hỗ trợ JPG, PNG (Tối đa 5MB)')}</p>
                     {errors.avatar && (
                       <p className="text-xs text-error flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">error</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[14px]">error</span>
                         {errors.avatar}
                       </p>
                     )}
@@ -220,28 +236,29 @@ export default function EditProfileModal({ user, onClose, onSave }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className={labelCls}>{t('Họ và tên')} <span className="text-error">*</span></label>
-                <input className={`${fieldCls} ${errors.name ? 'border-error focus:border-error focus:ring-error/20' : ''}`} value={form.name} onChange={set('name')} required />
+                <label className={labelCls} htmlFor="profile-name">{t('Họ và tên')} <span className="text-error">*</span></label>
+                <input id="profile-name" className={`${fieldCls} ${errors.name ? 'border-error focus:border-error focus:ring-error/20' : ''}`} value={form.name} onChange={set('name')} required />
                 {errors.name && <span className="text-error text-xs font-medium">{errors.name}</span>}
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>{t('Số điện thoại')}</label>
-                  <input className={`${fieldCls} ${errors.phone ? 'border-error focus:border-error focus:ring-error/20' : ''}`} type="tel" value={form.phone} onChange={set('phone')} />
+                  <label className={labelCls} htmlFor="profile-phone">{t('Số điện thoại')}</label>
+                  <input id="profile-phone" className={`${fieldCls} ${errors.phone ? 'border-error focus:border-error focus:ring-error/20' : ''}`} type="tel" value={form.phone} onChange={set('phone')} />
                   {errors.phone && <span className="text-error text-xs font-medium">{errors.phone}</span>}
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>{t('Email cá nhân')}</label>
-                  <input className={`${fieldCls} ${errors.personalEmail ? 'border-error focus:border-error focus:ring-error/20' : ''}`} type="email" value={form.personalEmail} onChange={set('personalEmail')} />
+                  <label className={labelCls} htmlFor="profile-personal-email">{t('Email cá nhân')}</label>
+                  <input id="profile-personal-email" className={`${fieldCls} ${errors.personalEmail ? 'border-error focus:border-error focus:ring-error/20' : ''}`} type="email" value={form.personalEmail} onChange={set('personalEmail')} />
                   {errors.personalEmail && <span className="text-error text-xs font-medium">{errors.personalEmail}</span>}
                 </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className={labelCls}>{t('Địa chỉ')}</label>
+                <label className={labelCls} htmlFor="profile-address">{t('Địa chỉ')}</label>
                 <input 
+                  id="profile-address"
                   className={`${fieldCls} min-w-0 ${errors.address ? 'border-error focus:border-error focus:ring-error/20' : ''}`} 
                   maxLength={200}
                   value={form.profileData?.address || ''} 
@@ -256,8 +273,9 @@ export default function EditProfileModal({ user, onClose, onSave }) {
           {activeTab === 'profile' && (
             <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="flex flex-col gap-2">
-                <label className={labelCls}>{t('Học vấn')}</label>
+                <label className={labelCls} htmlFor="profile-education">{t('Học vấn')}</label>
                 <textarea 
+                  id="profile-education"
                   className={fieldCls + " h-24 py-2.5 resize-none leading-relaxed"} 
                   value={form.profileData?.education || ''} 
                   onChange={(e) => setForm(f => ({ ...f, profileData: { ...(f.profileData || {}), education: e.target.value } }))} 
@@ -267,8 +285,9 @@ export default function EditProfileModal({ user, onClose, onSave }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className={labelCls}>{t('Kinh nghiệm làm việc')}</label>
+                <label className={labelCls} htmlFor="profile-experience">{t('Kinh nghiệm làm việc')}</label>
                 <textarea 
+                  id="profile-experience"
                   className={fieldCls + " h-28 py-2.5 resize-none leading-relaxed"} 
                   value={form.profileData?.experience || ''} 
                   onChange={(e) => setForm(f => ({ ...f, profileData: { ...(f.profileData || {}), experience: e.target.value } }))} 
@@ -278,8 +297,9 @@ export default function EditProfileModal({ user, onClose, onSave }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className={labelCls}>{t('Giải thưởng & Thành tích')}</label>
+                <label className={labelCls} htmlFor="profile-awards">{t('Giải thưởng & Thành tích')}</label>
                 <textarea 
+                  id="profile-awards"
                   className={fieldCls + " h-24 py-2.5 resize-none leading-relaxed"} 
                   value={form.profileData?.awards || ''} 
                   onChange={(e) => setForm(f => ({ ...f, profileData: { ...(f.profileData || {}), awards: e.target.value } }))} 

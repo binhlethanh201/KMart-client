@@ -30,6 +30,32 @@ export default {
         "secondary-container": "#f1f5f9", // Slate 100
         "on-secondary-container": "#0f172a",
 
+        // Chữ bậc BA (timestamp, mã đơn, ghi chú phụ, placeholder).
+        // Vì sao cần token riêng: trước đây các chỗ này dùng `text-outline` (#94a3b8) — đó là màu VIỀN,
+        // chỉ đạt 2.37–2.56:1 trên nền của app, dưới xa ngưỡng WCAG AA 4.5:1 cho chữ thường.
+        // #5f6b7a đạt tối thiểu 4.95:1 trên cả 4 nền đang dùng (#ffffff, #f6f6f4, #f8fafc, #f1f5f9)
+        // mà vẫn nhạt hơn `secondary` (#475569 = 7.0:1) nên giữ được 3 bậc phân cấp chữ.
+        "muted": "#5f6b7a",
+
+        /*
+         * Dải xám ẤM dùng cho thanh lọc (ô lọc giữ tông trắng ngà #fffefa, khác nền trắng của thẻ).
+         * Trước đây các giá trị này nằm rải rác dạng hex trần trong src/index.css và
+         * src/features/reports/* (palette thứ hai không có trong design system). Gom vào token để
+         * sửa một chỗ là mọi nơi đổi theo.
+         */
+        "warm-border": "#d9d5cc",   // viền ô lọc
+        "warm-surface": "#fffefa",  // nền ô lọc
+        "warm-placeholder": "#9a968d",
+        "warm-label": "#66655f",    // nhãn nhỏ in hoa trên thanh lọc (5.40:1 trên nền app)
+        // Icon kính lúp trong ô tìm kiếm: #8a867c cũ chỉ đạt 3.36:1 (vừa đủ ngưỡng 3:1 cho icon, nhưng
+        // không có chỗ dự phòng). #6e6a61 đạt 4.98–5.39:1 nên đọc rõ trên mọi nền.
+        "warm-icon": "#6e6a61",
+
+        // Màu nhấn của khối Báo cáo & Thống kê (đỏ ấm).
+        // #d94a38 cũ chỉ đạt 3.84–4.21:1 — trượt AA cho chữ ở MỌI nền nó được dùng, trong khi nó là
+        // màu chữ chính của cả trang Báo cáo. #c0392b đạt 4.96–5.44:1 mà vẫn cùng tông đỏ ấm.
+        "accent": "#c0392b",
+
         // Warning/Pending (Amber)
         "warning": "#b45309",             // Amber 700
         "on-warning": "#ffffff",

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { reportService } from '../services/reportService';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { FILTER_CONTROL_CLS, FILTER_LABEL_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
+import LoadError from '../../../components/LoadError';
 import ExportTableButton from './ExportTableButton';
 import TablePager from './TablePager';
 
@@ -28,6 +29,12 @@ export default function DrillTable({ query }) {
   const [search, setSearch] = useState('');
   const [from, setFrom] = useState(query?.from || '');
   const [to, setTo] = useState(query?.to || '');
+  /**
+   * RPT-02: cờ "không nạp được danh sách đơn".
+   * Trước đây `.catch()` xoá dữ liệu về rỗng nên bảng hiện "Không có đơn nào phù hợp bộ lọc" —
+   * sai sự thật, và còn xoá luôn số dòng đang có nên người dùng tưởng bộ lọc ăn quá chặt.
+   */
+  const [loadError, setLoadError] = useState(false);
 
   // Bộ lọc chung đổi thì khoảng ngày của bảng đi theo (tránh hiểu nhầm số liệu).
   useEffect(() => {
@@ -50,6 +57,7 @@ export default function DrillTable({ query }) {
 
   const load = useCallback((targetPage, targetSize) => {
     setLoading(true);
+    setLoadError(false);
     reportService.getApplications(request, targetPage, targetSize)
       .then((r) => {
         const data = r.data || {};
@@ -60,6 +68,7 @@ export default function DrillTable({ query }) {
       .catch(() => {
         setItems([]);
         setTotalCount(0);
+        setLoadError(true);
       })
       .finally(() => setLoading(false));
   }, [request]);
@@ -76,7 +85,7 @@ export default function DrillTable({ query }) {
     <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
       <div className="flex items-start justify-between gap-3 flex-wrap mb-5">
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">{t('Soi kĩ từng đơn')}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-accent">{t('Soi kĩ từng đơn')}</h3>
           <p className="text-[11px] text-gray-500 mt-1">
             {t('Bấm vào một dòng để mở chi tiết đơn.')} · {totalCount} {t('đơn')}
           </p>
@@ -87,16 +96,17 @@ export default function DrillTable({ query }) {
       {/* Tìm kiếm nhanh + khoảng ngày ngay trong bảng để khỏi phải cuộn lên bộ lọc chung */}
       <div className="flex items-end gap-3 flex-wrap mb-5 pb-5 border-b border-[#f0eee9]">
         <div className="flex flex-col gap-1.5 flex-1 min-w-full sm:min-w-[240px]">
-          <label className={FILTER_LABEL_CLS}>{t('Tìm kiếm đơn')}</label>
+          <label className={FILTER_LABEL_CLS} htmlFor="drill-search">{t('Tìm kiếm đơn')}</label>
           <div className="relative">
-            <span className={FILTER_SEARCH_ICON_CLS}>
+            <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">
               search
             </span>
             <input
+              id="drill-search"
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={t('Mã đơn, người tạo, phòng ban, loại đơn...')}
+              placeholder={t('Mã đơn, mã nhân sự, người tạo, phòng ban, loại đơn...')}
               className={`${FILTER_SEARCH_CLS} pr-9`}
             />
             {searchInput && (
@@ -106,15 +116,16 @@ export default function DrillTable({ query }) {
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1d1d1f] cursor-pointer"
                 title={t('Xóa tìm kiếm')}
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
               </button>
             )}
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className={FILTER_LABEL_CLS}>{t('Từ ngày')}</label>
+          <label className={FILTER_LABEL_CLS} htmlFor="drill-from-date">{t('Từ ngày')}</label>
           <input
+            id="drill-from-date"
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
@@ -123,8 +134,9 @@ export default function DrillTable({ query }) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className={FILTER_LABEL_CLS}>{t('Đến ngày')}</label>
+          <label className={FILTER_LABEL_CLS} htmlFor="drill-to-date">{t('Đến ngày')}</label>
           <input
+            id="drill-to-date"
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
@@ -153,7 +165,7 @@ export default function DrillTable({ query }) {
         {loading && items.length > 0 && (
           <div className="absolute inset-0 z-10 bg-white/55 flex items-start justify-center pt-6 pointer-events-none">
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white shadow-sm border border-[#eeece7] text-[11px] font-semibold text-gray-500">
-              <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
               {t('Đang tải...')}
             </span>
           </div>
@@ -163,6 +175,8 @@ export default function DrillTable({ query }) {
             <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-[#eeece7]">
               <th className="py-3 pr-4 font-bold">{t('Mã đơn')}</th>
               <th className="py-3 pr-4 font-bold">{t('Loại đơn')}</th>
+              {/* RPT-01: cột mã nhân sự — hai người trùng họ tên phải phân biệt được ngay trên bảng */}
+              <th className="py-3 pr-4 font-bold">{t('Mã nhân sự')}</th>
               <th className="py-3 pr-4 font-bold">{t('Người tạo')}</th>
               <th className="py-3 pr-4 font-bold">{t('Phòng ban')}</th>
               <th className="py-3 pr-4 font-bold">{t('Chức vụ')}</th>
@@ -173,7 +187,7 @@ export default function DrillTable({ query }) {
           <tbody>
             {loading && items.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-gray-400 text-sm">{t('Đang tải...')}</td>
+                <td colSpan={8} className="py-8 text-center text-gray-400 text-sm">{t('Đang tải...')}</td>
               </tr>
             )}
             {(!loading || items.length > 0) && items.map((a) => (
@@ -186,6 +200,9 @@ export default function DrillTable({ query }) {
                   {(a.code || a.id || '').toString().substring(0, 8).toUpperCase()}
                 </td>
                 <td className="py-3 pr-4 text-[12px] text-[#1d1d1f]">{t(a.documentTypeName || '—')}</td>
+                <td className="py-3 pr-4 text-[12px] font-mono text-gray-500">
+                  {a.applicantCode || (a.applicantId || '').toString().substring(0, 8).toUpperCase() || '—'}
+                </td>
                 <td className="py-3 pr-4 text-[12px] text-gray-600">{a.applicantName || '—'}</td>
                 <td className="py-3 pr-4 text-[12px] text-gray-600">{t(a.departmentName || '—')}</td>
                 <td className="py-3 pr-4 text-[12px] text-gray-600">{t(a.positionName || '—')}</td>
@@ -197,9 +214,19 @@ export default function DrillTable({ query }) {
                 </td>
               </tr>
             ))}
-            {!loading && items.length === 0 && (
+            {!loading && loadError && (
               <tr>
-                <td colSpan={7} className="py-10 text-center text-gray-500 text-sm">
+                <td colSpan={8} className="py-6">
+                  <LoadError
+                    message={t('Không tải được danh sách đơn.')}
+                    onRetry={() => load(page, pageSize)}
+                  />
+                </td>
+              </tr>
+            )}
+            {!loading && !loadError && items.length === 0 && (
+              <tr>
+                <td colSpan={8} className="py-10 text-center text-gray-500 text-sm">
                   {t('Không có đơn nào phù hợp bộ lọc')}
                 </td>
               </tr>

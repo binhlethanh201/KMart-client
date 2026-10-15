@@ -21,6 +21,7 @@ export default function LanguageSwitcher({ isCollapsed = false, variant = 'dark'
                 type="button"
                 onClick={() => setLanguage(l.code)}
                 title={l.label}
+                aria-pressed={active}
                 className={`px-2.5 py-1 rounded-full text-[12px] font-semibold tracking-wide transition-colors cursor-pointer ${
                   active ? 'text-primary' : 'text-secondary hover:text-on-surface'
                 }`}
@@ -48,6 +49,7 @@ export default function LanguageSwitcher({ isCollapsed = false, variant = 'dark'
                 type="button"
                 onClick={() => setLanguage(l.code)}
                 title={l.label}
+                aria-pressed={active}
                 className={`px-2.5 py-1 rounded-full text-[12px] font-semibold tracking-wide transition-colors cursor-pointer ${
                   active ? 'bg-white text-primary' : 'text-white/75 hover:text-white'
                 }`}
@@ -75,8 +77,8 @@ export default function LanguageSwitcher({ isCollapsed = false, variant = 'dark'
               title={l.label}
               className={`w-9 h-6 rounded text-[11px] font-bold transition-colors cursor-pointer ${
                 active
-                  ? 'text-primary bg-white/10'
-                  : 'text-slate-500 hover:bg-white/10 hover:text-white'
+                  ? 'bg-white text-primary'
+                  : 'text-slate-400 hover:bg-white/10 hover:text-white'
               }`}
             >
               {l.short}
@@ -87,7 +89,10 @@ export default function LanguageSwitcher({ isCollapsed = false, variant = 'dark'
     );
   }
 
-  // Sidebar mở rộng: dải chữ gọn, không tiêu đề
+  // Sidebar mở rộng: dải chữ gọn, không tiêu đề.
+  // Ngôn ngữ ĐANG CHỌN tô nền trắng + chữ primary: trước đây chỉ đổi màu chữ thành `text-primary`
+  // (#1d4ed8) trên nền sidebar tối, chỉ đạt 2.35:1 — tức là lựa chọn hiện tại lại là chỗ khó đọc
+  // nhất. Nút chưa chọn dùng slate-400 (6.12:1) thay cho slate-500 (3.3:1).
   return (
     <div className="px-3 py-2.5 border-t border-white/10">
       <div className="flex items-center rounded-md bg-white/5 px-1 py-0.5">
@@ -100,8 +105,9 @@ export default function LanguageSwitcher({ isCollapsed = false, variant = 'dark'
                 type="button"
                 onClick={() => setLanguage(l.code)}
                 title={l.label}
-                className={`flex-1 py-1.5 text-[12px] font-semibold tracking-wide transition-colors cursor-pointer ${
-                  active ? 'text-primary' : 'text-slate-500 hover:text-white'
+                aria-pressed={active}
+                className={`flex-1 py-1.5 text-[12px] font-semibold tracking-wide transition-colors cursor-pointer rounded ${
+                  active ? 'bg-white text-primary' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {l.short}

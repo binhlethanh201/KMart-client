@@ -44,9 +44,9 @@ function RequestsSubPanel({ pendingCount, supplementCount, onClose }) {
           onClick={onClose}
           title={t('Đóng bảng')}
           aria-label={t('Đóng bảng')}
-          className="text-slate-500 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
+          className="text-slate-400 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[16px] leading-none">close</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px] leading-none">close</span>
         </button>
       </div>
 
@@ -65,7 +65,7 @@ function RequestsSubPanel({ pendingCount, supplementCount, onClose }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5 min-w-0">
-                  <span className="material-symbols-outlined text-[18px] flex-shrink-0">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] flex-shrink-0">
                     {item.icon}
                   </span>
                   <span className="text-sm font-medium break-words text-left min-w-0">{t(item.label)}</span>
@@ -125,9 +125,9 @@ function SettingsSubPanel({ onClose }) {
           onClick={onClose}
           title={t('Đóng bảng')}
           aria-label={t('Đóng bảng')}
-          className="text-slate-500 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
+          className="text-slate-400 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[16px] leading-none">close</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px] leading-none">close</span>
         </button>
       </div>
 
@@ -146,7 +146,7 @@ function SettingsSubPanel({ onClose }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5 min-w-0">
-                  <span className="material-symbols-outlined text-[18px] flex-shrink-0">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] flex-shrink-0">
                     {item.icon}
                   </span>
                   <span className="text-sm font-medium break-words text-left min-w-0">{t(item.label)}</span>
@@ -195,9 +195,9 @@ function DelegationsSubPanel({ onClose }) {
           onClick={onClose}
           title={t('Đóng bảng')}
           aria-label={t('Đóng bảng')}
-          className="text-slate-500 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
+          className="text-slate-400 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[16px] leading-none">close</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px] leading-none">close</span>
         </button>
       </div>
 
@@ -216,7 +216,7 @@ function DelegationsSubPanel({ onClose }) {
                 }`}
               >
                 <span className="flex items-center gap-2.5 min-w-0">
-                  <span className="material-symbols-outlined text-[18px] flex-shrink-0">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] flex-shrink-0">
                     {item.icon}
                   </span>
                   <span className="text-sm font-medium break-words text-left min-w-0">{item.label}</span>
@@ -290,7 +290,6 @@ const SIDEBAR_PANEL_COLLAPSE_MS = 650; // phải khớp `duration-[650ms]` của
 
 export default function UnifiedSidebar({
   isOpen,
-  onClose,
   /** Current user object: { name, role, subtitle, avatar } */
   currentUser,
 }) {
@@ -459,7 +458,7 @@ export default function UnifiedSidebar({
             aria-label={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
           >
             <span className="w-8 h-8 bg-white text-slate-600 border border-slate-200 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] group-hover:text-primary group-hover:bg-slate-50 group-hover:border-primary/20 transition-colors">
-              <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
                 {isCollapsed ? 'chevron_right' : 'chevron_left'}
               </span>
             </span>
@@ -498,7 +497,7 @@ export default function UnifiedSidebar({
                       </span>
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                        <span className="text-[11px] text-slate-500 font-medium">{t('Trực tuyến')}</span>
+                        <span className="text-[11px] text-slate-400 font-medium">{t('Trực tuyến')}</span>
                       </div>
                     </div>
                   </div>
@@ -547,7 +546,7 @@ export default function UnifiedSidebar({
                         }`}
                       >
                         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'}`}>
-                          <span className="material-symbols-outlined text-[20px] relative">
+                          <span aria-hidden="true" className="material-symbols-outlined text-[20px] relative">
                             {item.icon}
                             {isCollapsed && badge > 0 && (
                               <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
@@ -561,7 +560,7 @@ export default function UnifiedSidebar({
                           </span>
                         )}
                         {!isCollapsed && (
-                          <span
+                          <span aria-hidden="true"
                             className={`material-symbols-outlined text-[16px] flex-shrink-0 transition-transform duration-200 ${
                               isSubPanelOpen ? 'rotate-180' : ''
                             }`}
@@ -587,7 +586,7 @@ export default function UnifiedSidebar({
                       }`}
                     >
                       <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'}`}>
-                        <span className="material-symbols-outlined text-[20px] relative">
+                        <span aria-hidden="true" className="material-symbols-outlined text-[20px] relative">
                           {item.icon}
                           {isCollapsed && badge > 0 && (
                             <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
@@ -619,7 +618,7 @@ export default function UnifiedSidebar({
                 title={isCollapsed ? t('Đăng xuất') : undefined}
                 className={`w-full text-slate-400 hover:text-white flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-center px-4 gap-2'} py-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer`}
               >
-                <span className="material-symbols-outlined text-[20px]">logout</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">logout</span>
                 {!isCollapsed && <span className="text-sm font-medium">{t('Đăng xuất')}</span>}
               </button>
             </div>

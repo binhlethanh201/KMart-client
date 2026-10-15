@@ -65,7 +65,7 @@ export default function TablePager({
           className={buttonClass(page <= 1)}
           title={t('Trang trước')}
         >
-          <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_left</span>
         </button>
         <span>
           {t('Trang')} <strong className={strongClass}>{page}</strong> / {totalPages}
@@ -77,7 +77,7 @@ export default function TablePager({
           className={buttonClass(page >= totalPages)}
           title={t('Trang sau')}
         >
-          <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_right</span>
         </button>
       </div>
     </div>

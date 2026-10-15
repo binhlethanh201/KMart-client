@@ -28,12 +28,12 @@ export default function ToastHost() {
             key={toast.id}
             className={`pointer-events-auto flex items-center gap-2.5 pl-3 pr-2 py-2.5 rounded-lg border shadow-lg ${s.cls} w-full`}
           >
-            <span className={`material-symbols-outlined text-[20px]`}>{s.icon}</span>
+            <span aria-hidden="true" className={`material-symbols-outlined text-[20px]`}>{s.icon}</span>
             {/* toast.resolved: thông báo đã được dịch/xử lý trước khi đưa vào (vd lỗi kiểm tra dữ liệu
                 ghép nhiều câu) nên không dịch lại lần nữa. */}
             <span className="text-sm font-medium flex-1">{toast.resolved ? toast.message : t(toast.message)}</span>
             <button onClick={() => dismissToast(toast.id)} className="p-1 rounded hover:bg-black/10 cursor-pointer" aria-label={t('Đóng')}>
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </div>
         );

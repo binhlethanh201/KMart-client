@@ -39,7 +39,7 @@ export default function PageHeader({
         <div className="flex items-center gap-3 min-w-0">
           {icon && (
             <div className="w-11 h-11 rounded-lg bg-white border border-[#e7e3da] shadow-sm flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined text-primary text-[24px]">{icon}</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-primary text-[24px]">{icon}</span>
             </div>
           )}
           <div className="min-w-0">

@@ -71,14 +71,14 @@ export default function SearchableSelect({
         <span className={`truncate ${selected ? '' : 'text-secondary'}`}>
           {selected ? renderLabel(selected) : t(placeholder)}
         </span>
-        <span className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">expand_more</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">expand_more</span>
       </button>
 
       {open && !disabled && (
         <div className="absolute z-50 left-0 right-0 mt-1 bg-surface border border-outline-variant rounded-md shadow-xl flex flex-col overflow-hidden">
           <div className="p-2 border-b border-outline-variant/50">
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[16px] text-secondary">search</span>
+              <span aria-hidden="true" className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[16px] text-secondary">search</span>
               <input
                 ref={inputRef}
                 type="text"
@@ -108,7 +108,7 @@ export default function SearchableSelect({
                 >
                   <span className="truncate">{renderLabel(o)}</span>
                   {o.value === value && (
-                    <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
                   )}
                 </button>
               ))

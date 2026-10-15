@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../services/notificationService';
 import { useI18n, translate } from '../i18n/I18nProvider';
 import { useApproval } from '../context/useApproval';
+import useNow from '../hooks/useNow';
 
 // BE-22: chuông thông báo. Backend đã ghi thông báo (ApplicationService/NotificationService)
 // nhưng FE chưa hiển thị. Component này lấy danh sách + số chưa đọc, cho phép đọc và điều hướng.
@@ -19,10 +20,10 @@ const TYPE_META = {
   CommentAdded: { icon: 'forum', color: 'text-secondary', bg: 'bg-surface-container' },
 };
 
-const timeAgo = (iso) => {
+const timeAgo = (iso, now) => {
   if (!iso) return '';
   const d = new Date(iso);
-  const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+  const diff = Math.floor((now - d.getTime()) / 1000);
   if (diff < 60) return translate('Vừa xong');
   if (diff < 3600) return translate('{v0} phút trước', { v0: Math.floor(diff / 60) });
   if (diff < 86400) return translate('{v0} giờ trước', { v0: Math.floor(diff / 3600) });
@@ -39,6 +40,8 @@ export default function NotificationBell({ variant = 'sidebar' }) {
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
   const ref = useRef(null);
+  /** Nhãn "N phút trước" phải tự cập nhật, nếu không nó đứng im ở thời điểm mở trang. */
+  const now = useNow();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -123,7 +126,7 @@ export default function NotificationBell({ variant = 'sidebar' }) {
         }`}
         aria-label={t('Thông báo')}
       >
-        <span className="material-symbols-outlined text-[16px]">notifications</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">notifications</span>
         {unread > 0 && (
           <span className={`absolute -top-0.5 -right-0.5 min-w-[13px] h-[13px] px-0.5 rounded-full bg-error text-white text-[8px] font-bold flex items-center justify-center leading-none ring-2 ${variant === 'header' ? 'ring-surface' : 'ring-[#0F172A]'}`}>
             {unread > 99 ? '99+' : unread}
@@ -141,7 +144,7 @@ export default function NotificationBell({ variant = 'sidebar' }) {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant/50 bg-surface-container-lowest/60">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-primary">notifications</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">notifications</span>
               <span className="text-sm font-bold text-on-surface">{t('Thông báo')}</span>
               {unread > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full bg-error/10 text-error text-[10px] font-bold">{unread} {t('mới')}</span>
@@ -160,7 +163,7 @@ export default function NotificationBell({ variant = 'sidebar' }) {
             )}
             {!loading && items.length === 0 && (
               <div className="text-center py-10">
-                <span className="material-symbols-outlined text-[32px] text-outline block mb-1">notifications_off</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[32px] text-muted block mb-1">notifications_off</span>
                 <p className="text-sm text-secondary">{t('Không có thông báo nào')}</p>
               </div>
             )}
@@ -173,7 +176,7 @@ export default function NotificationBell({ variant = 'sidebar' }) {
                   onClick={() => handleOpenItem(n)}
                 >
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${meta.bg}`}>
-                    <span className={`material-symbols-outlined text-[18px] ${meta.color}`}>{meta.icon}</span>
+                    <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${meta.color}`}>{meta.icon}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
@@ -182,12 +185,12 @@ export default function NotificationBell({ variant = 'sidebar' }) {
                     </div>
                     <p className="text-xs text-secondary mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <span className="material-symbols-outlined text-[12px] text-outline">schedule</span>
-                      <span className="text-[10px] text-outline font-medium">{timeAgo(n.createdAt)}</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[12px] text-muted">schedule</span>
+                      <span className="text-[10px] text-muted font-medium">{timeAgo(n.createdAt, now)}</span>
                     </div>
                   </div>
                   {(n.referenceType === 'Application' && n.referenceId) && (
-                    <span className="material-symbols-outlined text-[16px] text-outline opacity-0 group-hover:opacity-100 transition-opacity self-center flex-shrink-0">chevron_right</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-muted opacity-0 group-hover:opacity-100 transition-opacity self-center flex-shrink-0">chevron_right</span>
                   )}
                   <button
                     type="button"
@@ -196,7 +199,7 @@ export default function NotificationBell({ variant = 'sidebar' }) {
                     className="absolute top-2 right-2 w-7 h-7 rounded-full text-secondary hover:bg-error-container hover:text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                     aria-label={t('Xóa thông báo')}
                   >
-                    <span className="material-symbols-outlined text-[14px]">delete</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[14px]">delete</span>
                   </button>
                 </div>
               );

@@ -43,7 +43,7 @@ export default function ExportTableButton({ table, filters, scope, filePrefix, t
           : 'border-[#e5e2db] bg-white text-[#66655F] hover:text-[#1d1d1f] hover:border-[#c9c5bb]'
       }`}
     >
-      <span className={`material-symbols-outlined text-[15px] ${busy ? 'animate-spin' : ''}`}>
+      <span aria-hidden="true" className={`material-symbols-outlined text-[15px] ${busy ? 'animate-spin' : ''}`}>
         {busy ? 'progress_activity' : error ? 'error' : 'download'}
       </span>
       {busy ? t('Đang xuất...') : t('Excel')}

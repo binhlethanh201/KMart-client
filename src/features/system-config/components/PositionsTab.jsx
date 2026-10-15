@@ -101,7 +101,7 @@ function PositionModal({ position, onClose, onSaved }) {
         <div className="flex justify-between items-start p-5 border-b border-outline-variant/30">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined">{isEdit ? 'edit' : 'add'}</span>
+              <span aria-hidden="true" className="material-symbols-outlined">{isEdit ? 'edit' : 'add'}</span>
             </div>
             <div>
               <h2 className="font-headline-sm text-headline-sm text-on-surface">
@@ -113,7 +113,7 @@ function PositionModal({ position, onClose, onSaved }) {
             </div>
           </div>
           <button type="button" onClick={onClose} disabled={saving} className="text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-variant cursor-pointer disabled:opacity-40" aria-label={t('Đóng')}>
-            <span className="material-symbols-outlined">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined">close</span>
           </button>
         </div>
 
@@ -131,7 +131,7 @@ function PositionModal({ position, onClose, onSaved }) {
             {errors.name && <p className="text-xs text-error mt-1">{errors.name}</p>}
             {isEdit && name.trim() !== position.name && (
               <p className="text-xs text-warning mt-1 flex items-start gap-1">
-                <span className="material-symbols-outlined text-[14px] mt-px">warning</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px] mt-px">warning</span>
                 {t('Đổi tên chức vụ KHÔNG tự cập nhật các bước duyệt đang dùng tên cũ — hãy kiểm tra lại màn Cấu hình luồng duyệt.')}
               </p>
             )}
@@ -166,7 +166,7 @@ function PositionModal({ position, onClose, onSaved }) {
 
           {errors.submit && (
             <p className="text-xs text-error flex items-start gap-1">
-              <span className="material-symbols-outlined text-[14px] mt-px">error</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[14px] mt-px">error</span>
               {errors.submit}
             </p>
           )}
@@ -181,7 +181,7 @@ function PositionModal({ position, onClose, onSaved }) {
             disabled={saving}
             className="font-label-md text-on-primary bg-primary px-5 py-2 rounded-md hover:bg-primary/90 transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            <span className={`material-symbols-outlined text-[18px] ${saving ? 'animate-spin' : ''}`}>
+            <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${saving ? 'animate-spin' : ''}`}>
               {saving ? 'progress_activity' : 'save'}
             </span>
             {saving ? t('Đang lưu...') : t('Lưu chức vụ')}
@@ -218,6 +218,10 @@ export default function PositionsTab() {
       .catch((err) => { console.error('Failed to load positions', err); setError(t('Không tải được danh sách chức vụ.')); })
       .finally(() => setLoading(false));
   };
+  // `load` cố ý chỉ chạy 1 lần khi mount. Không thêm `t` vào deps: `t` đổi danh tính khi ngôn ngữ đổi
+  // HOẶC khi có lô bản dịch tự động mới, nên thêm vào sẽ gọi lại API mỗi lần — và vì thông báo lỗi
+  // sinh thêm bản dịch mới, việc đó có thể lặp. `t` ở đây chỉ dùng cho câu báo lỗi.
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, []);
 
   /** Số nhân sự đang giữ từng chức vụ (đếm từ danh sách nhân sự đã có sẵn trong app). */
@@ -290,7 +294,7 @@ export default function PositionsTab() {
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full sm:w-80">
-          <span className={FILTER_SEARCH_ICON_CLS}>search</span>
+          <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">search</span>
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
@@ -314,7 +318,7 @@ export default function PositionsTab() {
             onClick={() => setModal({ position: null })}
             className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
             {t('Thêm chức vụ')}
           </button>
         )}
@@ -336,7 +340,7 @@ export default function PositionsTab() {
           <tbody>
             {loading ? (
               <tr><td colSpan={5} className="px-4 py-12 text-center text-secondary">
-                <span className="material-symbols-outlined text-[28px] block mb-2 animate-spin">progress_activity</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[28px] block mb-2 animate-spin">progress_activity</span>
                 {t('Đang tải danh sách chức vụ...')}
               </td></tr>
             ) : error ? (
@@ -364,7 +368,7 @@ export default function PositionsTab() {
                           title={t('Chỉnh sửa')}
                           className="p-1.5 rounded-md text-secondary hover:text-primary hover:bg-primary-container/30 cursor-pointer"
                         >
-                          <span className="material-symbols-outlined text-[18px]">edit</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">edit</span>
                         </button>
                         <button
                           onClick={() => remove(p)}
@@ -372,7 +376,7 @@ export default function PositionsTab() {
                           disabled={used > 0}
                           className={`p-1.5 rounded-md cursor-pointer ${used > 0 ? 'text-outline opacity-40 cursor-not-allowed' : 'text-secondary hover:text-error hover:bg-error-container/40'}`}
                         >
-                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                         </button>
                       </div>
                     )}
@@ -415,7 +419,7 @@ export default function PositionsTab() {
               className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
               aria-label={t('Trang trước')}
             >
-              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_left</span>
             </button>
             <div className="px-2 flex items-center justify-center min-w-[4rem]">
               <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: safePage, v1: totalPages })}</span>
@@ -426,14 +430,14 @@ export default function PositionsTab() {
               className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
               aria-label={t('Trang sau')}
             >
-              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_right</span>
             </button>
           </div>
         </div>
       </div>
 
       <div className="flex items-start gap-2 text-[12px] text-secondary bg-[#f6f6f4] border border-outline-variant rounded-lg px-3 py-2.5">
-        <span className="material-symbols-outlined text-[16px] text-warning flex-shrink-0 mt-px">info</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-warning flex-shrink-0 mt-px">info</span>
         <span>
           {t('Bước duyệt "Duyệt theo chức danh" khớp theo TÊN chức vụ, nên tên chức vụ phải là duy nhất và không nên đổi tên sau khi đã cấu hình luồng duyệt.')}
         </span>

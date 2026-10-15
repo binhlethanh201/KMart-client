@@ -5,6 +5,7 @@ import { useApproval } from '../context/useApproval';
 import { useI18n } from '../i18n/I18nProvider';
 import { isApproverAccount } from '../utils/approverAccounts';
 import { CreateDelegationModal } from '../features/system-config/components/DelegationsTab';
+import useNow from '../hooks/useNow';
 
 /*
  * BE-146: thẻ "Ủy quyền tạm thời" trên sidebar trái.
@@ -23,8 +24,8 @@ const formatDate = (v) => {
 };
 
 /** Ủy quyền còn hiệu lực (đang chạy) hoặc sắp tới; đã thu hồi/hết hạn thì bỏ qua. */
-const pickLive = (list) => {
-  const now = new Date();
+const pickLive = (list, nowMs) => {
+  const now = new Date(nowMs);
   const live = (list || []).filter((d) => d?.isActive && d.endDate && new Date(d.endDate) >= now);
   if (!live.length) return { active: null, upcoming: null, count: 0 };
   const active = live.find((d) => new Date(d.startDate) <= now) || null;
@@ -38,6 +39,14 @@ export default function SidebarDelegationCard({ isCollapsed }) {
   const location = useLocation();
   const [mine, setMine] = useState([]);
   const [toMe, setToMe] = useState([]);
+  /**
+   * UX-02: cờ "không nạp được danh sách ủy quyền".
+   *
+   * Vì sao cần: trước đây `.catch()` chỉ xoá mảng về rỗng, nên khi máy chủ lỗi thẻ này hiện
+   * "Chưa có ủy quyền" — một lời khẳng định SAI. Người dùng đang có ủy quyền hiệu lực sẽ tưởng
+   * ủy quyền đã mất và có thể tạo lại cái mới, trong khi thực tế chỉ là không đọc được dữ liệu.
+   */
+  const [errored, setErrored] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
   // Ai được coi là "cấp duyệt đơn": có quyền duyệt, HOẶC giữ vai trò quản lý/trưởng nhóm/…
@@ -47,20 +56,26 @@ export default function SidebarDelegationCard({ isCollapsed }) {
   );
 
   const load = useCallback(() => {
+    setErrored(false);
     Promise.all([delegationService.getMine(), delegationService.getToMe()])
       .then(([my, received]) => {
         setMine(Array.isArray(my) ? my : []);
         setToMe(Array.isArray(received) ? received : []);
       })
       .catch(() => {
+        // Không đọc được thì để mảng rỗng NHƯNG bật cờ lỗi để giao diện không nói sai "chưa có ủy quyền".
         setMine([]);
         setToMe([]);
+        setErrored(true);
       });
   }, []);
 
   // BE-147: tải lại khi đổi trang và mỗi khi có thao tác tạo/thu hồi ủy quyền ở bất kỳ màn hình nào.
   useEffect(() => { load(); }, [load, location.pathname]);
   useEffect(() => onDelegationsChanged(load), [load]);
+
+  /** Đồng hồ chung: ủy quyền vừa tới hạn phải tự chuyển từ "sắp tới" sang "đang chạy". */
+  const now = useNow();
 
   const today = useMemo(() => {
     const d = new Date();
@@ -69,9 +84,9 @@ export default function SidebarDelegationCard({ isCollapsed }) {
   }, []);
 
   /** Ủy quyền TÔI đã tạo cho người khác. */
-  const gave = useMemo(() => pickLive(mine), [mine]);
+  const gave = useMemo(() => pickLive(mine, now), [mine, now]);
   /** Ủy quyền NGƯỜI KHÁC tạo cho tôi. */
-  const received = useMemo(() => pickLive(toMe), [toMe]);
+  const received = useMemo(() => pickLive(toMe, now), [toMe, now]);
 
   const givenShown = gave.active || gave.upcoming;
   const receivedShown = received.active || received.upcoming;
@@ -93,7 +108,7 @@ export default function SidebarDelegationCard({ isCollapsed }) {
           title={label}
           className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
         >
-          <span className="material-symbols-outlined text-[20px]">assignment_ind</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[20px]">assignment_ind</span>
           {(gave.active || received.active) && (
             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-success shadow-[0_0_6px_rgba(34,197,94,0.8)]" />
           )}
@@ -113,7 +128,7 @@ export default function SidebarDelegationCard({ isCollapsed }) {
 
   const range = (d, isActiveNow) => (
     <p className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
-      <span className="material-symbols-outlined text-[12px]">schedule</span>
+      <span aria-hidden="true" className="material-symbols-outlined text-[12px]">schedule</span>
       {isActiveNow
         ? <>{t('Hết hạn')}: <span className="text-warning font-semibold">{formatDate(d.endDate)}</span></>
         : <>{t('Bắt đầu')}: {formatDate(d.startDate)}</>}
@@ -124,8 +139,8 @@ export default function SidebarDelegationCard({ isCollapsed }) {
     <div className="px-3 py-2.5 border-t border-white/10">
       <div className="rounded-lg bg-white/5 border border-white/10 p-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-slate-500 font-semibold min-w-0">
-            <span className="material-symbols-outlined text-[14px] flex-shrink-0">assignment_ind</span>
+          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-slate-400 font-semibold min-w-0">
+            <span aria-hidden="true" className="material-symbols-outlined text-[14px] flex-shrink-0">assignment_ind</span>
             <span className="truncate">{t('Ủy quyền tạm thời')}</span>
           </span>
           {canApprove && !givenShown && (
@@ -135,7 +150,7 @@ export default function SidebarDelegationCard({ isCollapsed }) {
               title={t('Tạo ủy quyền tạm thời')}
               className="flex-shrink-0 w-6 h-6 rounded-md bg-primary/15 text-primary hover:bg-primary hover:text-on-primary flex items-center justify-center transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[15px]">add</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[15px]">add</span>
             </button>
           )}
         </div>
@@ -143,7 +158,7 @@ export default function SidebarDelegationCard({ isCollapsed }) {
         {/* Tôi ủy quyền cho ai */}
         {givenShown && (
           <Link to="/delegations" className="block mt-1.5 group">
-            <p className="text-[10px] uppercase tracking-wide text-slate-500">{t('Đã ủy quyền cho')}</p>
+            <p className="text-[10px] uppercase tracking-wide text-slate-400">{t('Đã ủy quyền cho')}</p>
             <p className="text-xs font-semibold text-white truncate group-hover:text-primary transition-colors">
               {givenShown.delegateName || t('Người được ủy quyền')}
             </p>
@@ -158,7 +173,7 @@ export default function SidebarDelegationCard({ isCollapsed }) {
             to="/delegations"
             className={`block group ${givenShown ? 'mt-2 pt-2 border-t border-white/10' : 'mt-1.5'}`}
           >
-            <p className="text-[10px] uppercase tracking-wide text-slate-500">{t('Đã được ủy quyền')}</p>
+            <p className="text-[10px] uppercase tracking-wide text-slate-400">{t('Đã được ủy quyền')}</p>
             <p className="text-xs font-semibold text-white truncate group-hover:text-primary transition-colors">
               {receivedShown.delegatorName || t('Người ủy quyền')}
             </p>
@@ -166,16 +181,34 @@ export default function SidebarDelegationCard({ isCollapsed }) {
             <span className="flex items-center gap-1.5">
               {statusBadge(Boolean(received.active))}
               {received.count > 1 && (
-                <span className="text-[10px] text-slate-500">+{received.count - 1}</span>
+                <span className="text-[10px] text-slate-400">+{received.count - 1}</span>
               )}
             </span>
           </Link>
         )}
 
         {!givenShown && !receivedShown && (
-          <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
-            {t('Chưa có ủy quyền. Tạo ủy quyền tạm thời để người khác duyệt đơn thay bạn.')}
-          </p>
+          errored ? (
+            /* UX-02: không đọc được dữ liệu thì nói đúng sự thật, kèm nút thử lại — ĐỪNG khẳng định
+               "chưa có ủy quyền", vì người đang có ủy quyền hiệu lực sẽ hiểu sai là đã mất. */
+            <div className="mt-1.5 flex flex-col gap-1">
+              <p className="text-[11px] text-warning leading-snug flex items-start gap-1">
+                <span aria-hidden="true" className="material-symbols-outlined text-[13px] flex-shrink-0">cloud_off</span>
+                {t('Không tải được thông tin ủy quyền.')}
+              </p>
+              <button
+                type="button"
+                onClick={load}
+                className="self-start text-[11px] text-primary hover:text-primary/80 underline underline-offset-2 cursor-pointer"
+              >
+                {t('Thử lại')}
+              </button>
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-400 mt-1.5 leading-snug">
+              {t('Chưa có ủy quyền. Tạo ủy quyền tạm thời để người khác duyệt đơn thay bạn.')}
+            </p>
+          )
         )}
       </div>
 

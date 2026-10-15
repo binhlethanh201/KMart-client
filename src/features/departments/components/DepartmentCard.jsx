@@ -43,7 +43,7 @@ export default function DepartmentCard({
           {iconImage ? (
             <img src={iconImage} alt={name} className="w-full h-full object-cover" />
           ) : (
-            <span className="material-symbols-outlined text-2xl">{icon}</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-2xl">{icon}</span>
           )}
         </div>
         <div className="flex items-center gap-1 relative">
@@ -60,7 +60,7 @@ export default function DepartmentCard({
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(!menuOpen); }} 
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${menuOpen ? 'bg-primary/10 text-primary' : 'text-secondary hover:text-primary hover:bg-primary-container/30'}`}
               >
-                <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">more_vert</span>
               </button>
               {menuOpen && (
                 <>
@@ -73,14 +73,14 @@ export default function DepartmentCard({
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onEdit?.(); }}
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors cursor-pointer font-medium group/btn"
                     >
-                      <span className="material-symbols-outlined text-[18px] text-secondary group-hover/btn:text-primary transition-colors">edit</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary group-hover/btn:text-primary transition-colors">edit</span>
                       {t('Chỉnh sửa')}
                     </button>
                     <button 
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onToggleStatus?.(); }}
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors cursor-pointer font-medium group/btn"
                     >
-                      <span className="material-symbols-outlined text-[18px] text-warning transition-colors">block</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-warning transition-colors">block</span>
                       {status.toLowerCase() === 'active' ? t('Ngừng hoạt động') : t('Mở hoạt động')}
                     </button>
                     <div className="h-px bg-outline-variant/50 my-1 mx-2" />
@@ -88,7 +88,7 @@ export default function DepartmentCard({
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); onDelete?.(); }}
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error-container/40 w-full text-left transition-colors cursor-pointer font-medium"
                     >
-                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                       {t('Xóa phòng ban')}
                     </button>
                   </div>
@@ -103,13 +103,13 @@ export default function DepartmentCard({
         <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold mb-1 group-hover:text-primary transition-colors line-clamp-1">
           {t(name)}
         </h3>
-        <p className="text-sm text-outline font-medium">{code}</p>
+        <p className="text-sm text-muted font-medium">{code}</p>
       </div>
       
       <div className="space-y-2 mb-6 flex-1">
         {leaders.map((leader, idx) => (
           <div key={idx} className="flex items-center gap-2 text-sm text-on-surface-variant">
-            <span className="material-symbols-outlined text-[16px] text-primary">badge</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary">badge</span>
             <span className="truncate font-medium">{t(leader.title)}: {leader.name}</span>
           </div>
         ))}
@@ -149,7 +149,7 @@ export default function DepartmentCard({
         to={`/departments/${id}`}
         className="mt-4 w-full bg-transparent border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low hover:border-primary hover:text-primary py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
       >
-        <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[18px]">arrow_forward</span>
         {t('Vào chi tiết phòng')}
       </Link>
 

@@ -83,8 +83,10 @@ export default function ExportModal({ open, onClose, documentTypes, filters }) {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">{t('Xuất Excel Báo Cáo')}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer">
-            <span className="material-symbols-outlined">close</span>
+          <button
+            aria-label={t('Đóng')}
+            onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+            <span aria-hidden="true" className="material-symbols-outlined">close</span>
           </button>
         </div>
 

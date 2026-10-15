@@ -493,6 +493,10 @@ export default function ApprovalFlowTree({
       }],
     };
     return [overridden, ...rest];
+    // `empById`/`roleLabel` là hàm khai báo trong thân component nên đổi danh tính mỗi lần render —
+    // đưa vào deps sẽ làm memo này chạy lại vô ích. Dữ liệu thật mà chúng dựa vào là `employees`,
+    // và nó ĐÃ có trong deps.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [flowStages, selectedApproverId, selectedApprover, employees]);
 
   // Chuỗi "từ ai ➔ đến ai" để đọc nhanh toàn bộ luồng (chỉ hiện ở bản đầy đủ).
@@ -534,7 +538,7 @@ export default function ApprovalFlowTree({
             )
           ) : (
             <div className="w-9 h-9 rounded-full bg-warning-container text-warning flex items-center justify-center border border-warning/20">
-              <span className="material-symbols-outlined text-[18px]">warning</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">warning</span>
             </div>
           )}
         </div>
@@ -544,7 +548,7 @@ export default function ApprovalFlowTree({
               className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide flex-shrink-0 ${node.hasManager ? 'bg-primary/10 text-primary' : 'bg-warning-container text-warning'}`}
               title={node.badgeTitle || node.badge}
             >
-              <span className="material-symbols-outlined text-[11px]">{node.isStep ? 'account_tree' : 'apartment'}</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[11px]">{node.isStep ? 'account_tree' : 'apartment'}</span>
               {node.badge}
             </span>
             <span className="text-[12px] font-semibold text-on-surface truncate" title={node.name}>{node.name}</span>
@@ -556,7 +560,7 @@ export default function ApprovalFlowTree({
               className="inline-flex items-center gap-0.5 mt-0.5 px-1.5 py-px rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide w-fit max-w-full"
               title={t('Người được ủy quyền duyệt thay cho {v0}', { v0: node.onBehalfOfName })}
             >
-              <span className="material-symbols-outlined text-[10px]">assignment_ind</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[10px]">assignment_ind</span>
               <span className="truncate">{t('Duyệt thay cho')} {node.onBehalfOfName}</span>
             </span>
           )}
@@ -575,20 +579,20 @@ export default function ApprovalFlowTree({
       {isFull && chainPath.length > 0 && (
         <div className="mb-5 w-full max-w-[900px] flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-4 py-2.5 rounded-lg border border-primary/20 bg-primary/5">
           <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-primary">
-            <span className="material-symbols-outlined text-[15px]">route</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[15px]">route</span>
             {t('Đường đi của đơn')}
           </span>
           <span className="text-[12px] font-semibold text-on-surface">{currentUser?.name || t('Tôi')}</span>
           {chainPath.map((p) => (
             <span key={p.key} className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[16px]">arrow_forward</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-primary text-[16px]">arrow_forward</span>
               <span className="inline-flex items-center gap-1">
                 <span className="text-[10px] font-bold uppercase text-secondary">{t('Cấp')} {p.stepNo}</span>
                 <span className="text-[12px] font-semibold text-on-surface">{p.label}</span>
               </span>
             </span>
           ))}
-          <span className="material-symbols-outlined text-success text-[16px]">arrow_forward</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-success text-[16px]">arrow_forward</span>
           <span className="text-[12px] font-semibold text-success">{t('Hoàn tất')}</span>
         </div>
       )}
@@ -613,14 +617,14 @@ export default function ApprovalFlowTree({
         <div key={stage.key} className="flex flex-col items-center">
           <div className="flex flex-col items-center" title={t('Chuyển tiếp sang bước sau')}>
             <div className="w-px h-3 bg-outline-variant" />
-            <span className="material-symbols-outlined text-primary text-[18px] leading-none">arrow_downward</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-primary text-[18px] leading-none">arrow_downward</span>
             <div className="w-px h-2 bg-outline-variant" />
           </div>
 
           {stage.parallel && stage.branches.length > 1 ? (
             <div className="flex flex-col items-center">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
-                <span className="material-symbols-outlined text-[12px]">call_split</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[12px]">call_split</span>
                 {t('Bước')} {stage.stepNo ?? si + 1} {t('(Cấp')} {stage.levelNo ?? stage.stepNo ?? si + 1}) · song song
               </span>
               <div className="w-px h-3 bg-outline-variant" />
@@ -644,7 +648,7 @@ export default function ApprovalFlowTree({
           ) : (
             <div className="flex flex-col items-center">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider">
-                <span className="material-symbols-outlined text-[12px]">account_tree</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[12px]">account_tree</span>
                 {t('Bước')} {stage.stepNo ?? si + 1} {t('(Cấp')} {stage.levelNo ?? stage.stepNo ?? si + 1})
               </span>
               <div className="w-px h-3 bg-outline-variant" />
@@ -657,11 +661,11 @@ export default function ApprovalFlowTree({
       {/* Nối + Hoàn tất */}
       <div className="flex flex-col items-center">
         <div className="w-px h-3 bg-outline-variant" />
-        <span className="material-symbols-outlined text-success text-[18px] leading-none">arrow_downward</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-success text-[18px] leading-none">arrow_downward</span>
         <div className="w-px h-2 bg-outline-variant" />
       </div>
       <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success-container/30 px-4 py-1.5 shadow-sm">
-        <span className="material-symbols-outlined text-success text-[18px]">flag</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-success text-[18px]">flag</span>
         <span className="text-[12px] font-semibold text-success">{t('Hoàn tất')}</span>
       </div>
     </div>

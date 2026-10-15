@@ -34,7 +34,7 @@ export default function UserProfile({ userId, onClose }) {
               <div key={idx} className={`flex items-center justify-between gap-2 p-3 rounded-lg border min-w-0 ${pos.isPrimary ? 'border-primary/20 bg-primary/5' : 'border-outline-variant/50 bg-surface-container-lowest'}`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${pos.isPrimary ? 'bg-primary/10 text-primary' : 'bg-surface-variant text-secondary'}`}>
-                    <span className="material-symbols-outlined text-lg">
+                    <span aria-hidden="true" className="material-symbols-outlined text-lg">
                       {pos.isPrimary ? 'stars' : 'work'}
                     </span>
                   </div>
@@ -91,7 +91,7 @@ export default function UserProfile({ userId, onClose }) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background w-full h-full">
         <div className="text-secondary flex flex-col items-center">
-          <span className="material-symbols-outlined text-[48px] mb-2 opacity-50">person_off</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[48px] mb-2 opacity-50">person_off</span>
           <p>{t('Không tìm thấy thông tin người dùng')}</p>
         </div>
       </div>
@@ -104,7 +104,7 @@ export default function UserProfile({ userId, onClose }) {
       <header className="min-h-[56px] bg-[#f6f6f4] border-b border-outline-variant flex items-center justify-between gap-2 px-4 sm:px-6 py-2 sticky top-0 z-20">
         <div className="flex items-center text-on-surface-variant font-body-sm flex-wrap min-w-0">
           <span className="uppercase tracking-wider font-semibold text-xs text-secondary hidden sm:inline">{t('Tài khoản')}</span>
-          <span className="material-symbols-outlined text-[16px] mx-1 sm:mx-2 text-outline hidden sm:inline">chevron_right</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px] mx-1 sm:mx-2 text-muted hidden sm:inline">chevron_right</span>
           <span className="font-medium text-on-surface break-words min-w-0" title={user.name}>{user.name}</span>
           <span className="mx-1 sm:mx-2 text-outline-variant">•</span>
           <span className="text-secondary truncate">{roleLabel(user.role)}</span>
@@ -115,13 +115,15 @@ export default function UserProfile({ userId, onClose }) {
               onClick={() => setShowEditModal(true)}
               className="text-white px-3 sm:px-4 py-1.5 rounded text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-1 bg-[#2563eb] cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">edit</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">edit</span>
               <span className="hidden sm:inline">{t('Chỉnh sửa')}</span>
             </button>
           )}
           {onClose && (
-            <button onClick={onClose} className="text-gray-500 hover:text-black hover:bg-gray-100 rounded-full p-1 flex items-center justify-center transition-colors cursor-pointer">
-              <span className="material-symbols-outlined text-[20px]">close</span>
+            <button
+              aria-label={t('Đóng')}
+              onClick={onClose} className="text-gray-500 hover:text-black hover:bg-gray-100 rounded-full p-1 flex items-center justify-center transition-colors cursor-pointer">
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px]">close</span>
             </button>
           )}
         </div>
@@ -144,20 +146,20 @@ export default function UserProfile({ userId, onClose }) {
             {/* BE-137: lưới tự chia cột theo không gian thật (không cố định 1/2 cột theo breakpoint) */}
             <div className="grid gap-y-3 sm:gap-y-4 gap-x-4 text-sm grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))]">
               <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-outline text-[20px]">mail</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-muted text-[20px]">mail</span>
                 <span className="text-on-surface break-all">{user.personalEmail || user.email || t('Chưa cập nhật')}</span>
               </div>
               <div className="flex items-center gap-3 min-w-0">
-                <span className="material-symbols-outlined text-outline text-[20px] shrink-0">call</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-muted text-[20px] shrink-0">call</span>
                 <span className="text-on-surface min-w-0 break-words">{user.phone || <span className="text-secondary italic">{t('Chưa cập nhật số điện thoại')}</span>}</span>
               </div>
               {(!userId || userId === currentUser.id) && (
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="material-symbols-outlined text-outline text-[20px] shrink-0">notifications</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-muted text-[20px] shrink-0">notifications</span>
                   {user.telegramChatId ? (
                     <span className="flex items-center gap-2 min-w-0 flex-wrap">
                       <span className="flex items-center gap-1 text-success text-sm font-medium">
-                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">check_circle</span>
                         {t('Đã kết nối Telegram')}
                       </span>
                       {/* TELE-02: đã kết nối vẫn phải ĐỔI được tài khoản Telegram — bấm sẽ mở
@@ -181,7 +183,7 @@ export default function UserProfile({ userId, onClose }) {
                 </div>
               )}
               <div className="flex items-center gap-3 sm:col-span-2 min-w-0">
-                <span className="material-symbols-outlined text-outline text-[20px] shrink-0">location_on</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-muted text-[20px] shrink-0">location_on</span>
                 <span className="text-on-surface min-w-0 break-words">{user.profileData?.address || <span className="text-secondary italic">{t('Chưa cập nhật địa chỉ')}</span>}</span>
               </div>
             </div>
@@ -195,8 +197,8 @@ export default function UserProfile({ userId, onClose }) {
               <div className="px-4 sm:px-5 border-b border-slate-100 flex justify-between items-center bg-surface-bright rounded-t py-2.5">
                 <h2 className="font-label-md text-secondary uppercase">{section.title}</h2>
                 {(!userId || userId === currentUser.id) && section.id !== 'group' && (
-                  <button onClick={() => setShowEditModal(true)} className="text-outline hover:text-primary transition-colors cursor-pointer">
-                    <span className="material-symbols-outlined text-[20px]">edit</span>
+                  <button onClick={() => setShowEditModal(true)} className="text-muted hover:text-primary transition-colors cursor-pointer">
+                    <span aria-hidden="true" className="material-symbols-outlined text-[20px]">edit</span>
                   </button>
                 )}
               </div>
@@ -205,7 +207,7 @@ export default function UserProfile({ userId, onClose }) {
                   <div className="text-on-surface font-body-sm whitespace-pre-wrap w-full">{section.value}</div>
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-outline-variant text-3xl sm:text-4xl mb-2">
+                    <span aria-hidden="true" className="material-symbols-outlined text-outline-variant text-3xl sm:text-4xl mb-2">
                       {section.icon}
                     </span>
                     <p className="text-secondary font-body-sm">{t('Không có thông tin')}</p>

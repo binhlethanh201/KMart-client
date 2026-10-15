@@ -34,21 +34,22 @@ export default function DepartmentMembersModal({ departmentId, departmentName, o
             <p className="text-sm text-secondary mt-1">{departmentName}</p>
           </div>
           <button
+            aria-label={t('Đóng')}
             onClick={onClose}
             className="w-8 h-8 rounded-full hover:bg-surface-container-high flex items-center justify-center text-secondary transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
 
         <div className="p-4 overflow-y-auto flex-1">
           {loading ? (
             <div className="py-8 flex justify-center items-center">
-              <span className="material-symbols-outlined animate-spin text-primary text-[32px]">sync</span>
+              <span aria-hidden="true" className="material-symbols-outlined animate-spin text-primary text-[32px]">sync</span>
             </div>
           ) : members.length === 0 ? (
             <div className="text-center py-8 text-secondary">
-              <span className="material-symbols-outlined text-[48px] opacity-20 mb-2">group_off</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[48px] opacity-20 mb-2">group_off</span>
               <p>{t('Chưa có nhân sự nào trong phòng ban này.')}</p>
             </div>
           ) : (

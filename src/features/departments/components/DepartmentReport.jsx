@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { STATUS_META } from '../../requests/data/constants';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { FILTER_CONTROL_CLS, FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS, FILTER_GHOST_BUTTON_CLS } from '../../../styles/filterControls';
 import Select from '../../../components/Select';
@@ -112,7 +111,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
   if (scopedMembers.length === 0) {
     return (
       <div className="bg-surface rounded-xl shadow-sm border border-outline-variant p-10 text-center">
-        <span className="material-symbols-outlined text-[48px] text-outline mb-3">bar_chart</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[48px] text-muted mb-3">bar_chart</span>
         <h3 className="text-lg font-bold text-on-surface mb-1">{t('Chưa có dữ liệu thống kê')}</h3>
         <p className="text-secondary text-sm">{t('Cần có nhân sự trong phòng ban để hiển thị báo cáo.')}</p>
       </div>
@@ -124,7 +123,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
       {/* Date Filter */}
       <div className="bg-surface rounded-xl p-4 border border-outline-variant shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h2 className="text-base font-bold text-on-surface flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary">analytics</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-primary">analytics</span>
           {t('Báo cáo & Thống kê Đơn từ')}
         </h2>
         <div className="flex items-center gap-3">
@@ -161,7 +160,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
       <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))]">
         <div className="bg-surface rounded-xl p-5 border border-outline-variant shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-success/10 text-success flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[24px]">task_alt</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[24px]">task_alt</span>
           </div>
           <div>
             <p className="text-sm font-medium text-secondary mb-0.5">{t('Tổng số đơn đã duyệt')}</p>
@@ -170,7 +169,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
         </div>
         <div className="bg-surface rounded-xl p-5 border border-outline-variant shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[24px]">group</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[24px]">group</span>
           </div>
           <div>
             <p className="text-sm font-medium text-secondary mb-0.5">{t('Số nhân sự có đơn được duyệt')}</p>
@@ -186,7 +185,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
         <div className="bg-surface border border-outline-variant rounded-2xl p-6 shadow-sm mb-6 mt-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">bar_chart</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-primary">bar_chart</span>
               {t('Biểu đồ so sánh lượng đơn từ')}
             </h3>
             <Select
@@ -213,7 +212,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
                 {[...stats.rows].sort((a, b) => {
                   const getCount = (r) => chartFilter === 'all' ? r.total : (r.typeCounts[chartFilter] || 0);
                   return getCount(b) - getCount(a);
-                }).map((row, index) => {
+                }).map((row) => {
                   const getCount = (r) => chartFilter === 'all' ? r.total : (r.typeCounts[chartFilter] || 0);
                   const count = getCount(row);
                   const maxTotal = Math.max(1, ...stats.rows.map(r => getCount(r)));
@@ -244,7 +243,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
                          <span className="text-[10px] font-medium text-secondary mt-1 text-center w-[200%] truncate" title={row.name}>
                             {row.name.split(' ').pop()}
                          </span>
-                         <span className="text-[9px] text-outline mt-0.5 truncate w-[200%] text-center uppercase tracking-wider" title={t(row.title) || t('Nhân sự')}>
+                         <span className="text-[9px] text-muted mt-0.5 truncate w-[200%] text-center uppercase tracking-wider" title={t(row.title) || t('Nhân sự')}>
                             {t(row.title) || t('Nhân sự')}
                          </span>
                       </div>
@@ -260,11 +259,11 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
       <div>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
           <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">groups</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-primary">groups</span>
             {t('Chi tiết theo nhân sự')}
           </h3>
           <div className="relative w-full sm:w-64">
-            <span className={FILTER_SEARCH_ICON_CLS}>search</span>
+            <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">search</span>
             <input
               type="text"
               placeholder={t('Tìm nhân viên...')}
@@ -277,7 +276,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
 
         {filteredRows.length === 0 ? (
           <div className="text-center py-10 bg-surface rounded-xl border border-outline-variant">
-            <span className="material-symbols-outlined text-[48px] text-outline mb-2">person_off</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[48px] text-muted mb-2">person_off</span>
             <p className="text-secondary font-medium">{t('Không tìm thấy nhân sự phù hợp.')}</p>
           </div>
         ) : (
@@ -309,7 +308,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
             {/* Type Breakdown */}
             <div className="mt-auto pt-4 border-t border-outline-variant/60">
               <p className="text-[11px] font-bold text-secondary uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[14px]">receipt_long</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">receipt_long</span>
                 {t('Chi tiết các loại đơn')}
               </p>
               
@@ -344,7 +343,7 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
                         >
                           <div className="flex justify-between items-end mb-1 text-[11px]">
                             <span className="font-bold text-on-surface truncate pr-2 group-hover/item:text-primary transition-colors flex items-center gap-0.5">
-                              <span className={`material-symbols-outlined text-[14px] transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                              <span aria-hidden="true" className={`material-symbols-outlined text-[14px] transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
                                 expand_more
                               </span>
                               {t}

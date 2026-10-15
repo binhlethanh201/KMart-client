@@ -848,6 +848,34 @@ export const ko = {
   'đơn nghỉ': '휴가 신청서',
 
   // ── BE-58: bản dịch CHỈNH TAY — luôn thắng bản tự động ở khối dưới ──
+  // ── UX-01: chuỗi cho trạng thái "tải dữ liệu thất bại" ──
+  // (dịch vụ dịch tự động trả HTTP 429 lúc thêm, nên khai báo tay ở đây)
+  'Không tải được dữ liệu. Vui lòng thử lại.': '데이터를 불러오지 못했습니다. 다시 시도해 주세요.',
+  'Thử lại': '다시 시도',
+  'Không tải được nhật ký hoạt động.': '활동 기록을 불러오지 못했습니다.',
+  'Không tải được danh sách phòng ban / loại đơn để lọc.': '필터링할 부서 / 신청 유형 목록을 불러오지 못했습니다.',
+  'Không tải được danh sách loại đơn.': '신청 유형 목록을 불러오지 못했습니다.',
+  'Không tải được danh sách mẫu đơn.': '신청서 양식 목록을 불러오지 못했습니다.',
+  'Không tải được thông tin tài khoản.': '계정 정보를 불러오지 못했습니다.',
+  // UX-02: 위임 카드 — 불러오기 실패 시 "위임 없음"이라고 잘못 말하지 않도록
+  'Không tải được thông tin ủy quyền.': '위임 정보를 불러오지 못했습니다.',
+  // UX-02: 신청 상세 — 첨부파일 목록을 불러오지 못한 경우
+  'Không tải được danh sách tài liệu đính kèm.': '첨부파일 목록을 불러오지 못했습니다.',
+  // ERR-01: 렌더 오류 / JS 청크 로드 실패 시 안전망
+  'Có lỗi xảy ra khi hiển thị trang này. Vui lòng tải lại trang.': '이 페이지를 표시하는 중 오류가 발생했습니다. 새로고침해 주세요.',
+  // RPT-02: 보고서 수치를 불러오지 못했을 때 가짜 0을 표시하지 않음
+  'Không tải được số liệu báo cáo. Chưa thể kết luận gì về kỳ này.': '보고서 수치를 불러오지 못했습니다. 이 기간에 대해 아무것도 단정할 수 없습니다.',
+  'Không tải được danh sách đơn.': '신청 목록을 불러오지 못했습니다.',
+  'Không tải được nội dung đơn này.': '이 신청의 내용을 불러오지 못했습니다.',
+  'Không tải được danh sách nhân sự.': '인사 목록을 불러오지 못했습니다.',
+  'Không tải được danh sách nhân sự của phòng ban.': '이 부서의 인사 목록을 불러오지 못했습니다.',
+  'Không tải được đầy đủ bình luận và nhật ký duyệt của đơn này.': '이 신청의 댓글과 결재 이력을 모두 불러오지 못했습니다.',
+  // RPT-01: 사번 열은 기존 'Mã nhân sự' 키를 사용하고, 새 안내 문구만 추가
+  'Mã đơn, mã nhân sự, người tạo, phòng ban, loại đơn...': '신청 번호, 사번, 작성자, 부서, 신청 유형...',
+  'Tên, mã nhân sự, phòng công tác, chức vụ...': '이름, 사번, 근무 부서, 직위...',
+  'Tìm theo mã đơn, mã nhân sự, loại đơn, người tạo, nội dung...': '신청 번호, 사번, 신청 유형, 작성자, 내용으로 검색...',
+  // A11Y-03: nhãn cho ô nhập tên phương án (trước đây chỉ có placeholder, không có tên cho trình đọc màn hình)
+  'Tên phương án': '항목 이름',
   'Báo cáo & Thống kê': '보고서 및 통계',
   'Đơn đã được duyệt, nhìn từ mọi góc độ.': '승인된 신청을 모든 각도에서 확인하세요.',
   'Xuất Báo Cáo': '보고서 내보내기',

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { delegationService } from '../../../services/delegationService';
 import { userService } from '../../hr/services/userService';
@@ -6,6 +6,7 @@ import { useApproval } from '../../../context/useApproval';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { describeApiError } from '../../../utils/apiError';
 import PageHeader from '../../../components/PageHeader';
+import LoadError from '../../../components/LoadError';
 import { isApproverAccount } from '../../../utils/approverAccounts';
 
 /* ─── Shared form styles ─────────────────────────────────────────────────────── */
@@ -28,15 +29,22 @@ export function UserSelect({ value, onChange, excludeId, openSignal = 0 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
+  // RPT-02: không nạp được danh sách thì phải nói rõ — để trống sẽ bị hiểu là "không có ai để ủy quyền".
+  const [usersError, setUsersError] = useState(false);
 
   // BE-167: cho phép nút bên ngoài (VD nút tạo trong khung xanh) mở danh sách chọn.
   useEffect(() => {
     if (openSignal > 0) setOpen(true);
   }, [openSignal]);
 
-  useEffect(() => {
-    userService.getAll().then(setUsers).catch(() => setUsers([]));
+  const loadUsers = useCallback(() => {
+    setUsersError(false);
+    userService.getAll()
+      .then(setUsers)
+      .catch(() => { setUsers([]); setUsersError(true); });
   }, []);
+
+  useEffect(() => { loadUsers(); }, [loadUsers]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -85,7 +93,7 @@ export function UserSelect({ value, onChange, excludeId, openSignal = 0 }) {
         ) : (
           <span className="text-sm text-secondary">{t('Chọn người được ủy quyền...')}</span>
         )}
-        <span className="material-symbols-outlined text-outline flex-shrink-0 ml-2">
+        <span aria-hidden="true" className="material-symbols-outlined text-muted flex-shrink-0 ml-2">
           {open ? 'expand_less' : 'expand_more'}
         </span>
       </div>
@@ -93,12 +101,12 @@ export function UserSelect({ value, onChange, excludeId, openSignal = 0 }) {
       {open && (
         <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-surface border border-outline-variant rounded-md shadow-lg z-50 overflow-hidden flex flex-col">
           <div className="p-2 border-b border-outline-variant/50 flex items-center gap-2 bg-surface-container-lowest">
-            <span className="material-symbols-outlined text-secondary text-[16px] flex-shrink-0">search</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-secondary text-[16px] flex-shrink-0">search</span>
             <input
               autoFocus
               type="text"
               placeholder={t('Tìm tên hoặc mã nhân sự...')}
-              className="flex-1 bg-transparent text-xs text-on-surface outline-none"
+              className="flex-1 bg-transparent text-xs text-on-surface outline-none py-1 border-b border-transparent focus:border-primary"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -108,11 +116,17 @@ export function UserSelect({ value, onChange, excludeId, openSignal = 0 }) {
               className="text-secondary hover:text-error p-0.5 rounded cursor-pointer"
               aria-label={t('Đóng')}
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </div>
           <div className="max-h-[200px] overflow-y-auto p-1.5 flex flex-col gap-0.5">
-            {filtered.length === 0 ? (
+            {usersError ? (
+              <LoadError
+                compact
+                message={t('Không tải được danh sách nhân sự.')}
+                onRetry={loadUsers}
+              />
+            ) : filtered.length === 0 ? (
               <div className="text-xs text-secondary text-center py-4 italic">{t('Không tìm thấy nhân sự nào.')}</div>
             ) : (
               filtered.map((u) => (
@@ -257,7 +271,7 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
         <div className="flex justify-between items-start p-5 border-b border-outline-variant/30">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined">person_add</span>
+              <span aria-hidden="true" className="material-symbols-outlined">person_add</span>
             </div>
             <div>
               <h2 id="delegation-modal-title" className="font-headline-sm text-on-surface">
@@ -275,7 +289,7 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
             className="text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-variant cursor-pointer disabled:opacity-40"
             aria-label={t('Đóng')}
           >
-            <span className="material-symbols-outlined">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined">close</span>
           </button>
         </div>
 
@@ -297,7 +311,7 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
             />
             {errors.delegateId && (
               <p className="text-xs text-error mt-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">error</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">error</span>
                 {errors.delegateId}
               </p>
             )}
@@ -353,7 +367,7 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
 
           {submitError && (
             <div className="text-xs text-error flex items-start gap-1.5 bg-error-container/30 border border-error/30 rounded-md px-3 py-2">
-              <span className="material-symbols-outlined text-[16px] flex-shrink-0">error</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px] flex-shrink-0">error</span>
               {submitError}
             </div>
           )}
@@ -374,7 +388,7 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
             disabled={saving}
             className="font-label-md text-on-primary bg-primary px-5 py-2 rounded-md hover:bg-primary/90 transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            <span className={`material-symbols-outlined text-[18px] ${saving ? 'animate-spin' : ''}`}>
+            <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${saving ? 'animate-spin' : ''}`}>
               {saving ? 'progress_activity' : 'add_task'}
             </span>
             {saving ? t('Đang tạo...') : t('Tạo ủy quyền')}
@@ -509,7 +523,7 @@ export function StepCard({ index, icon, title, desc }) {
         <span className="w-7 h-7 rounded-full bg-primary text-on-primary text-xs font-bold flex items-center justify-center">
           {index}
         </span>
-        <span className="material-symbols-outlined text-[18px] text-primary">{icon}</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">{icon}</span>
       </div>
       <div className="min-w-0">
         <div className="text-sm font-semibold text-on-surface">{title}</div>
@@ -523,7 +537,7 @@ export function StepCard({ index, icon, title, desc }) {
 export function TipCard({ icon, text }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="material-symbols-outlined text-primary text-[18px] flex-shrink-0">{icon}</span>
+      <span aria-hidden="true" className="material-symbols-outlined text-primary text-[18px] flex-shrink-0">{icon}</span>
       <p className="text-xs text-on-surface-variant leading-relaxed text-left">{text}</p>
     </div>
   );
@@ -560,6 +574,9 @@ export default function DelegationsTab() {
     }
   };
 
+  // Nạp 1 lần khi mount. `load` là hàm khai báo trong thân component nên đổi danh tính mỗi render;
+  // đưa vào deps sẽ khiến effect chạy lại liên tục và gọi API không ngừng.
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, []);
 
   /**
@@ -600,7 +617,7 @@ export default function DelegationsTab() {
         <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden shrink-0">
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-outline-variant/50">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[20px]">route</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-primary text-[20px]">route</span>
               <h3 className="text-sm font-semibold text-on-surface">{t('Ủy quyền hoạt động thế nào?')}</h3>
             </div>
             <span className="text-[11px] text-secondary">{t('3 bước')}</span>
@@ -634,7 +651,7 @@ export default function DelegationsTab() {
           <div className="w-full flex flex-col items-center gap-5 my-auto">
           {loading ? (
             <div className="px-4 py-6 text-center text-secondary text-sm flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-[24px] animate-spin">progress_activity</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[24px] animate-spin">progress_activity</span>
               {t('Đang tải...')}
             </div>
           ) : current ? (
@@ -644,7 +661,7 @@ export default function DelegationsTab() {
                 <PersonBlock label={t('Người ủy quyền')} name={t('Bạn')} tone="neutral" />
                 <div className="flex items-center gap-1.5 text-primary flex-shrink-0">
                   <span className="hidden sm:block w-12 h-px bg-primary/30" />
-                  <span className="material-symbols-outlined text-[34px]">swap_horiz</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[34px]">swap_horiz</span>
                   <span className="hidden sm:block w-12 h-px bg-primary/30" />
                 </div>
                 <PersonBlock label={t('Người được ủy quyền')} name={current.delegateName} />
@@ -654,7 +671,7 @@ export default function DelegationsTab() {
 
               <div className="w-full max-w-[620px] rounded-lg bg-surface/80 border border-primary/15 px-4 py-3 flex flex-wrap items-center justify-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-on-surface bg-surface-container-lowest border border-outline-variant/60 rounded-full px-3 py-1.5 whitespace-nowrap">
-                  <span className="material-symbols-outlined text-[15px] text-secondary">event</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-secondary">event</span>
                   {FORMAT_DATE(current.startDate)} — {FORMAT_DATE(current.endDate)}
                 </span>
                 <button
@@ -692,7 +709,7 @@ export default function DelegationsTab() {
                   onClick={() => setShowCreate(true)}
                   className="bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
                 >
-                  <span className="material-symbols-outlined text-[18px]">add</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
                   {t('Tạo ủy quyền')}
                 </button>
               )}
@@ -703,7 +720,7 @@ export default function DelegationsTab() {
       {!loading && received.length > 0 && (
         <div className="w-full rounded-lg bg-surface/80 border border-primary/15 overflow-hidden text-left">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-primary/10">
-            <span className="material-symbols-outlined text-primary text-[20px]">assignment_ind</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-primary text-[20px]">assignment_ind</span>
             <h3 className="text-sm font-semibold text-on-surface">{t('Bạn đang duyệt thay')}</h3>
             <span className="text-[11px] text-secondary ml-auto">{received.length}</span>
           </div>
@@ -711,10 +728,10 @@ export default function DelegationsTab() {
             {received.map((d) => (
               <div key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
                 <PersonChip label={t('Người ủy quyền')} name={d.delegatorName} />
-                <span className="material-symbols-outlined text-[18px] text-secondary">arrow_forward</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary">arrow_forward</span>
                 <PersonChip label={t('Người được ủy quyền')} name={t('Bạn')} tone="neutral" />
                 <span className="inline-flex items-center gap-1.5 text-xs text-secondary bg-surface border border-outline-variant/60 rounded-full px-3 py-1.5 whitespace-nowrap ml-auto">
-                  <span className="material-symbols-outlined text-[15px]">event</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[15px]">event</span>
                   {FORMAT_DATE(d.startDate)} — {FORMAT_DATE(d.endDate)}
                 </span>
                 <StatusBadge isActive={d.isActive} startDate={d.startDate} endDate={d.endDate} />
@@ -729,17 +746,17 @@ export default function DelegationsTab() {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-on-surface-variant">
           <span className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[15px] text-primary">person</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary">person</span>
             {t('Bạn vắng mặt')}
           </span>
-          <span className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
           <span className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[15px] text-primary">assignment_ind</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary">assignment_ind</span>
             {t('Người được ủy quyền duyệt đơn thay bạn')}
           </span>
-          <span className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary/40">arrow_forward</span>
           <span className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[15px] text-primary">event_busy</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary">event_busy</span>
             {t('Tự động hết hiệu lực')}
           </span>
         </div>

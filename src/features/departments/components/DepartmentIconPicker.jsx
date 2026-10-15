@@ -90,7 +90,7 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
             className="text-secondary hover:text-error p-1 rounded hover:bg-error-container/30 transition-colors cursor-pointer"
             title={t('Xóa ảnh')}
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
       )}
@@ -111,10 +111,10 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
                     : 'border-outline-variant text-secondary hover:bg-surface-container-low'
                 }`}
               >
-                <span className="material-symbols-outlined text-[22px]">{p.icon}</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[22px]">{p.icon}</span>
                 <span className="text-[10px] truncate w-full text-center px-1">{t(p.label)}</span>
                 {active && (
-                  <span className="absolute top-1 right-1 material-symbols-outlined text-[14px] text-primary">
+                  <span aria-hidden="true" className="absolute top-1 right-1 material-symbols-outlined text-[14px] text-primary">
                     check_circle
                   </span>
                 )}
@@ -124,7 +124,7 @@ export default function DepartmentIconPicker({ icon, iconImage, onChange }) {
         </div>
       ) : (
         <label className="flex flex-col items-center justify-center gap-1 py-6 rounded-md border border-dashed border-primary/50 text-primary hover:bg-primary-container/20 transition-colors cursor-pointer">
-          <span className="material-symbols-outlined text-[28px]">add_photo_alternate</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[28px]">add_photo_alternate</span>
           <span className="text-sm font-medium">{t('Tải lên ảnh đại diện')}</span>
           <span className="text-[11px] text-secondary">{t('PNG, JPG — tự thu nhỏ về 160×160')}</span>
           <input type="file" accept="image/*" className="sr-only" onChange={onFile} />

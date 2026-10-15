@@ -195,11 +195,12 @@ export default function EmployeeModal({ employee, departments = [], positions = 
             </h2>
           </div>
           <button
+            aria-label={t('Đóng')}
             type="button"
             onClick={onClose}
             className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer"
           >
-            <span className="material-symbols-outlined">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined">close</span>
           </button>
         </div>
 
@@ -388,7 +389,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                     onClick={addSecondary}
                     className="text-primary hover:bg-primary-container/40 text-xs font-medium px-2 py-1 rounded-md flex items-center gap-1 transition-colors cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">add</span>
                     {t('Thêm vị trí')}
                   </button>
                 </div>
@@ -419,7 +420,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                         onClick={() => removeSecondary(idx)}
                         className="text-error hover:bg-error-container/40 p-2 rounded-md transition-colors cursor-pointer flex-shrink-0"
                       >
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                       </button>
                     </div>
                   ))}
@@ -434,7 +435,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
           <div className="flex-1 min-w-0">
             {serverError && (
               <p className="text-xs text-error flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[16px]">error</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">error</span>
                 {t(serverError)}
               </p>
             )}
@@ -451,7 +452,7 @@ export default function EmployeeModal({ employee, departments = [], positions = 
             disabled={saving}
             className="flex items-center gap-2 font-label-md text-label-md text-on-primary bg-primary px-5 py-2 rounded-md hover:bg-on-primary-fixed-variant transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined text-[18px]">{saving ? 'progress_activity' : 'save'}</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{saving ? 'progress_activity' : 'save'}</span>
             {saving ? t('Đang lưu...') : t('Lưu thông tin')}
           </button>
         </div>

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
+import useNow from '../../../hooks/useNow';
 import RejectReasonModal from '../components/RejectReasonModal';
 import SupplementReasonModal from '../components/SupplementReasonModal';
 import CreateRequestModal from '../components/CreateRequestModal';
@@ -15,6 +16,7 @@ import { documentTypeService } from '../../../services/documentTypeService';
 import CancelRequestModal from '../components/CancelRequestModal';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
+import LoadError from '../../../components/LoadError';
 
 // BE-09: định dạng dung lượng file đính kèm
 const formatFileSize = (bytes) => {
@@ -46,18 +48,26 @@ export default function RequestDetail() {
   // BE-15: dữ liệu danh sách (getAll/my/pending) KHÔNG kèm comments/histories nên trang chi tiết
   // luôn trống. Fetch riêng /applications/{id} để có đủ bình luận + nhật ký + lý do bổ sung.
   const [detail, setDetail] = useState(null);
+  /**
+   * RPT-02: cờ "không nạp được chi tiết đơn".
+   * Trước đây `.catch()` đặt `detail = null`, mà `null` lại bị hiểu là "không có đơn này", nên khi
+   * máy chủ lỗi trang hiện "Không tìm thấy yêu cầu {id}" — người dùng tưởng đơn của mình đã biến mất.
+   */
+  const [detailError, setDetailError] = useState(false);
   const refreshDetail = useCallback(() => {
+    setDetailError(false);
     applicationService.getById(id)
       .then((data) => setDetail(data))
-      .catch(() => setDetail(null));
+      .catch(() => { setDetail(null); setDetailError(true); });
   }, [id]);
 
   useEffect(() => {
     let cancelled = false;
     setDetail(null);
+    setDetailError(false);
     applicationService.getById(id)
       .then((data) => { if (!cancelled) setDetail(data); })
-      .catch(() => { if (!cancelled) setDetail(null); });
+      .catch(() => { if (!cancelled) { setDetail(null); setDetailError(true); } });
     return () => { cancelled = true; };
   }, [id]);
 
@@ -133,17 +143,27 @@ export default function RequestDetail() {
 
   // BE-09: tài liệu đính kèm thật của đơn (lấy từ /applications/{id}/attachments)
   const [attachments, setAttachments] = useState([]);
+  /**
+   * UX-02: cờ "không nạp được danh sách tệp đính kèm".
+   *
+   * Vì sao cần: trước đây `.catch()` xoá mảng về rỗng, nên khi máy chủ lỗi trang chi tiết in ra
+   * "Không có tài liệu" — sai sự thật. Tệp đính kèm là BẰNG CHỨNG của hồ sơ (ảnh, giấy tờ), người
+   * duyệt nhìn thấy "Không có tài liệu" sẽ tưởng người tạo đơn quên gửi và từ chối oan.
+   */
+  const [attachmentsError, setAttachmentsError] = useState(false);
   const refreshAttachments = useCallback(() => {
+    setAttachmentsError(false);
     applicationService.getAttachments(id)
       .then((data) => setAttachments(data || []))
-      .catch(() => setAttachments([]));
+      .catch(() => { setAttachments([]); setAttachmentsError(true); });
   }, [id]);
 
   useEffect(() => {
     let cancelled = false;
+    setAttachmentsError(false);
     applicationService.getAttachments(id)
       .then((data) => { if (!cancelled) setAttachments(data || []); })
-      .catch(() => { if (!cancelled) setAttachments([]); });
+      .catch(() => { if (!cancelled) { setAttachments([]); setAttachmentsError(true); } });
     return () => { cancelled = true; };
   }, [id]);
 
@@ -162,13 +182,32 @@ export default function RequestDetail() {
 
   useDocumentTitle(request ? t('Chi tiết yêu cầu {v0}', { v0: request.id.substring(0, 8).toUpperCase() }) : t('Chi tiết yêu cầu'));
 
+  /** Đồng hồ dùng chung cho nhãn hạn xử lý — tự cập nhật mỗi phút (xem useNow). */
+  const now = useNow();
+
   if (!request) {
     return (
       <div className="flex-1 flex items-center justify-center h-full bg-background p-6">
         <div className="text-center">
-          <span className="material-symbols-outlined text-[48px] text-outline block mb-2">search_off</span>
-          <p className="text-on-surface font-medium">{t('Không tìm thấy yêu cầu')} {id}.</p>
-          <Link to="/my-requests" className="text-primary text-sm hover:underline mt-2 inline-block">{t('Quay lại danh sách')}</Link>
+          <span aria-hidden="true" className="material-symbols-outlined text-[48px] text-muted block mb-2">
+            {detailError ? 'cloud_off' : 'search_off'}
+          </span>
+          {/* RPT-02: phân biệt "không có đơn này" với "không đọc được đơn" — hai chuyện khác hẳn nhau */}
+          <p className="text-on-surface font-medium">
+            {detailError ? t('Không tải được nội dung đơn này.') : `${t('Không tìm thấy yêu cầu')} ${id}.`}
+          </p>
+          {detailError ? (
+            <button
+              type="button"
+              onClick={refreshDetail}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-on-primary text-sm font-medium hover:bg-on-primary-fixed-variant transition-colors cursor-pointer"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">refresh</span>
+              {t('Thử lại')}
+            </button>
+          ) : (
+            <Link to="/my-requests" className="text-primary text-sm hover:underline mt-2 inline-block">{t('Quay lại danh sách')}</Link>
+          )}
         </div>
       </div>
     );
@@ -191,12 +230,15 @@ export default function RequestDetail() {
   /**
    * BE-67: hiển thị hạn xử lý của bước hiện tại (máy chủ đặt theo cấu hình "Xử lý quá hạn").
    * Trước đây người dùng không thấy còn bao lâu là hết hạn nên không hiểu vì sao đơn bị trả về.
+   *
+   * `now` lấy từ useNow() chứ không phải Date.now() trực tiếp: trước đây giá trị chỉ được tính lúc
+   * render nên badge "còn N giờ" và màu "quá hạn" đứng im cho tới khi có state khác thay đổi.
    */
   const deadlineInfo = (() => {
     if (!isPendingWorkflow || !request.deadlineAt) return null;
     const deadline = new Date(request.deadlineAt);
     if (Number.isNaN(deadline.getTime())) return null;
-    const hoursLeft = (deadline.getTime() - Date.now()) / 36e5;
+    const hoursLeft = (deadline.getTime() - now) / 36e5;
     return {
       text: deadline.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       hoursLeft,
@@ -419,10 +461,25 @@ export default function RequestDetail() {
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-1 text-sm text-secondary hover:text-primary transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">arrow_back</span>
             {t('Quay lại')}
           </button>
         </div>
+
+        {/*
+          * RPT-02: khi không tải được chi tiết đơn, trang vẫn hiển thị dữ liệu thô từ danh sách
+          * (thiếu bình luận + nhật ký duyệt). Phải nói rõ để người duyệt không kết luận vội —
+          * ví dụ không thấy nhật ký lại tưởng đơn chưa ai xử lý.
+          */}
+        {detailError && (
+          <div className="px-6 py-3 border-b border-outline-variant/50">
+            <LoadError
+              compact
+              message={t('Không tải được đầy đủ bình luận và nhật ký duyệt của đơn này.')}
+              onRetry={refreshDetail}
+            />
+          </div>
+        )}
 
         {/* Action Header */}
         <div className="px-6 py-4 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4">
@@ -449,7 +506,7 @@ export default function RequestDetail() {
                       : 'bg-surface-container-low text-secondary border-outline-variant'
                 }`}
               >
-                <span className="material-symbols-outlined text-[15px]">schedule</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[15px]">schedule</span>
                 {deadlineInfo.overdue
                   ? t('Đã quá hạn xử lý từ {v0}', { v0: deadlineInfo.text })
                   : t('Hạn xử lý: {v0} (còn {v1} giờ)', { v0: deadlineInfo.text, v1: Math.max(1, Math.round(deadlineInfo.hoursLeft)) })}
@@ -466,7 +523,7 @@ export default function RequestDetail() {
                 className="px-4 py-1.5 rounded text-sm font-medium border border-error/40 text-error hover:bg-error-container/40 transition-colors flex items-center gap-2 bg-surface cursor-pointer"
                 title={t('Hủy đơn này (chưa ai duyệt)')}
               >
-                <span className="material-symbols-outlined text-[16px]">cancel</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">cancel</span>
                 {t('Hủy đơn')}
               </button>
             )}
@@ -474,14 +531,14 @@ export default function RequestDetail() {
             {isSupplementOwner ? (
               <>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 text-pink-800 text-xs font-semibold border border-pink-200">
-                  <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">edit_note</span>
                   {t('Người duyệt yêu cầu bạn bổ sung thông tin')}
                 </span>
                 <button
                   onClick={() => setSupplementEditOpen(true)}
                   className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">edit_note</span>
                   {t('Bổ sung & gửi lại')}
                 </button>
               </>
@@ -493,7 +550,7 @@ export default function RequestDetail() {
                     className="px-3 py-1.5 rounded text-sm font-medium border border-warning text-warning hover:bg-warning-container transition-colors flex items-center gap-2 bg-surface cursor-pointer"
                     title={t('Giả lập đơn quá hạn để thử luồng xử lý quá hạn (chỉ ADMIN/HR)')}
                   >
-                    <span className="material-symbols-outlined text-[16px]">bolt</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">bolt</span>
                     {t('Giả lập quá hạn')}
                   </button>
                 )}
@@ -504,7 +561,7 @@ export default function RequestDetail() {
                   className="px-3 py-1.5 rounded text-sm font-medium border border-outline-variant text-on-surface hover:bg-surface-container transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   title={actionable ? t('Yêu cầu người gửi bổ sung thông tin') : t('Bạn không phải người duyệt bước này')}
                 >
-                  <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">edit_note</span>
                   {t('Yêu cầu bổ sung')}
                 </button>
                 <button
@@ -513,7 +570,7 @@ export default function RequestDetail() {
                   className="px-4 py-1.5 rounded text-sm font-medium border border-error text-error hover:bg-error-container transition-colors flex items-center gap-2 bg-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   title={actionable ? t('Từ chối yêu cầu') : t('Bạn không phải người duyệt bước này')}
                 >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                   {t('Từ chối')}
                 </button>
                 <button
@@ -522,7 +579,7 @@ export default function RequestDetail() {
                   className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   title={actionable ? t('Phê duyệt yêu cầu') : t('Bạn không phải người duyệt bước này')}
                 >
-                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">check_circle</span>
                   {t('Duyệt yêu cầu')}
                 </button>
               </>
@@ -535,7 +592,7 @@ export default function RequestDetail() {
               <div className="bg-surface rounded-lg shadow-xl max-w-sm w-full p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-success-container flex items-center justify-center">
-                    <span className="material-symbols-outlined text-success text-[24px]">check_circle</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-success text-[24px]">check_circle</span>
                   </div>
                   <div>
                     <h3 className="font-semibold text-on-surface">{t('Xác nhận phê duyệt')}</h3>
@@ -578,7 +635,7 @@ export default function RequestDetail() {
             {isSupplementWorkflow && (
               <section className="bg-pink-50/60 border border-pink-200 rounded-lg shadow-sm overflow-hidden">
                 <div className="px-4 py-3 flex items-start gap-3">
-                  <span className="material-symbols-outlined text-pink-700 text-[20px] flex-shrink-0">edit_note</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-pink-700 text-[20px] flex-shrink-0">edit_note</span>
                   <div className="flex-1 min-w-0">
                     <h2 className="text-sm text-on-surface font-semibold">{t('Đơn đang chờ bổ sung thông tin')}</h2>
                     {lastSupplementReason ? (
@@ -601,7 +658,7 @@ export default function RequestDetail() {
             {request.status === 'rejected' && lastRejectReason && (
               <section className="bg-error-container/30 border border-error/30 rounded-lg shadow-sm overflow-hidden">
                 <div className="px-4 py-3 flex items-start gap-3">
-                  <span className="material-symbols-outlined text-error text-[20px] flex-shrink-0">block</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-error text-[20px] flex-shrink-0">block</span>
                   <div className="flex-1 min-w-0">
                     <h2 className="text-sm text-on-surface font-semibold">{t('Đơn đã bị từ chối')}</h2>
                     <p className="text-sm text-on-surface mt-1">
@@ -616,7 +673,7 @@ export default function RequestDetail() {
             {/* Detail block */}
             <section className="bg-surface border border-outline-variant rounded-lg shadow-sm overflow-hidden">
               <div className="px-4 py-3 bg-surface-container-low border-b border-outline-variant flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] text-secondary">feed</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary">feed</span>
                 <h2 className="text-sm text-on-surface uppercase tracking-wide font-semibold">{t('Chi tiết Đề xuất')}</h2>
               </div>
               {/* BE-137: cuộn ngang trên màn hẹp thay vì tràn vỡ bố cục */}
@@ -639,7 +696,7 @@ export default function RequestDetail() {
                           className="p-1.5 text-secondary hover:text-primary hover:bg-primary-container/30 rounded-full transition-colors cursor-pointer"
                           title={t('Xem thông tin chi tiết')}
                         >
-                          <span className="material-symbols-outlined text-[20px]">info</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[20px]">info</span>
                         </button>
                       </div>
                     </td>
@@ -703,13 +760,16 @@ export default function RequestDetail() {
                               title={a.uploaderName ? t('Người tải lên: {v0}', { v0: a.uploaderName }) : undefined}
                               className="inline-flex items-center gap-2 border border-outline-variant rounded bg-surface px-3 py-1.5 text-sm hover:border-primary transition-colors text-on-surface group cursor-pointer max-w-full"
                             >
-                              <span className="material-symbols-outlined text-[16px] text-secondary group-hover:text-primary">attach_file</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-secondary group-hover:text-primary">attach_file</span>
                               <span className="font-medium truncate">{a.originalFileName || a.fileName}</span>
                               <span className="text-xs text-secondary flex-shrink-0">{formatFileSize(a.fileSize)}</span>
-                              <span className="material-symbols-outlined text-[16px] text-secondary group-hover:text-primary flex-shrink-0">download</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-secondary group-hover:text-primary flex-shrink-0">download</span>
                             </button>
                           ))}
                         </div>
+                      ) : attachmentsError ? (
+                        /* UX-02: không đọc được thì nói rõ, đừng khẳng định "Không có tài liệu". */
+                        <LoadError compact message={t('Không tải được danh sách tài liệu đính kèm.')} onRetry={refreshAttachments} />
                       ) : (
                         <span className="text-secondary text-xs italic">{t('Không có tài liệu')}</span>
                       )}
@@ -723,7 +783,7 @@ export default function RequestDetail() {
             {/* Comment thread */}
             <section className="bg-surface border border-outline-variant rounded-lg shadow-sm overflow-hidden">
               <div className="px-4 py-3 bg-surface-container-low border-b border-outline-variant flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] text-secondary">forum</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary">forum</span>
                 <h2 className="text-sm text-on-surface uppercase tracking-wide font-semibold">{t('Lịch sử Thảo luận')}</h2>
                 <span className="ml-auto text-xs text-secondary">{request.comments?.length || 0} {t('bình luận')}</span>
               </div>
@@ -746,7 +806,7 @@ export default function RequestDetail() {
                         <div className="flex-1 bg-pink-50/70 border border-pink-200 rounded-md p-3">
                           <div className="flex justify-between items-start mb-1">
                             <span className="flex items-center gap-1.5 font-semibold text-sm text-pink-700">
-                              <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">edit_note</span>
                               {t('Yêu cầu bổ sung')}
                             </span>
                             <span className="text-xs text-secondary">{c.at}</span>
@@ -765,7 +825,7 @@ export default function RequestDetail() {
                         <div className="flex-1 bg-error-container/40 border border-error/30 rounded-md p-3">
                           <div className="flex justify-between items-start mb-1">
                             <span className="flex items-center gap-1.5 font-semibold text-sm text-error">
-                              <span className="material-symbols-outlined text-[16px]">block</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">block</span>
                               {t('Từ chối')}
                             </span>
                             <span className="text-xs text-secondary">{c.at}</span>
@@ -805,7 +865,7 @@ export default function RequestDetail() {
                     />
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-xs text-secondary flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[16px]">alternate_email</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">alternate_email</span>
                         {t('@mention người dùng')}
                       </span>
                       <button
@@ -828,7 +888,7 @@ export default function RequestDetail() {
           {/* Action reminder */}
           <div className={`border-b p-4 ${isSupplementOwner ? 'bg-pink-50/60 border-pink-200' : actionable ? 'bg-warning-container/30 border-warning/20' : 'bg-surface-container-low border-outline-variant'}`}>
             <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1 ${isSupplementOwner ? 'text-pink-700' : actionable ? 'text-warning' : 'text-secondary'}`}>
-              <span className="material-symbols-outlined text-[14px]">{(actionable || isSupplementOwner) ? 'warning' : 'task_alt'}</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[14px]">{(actionable || isSupplementOwner) ? 'warning' : 'task_alt'}</span>
               {(actionable || isSupplementOwner) ? t('Yêu cầu hành động') : t('Trạng thái')}
             </h3>
             <p className="text-sm text-on-surface">
@@ -844,20 +904,20 @@ export default function RequestDetail() {
               mỗi mốc ghi rõ người thực hiện + thời gian; UI giữ nguyên phong cách timeline cũ. */}
           <div className="p-6">
             <h3 className="text-xs text-secondary uppercase tracking-widest mb-4 flex items-center gap-2 font-semibold">
-              <span className="material-symbols-outlined text-[16px]">account_tree</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">account_tree</span>
               {t('Tiến trình xử lý')}
             </h3>
 
             {/* BE-50: đường đi của đơn — rõ ràng TỪ AI ➔ ĐẾN AI theo đúng thứ tự duyệt */}
             <div className="mb-5 flex flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-2.5 rounded-lg border border-primary/20 bg-primary/5">
               <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-primary">
-                <span className="material-symbols-outlined text-[14px]">route</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">route</span>
                 {t('Đường đi của đơn')}
               </span>
               {flowPath.map((p, pi) => (
                 <span key={p.key} className="flex items-center gap-2">
                   {pi > 0 && (
-                    <span className="material-symbols-outlined text-primary text-[16px] leading-none">arrow_forward</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-primary text-[16px] leading-none">arrow_forward</span>
                   )}
                   <span className="inline-flex items-center gap-1.5">
                     {p.stepNo != null && (
@@ -869,7 +929,7 @@ export default function RequestDetail() {
                   </span>
                 </span>
               ))}
-              <span className="material-symbols-outlined text-success text-[16px] leading-none">arrow_forward</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-success text-[16px] leading-none">arrow_forward</span>
               <span className="text-[12px] font-semibold text-success">{t('Hoàn tất')}</span>
             </div>
 
@@ -882,7 +942,7 @@ export default function RequestDetail() {
                     return (
                       <li key={item.key} className="flex items-start gap-3">
                         <div className="w-6 h-6 rounded-full bg-surface border border-outline-variant flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="material-symbols-outlined text-[12px] text-secondary">person</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[12px] text-secondary">person</span>
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-secondary uppercase tracking-wide">{t('Người nộp đơn')}</p>
@@ -900,7 +960,7 @@ export default function RequestDetail() {
                     return (
                       <li key={item.key} className="flex items-start gap-3">
                         <div className="w-6 h-6 rounded-full bg-pink-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                          <span className="material-symbols-outlined text-[12px]">edit_note</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[12px]">edit_note</span>
                         </div>
                         <div className="bg-pink-50/70 border border-pink-200 p-2.5 rounded-xl -mt-1 shadow-sm w-full min-w-0">
                           <div className="flex items-center justify-between gap-2">
@@ -926,7 +986,7 @@ export default function RequestDetail() {
                     return (
                       <li key={item.key} className="flex items-start gap-3">
                         <div className="w-6 h-6 rounded-full bg-pink-600/15 text-pink-700 border border-pink-300 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="material-symbols-outlined text-[12px]">refresh</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[12px]">refresh</span>
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-bold text-pink-700 uppercase tracking-wide">{t('Bổ sung thông tin')}</p>
@@ -965,7 +1025,7 @@ export default function RequestDetail() {
                     return (
                       <li key={item.key} className="flex items-start gap-3">
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ring-2 ring-pink-500/20 ring-offset-1 ring-offset-surface ${isSupplementOwner ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-700 border border-pink-300'}`}>
-                          <span className="material-symbols-outlined text-[12px]">edit_note</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[12px]">edit_note</span>
                         </div>
                         <div className="bg-pink-50/70 border border-pink-200 p-2.5 rounded-xl -mt-1 shadow-sm w-full min-w-0">
                           <div className="flex items-center justify-between gap-2">
@@ -1082,7 +1142,7 @@ export default function RequestDetail() {
                         {/* BE-27: chấm NHỎ = từng người trong bước (chấm to w-6 là cả bước) */}
                         <div className={`rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${done ? 'w-[18px] h-[18px] ml-[3px]' : 'w-[10px] h-[10px] ml-[7px] border'} ${personTone.ring}`}>
                           {done && (
-                            <span className="material-symbols-outlined text-[11px]">
+                            <span aria-hidden="true" className="material-symbols-outlined text-[11px]">
                               {actedBy === 'approved' ? 'check' : actedBy === 'rejected' ? 'close' : actedBy === 'supplement_requested' ? 'edit_note' : 'schedule'}
                             </span>
                           )}
@@ -1095,7 +1155,7 @@ export default function RequestDetail() {
                                 className="ml-1.5 inline-flex items-center gap-0.5 align-middle text-[10px] font-bold text-primary"
                                 title={t('{v0} đã được ủy quyền duyệt thay cho {v1}', { v0: via.actorName || nameOf(via.actorId), v1: person?.name || '' })}
                               >
-                                <span className="material-symbols-outlined text-[11px]">assignment_ind</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[11px]">assignment_ind</span>
                                 {via.actorName || nameOf(via.actorId)} {t('duyệt thay')}
                               </span>
                             )}
@@ -1104,7 +1164,7 @@ export default function RequestDetail() {
                                 className="ml-1.5 inline-flex items-center gap-0.5 align-middle text-[10px] font-bold text-primary"
                                 title={t('Người được ủy quyền sẽ duyệt thay đến hết ngày {v0}', { v0: pendingDelegate.endDate ? new Date(pendingDelegate.endDate).toLocaleDateString('vi-VN') : '' })}
                               >
-                                <span className="material-symbols-outlined text-[11px]">assignment_ind</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[11px]">assignment_ind</span>
                                 {pendingDelegate.delegateName} {t('sẽ duyệt thay')}
                               </span>
                             )}
@@ -1140,7 +1200,7 @@ export default function RequestDetail() {
                   return (
                     <li key={item.key} className="flex items-start gap-3">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm ${tone.ring} ${(isCurrent || isTimedOut) ? 'ring-2 ring-current/20 ring-offset-1 ring-offset-surface' : ''}`}>
-                        <span className="material-symbols-outlined text-[12px]">
+                        <span aria-hidden="true" className="material-symbols-outlined text-[12px]">
                           {s.status === 'approved' ? 'check' : (s.status === 'rejected' || isTimedOut) ? 'close' : isSupplementPaused ? 'edit_note' : isCurrent ? 'pending_actions' : 'schedule'}
                         </span>
                       </div>
@@ -1185,7 +1245,7 @@ export default function RequestDetail() {
                       return (
                         <li key={item.key} className="flex items-start gap-3">
                           <div className="w-6 h-6 rounded-full bg-success text-on-success flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                            <span className="material-symbols-outlined text-[12px]">task_alt</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[12px]">task_alt</span>
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-success uppercase tracking-wide">{t('Hoàn tất')}</p>
@@ -1202,7 +1262,7 @@ export default function RequestDetail() {
                       return (
                         <li key={item.key} className="flex items-start gap-3">
                           <div className="w-6 h-6 rounded-full bg-error text-on-error flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                            <span className="material-symbols-outlined text-[12px]">block</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[12px]">block</span>
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-error uppercase tracking-wide">{label}</p>
@@ -1218,7 +1278,7 @@ export default function RequestDetail() {
                       return (
                         <li key={item.key} className="flex items-start gap-3">
                           <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                            <span className="material-symbols-outlined text-[12px]">schedule</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[12px]">schedule</span>
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-orange-700 uppercase tracking-wide">{t('Cấp')} {request.currentStep || 1}</p>

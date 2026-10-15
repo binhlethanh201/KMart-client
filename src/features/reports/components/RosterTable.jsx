@@ -10,7 +10,7 @@ import Select from '../../../components/Select';
  * Tách riêng + tách state (tìm kiếm / phân trang) ra khỏi trang để gõ tìm kiếm
  * chỉ vẽ lại bảng này, không vẽ lại cả trang Báo cáo.
  *
- * Tìm kiếm theo tên nhân sự, phòng công tác chính, chức vụ — lọc ngay trên dữ liệu
+ * Tìm kiếm theo tên nhân sự, MÃ NHÂN SỰ, phòng công tác chính, chức vụ — lọc ngay trên dữ liệu
  * đã tải nên không cần gọi lại máy chủ.
  */
 export default function RosterTable({ managers, rosterMode, total, onPickDepartment, query }) {
@@ -29,10 +29,13 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
   const filtered = useMemo(() => {
     const keyword = query_.trim().toLowerCase();
     return managers.filter((m) => {
+      // RPT-01: tra được theo MÃ NHÂN SỰ, không chỉ tên — hai người trùng họ tên vẫn tách được.
+      const code = (m.code || (m.userId || '').toString().substring(0, 8)).toLowerCase();
       const matchKeyword = !keyword
         || (m.fullName || '').toLowerCase().includes(keyword)
         || (m.departmentName || '').toLowerCase().includes(keyword)
-        || (m.positionName || '').toLowerCase().includes(keyword);
+        || (m.positionName || '').toLowerCase().includes(keyword)
+        || code.includes(keyword);
       const matchRole = !roleFilter || m.positionName === roleFilter;
       return matchKeyword && matchRole;
     });
@@ -61,7 +64,7 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
               : t('Số đơn CỦA mỗi quản lý đã được người khác duyệt trong kỳ, tách riêng đơn nghỉ (căn cứ tính lương). Bấm vào một dòng để lọc theo phòng ban.')}
           </p>
         </div>
-        <span className="material-symbols-outlined text-white/40 text-[28px]">supervisor_account</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-white/40 text-[28px]">supervisor_account</span>
       </div>
 
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
@@ -93,14 +96,14 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
         <div className="flex flex-col gap-1.5 flex-1 min-w-[220px]">
           <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{t('Tìm kiếm nhân sự')}</label>
           <div className="relative">
-            <span className="material-symbols-outlined text-[18px] text-gray-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-gray-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
               search
             </span>
             <input
               type="text"
               value={query_}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('Tên, phòng công tác, chức vụ...')}
+            placeholder={t('Tên, mã nhân sự, phòng công tác, chức vụ...')}
               className="w-full h-[38px] pl-10 pr-9 bg-white/5 border border-white/15 rounded-lg text-[13px] text-white placeholder:text-gray-500 outline-none focus:border-white/40 transition-colors"
             />
             {query_ && (
@@ -110,7 +113,7 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer"
                 title={t('Xóa tìm kiếm')}
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
               </button>
             )}
           </div>
@@ -154,6 +157,8 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
             <table className="w-full text-left min-w-[820px]">
               <thead>
                 <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-white/10">
+                  {/* RPT-01: mã nhân sự đứng trước tên để hai người trùng họ tên phân biệt được */}
+                  <th className="py-3 pr-4 font-bold">{t('Mã nhân sự')}</th>
                   <th className="py-3 pr-4 font-bold">{t('Nhân sự')}</th>
                   <th className="py-3 pr-4 font-bold">{t('Phòng công tác chính')}</th>
                   <th className="py-3 pr-4 font-bold">{t('Chức vụ')}</th>
@@ -174,6 +179,9 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
                          vào hồ sơ nhân sự. Bảng giờ chỉ để xem; lọc vẫn dùng thanh bộ lọc chung. */
                       className="border-b border-white/5 transition-colors"
                     >
+                      <td className="py-3 pr-4 text-[12px] font-mono text-gray-400">
+                        {m.code || (m.userId || '').toString().substring(0, 8).toUpperCase() || '—'}
+                      </td>
                       <td className="py-3 pr-4">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0">

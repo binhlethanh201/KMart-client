@@ -58,9 +58,16 @@ const LandingPage = () => {
         <div className="flex h-full w-screen shrink-0 flex-col overflow-y-auto overflow-x-hidden">
           {/* HEADER */}
           <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b border-outline-variant bg-surface/90 px-6 shadow-sm backdrop-blur-md md:px-12">
-            <div className="cursor-pointer transition-transform active:scale-95" onClick={() => handleSmoothNavigate("/")}>
+            {/* Logo là điều hướng về trang chủ: dùng <button> để Tab tới và Enter được.
+                Trước đây là <div cursor-pointer onClick> nên người dùng bàn phím không tới được.
+                Không đặt aria-label riêng: tên của nút lấy từ chính chữ "Kmart" trong logo. */}
+            <button
+              type="button"
+              onClick={() => handleSmoothNavigate("/")}
+              className="cursor-pointer transition-transform active:scale-95"
+            >
               <BrandLogo size="sm" />
-            </div>
+            </button>
 
             <div className="flex items-center gap-3">
               <LanguageSwitcher variant="light" />
@@ -85,7 +92,7 @@ const LandingPage = () => {
             <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-12">
               <div className="space-y-6 text-left lg:col-span-6">
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-primary-fixed-dim bg-primary-container px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-on-primary-container shadow-sm">
-                  <span className="material-symbols-outlined text-[14px] text-primary">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-primary">
                     verified
                   </span>
                   {t('Nền tảng duyệt đơn nội bộ')}
@@ -114,7 +121,7 @@ const LandingPage = () => {
                     className="group flex items-center justify-center gap-2 rounded-lg bg-primary px-8 py-3 text-on-primary shadow-lg shadow-primary/25 transition-all hover:bg-on-primary-fixed-variant hover:shadow-xl hover:shadow-primary/30 active:scale-95"
                   >
                     <span>{t('Truy cập hệ thống')}</span>
-                    <span className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">
+                    <span aria-hidden="true" className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">
                       arrow_forward
                     </span>
                   </button>
@@ -179,7 +186,7 @@ const LandingPage = () => {
                           >
                             <div className="flex items-center gap-3">
                               <div className="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-primary">
-                                <span className="material-symbols-outlined text-[16px]">
+                                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
                                   draft
                                 </span>
                               </div>
@@ -224,7 +231,7 @@ const LandingPage = () => {
                     </span>
 
                     <div className="mb-5 inline-flex rounded-xl bg-primary-container p-3 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-on-primary">
-                      <span className="material-symbols-outlined text-[24px]">
+                      <span aria-hidden="true" className="material-symbols-outlined text-[24px]">
                         {feature.icon}
                       </span>
                     </div>
@@ -259,7 +266,7 @@ const LandingPage = () => {
                   className="group flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-7 py-3 text-label-md font-semibold text-primary shadow-lg transition-all hover:bg-white/90 active:scale-95"
                 >
                   <span>{t('Đăng nhập ngay')}</span>
-                  <span className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">
                     arrow_forward
                   </span>
                 </button>
@@ -273,7 +280,7 @@ const LandingPage = () => {
               <div className="flex items-center gap-2">
                 <BrandLogo size="sm" />
               </div>
-              <span className="text-[11px] uppercase tracking-widest text-outline">
+              <span className="text-[11px] uppercase tracking-widest text-muted">
                 {t('© 2026 Kmart Internal Systems. Bảo lưu mọi quyền lợi.')}
               </span>
               <LanguageSwitcher variant="light" />

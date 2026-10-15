@@ -192,7 +192,7 @@ export default function Select({
         <span className={`truncate ${selected ? '' : 'text-secondary'}`}>
           {selected ? selected.label : t(placeholder)}
         </span>
-        <span
+        <span aria-hidden="true"
           className={`material-symbols-outlined text-[18px] text-secondary flex-shrink-0 transition-transform duration-150 ${
             open ? 'rotate-180' : ''
           }`}
@@ -220,7 +220,7 @@ export default function Select({
           {withSearch && (
             <div className="p-2 border-b border-outline-variant/50">
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[16px] text-secondary">
+                <span aria-hidden="true" className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[16px] text-secondary">
                   search
                 </span>
                 <input
@@ -272,7 +272,7 @@ export default function Select({
                     >
                       <span className="truncate">{o.label}</span>
                       {o.value === value && !o.disabled && (
-                        <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary flex-shrink-0">check</span>
                       )}
                     </button>
                   </div>

@@ -4,6 +4,7 @@ import { documentTypeService } from '../../../services/documentTypeService';
 import { useI18n } from '../../../i18n/I18nProvider';
 import describeApiError from '../../../utils/apiError';
 import Select from '../../../components/Select';
+import LoadError from '../../../components/LoadError';
 
 function Toggle({ checked, onChange, label, disabled }) {
   return (
@@ -34,6 +35,9 @@ export default function FormTemplatesTab() {
 
   const [documentTypes, setDocumentTypes] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  /** UX-01: tải danh sách mẫu đơn thất bại -> phải báo, không để màn hình trông như chưa có dữ liệu. */
+  const [loadError, setLoadError] = useState(false);
+  const [loadRetry, setLoadRetry] = useState(0);
   /** BE-134: mẫu đơn đang chờ xác nhận xóa trong hộp thoại (thay window.confirm). */
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -43,6 +47,26 @@ export default function FormTemplatesTab() {
    */
   const documentTypesRef = useRef(documentTypes);
   useEffect(() => { documentTypesRef.current = documentTypes; }, [documentTypes]);
+
+  /**
+   * Mẫu đơn đang chọn. Khai báo Ở ĐÂY (trước effect bên dưới) vì effect đọc `selectedForm` ngay
+   * trong callback: chạy được chỉ nhờ callback chạy sau render, nhưng đọc biến `const` trước khi
+   * khởi tạo là chỗ dễ vỡ (lint báo react(immutability)).
+   */
+  const [selectedForm, setSelectedForm] = useState(() => Object.keys(fields)[0] || '');
+
+  // Gom nhóm mẫu đơn theo cột `category` thật từ API (không dùng danh mục cứng).
+  // Khai báo TRƯỚC effect bên dưới: trước đây hàm nằm sau, nên effect gọi nó khi `const` chưa
+  // được khởi tạo — chạy được chỉ vì effect chạy sau render, nhưng vẫn là chỗ dễ vỡ.
+  const buildCategories = (list) => {
+    const byCat = new Map();
+    list.forEach(dt => {
+      const cat = (dt.category && String(dt.category).trim()) || t('Khác');
+      if (!byCat.has(cat)) byCat.set(cat, []);
+      byCat.get(cat).push(dt.name);
+    });
+    return [...byCat.entries()].map(([name, items]) => ({ id: `cat_${name}`, name, items }));
+  };
 
   useEffect(() => {
     documentTypeService.getAll().then(data => {
@@ -83,19 +107,17 @@ export default function FormTemplatesTab() {
       if (!selectedForm && data.length > 0) {
         setSelectedForm(data[0].name);
       }
-    }).catch(console.error);
-  }, []);
-
-  // Gom nhóm mẫu đơn theo cột `category` thật từ API (không dùng danh mục cứng)
-  const buildCategories = (list) => {
-    const byCat = new Map();
-    list.forEach(dt => {
-      const cat = (dt.category && String(dt.category).trim()) || t('Khác');
-      if (!byCat.has(cat)) byCat.set(cat, []);
-      byCat.get(cat).push(dt.name);
-    });
-    return [...byCat.entries()].map(([name, items]) => ({ id: `cat_${name}`, name, items }));
-  };
+    }).catch((err) => {
+      // UX-01: lỗi phải hiện ra; trước đây chỉ console.error nên màn Cấu hình trông như chưa có
+      // mẫu đơn nào, người dùng tưởng dữ liệu đã mất.
+      console.error('Failed to load document types', err);
+      setLoadError(true);
+    });    // Cố ý chạy ĐÚNG MỘT LẦN khi mount. Không thêm `fields`/`selectedForm` vào deps: effect này dựng
+    // lại toàn bộ state từ server, nên nếu chạy lại theo mỗi thay đổi field thì mọi chỉnh sửa chưa
+    // lưu của người dùng sẽ bị ghi đè. `buildCategories` và `setFields` là hàm ổn định/khai báo trong
+    // component nên cũng không cần.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadRetry]);
 
   /**
    * BE-84: gộp danh mục dựng từ server với các danh mục người dùng vừa thêm tay trong phiên
@@ -197,8 +219,6 @@ export default function FormTemplatesTab() {
 
   /** Nút "Lưu đồng bộ DB": lưu đúng danh sách trường đang hiển thị. */
   const handleSaveToServer = () => saveFieldsToServer(fields[selectedForm] || []);
-
-  const [selectedForm, setSelectedForm] = useState(() => Object.keys(fields)[0] || '');
 
   const [isAddingType, setIsAddingType] = useState(false);
   const [editingDocType, setEditingDocType] = useState(null);
@@ -515,10 +535,16 @@ export default function FormTemplatesTab() {
             className="text-primary hover:bg-primary-container/30 p-1 rounded-md transition-colors cursor-pointer"
             title={t('Thêm danh mục')}
           >
-            <span className="material-symbols-outlined text-[18px]">create_new_folder</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">create_new_folder</span>
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">
+          {/* UX-01: tải mẫu đơn lỗi thì báo rõ + cho thử lại, thay vì danh sách rỗng im lặng. */}
+          {loadError && (
+            <div className="px-4 pt-3">
+              <LoadError compact message={t('Không tải được danh sách mẫu đơn.')} onRetry={() => setLoadRetry((v) => v + 1)} />
+            </div>
+          )}
           <ul className="flex flex-col p-2 gap-3">
             {categories.map((cat) => {
               const isExpanded = expandedCats[cat.id] !== false; // Default true
@@ -535,13 +561,14 @@ export default function FormTemplatesTab() {
                          mục" lại một kiểu, nhìn như hai danh mục khác nhau. Nay hiện đúng tên đã lưu. */
                       className="flex-1 flex items-center gap-2 px-2 py-1 text-xs font-semibold text-secondary hover:text-primary transition-colors cursor-pointer text-left tracking-wider"
                     >
-                      <span className="material-symbols-outlined text-[16px]">
+                      <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
                         {isExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}
                       </span>
                       {isEditing ? (
                         <input 
                           autoFocus
                           type="text"
+                          aria-label={t('Tên danh mục')}
                           value={editCatName}
                           onChange={e => setEditCatName(e.target.value)}
                           onBlur={() => handleEditCategory(cat.id)}
@@ -566,7 +593,7 @@ export default function FormTemplatesTab() {
                           className="text-secondary hover:text-primary p-1 rounded hover:bg-surface-container-low cursor-pointer"
                           title={t('Đổi tên danh mục')}
                         >
-                          <span className="material-symbols-outlined text-[14px]">edit</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[14px]">edit</span>
                         </button>
                         <button 
                           onClick={() => {
@@ -582,7 +609,7 @@ export default function FormTemplatesTab() {
                           }`}
                           title={cat.items.length > 0 ? t('Phải xóa hết đơn bên trong để xóa danh mục') : t('Xóa danh mục')}
                         >
-                          <span className="material-symbols-outlined text-[14px]">delete</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[14px]">delete</span>
                         </button>
                       </div>
                     )}
@@ -602,7 +629,7 @@ export default function FormTemplatesTab() {
                                 active ? 'bg-primary-container/40 text-primary font-semibold' : 'text-on-surface hover:bg-surface-container-low'
                               }`}
                             >
-                              <span className="material-symbols-outlined text-[16px]">{active ? 'description' : 'draft'}</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{active ? 'description' : 'draft'}</span>
                               <span className="truncate">{t(f)}</span>
                             </button>
                             <div className="absolute right-1 opacity-0 group-hover/item:opacity-100 flex items-center transition-all bg-surface">
@@ -621,7 +648,7 @@ export default function FormTemplatesTab() {
                                 className="text-secondary hover:text-primary transition-all p-1.5 rounded hover:bg-primary-container/30 cursor-pointer flex-shrink-0"
                                 title={t('Sửa mẫu đơn')}
                               >
-                                <span className="material-symbols-outlined text-[14px]">edit</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">edit</span>
                               </button>
                               <button 
                                 onClick={(e) => {
@@ -631,7 +658,7 @@ export default function FormTemplatesTab() {
                                 className="text-secondary hover:text-error transition-all p-1.5 rounded hover:bg-error-container/30 cursor-pointer flex-shrink-0"
                                 title={t('Xóa mẫu đơn')}
                               >
-                                <span className="material-symbols-outlined text-[14px]">delete</span>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">delete</span>
                               </button>
                             </div>
                           </li>
@@ -653,7 +680,7 @@ export default function FormTemplatesTab() {
             }}
             className="w-full text-center px-3 py-2 rounded-md text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-primary hover:bg-primary-container/30 border border-dashed border-primary/50"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
             {t('Thêm loại đơn')}
           </button>
         </div>
@@ -672,7 +699,7 @@ export default function FormTemplatesTab() {
               disabled={isSaving}
               className="bg-surface border border-outline-variant text-on-surface hover:bg-surface-container-low transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5 cursor-pointer flex-shrink-0"
             >
-              <span className="material-symbols-outlined text-[18px]">
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">
                 {isSaving ? 'sync' : 'save'}
               </span>
               {isSaving ? t('Đang lưu...') : t('Lưu đồng bộ DB')}
@@ -681,7 +708,7 @@ export default function FormTemplatesTab() {
               onClick={addField}
               className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5 cursor-pointer flex-shrink-0"
             >
-              <span className="material-symbols-outlined text-[18px]">add</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
               {t('Thêm trường mới')}
             </button>
           </div>
@@ -703,6 +730,7 @@ export default function FormTemplatesTab() {
                   <td className="px-4 py-3">
                     <input 
                       type="text" 
+                      aria-label={t('Tên trường / Tiêu đề câu hỏi')}
                       value={f.label} 
                       onChange={(e) => updateField(idx, { label: e.target.value })}
                       className="text-sm font-medium text-on-surface bg-transparent border-b border-transparent hover:border-outline-variant focus:border-primary outline-none px-1 py-0.5 w-full max-w-[200px] transition-colors"
@@ -724,12 +752,12 @@ export default function FormTemplatesTab() {
                       className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-surface-container text-secondary border border-outline-variant hover:border-primary hover:text-primary transition-colors cursor-pointer w-full justify-between"
                     >
                       <div className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">
+                        <span aria-hidden="true" className="material-symbols-outlined text-[14px]">
                           {f.type === 'Tải file' ? 'attach_file' : f.type === 'Ngày' ? 'calendar_month' : f.type === 'Số' ? 'numbers' : f.type === 'Lựa chọn' ? 'list_alt' : f.type === 'Người duyệt thay' ? 'manage_accounts' : 'text_fields'}
                         </span>
                         {t(f.type)}
                       </div>
-                      <span className="material-symbols-outlined text-[14px] text-outline">edit</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-muted">edit</span>
                     </button>
                     {f.type === 'Lựa chọn' && f.options && f.options.length > 0 && (
                       <div className="text-[10px] text-secondary mt-1 ml-1">
@@ -761,7 +789,7 @@ export default function FormTemplatesTab() {
                     <div>
                       {f.type === 'Tải file' ? (
                         <div className="flex items-center gap-2 text-xs text-secondary">
-                          <span className="material-symbols-outlined text-[16px] text-outline">attach_file</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-muted">attach_file</span>
                           <span className="italic">{t('File đính kèm — tách riêng, không xuất Excel')}</span>
                         </div>
                       ) : (
@@ -786,7 +814,7 @@ export default function FormTemplatesTab() {
                       className="text-secondary hover:text-error hover:bg-error-container/30 p-1.5 rounded-md transition-colors cursor-pointer inline-flex items-center justify-center"
                       title={t('Xóa trường')}
                     >
-                      <span className="material-symbols-outlined text-[18px]">close</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[18px]">close</span>
                     </button>
                   </td>
                 </tr>
@@ -811,16 +839,17 @@ export default function FormTemplatesTab() {
                 onClick={() => { setIsAddingType(false); setEditingDocType(null); }}
                 className="text-on-surface-variant hover:text-on-surface transition-colors p-1 rounded-full hover:bg-surface-variant cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
             
             <div className="p-4 flex flex-col gap-4">
               <div>
-                <label className="block text-sm font-medium text-on-surface mb-1.5">
+                <label className="block text-sm font-medium text-on-surface mb-1.5" htmlFor="new-doc-type-name">
                   {t('Tên loại đơn')} <span className="text-error">*</span>
                 </label>
                 <input 
+                  id="new-doc-type-name"
                   type="text" 
                   autoFocus
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary" 
@@ -879,15 +908,16 @@ export default function FormTemplatesTab() {
                 onClick={() => setIsAddingCat(false)}
                 className="text-on-surface-variant hover:text-on-surface transition-colors p-1 rounded-full hover:bg-surface-variant cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
             
             <div className="p-4">
-              <label className="block text-sm font-medium text-on-surface mb-1.5">
+              <label className="block text-sm font-medium text-on-surface mb-1.5" htmlFor="new-category-name">
                 {t('Tên danh mục')} <span className="text-error">*</span>
               </label>
               <input 
+                id="new-category-name"
                 type="text" 
                 autoFocus
                 className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary" 
@@ -934,16 +964,17 @@ export default function FormTemplatesTab() {
                 onClick={() => setEditingTypeIdx(null)}
                 className="text-on-surface-variant hover:text-on-surface transition-colors p-1 rounded-full hover:bg-surface-variant cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[20px]">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
             
             <div className="p-4 flex-1 overflow-y-auto flex flex-col gap-6">
               <div>
-                <label className="block text-sm font-medium text-on-surface mb-2 block">
+                <label className="block text-sm font-medium text-on-surface mb-2 block" htmlFor="field-label-input">
                   {t('Tên trường / Tiêu đề câu hỏi')} <span className="text-error">*</span>
                 </label>
                 <input 
+                  id="field-label-input"
                   type="text"
                   value={tempLabel}
                   onChange={(e) => setTempLabel(e.target.value)}
@@ -978,7 +1009,7 @@ export default function FormTemplatesTab() {
                           : 'border-outline-variant bg-surface-container-lowest text-secondary hover:border-primary/50'
                       }`}
                     >
-                      <span className="material-symbols-outlined text-[24px]">{ft.icon}</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[24px]">{ft.icon}</span>
                       <span className="text-xs font-medium">{t(ft.id)}</span>
                     </button>
                   ))}
@@ -1008,7 +1039,7 @@ export default function FormTemplatesTab() {
                               : 'border-outline-variant bg-surface text-secondary hover:border-primary/50'
                           }`}
                         >
-                          <span className="material-symbols-outlined text-[18px]">{style.icon}</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{style.icon}</span>
                           {style.label}
                         </button>
                       ))}
@@ -1033,9 +1064,10 @@ export default function FormTemplatesTab() {
                       ) : (
                         tempOptions.map((opt, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <span className="material-symbols-outlined text-outline text-[16px] cursor-grab">drag_indicator</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-muted text-[16px] cursor-grab">drag_indicator</span>
                             <input 
                               type="text"
+                              aria-label={t('Tên phương án')}
                               value={opt}
                               onChange={(e) => updateTempOption(i, e.target.value)}
                               className="flex-1 bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"
@@ -1046,7 +1078,7 @@ export default function FormTemplatesTab() {
                               className="text-secondary hover:text-error hover:bg-error-container/30 p-1.5 rounded-md transition-colors cursor-pointer flex-shrink-0"
                               title={t('Xóa phương án')}
                             >
-                              <span className="material-symbols-outlined text-[18px]">close</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">close</span>
                             </button>
                           </div>
                         ))
@@ -1057,7 +1089,7 @@ export default function FormTemplatesTab() {
                       onClick={addTempOption}
                       className="mt-3 w-full text-center px-3 py-2 rounded-md text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-primary hover:bg-primary-container/30 border border-dashed border-primary/50"
                     >
-                      <span className="material-symbols-outlined text-[18px]">add</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
                       {t('Thêm phương án')}
                     </button>
                   </div>
@@ -1085,7 +1117,7 @@ export default function FormTemplatesTab() {
                               : 'border-outline-variant bg-surface text-secondary hover:border-primary/50'
                           }`}
                         >
-                          <span className="material-symbols-outlined text-[18px]">{style.icon}</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{style.icon}</span>
                           <span>{style.label}</span>
                           <span className="text-[10px] font-normal opacity-70">{style.subtext}</span>
                         </button>
@@ -1105,7 +1137,7 @@ export default function FormTemplatesTab() {
                   </p>
                   {tempTemplateFile ? (
                     <div className="flex items-center gap-2 bg-surface border border-outline-variant rounded-md px-3 py-2">
-                      <span className="material-symbols-outlined text-[18px] text-primary">description</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">description</span>
                       <span className="text-sm text-on-surface flex-1 truncate">{tempTemplateFile.name}</span>
                       <button
                         type="button"
@@ -1113,12 +1145,12 @@ export default function FormTemplatesTab() {
                         className="text-secondary hover:text-error p-1 rounded hover:bg-error-container/30 transition-colors cursor-pointer"
                         title={t('Xóa file mẫu')}
                       >
-                        <span className="material-symbols-outlined text-[18px]">close</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[18px]">close</span>
                       </button>
                     </div>
                   ) : (
                     <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-md border border-dashed border-primary/50 text-primary hover:bg-primary-container/20 transition-colors cursor-pointer text-sm font-medium">
-                      <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[18px]">upload_file</span>
                       {t('Tải lên file mẫu')}
                       <input type="file" className="sr-only" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={handleTemplateFileChange} />
                     </label>
@@ -1159,7 +1191,7 @@ export default function FormTemplatesTab() {
           >
             <div className="p-5 flex items-start gap-3">
               <div className="w-9 h-9 rounded-full bg-error-container text-error flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined">delete</span>
+                <span aria-hidden="true" className="material-symbols-outlined">delete</span>
               </div>
               <div>
                 <h2 className="font-headline-sm text-headline-sm text-on-surface">{t('Xóa mẫu đơn này?')}</h2>
@@ -1185,7 +1217,7 @@ export default function FormTemplatesTab() {
                 }}
                 className="font-label-md text-on-error bg-error px-5 py-2 rounded-md hover:bg-error/90 transition-colors shadow-sm cursor-pointer flex items-center gap-2"
               >
-                <span className="material-symbols-outlined text-[18px]">delete</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                 {t('Xóa mẫu đơn')}
               </button>
             </div>

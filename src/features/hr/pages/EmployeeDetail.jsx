@@ -10,6 +10,7 @@ import { userService } from '../services/userService';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
+import LoadError from '../../../components/LoadError';
 import Select from '../../../components/Select';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -41,6 +42,9 @@ export default function EmployeeDetail() {
   const employee = useMemo(() => getEmployee(id), [getEmployee, id]);
   const [log, setLog] = useState([]);
   const [logLoading, setLogLoading] = useState(false);
+  const [logError, setLogError] = useState(false);
+  /** Tăng lên để chạy lại effect tải nhật ký khi bấm "Thử lại". */
+  const [logRetry, setLogRetry] = useState(0);
   // BE-114: lịch sử chức vụ / phòng ban công tác (khác "Lịch sử hoạt động" — đây là dấu vết
   // nhân sự từng thuộc phòng nào, đọc được cả khi phòng ban đã bị xoá).
   const [positionHistory, setPositionHistory] = useState([]);
@@ -59,6 +63,7 @@ export default function EmployeeDetail() {
 
   useEffect(() => {
     if (!employee?.id) return;
+    setLogError(false);
     setLogLoading(true);
     userService.getActivityLog(employee.id, 1, 100) // fetch up to 100 recent logs
       .then(res => {
@@ -95,9 +100,15 @@ export default function EmployeeDetail() {
         formatted.sort((a, b) => b.date - a.date);
         setLog(formatted);
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error('Failed to load activity log', err);
+        setLogError(true);
+      })
       .finally(() => setLogLoading(false));
-  }, [employee?.id]);
+    // Tải nhật ký 1 lần cho mỗi nhân sự. Không thêm `t`: `t` đổi danh tính khi có bản dịch tự động mới
+    // nên sẽ gọi lại API liên tục; nó chỉ dùng để dịch nhãn hành động.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [employee?.id, logRetry]);
 
   const [editOpen, setEditOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -113,10 +124,10 @@ export default function EmployeeDetail() {
     return (
       <section className="flex-1 overflow-y-auto bg-background p-6">
         <div className="max-w-3xl mx-auto text-center py-16">
-          <span className="material-symbols-outlined text-[48px] text-outline block mb-3">person_off</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[48px] text-muted block mb-3">person_off</span>
           <p className="text-on-surface font-medium">{t('Không tìm thấy nhân sự với mã')} {id}.</p>
           <Link to="/personnel" className="inline-flex items-center gap-2 mt-4 text-primary hover:underline font-medium">
-            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">arrow_back</span>
             {t('Quay lại danh sách')}
           </Link>
         </div>
@@ -163,7 +174,7 @@ export default function EmployeeDetail() {
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-secondary hover:text-primary transition-colors font-medium text-sm cursor-pointer mb-2"
         >
-          <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">arrow_back</span>
           {t('Quay lại danh sách')}
         </button>
 
@@ -188,7 +199,7 @@ export default function EmployeeDetail() {
                <div className="flex items-center gap-2">
                  <h1 className={PAGE_TITLE_CLS}>{employee.name}</h1>
                  <button onClick={() => setProfileModalOpen(true)} title={t('Xem hồ sơ chi tiết')} className="w-6 h-6 rounded-full border border-outline-variant text-secondary hover:text-primary hover:border-primary hover:bg-primary/5 flex items-center justify-center transition-colors cursor-pointer">
-                   <span className="material-symbols-outlined text-[14px]">person_search</span>
+                   <span aria-hidden="true" className="material-symbols-outlined text-[14px]">person_search</span>
                  </button>
                </div>
                <p className="text-secondary text-sm">{employee.email}</p>
@@ -198,14 +209,14 @@ export default function EmployeeDetail() {
                    {status.label}
                  </span>
                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700`}>
-                   <span className="material-symbols-outlined text-[14px]">apartment</span>
+                   <span aria-hidden="true" className="material-symbols-outlined text-[14px]">apartment</span>
                    {employee.department}
                  </span>
                  {/* BE-114: không có chức vụ CHÍNH => tài khoản chưa xác định được phòng ban công tác.
                      Nhân sự thường bị chặn đăng nhập; ADMIN được miễn trừ nên phải cảnh báo rõ. */}
                  {employee.hasPrimaryPosition === false && (
                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-warning-container text-on-warning-container border border-warning/30">
-                     <span className="material-symbols-outlined text-[14px]">warning</span>
+                     <span aria-hidden="true" className="material-symbols-outlined text-[14px]">warning</span>
                      {t('Chưa có phòng ban công tác chính')}
                    </span>
                  )}
@@ -221,9 +232,9 @@ export default function EmployeeDetail() {
                onClick={() => setDropdownOpen(!dropdownOpen)}
                className="w-full md:w-auto justify-center bg-[#004B8D] text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 hover:bg-[#003B73] transition-colors shadow-sm cursor-pointer relative z-50"
              >
-               <span className="material-symbols-outlined text-[18px]">settings</span>
+               <span aria-hidden="true" className="material-symbols-outlined text-[18px]">settings</span>
                {t('Thao tác')}
-               <span className="material-symbols-outlined text-[18px]">expand_more</span>
+               <span aria-hidden="true" className="material-symbols-outlined text-[18px]">expand_more</span>
              </button>
              
              {/* Dropdown overlay */}
@@ -238,13 +249,13 @@ export default function EmployeeDetail() {
                     không có quyền vẫn thấy nút rồi bấm vào chỉ nhận lỗi 403 từ máy chủ. */}
                 {canEditEmployee && (
                   <button onClick={() => { setEditOpen(true); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low flex items-center gap-2 cursor-pointer">
-                     <span className="material-symbols-outlined text-[18px]">edit</span>
+                     <span aria-hidden="true" className="material-symbols-outlined text-[18px]">edit</span>
                      {t('Chỉnh sửa thông tin')}
                   </button>
                 )}
                 {canResetPassword && (
                   <button onClick={() => { handleResetPassword(); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-warning hover:bg-warning-container/30 flex items-center gap-2 cursor-pointer">
-                     <span className="material-symbols-outlined text-[18px]">lock_reset</span>
+                     <span aria-hidden="true" className="material-symbols-outlined text-[18px]">lock_reset</span>
                      {t('Đặt lại mật khẩu')}
                   </button>
                 )}
@@ -252,7 +263,7 @@ export default function EmployeeDetail() {
                   <>
                     <div className="h-px bg-outline-variant/50 my-1 w-full" />
                     <button onClick={() => { handleToggleLock(); setDropdownOpen(false); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 cursor-pointer ${isActive ? 'text-error hover:bg-error-container/30' : 'text-success hover:bg-success-container/30'}`}>
-                       <span className="material-symbols-outlined text-[18px]">{isActive ? 'lock' : 'lock_open'}</span>
+                       <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{isActive ? 'lock' : 'lock_open'}</span>
                        {isActive ? t('Khóa tài khoản') : t('Mở khóa')}
                     </button>
                   </>
@@ -262,7 +273,7 @@ export default function EmployeeDetail() {
                   <>
                     <div className="h-px bg-outline-variant/50 my-1 w-full" />
                     <button onClick={() => { handleDelete(); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error-container/30 flex items-center gap-2 cursor-pointer">
-                       <span className="material-symbols-outlined text-[18px]">delete</span>
+                       <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                        {t('Xóa nhân sự')}
                     </button>
                   </>
@@ -276,7 +287,7 @@ export default function EmployeeDetail() {
         <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))]">
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
-                 <span className="material-symbols-outlined text-[16px]">badge</span>
+                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">badge</span>
                  <span className="text-[10px] font-bold uppercase tracking-wider">{t('Mã nhân sự')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm truncate" title={employee.id}>{employee.id.substring(0, 8).toUpperCase()}</div>
@@ -284,7 +295,7 @@ export default function EmployeeDetail() {
            
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
-                 <span className="material-symbols-outlined text-[16px]">mail</span>
+                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">mail</span>
                  <span className="text-[10px] font-bold uppercase tracking-wider">{t('Email công ty')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm truncate" title={employee.email}>{employee.email}</div>
@@ -292,7 +303,7 @@ export default function EmployeeDetail() {
 
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
-                 <span className="material-symbols-outlined text-[16px]">mail</span>
+                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">mail</span>
                  <span className="text-[10px] font-bold uppercase tracking-wider">{t('Email cá nhân')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm truncate" title={employee.personalEmail || t('Không có')}>{employee.personalEmail || t('Không có')}</div>
@@ -300,7 +311,7 @@ export default function EmployeeDetail() {
 
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
-                 <span className="material-symbols-outlined text-[16px]">call</span>
+                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">call</span>
                  <span className="text-[10px] font-bold uppercase tracking-wider">{t('Số điện thoại')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm">{employee.phone}</div>
@@ -309,7 +320,7 @@ export default function EmployeeDetail() {
            {/* BE-163: ngày sinh chỉ hiển thị ở trang chi tiết (đã bỏ khỏi danh sách nhân sự). */}
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
-                 <span className="material-symbols-outlined text-[16px]">cake</span>
+                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">cake</span>
                  <span className="text-[10px] font-bold uppercase tracking-wider">{t('Ngày sinh')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm">{formatDate(employee.dateOfBirth)}</div>
@@ -317,7 +328,7 @@ export default function EmployeeDetail() {
 
            <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col gap-2 relative overflow-hidden">
               <div className="flex items-center gap-1.5 text-secondary">
-                 <span className="material-symbols-outlined text-[16px]">event</span>
+                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">event</span>
                  <span className="text-[10px] font-bold uppercase tracking-wider">{t('Ngày tạo')}</span>
               </div>
               <div className="font-bold text-on-surface text-sm">{formatDate(employee.createdAt)}</div>
@@ -327,7 +338,7 @@ export default function EmployeeDetail() {
         {/* Activity Log */}
         <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
            <div className="flex items-center gap-2 px-6 py-4 border-b border-outline-variant/50">
-             <span className="material-symbols-outlined text-primary text-[20px]">history</span>
+             <span aria-hidden="true" className="material-symbols-outlined text-primary text-[20px]">history</span>
              <h2 className="text-base font-bold text-on-surface tracking-tight">{t('Lịch sử hoạt động')}</h2>
            </div>
            
@@ -337,6 +348,13 @@ export default function EmployeeDetail() {
                   <div className="flex justify-center items-center py-10">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                   </div>
+                ) : logError ? (
+                  /* UX-01: lỗi tải nhật ký phải hiện ra, không để "Chưa có hoạt động nào" gây hiểu sai. */
+                  <LoadError
+                    compact
+                    message={t('Không tải được nhật ký hoạt động.')}
+                    onRetry={() => setLogRetry((v) => v + 1)}
+                  />
                 ) : pagedLog.length === 0 ? (
                   <div className="text-center py-10 text-secondary italic">
                     {t('Chưa có hoạt động nào được ghi nhận.')}
@@ -398,7 +416,7 @@ export default function EmployeeDetail() {
                  disabled={safePage <= 1}
                  className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                >
-                 <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_left</span>
                </button>
                <div className="px-2 flex items-center justify-center min-w-[4rem]">
                  <span className="text-xs text-secondary">{t('Trang {v0} / {v1}', { v0: safePage, v1: totalPages })}</span>
@@ -408,7 +426,7 @@ export default function EmployeeDetail() {
                  disabled={safePage >= totalPages}
                  className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
                >
-                 <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                 <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_right</span>
                </button>
              </div>
            </div>
@@ -417,7 +435,7 @@ export default function EmployeeDetail() {
           chuyển phòng, cần tra được đã từng thuộc phòng nào. */}
       <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 px-6 py-4 border-b border-outline-variant/50">
-          <span className="material-symbols-outlined text-primary text-[20px]">swap_horiz</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-primary text-[20px]">swap_horiz</span>
           <h2 className="text-base font-bold text-on-surface tracking-tight">{t('Lịch sử công tác (phòng ban & chức vụ)')}</h2>
         </div>
 
@@ -441,7 +459,7 @@ export default function EmployeeDetail() {
 
                   return (
                     <div key={h.id} className="flex items-start gap-3 py-3">
-                      <span className={`material-symbols-outlined text-[20px] mt-0.5 ${kind.cls}`}>{kind.icon}</span>
+                      <span aria-hidden="true" className={`material-symbols-outlined text-[20px] mt-0.5 ${kind.cls}`}>{kind.icon}</span>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-on-surface">{kind.label}</p>
                         <p className="text-sm text-on-surface-variant mt-0.5">
@@ -477,7 +495,7 @@ export default function EmployeeDetail() {
                 disabled={historyPage <= 1}
                 className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_left</span>
               </button>
               <span className="text-xs text-secondary">
                 {t('Trang {v0} / {v1}', { v0: historyPage, v1: Math.ceil(positionHistory.length / HISTORY_PAGE_SIZE) })}
@@ -487,7 +505,7 @@ export default function EmployeeDetail() {
                 disabled={historyPage >= Math.ceil(positionHistory.length / HISTORY_PAGE_SIZE)}
                 className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_right</span>
               </button>
             </div>
           </div>

@@ -25,9 +25,6 @@ const HIERARCHY_OPTIONS = [
   { id: 'division_director', label: 'Giám đốc khối / Ban giám đốc', group: 'Cấp trên' },
 ];
 
-// Nhóm cấp bậc theo khối để hiển thị trong dropdown
-const HIERARCHY_GROUPS = ['Cấp trực tiếp', 'Trong đơn vị', 'Cấp trên'];
-
 // Các khối luồng (track) — tách setup riêng, "common" merge cho cả HQ & Retail
 const BLOCK_OPTIONS = [
   { id: 'hq', label: 'Khối Văn phòng', icon: 'apartment' },
@@ -97,11 +94,11 @@ function SequentialOrderList({ role, order, onChange, isSequential = true }) {
   const currentIds = useMemo(() => {
     if (Array.isArray(order)) return order;
     return EMPLOYEES.filter((e) => e.role === role || e.position === role).map((e) => e.id);
-  }, [role, order]);
+  }, [role, order, EMPLOYEES]);
 
   const displayList = useMemo(() => {
     return currentIds.map((id) => EMPLOYEES.find((e) => e.id === id)).filter(Boolean);
-  }, [currentIds]);
+  }, [currentIds, EMPLOYEES]);
 
   const [draggedIdx, setDraggedIdx] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -169,7 +166,7 @@ function SequentialOrderList({ role, order, onChange, isSequential = true }) {
               }`}
           >
             <div className="flex items-center gap-2 pointer-events-none min-w-0">
-              {isSequential && <span className="material-symbols-outlined text-outline text-[18px] flex-shrink-0">drag_indicator</span>}
+              {isSequential && <span aria-hidden="true" className="material-symbols-outlined text-muted text-[18px] flex-shrink-0">drag_indicator</span>}
               <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[11px] font-bold flex-shrink-0">
                 {idx + 1}
               </div>
@@ -189,10 +186,10 @@ function SequentialOrderList({ role, order, onChange, isSequential = true }) {
             </div>
             <button
               onClick={() => removeUser(idx)}
-              className="text-outline hover:text-error hover:bg-error-container/30 p-1 rounded transition-colors cursor-pointer"
+              className="text-muted hover:text-error hover:bg-error-container/30 p-1 rounded transition-colors cursor-pointer"
               title={t('Loại bỏ')}
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </div>
         ))}
@@ -203,18 +200,18 @@ function SequentialOrderList({ role, order, onChange, isSequential = true }) {
             onClick={() => setShowAdd(true)}
             className="mt-1 flex items-center gap-1.5 text-xs font-medium text-primary hover:bg-primary-container/30 w-fit px-2 py-1.5 rounded transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[16px]">add</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px]">add</span>
             {t('Thêm người duyệt')}
           </button>
         ) : (
           <div className="mt-1 bg-surface border border-outline-variant rounded-md shadow-lg overflow-hidden flex flex-col relative z-10 w-full sm:w-80">
             <div className="p-2 border-b border-outline-variant/50 flex items-center gap-2 bg-surface-container-lowest">
-              <span className="material-symbols-outlined text-secondary text-[16px]">search</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-secondary text-[16px]">search</span>
               <input
                 type="text"
                 autoFocus
                 placeholder={t('Tìm tên hoặc mã nhân sự...')}
-                className="flex-1 bg-transparent text-xs text-on-surface outline-none"
+                className="flex-1 bg-transparent text-xs text-on-surface outline-none py-1 border-b border-transparent focus:border-primary"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -225,7 +222,7 @@ function SequentialOrderList({ role, order, onChange, isSequential = true }) {
                 }}
                 className="text-secondary hover:text-error p-0.5 rounded transition-colors cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
               </button>
             </div>
             <div className="max-h-[180px] overflow-y-auto p-1.5 flex flex-col gap-1">
@@ -299,7 +296,7 @@ function UserSelect({ value, onChange }) {
         ) : (
           <span className="text-sm text-secondary">{t('Chọn nhân sự...')}</span>
         )}
-        <span className="material-symbols-outlined text-outline">expand_more</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-muted">expand_more</span>
       </div>
 
       {isOpen && (
@@ -307,12 +304,12 @@ function UserSelect({ value, onChange }) {
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-outline-variant rounded-md shadow-lg z-50 overflow-hidden flex flex-col">
             <div className="p-2 border-b border-outline-variant/50 flex items-center gap-2 bg-surface-container-lowest">
-              <span className="material-symbols-outlined text-secondary text-[16px]">search</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-secondary text-[16px]">search</span>
               <input
                 type="text"
                 autoFocus
                 placeholder={t('Tìm tên hoặc mã nhân sự...')}
-                className="flex-1 bg-transparent text-xs text-on-surface outline-none"
+                className="flex-1 bg-transparent text-xs text-on-surface outline-none py-1 border-b border-transparent focus:border-primary"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -357,7 +354,7 @@ function UserSelect({ value, onChange }) {
 }
 
 // Popup cấu hình nâng cao — tích chọn người tham gia bước duyệt
-function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
+function AdvancedApproverModal({ step, onConfirm, onClose }) {
   const { t } = useI18n();
   const { employees: EMPLOYEES } = useHr();
   
@@ -377,14 +374,16 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
   const [dept, setDept] = useState('all');
   const [pos, setPos] = useState('all');
 
+  // EMPLOYEES nạp bất đồng bộ từ API: thiếu nó trong deps thì danh sách phòng ban/chức vụ mãi rỗng
+  // cho tới khi có thứ khác buộc render lại.
   const departments = useMemo(
     () => Array.from(new Set(EMPLOYEES.map((e) => e.department).filter(Boolean))).sort(),
-    []
+    [EMPLOYEES]
   );
   
   const positions = useMemo(
     () => Array.from(new Set(EMPLOYEES.map((e) => e.position).filter(Boolean))).sort(),
-    []
+    [EMPLOYEES]
   );
 
   const filtered = useMemo(
@@ -400,7 +399,7 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
         const matchPos = pos === 'all' || e.position === pos;
         return matchSearch && matchDept && matchPos;
       }),
-    [search, dept, pos]
+    [search, dept, pos, EMPLOYEES]
   );
 
   useEffect(() => {
@@ -434,7 +433,7 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-outline-variant/30 bg-surface-container-lowest">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-primary">tune</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-primary">tune</span>
             <div>
               <h2 className="font-label-md text-on-surface font-semibold">{t('Cấu hình nâng cao — chọn người duyệt')}</h2>
               {arrangementMode === 'specific' && (
@@ -445,18 +444,19 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
             </div>
           </div>
           <button
+            aria-label={t('Đóng')}
             type="button"
             onClick={onClose}
             className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer"
           >
-            <span className="material-symbols-outlined">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined">close</span>
           </button>
         </div>
 
         <div className="flex flex-col gap-3 p-4 bg-surface-container-low border-b border-outline-variant/50">
           {!roleModeAllowed && (
             <div className="flex items-start gap-2 text-[12px] rounded-md border border-outline-variant bg-surface px-3 py-2">
-              <span className="material-symbols-outlined text-[16px] text-primary flex-shrink-0 mt-px">format_list_numbered</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-primary flex-shrink-0 mt-px">format_list_numbered</span>
               <span className="text-secondary">
                 {t('Quy tắc "Duyệt lần lượt" cần danh sách người duyệt cụ thể theo thứ tự — hãy tích chọn người duyệt bên dưới.')}
               </span>
@@ -518,13 +518,13 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
             {/* Bộ lọc */}
             <div className="flex flex-wrap items-center gap-2 p-3 border-b border-outline-variant/30 bg-surface-container-lowest">
               <div className="flex items-center gap-1.5 flex-1 min-w-[200px] bg-surface border border-outline-variant rounded-md px-2.5 py-1.5">
-                <span className="material-symbols-outlined text-secondary text-[18px]">search</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-secondary text-[18px]">search</span>
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t('Tìm theo tên / mã / chức vụ...')}
-                  className="flex-1 bg-transparent text-sm text-on-surface outline-none"
+                  className="flex-1 bg-transparent text-sm text-on-surface outline-none py-1 border-b border-transparent focus:border-primary"
                 />
               </div>
               <Select
@@ -590,17 +590,17 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
                     </div>
                     <div className="flex items-center gap-2 flex-wrap text-[11px] text-secondary mt-0.5">
                       <span className="flex items-center gap-0.5">
-                        <span className="material-symbols-outlined text-[13px]">apartment</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[13px]">apartment</span>
                         {t(e.department)}
                       </span>
                       <span className="text-outline-variant">·</span>
                       <span className="flex items-center gap-0.5">
-                        <span className="material-symbols-outlined text-[13px]">work</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[13px]">work</span>
                         {t(e.position)}
                       </span>
                       <span className="text-outline-variant">·</span>
                       <span className="flex items-center gap-0.5">
-                        <span className="material-symbols-outlined text-[13px]">shield_person</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[13px]">shield_person</span>
                         {e.role}
                       </span>
                     </div>
@@ -613,7 +613,7 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
                             key={idx}
                             className="flex items-center gap-1 bg-surface-container-low border border-outline-variant/50 rounded px-1.5 py-0.5"
                           >
-                            <span className="material-symbols-outlined text-[12px] text-primary">badge</span>
+                            <span aria-hidden="true" className="material-symbols-outlined text-[12px] text-primary">badge</span>
                             <span className="text-[11px] font-medium text-on-surface">{t(s.department)}</span>
                             <span className="text-[11px] text-secondary">· {t(s.position)}</span>
                           </div>
@@ -652,7 +652,7 @@ function AdvancedApproverModal({ step, approvalRoles, onConfirm, onClose }) {
               })}
               className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant text-sm font-medium px-4 py-2 rounded-md flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
-              <span className="material-symbols-outlined text-[18px]">check</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">check</span>
               {t('Xác nhận')} {arrangementMode === 'specific' && `(${selected.size})`}
             </button>
           </div>
@@ -695,7 +695,7 @@ function RadioCard({ checked, onClick, title, desc, badge, name }) {
 function GroupHeader({ icon, label, hint }) {
   return (
     <div className="flex items-center gap-2 mb-2.5">
-      <span className="material-symbols-outlined text-primary text-[18px]">{icon}</span>
+      <span aria-hidden="true" className="material-symbols-outlined text-primary text-[18px]">{icon}</span>
       <span className="text-sm font-semibold text-on-surface">{label}</span>
       {hint && <span className="text-[11px] text-secondary ml-auto">{hint}</span>}
     </div>
@@ -760,13 +760,13 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
             {selectedDoc ? t(selectedDoc.name) : t('Chọn loại đơn...')}
           </span>
           {selectedDoc && configuredTypes.has(selectedDoc.id) && (
-            <span className="material-symbols-outlined text-[16px] text-success flex-shrink-0" title={t('Đã cấu hình luồng cho khối này')}>check_circle</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-success flex-shrink-0" title={t('Đã cấu hình luồng cho khối này')}>check_circle</span>
           )}
           {selectedNote && (
             <span className="text-[11px] text-secondary truncate" title={selectedNote}>{selectedNote}</span>
           )}
         </div>
-        <span className={`material-symbols-outlined text-secondary group-hover:text-primary text-[20px] transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}>
+        <span aria-hidden="true" className={`material-symbols-outlined text-secondary group-hover:text-primary text-[20px] transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}>
           expand_more
         </span>
       </div>
@@ -789,7 +789,7 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
                       className={`px-3 py-2 bg-surface-container-low/90 text-[11px] font-bold text-primary uppercase tracking-wider sticky top-0 backdrop-blur-md flex items-center justify-between z-10 border-b border-outline-variant/30 cursor-pointer hover:bg-surface-container-low ${idx === 0 ? '' : 'mt-1'}`}
                     >
                       <span>{t(cat.name)}</span>
-                      <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                      <span aria-hidden="true" className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
                         expand_more
                       </span>
                     </div>
@@ -824,12 +824,12 @@ function CustomGroupedSelect({ categories, documentTypes, value, onChange, confi
                                 )}
                               </span>
                               {isConfigured && (
-                                <span className="material-symbols-outlined text-[16px] text-success flex-shrink-0" title={t('Đã cấu hình luồng cho khối này')}>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-success flex-shrink-0" title={t('Đã cấu hình luồng cho khối này')}>
                                   check_circle
                                 </span>
                               )}
                               {st.blocked && (
-                                <span className="material-symbols-outlined text-[16px] text-secondary flex-shrink-0" title={note}>
+                                <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-secondary flex-shrink-0" title={note}>
                                   block
                                 </span>
                               )}
@@ -941,7 +941,7 @@ export default function WorkflowTab() {
       if (used.has(block)) set.add(docId);
     });
     return set;
-  }, [allWorkflows, workflows, block]);
+  }, [blockUsage, block]);
 
   // Fetch roles từ API
   useEffect(() => {
@@ -962,6 +962,9 @@ export default function WorkflowTab() {
         console.error(t('Không tải được chức danh:'), err);
         setApprovalRoles([]);
       });
+    // Nạp 1 lần khi mount. Không thêm `t`: nó đổi danh tính khi có bản dịch tự động mới nên sẽ gọi
+    // lại API liên tục; ở đây `t` chỉ dùng để dịch câu log lỗi.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -995,6 +998,9 @@ export default function WorkflowTab() {
         setFormType(merged[0].id);
       }
     });
+    // `formFields` là thứ duy nhất quyết định lần nạp này; `t` chỉ dùng cho câu log lỗi nên không
+    // thêm vào deps (thêm sẽ gọi lại API mỗi khi có bản dịch tự động mới).
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [formFields]);
 
   // Dựng danh mục mẫu đơn từ dữ liệu THẬT (cột category) thay vì danh sách cứng.
@@ -1015,7 +1021,7 @@ export default function WorkflowTab() {
     setCategories(built);
     // BE-141: trước đây còn ghi `setExpandedCats(...)` nhưng giá trị đó KHÔNG nơi nào đọc
     // (không có UI thu/mở danh mục) nên chỉ gây thêm một lần render vô ích — đã bỏ.
-  }, [documentTypes]);
+  }, [documentTypes, t]);
 
   useEffect(() => {
     if (!formType) return;
@@ -1136,6 +1142,9 @@ export default function WorkflowTab() {
         };
       });
     }
+    // Nạp luồng duyệt mỗi khi đổi loại đơn. Không thêm `t`: nó chỉ dùng cho câu log lỗi, còn thêm
+    // vào deps sẽ gọi lại API mỗi khi có bản dịch tự động mới.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [formType]);
 
   const steps = (workflows[formType] && workflows[formType][block]) || [];
@@ -1515,7 +1524,7 @@ export default function WorkflowTab() {
       <div className="bg-surface rounded-lg border border-outline-variant shadow-sm p-4 flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="material-symbols-outlined text-primary">tune</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-primary">tune</span>
             <span className="font-label-md text-on-surface font-semibold">{t('Cấu hình luồng duyệt cho:')}</span>
           </div>
 
@@ -1547,7 +1556,7 @@ export default function WorkflowTab() {
                 className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors cursor-pointer ${block === b.id ? 'bg-primary text-on-primary font-medium' : 'text-secondary hover:text-on-surface'
                   }`}
               >
-                <span className="material-symbols-outlined text-[16px]">{b.icon}</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{b.icon}</span>
                 {t(b.label)}
               </button>
             ))}
@@ -1557,7 +1566,7 @@ export default function WorkflowTab() {
           {/* Khối đang chọn chưa có bước duyệt -> nhân viên khối đó không tạo được đơn */}
           {!loadingWorkflows && steps.length === 0 && (
             <div className="flex items-start gap-2 text-xs rounded-md border border-warning/40 bg-warning-container/40 text-on-warning-container px-3 py-2">
-              <span className="material-symbols-outlined text-[16px] text-warning flex-shrink-0">warning</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-warning flex-shrink-0">warning</span>
               <span>{t(BLOCK_MISSING_HINTS[block] || '')}</span>
             </div>
           )}
@@ -1565,13 +1574,13 @@ export default function WorkflowTab() {
           {/* Chú giải nhỏ: loại đơn đã cấu hình ở khối nào thì bị làm mờ ở khối còn lại */}
           <div className="flex flex-col gap-1 pt-3 border-t border-outline-variant/50">
             <div className="flex items-start gap-2 text-[11px] text-secondary">
-              <span className="material-symbols-outlined text-[15px] text-success flex-shrink-0 mt-px">check_circle</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-success flex-shrink-0 mt-px">check_circle</span>
               <span>
                 {t('Khối Văn phòng và Khối Cửa hàng là 2 khối CHÍNH, luôn cấu hình được: mỗi khối có luồng riêng cho nhân viên của mình nên một loại đơn có thể có ở cả hai khối.')}
               </span>
             </div>
             <div className="flex items-start gap-2 text-[11px] text-secondary pl-[23px]">
-              <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">menu_book</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">menu_book</span>
               <span>
                 {t('Riêng "Dùng chung" là phương án DỰ PHÒNG: chỉ mở khi loại đơn chưa có luồng ở khối nào. Khi cả Văn phòng và Cửa hàng đã có luồng riêng thì luồng Dùng chung tự được gỡ lúc bấm Lưu.')}
               </span>
@@ -1621,8 +1630,8 @@ export default function WorkflowTab() {
                   <>
                     {/* Header trạng thái mở rộng */}
                     <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant/50">
-                      <span
-                        className="material-symbols-outlined text-outline cursor-grab active:cursor-grabbing"
+                      <span aria-hidden="true"
+                        className="material-symbols-outlined text-muted cursor-grab active:cursor-grabbing"
                         title={t('Kéo để sắp xếp bước')}
                         draggable
                         onDragStart={() => setDraggedStepId(step.id)}
@@ -1641,14 +1650,14 @@ export default function WorkflowTab() {
                         className="text-secondary hover:text-primary hover:bg-primary-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
                         title={t('Thu gọn')}
                       >
-                        <span className="material-symbols-outlined text-[18px] transition-transform rotate-180">expand_more</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[18px] transition-transform rotate-180">expand_more</span>
                       </button>
                       <button
                         onClick={() => removeStep(step.id)}
                         className="text-secondary hover:text-error hover:bg-error-container/30 p-1.5 rounded-md transition-colors cursor-pointer"
                         title={t('Xoá bước')}
                       >
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                       </button>
                     </div>
 
@@ -1707,7 +1716,7 @@ export default function WorkflowTab() {
                                 {/* Giải thích quy tắc đang chọn để tránh nhầm "chưa đến lượt" */}
                                 {step.multiRule && (
                                   <div className="flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
-                                    <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">info</span>
+                                    <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-px">info</span>
                                     <span className="text-secondary">
                                       {step.multiRule === 'sequential'
                                         ? t('BẮT BUỘC theo đúng thứ tự: người đứng trước duyệt xong mới tới người kế tiếp (kéo-thả danh sách bên dưới để đổi thứ tự).')
@@ -1747,7 +1756,6 @@ export default function WorkflowTab() {
                                 {advancedStepId === step.id && (
                                   <AdvancedApproverModal
                                     step={step}
-                                    approvalRoles={approvalRoles}
                                     onClose={() => setAdvancedStepId(null)}
                                     onConfirm={(data) => {
                                       updateStep(step.id, { 
@@ -1773,7 +1781,7 @@ export default function WorkflowTab() {
                             {step.approvalType === 'chain' && (
                               <div className="flex flex-col gap-4 mt-2">
                                 <label className="text-[12px] font-semibold text-secondary uppercase tracking-wider flex items-center gap-2">
-                                  <span className="material-symbols-outlined text-[16px]">account_tree</span>
+                                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">account_tree</span>
                                   {t('Danh sách các cấp duyệt nối tiếp')}
                                 </label>
                                 
@@ -1820,10 +1828,10 @@ export default function WorkflowTab() {
                                             newList.splice(index, 1);
                                             updateStep(step.id, { chainList: newList });
                                           }}
-                                          className="p-2 text-outline hover:text-error hover:bg-error/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                          className="p-2 text-muted hover:text-error hover:bg-error/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                                           title={t('Xóa cấp duyệt')}
                                         >
-                                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                                          <span aria-hidden="true" className="material-symbols-outlined text-[20px]">delete</span>
                                         </button>
                                       </div>
                                     </div>
@@ -1839,14 +1847,14 @@ export default function WorkflowTab() {
                                         }}
                                         className="flex items-center gap-2 text-[13px] font-semibold text-primary hover:text-primary-dark hover:bg-primary/5 px-4 py-2 rounded-xl transition-all border border-dashed border-primary/40 hover:border-primary w-full justify-center bg-surface-container-lowest"
                                       >
-                                        <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                                        <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add_circle</span>
                                         {t('Thêm cấp duyệt mới')}
                                       </button>
                                   </div>
                                 </div>
 
                                 <div className="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/50 flex gap-3 items-start mt-2">
-                                  <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">info</span>
+                                  <span aria-hidden="true" className="material-symbols-outlined text-primary text-[18px] mt-0.5">info</span>
                                   <p className="text-[12px] text-secondary leading-relaxed flex-1">
                                     {t('Hệ thống sẽ duyệt tuần tự qua từng cấp từ trên xuống dưới. Các cấp không tồn tại trong sơ đồ tổ chức thực tế sẽ được tự động bỏ qua mà không làm gián đoạn luồng.')}
                                   </p>
@@ -1878,7 +1886,7 @@ export default function WorkflowTab() {
                           />
                           {(Array.isArray(stepApproverIds(step)) && stepApproverIds(step).length === 1) && (
                             <div className="mt-3 flex items-start gap-2 text-[11px] bg-surface-container-low border border-outline-variant rounded-md px-3 py-2">
-                              <span className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
+                              <span aria-hidden="true" className="material-symbols-outlined text-[15px] text-secondary flex-shrink-0 mt-px">info</span>
                               <span className="text-secondary">
                                 {t('Chỉ')} <strong className="text-on-surface">{t('1 người')}</strong> {t('được chỉ định — đơn sẽ chỉ tới người này (không áp dụng quy tắc nhiều người).')}
                               </span>
@@ -1945,7 +1953,7 @@ export default function WorkflowTab() {
                               </div>
                               {step.timeoutAction === 'delegate' && (
                                 <p className="text-[11px] text-secondary flex items-start gap-1.5">
-                                  <span className="material-symbols-outlined text-[14px] mt-px">info</span>
+                                  <span aria-hidden="true" className="material-symbols-outlined text-[14px] mt-px">info</span>
                                   {t('Khi quá hạn, đơn chuyển cho người duyệt thay mà người duyệt bước này đã cài ở màn Ủy quyền. Người duyệt thay cũng quá hạn thì đơn bị huỷ; chưa cài người duyệt thay thì đơn quá hạn sẽ bị huỷ.')}
                                 </p>
                               )}
@@ -1962,8 +1970,8 @@ export default function WorkflowTab() {
                     className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer group"
                     title={t('Mở rộng để chỉnh sửa')}
                   >
-                    <span
-                      className="material-symbols-outlined text-outline cursor-grab active:cursor-grabbing flex-shrink-0"
+                    <span aria-hidden="true"
+                      className="material-symbols-outlined text-muted cursor-grab active:cursor-grabbing flex-shrink-0"
                       title={t('Kéo để sắp xếp bước')}
                       draggable
                       onDragStart={() => setDraggedStepId(step.id)}
@@ -1974,14 +1982,14 @@ export default function WorkflowTab() {
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-on-surface truncate">{t(step.name)}</div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="material-symbols-outlined text-outline text-[14px]">account_tree</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-muted text-[14px]">account_tree</span>
                         <span className="text-xs text-secondary truncate">{approvalSummary(step, EMPLOYEES)}</span>
                       </div>
                     </div>
                     <span className="text-[11px] text-secondary px-2 py-0.5 bg-surface-container rounded flex-shrink-0 hidden sm:inline">
                       {t('Bước')} {idx + 1}
                     </span>
-                    <span className="material-symbols-outlined text-outline group-hover:text-primary text-[20px] transition-colors flex-shrink-0">
+                    <span aria-hidden="true" className="material-symbols-outlined text-muted group-hover:text-primary text-[20px] transition-colors flex-shrink-0">
                       expand_more
                     </span>
                   </button>
@@ -1998,13 +2006,13 @@ export default function WorkflowTab() {
           onClick={addStep}
           className="bg-surface text-primary border border-primary/40 hover:bg-primary-container/30 transition-colors text-sm font-medium px-4 py-2.5 rounded-md flex items-center gap-2 cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[18px]">add</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
           {t('Thêm bước duyệt tiếp theo')}
         </button>
         <div className="flex items-center gap-3">
           {saved && (
             <span className="text-success text-sm flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">check_circle</span>
               {t('Đã lưu cấu hình')}
             </span>
           )}
@@ -2012,7 +2020,7 @@ export default function WorkflowTab() {
             onClick={save}
             className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-5 py-2.5 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">save</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">save</span>
             {t('Lưu cấu hình luồng duyệt')}
           </button>
         </div>

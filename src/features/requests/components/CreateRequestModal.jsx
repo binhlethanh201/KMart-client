@@ -696,8 +696,10 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 : t('Điền đầy đủ thông tin để gửi yêu cầu phê duyệt')}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer">
-            <span className="material-symbols-outlined">close</span>
+          <button
+            aria-label={t('Đóng')}
+            type="button" onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer">
+            <span aria-hidden="true" className="material-symbols-outlined">close</span>
           </button>
         </div>
 
@@ -774,7 +776,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           {/* BE-17: quản lý trực tiếp / chuỗi quản lý -> người duyệt tự suy ra từ phòng & chức vụ của người tạo */}
           {(isHierarchyFlow || isChainFlow) && (
             <div className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-on-surface">
-              <span className="material-symbols-outlined text-[18px] text-primary flex-shrink-0">
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary flex-shrink-0">
                 {isHierarchyFlow ? 'supervisor_account' : 'account_tree'}
               </span>
               <span>
@@ -981,13 +983,13 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                         title={templateFileName}
                         className="flex items-center gap-1 text-xs text-primary font-medium hover:underline bg-primary/5 px-2 py-1 rounded shrink-0"
                       >
-                        <span className="material-symbols-outlined text-[14px]">download</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[14px]">download</span>
                         {t('Tải biểu mẫu')}
                       </button>
                     )}
                   </div>
                   <label className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-outline-variant rounded-lg bg-surface hover:bg-surface-container-lowest hover:border-primary/50 transition-colors cursor-pointer group">
-                    <span className="material-symbols-outlined text-[24px] text-outline group-hover:text-primary transition-colors">cloud_upload</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[24px] text-muted group-hover:text-primary transition-colors">cloud_upload</span>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors">
                         {(files[fieldId]?.name || form.dynamic[fieldId])
@@ -1051,7 +1053,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                   />
                   {lockedDelegate && (
                     <p className="text-[11px] text-secondary flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px] text-primary">assignment_ind</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[14px] text-primary">assignment_ind</span>
                       {t('Bạn đã ủy quyền cho {v0} — đơn này chỉ có thể chọn người được ủy quyền duyệt thay.', { v0: lockedDelegate.delegateName || '' })}
                     </p>
                   )}
@@ -1100,7 +1102,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 onClick={() => setFlowOpen(true)}
                 className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[16px]">open_in_full</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">open_in_full</span>
                 {t('Xem chi tiết luồng')}
               </button>
             </div>
@@ -1128,7 +1130,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 className="absolute inset-0 flex items-end justify-center pb-2 bg-gradient-to-t from-surface/90 to-transparent cursor-pointer group"
               >
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-on-primary text-xs font-semibold shadow-sm group-hover:bg-primary/90 transition-colors">
-                  <span className="material-symbols-outlined text-[16px]">open_in_full</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">open_in_full</span>
                   {t('Bấm vào đây để xem chi tiết luồng')}
                 </span>
               </button>
@@ -1148,14 +1150,14 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/40">
                 <div className="flex items-center gap-2.5">
-                  <span className="material-symbols-outlined text-primary text-[22px]">account_tree</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-primary text-[22px]">account_tree</span>
                   <div>
                     <h3 className="text-base font-bold text-on-surface">{t('Chi tiết luồng phê duyệt')}</h3>
                     <p className="text-xs text-secondary">{selectedDocType?.name || t('Đề xuất')} · {activeWorkflow?.name || ''}</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setFlowOpen(false)} className="p-1.5 rounded-full text-on-surface-variant hover:bg-surface-variant cursor-pointer">
-                  <span className="material-symbols-outlined">close</span>
+                  <span aria-hidden="true" className="material-symbols-outlined">close</span>
                 </button>
               </div>
               <div ref={flowScrollRef} className="flex-1 overflow-auto p-6 bg-surface-container-lowest">
@@ -1184,7 +1186,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           {/* BE-89: lỗi từ máy chủ hiện NGAY TRONG form, không đóng form rồi báo badge bên ngoài. */}
           {fieldErrors.__submit && (
             <div className="flex items-start gap-2 rounded-md border border-error/20 bg-error-container p-3 text-sm text-on-error-container">
-              <span className="material-symbols-outlined text-[18px] leading-none">error</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px] leading-none">error</span>
               <span>{fieldErrors.__submit}</span>
             </div>
           )}
@@ -1217,7 +1219,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
           >
             <div className="bg-surface rounded-lg shadow-xl w-full max-w-md p-6 flex flex-col gap-4">
               <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-error text-[24px]">upload_file</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-error text-[24px]">upload_file</span>
                 <div>
                   <h3 className="font-headline-sm text-headline-sm text-on-surface">
                     {t('Không tải lên được tệp đính kèm')}
@@ -1230,7 +1232,7 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               <ul className="flex flex-col gap-1.5 max-h-32 overflow-y-auto text-sm">
                 {uploadIssue.failed.map((f, i) => (
                   <li key={i} className="flex items-start gap-1.5 text-on-error-container">
-                    <span className="material-symbols-outlined text-[16px] mt-0.5 shrink-0">error</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px] mt-0.5 shrink-0">error</span>
                     <span>{f.message}</span>
                   </li>
                 ))}

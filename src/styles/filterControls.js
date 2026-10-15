@@ -22,12 +22,12 @@ export const FILTER_SELECT_CLS = 'filter-control filter-select';
 
 /** Nhãn nhỏ in hoa phía trên ô lọc. */
 export const FILTER_LABEL_CLS =
-  'text-[12px] font-bold uppercase tracking-[1.68px] text-[#66655F]';
+  'text-[12px] font-bold uppercase tracking-[1.68px] text-warm-label';
 
 /** Ô tìm kiếm có icon kính lúp bên trái. */
 export const FILTER_SEARCH_CLS = 'filter-control filter-search w-full';
 
-/** Icon kính lúp đặt tuyệt đối trong ô tìm kiếm (ô cha cần `relative`). */
+/** Icon kính lúp đặt tuyệt đối trong ô tìm kiếm (ô cha cần `relative`). Icon trang trí — ô nhập bên cạnh đã có nhãn. */
 export const FILTER_SEARCH_ICON_CLS = 'material-symbols-outlined filter-search-icon';
 
 /** Nút hành động phụ trên thanh lọc (VD "Đặt lại"). */

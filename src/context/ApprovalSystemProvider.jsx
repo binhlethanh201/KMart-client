@@ -7,6 +7,7 @@ import { userService, getFullAvatarUrl } from '../features/hr/services/userServi
 import { PERMISSIONS } from '../constants/permissions';
 import { useI18n } from '../i18n/I18nProvider';
 import { describeApiError } from '../utils/apiError';
+import { parseJsonField } from '../utils/parseJsonField';
 import { notifyHrDataChanged } from '../utils/hrEvents';
 import { canUserApprove } from '../features/requests/approvalEligibility';
 
@@ -17,10 +18,8 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw);
-      if (p && Array.isArray(p.requests)) {
-        return {
-          formFields: p.formFields || {}
-        };
+      if (p && p.formFields) {
+        return { formFields: p.formFields };
       }
     }
   } catch { }
@@ -31,39 +30,73 @@ function load() {
 
 export function ApprovalSystemProvider({ children }) {
   const { t } = useI18n();
-  const init = load();
   const [currentUser, setCurrentUser] = useState(null);
+  /**
+   * UX-01b: trạng thái nạp hồ sơ người dùng hiện tại (/auth/me).
+   *
+   * Vì sao cần: `ProtectedRoute` trả `null` khi chưa có `currentUser`. Trước đây khi /auth/me lỗi
+   * (máy chủ chết, token hỏng) thì `currentUser` mãi là null nên các trang được bảo vệ render ra
+   * **màn hình trắng hoàn toàn** — không lỗi, không thông báo, người dùng tưởng ứng dụng hỏng.
+   * `authLoading` cho biết còn đang chờ; `authError` cho biết đã lỗi để hiện thông báo + nút thử lại.
+   */
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
   const [requests, setRequests] = useState([]); // Fetch from API
   const [departments, setDepartments] = useState([]); // Fetch from API
   /** BE-136: cờ "đang tải danh sách phòng ban" để màn Phòng ban hiện spinner thay vì "không có dữ liệu". */
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
   const [employees, setEmployees] = useState([]);
-  const [formFields, setFormFields] = useState(init.formFields);
+  // Lazy initializer: trước đây `load()` chạy ở MỌI lần render (parse localStorage mỗi lần).
+  const [formFields, setFormFields] = useState(() => load().formFields);
   const [toasts, setToasts] = useState([]);
 
-  // Persist to localStorage on any change.
+  /**
+   * Chỉ lưu `formFields` — KHÔNG lưu `requests` nữa.
+   *
+   * `requests` lấy từ API và khi khởi động luôn bắt đầu bằng [] rồi `loadRequests()` nạp lại, nên
+   * bản lưu trong localStorage KHÔNG BAO GIỜ được đọc. Nhưng nó vẫn bị ghi ra mỗi lần danh sách
+   * đổi, và khi danh sách đủ lớn thì `setItem` vượt hạn mức của trình duyệt và ném lỗi — kéo theo
+   * `formFields` (thứ thật sự cần giữ) không được ghi nữa mà không có dấu hiệu gì cho người dùng.
+   */
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ requests, formFields }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ formFields }));
     } catch {
       /* quota / private mode - ignore */
     }
-  }, [requests, formFields]);
+  }, [formFields]);
 
   // Load departments from API
-  useEffect(() => {
-    departmentService.getAll()
+  // UX-01: giữ lỗi lại để màn hình báo được "không tải được" + nút thử lại, thay vì im lặng để
+  // người dùng tưởng hệ thống không có phòng ban nào.
+  const [departmentsError, setDepartmentsError] = useState(false);
+  const loadDepartments = useCallback(() => {
+    setDepartmentsError(false);
+    setDepartmentsLoading(true);
+    return departmentService.getAll()
       .then(data => setDepartments(data))
-      .catch(err => console.error('Failed to load departments', err))
+      .catch(err => {
+        console.error('Failed to load departments', err);
+        setDepartmentsError(true);
+      })
       .finally(() => setDepartmentsLoading(false));
   }, []);
 
+  useEffect(() => { loadDepartments(); }, [loadDepartments]);
+
   // Load employees from API (dùng cho EmployeeSelect trong Add/Edit Department)
-  useEffect(() => {
-    userService.getAll()
+  const [employeesError, setEmployeesError] = useState(false);
+  const loadEmployees = useCallback(() => {
+    setEmployeesError(false);
+    return userService.getAll()
       .then(data => setEmployees(data))
-      .catch(err => console.error('Failed to load employees', err));
+      .catch(err => {
+        console.error('Failed to load employees', err);
+        setEmployeesError(true);
+      });
   }, []);
+
+  useEffect(() => { loadEmployees(); }, [loadEmployees]);
 
   // Load requests from API
   const loadRequests = useCallback(async () => {
@@ -82,9 +115,10 @@ export function ApprovalSystemProvider({ children }) {
     }
   }, []);
 
-  useEffect(() => {
-    loadRequests();
-    authService.getCurrentUser().then(async u => {
+  const loadCurrentUser = useCallback(() => {
+    setAuthError(false);
+    setAuthLoading(true);
+    return authService.getCurrentUser().then(async u => {
       const positionsList = u.positions || u.departments || [];
       const primaryPos = positionsList.find(p => p.isPrimary) || positionsList[0];
       const actualAvatar = getFullAvatarUrl(u.avatarUrl);
@@ -107,7 +141,7 @@ export function ApprovalSystemProvider({ children }) {
         position: primaryPos?.positionName || t('Nhân viên'),
         allPositions: positionsList,
         role: u.roles?.[0]?.roleName || 'STAFF',
-        profileData: u.profileData ? JSON.parse(u.profileData) : null,
+        profileData: parseJsonField(u.profileData),
         avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`,
         roles: parsedRoles,
         permissions: perms,
@@ -117,8 +151,20 @@ export function ApprovalSystemProvider({ children }) {
          */
         mustChangePassword: Boolean(u.mustChangePassword),
       });
-    }).catch(console.error);
-  }, [loadRequests]);
+    }).finally(() => setAuthLoading(false));
+    // `t` cố ý KHÔNG nằm trong deps: effect này chỉ chạy 1 lần khi mount để nạp người dùng hiện tại.
+    // Thêm `t` sẽ gọi lại /auth/me mỗi khi đổi ngôn ngữ hoặc mỗi lô bản dịch tự động về; `t` ở đây
+    // chỉ dùng cho nhãn dự phòng ("Chưa phân bổ", "Nhân viên").
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    loadRequests();
+    loadCurrentUser().catch((err) => {
+      console.error('Failed to load current user', err);
+      setAuthError(true);
+    });
+  }, [loadRequests, loadCurrentUser]);
 
   const currentUserId = currentUser?.id;
 
@@ -307,7 +353,7 @@ export function ApprovalSystemProvider({ children }) {
         console.error('Reject error:', err);
       }
     },
-    [pushToast]
+    [pushToast, t]
   );
 
   /**
@@ -376,7 +422,7 @@ export function ApprovalSystemProvider({ children }) {
         console.error('Add comment error:', err);
       }
     },
-    [pushToast]
+    [pushToast, t]
   );
 
   /**
@@ -399,7 +445,7 @@ export function ApprovalSystemProvider({ children }) {
         console.error('Simulate timeout error:', err);
       }
     },
-    [pushToast]
+    [pushToast, t]
   );
 
   // Create a new department + assign personnel. Updates both the departments
@@ -465,7 +511,7 @@ export function ApprovalSystemProvider({ children }) {
         pushToast(describeApiError(err, t, 'Lỗi xóa phòng ban'), 'error', { resolved: true });
       }
     },
-    [pushToast]
+    [pushToast, t]
   );
 
   const toggleDepartmentStatus = useCallback(
@@ -478,7 +524,8 @@ export function ApprovalSystemProvider({ children }) {
         pushToast(t('Lỗi khi đổi trạng thái'), 'error');
       }
     },
-    [departments, pushToast]
+    // `departments` không cần: hàm chỉ dùng dạng cập nhật `setDepartments(list => ...)`.
+    [pushToast, t]
   );
 
   // Does the current user hold the pending step for this request?
@@ -504,6 +551,9 @@ export function ApprovalSystemProvider({ children }) {
 
       currentUser,
       currentUserId,
+      authLoading,
+      authError,
+      reloadCurrentUser: loadCurrentUser,
 
       requests,
       createRequest,
@@ -521,7 +571,11 @@ export function ApprovalSystemProvider({ children }) {
       hasPermission,
       departments,
       departmentsLoading,
+      departmentsError,
+      reloadDepartments: loadDepartments,
       employees,
+      employeesError,
+      reloadEmployees: loadEmployees,
       addDepartment,
       updateDepartment,
       deleteDepartment,
@@ -532,7 +586,7 @@ export function ApprovalSystemProvider({ children }) {
       pushToast,
       dismissToast,
     }),
-    [currentUser, currentUserId, requests, createRequest, updateRequest, submitDraft, retryDraftUploads, finalizePendingDraft, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, departmentsLoading, employees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
+    [currentUser, currentUserId, authLoading, authError, loadCurrentUser, requests, createRequest, updateRequest, submitDraft, retryDraftUploads, finalizePendingDraft, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, canApprove, hasPermission, departments, departmentsLoading, departmentsError, loadDepartments, employees, employeesError, loadEmployees, addDepartment, updateDepartment, deleteDepartment, toggleDepartmentStatus, formFields, setFormFields, toasts, pushToast, dismissToast]
   );
 
   return <ApprovalSystemContext.Provider value={value}>{children}</ApprovalSystemContext.Provider>;

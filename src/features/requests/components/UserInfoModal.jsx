@@ -47,7 +47,7 @@ export default function UserInfoModal({ user, onClose }) {
                 className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-variant cursor-pointer z-10 bg-surface/50 backdrop-blur"
                 aria-label={t('Đóng')}
               >
-                <span className="material-symbols-outlined">close</span>
+                <span aria-hidden="true" className="material-symbols-outlined">close</span>
               </button>
             </div>
             <div>
@@ -85,7 +85,7 @@ export default function UserInfoModal({ user, onClose }) {
           <div>
             <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">{t('Phòng ban')}</label>
             <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-secondary">{department?.icon || 'corporate_fare'}</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary">{department?.icon || 'corporate_fare'}</span>
               {department?.name || t('Không có dữ liệu')}
             </p>
           </div>

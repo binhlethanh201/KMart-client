@@ -20,7 +20,7 @@ import AuthBackground from '../components/AuthBackground';
 const inputWrapCls =
   'relative flex items-center rounded-lg border border-outline-variant bg-[#FFFEFA] transition-colors focus-within:border-primary focus-within:ring-4 focus-within:ring-primary-container';
 const inputCls =
-  'w-full bg-transparent px-3.5 py-2.5 text-body-md text-on-surface placeholder:text-outline outline-none';
+  'w-full bg-transparent px-3.5 py-2.5 text-body-md text-on-surface placeholder:text-muted outline-none';
 const labelCls = 'block text-label-md text-on-surface mb-1.5';
 const primaryBtnCls =
   'w-full rounded-lg bg-primary py-2.5 text-label-md text-on-primary shadow-sm transition-colors hover:bg-on-primary-fixed-variant disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer';
@@ -35,7 +35,7 @@ function Field({ icon, label, type = 'text', value, onChange, placeholder, autoC
     <div>
       {label ? <label className={labelCls}>{label}</label> : null}
       <div className={inputWrapCls}>
-        <span className="material-symbols-outlined pl-3.5 text-[19px] text-outline pointer-events-none">
+        <span aria-hidden="true" className="material-symbols-outlined pl-3.5 text-[19px] text-muted pointer-events-none">
           {icon}
         </span>
         <input
@@ -51,11 +51,11 @@ function Field({ icon, label, type = 'text', value, onChange, placeholder, autoC
           <button
             type="button"
             onClick={() => setRevealed((v) => !v)}
-            className="absolute right-2.5 text-outline hover:text-on-surface transition-colors cursor-pointer"
+            className="absolute right-2.5 text-muted hover:text-on-surface transition-colors cursor-pointer"
             aria-label={revealed ? t('Ẩn mật khẩu') : t('Hiện mật khẩu')}
             tabIndex={-1}
           >
-            <span className="material-symbols-outlined text-[19px]">
+            <span aria-hidden="true" className="material-symbols-outlined text-[19px]">
               {revealed ? 'visibility_off' : 'visibility'}
             </span>
           </button>
@@ -194,7 +194,7 @@ const LoginPage = ({ onLoginSuccess }) => {
 
           {error && (
             <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-error/20 bg-error-container p-3 text-body-md text-on-error-container">
-              <span className="material-symbols-outlined text-[18px] leading-none">error</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px] leading-none">error</span>
               <span>{t(error)}</span>
             </div>
           )}
@@ -220,7 +220,7 @@ const LoginPage = ({ onLoginSuccess }) => {
                     title={t('Đặt lại mật khẩu')}
                     className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-4 text-primary/75 transition-colors hover:bg-primary/5 hover:text-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[13px] leading-none">lock_reset</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[13px] leading-none">lock_reset</span>
                     {t('Đặt lại mật khẩu')}
                   </button>
                 </div>
@@ -314,7 +314,7 @@ const LoginPage = ({ onLoginSuccess }) => {
               ) : (
                 <div className="space-y-4 text-center">
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success-container text-success">
-                    <span className="material-symbols-outlined text-[28px]">check_circle</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[28px]">check_circle</span>
                   </div>
                   <div>
                     <h3 className="mb-1 text-[17px] font-semibold text-on-surface">{t('Đã đặt lại mật khẩu')}</h3>

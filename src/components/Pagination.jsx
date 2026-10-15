@@ -42,7 +42,7 @@ export default function Pagination({
         disabled={currentPage === 1}
         className={`${SLOT} flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer`} 
       >
-        <span className="material-symbols-outlined text-sm">chevron_left</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-sm">chevron_left</span>
       </button>
       
       {pages.map((page, idx) => (
@@ -68,7 +68,7 @@ export default function Pagination({
         disabled={currentPage === totalPages}
         className={`${SLOT} flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-container-low transition-colors disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer`}
       >
-        <span className="material-symbols-outlined text-sm">chevron_right</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-sm">chevron_right</span>
       </button>
     </div>
   );

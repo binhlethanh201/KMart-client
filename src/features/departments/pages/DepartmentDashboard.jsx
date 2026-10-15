@@ -5,6 +5,7 @@ import AddDepartmentModal from '../components/AddDepartmentModal';
 import EditDepartmentModal from '../components/EditDepartmentModal';
 import Pagination from '../../../components/Pagination';
 import Select from '../../../components/Select';
+import LoadError from '../../../components/LoadError';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useApproval } from '../../../context/useApproval';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -14,7 +15,7 @@ import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 export default function DepartmentDashboard() {
   const { t } = useI18n();
   useDocumentTitle(t('Cơ cấu tổ chức & Siêu thị'));
-  const { departments, departmentsLoading, toggleDepartmentStatus, deleteDepartment, currentUser, hasPermission } = useApproval();
+  const { departments, departmentsLoading, departmentsError, reloadDepartments, toggleDepartmentStatus, deleteDepartment, currentUser, hasPermission } = useApproval();
 
   // Use hasPermission if available, fallback to role check
   const canManageDepts = hasPermission ? hasPermission('DEPARTMENT_MANAGE') : currentUser?.role === 'ADMIN';
@@ -176,7 +177,7 @@ export default function DepartmentDashboard() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#f6f6f4] p-4 rounded-lg border border-outline-variant shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-[24px]">account_tree</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-primary text-[24px]">account_tree</span>
               </div>
               <h1 className={`${PAGE_TITLE_CLS} break-words min-w-0`}>{t('Cơ cấu tổ chức & Siêu thị')}</h1>
             </div>
@@ -186,7 +187,7 @@ export default function DepartmentDashboard() {
                   onClick={() => setModalOpen(true)}
                   className="w-full sm:w-auto justify-center bg-primary text-on-primary hover:bg-primary-fixed-variant px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[16px]">add</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">add</span>
                   {t('Thêm phòng ban')}
                 </button>
               )}
@@ -197,7 +198,7 @@ export default function DepartmentDashboard() {
           <div className="flex flex-wrap gap-3 items-center justify-between">
             <div className="flex flex-wrap items-center gap-3 flex-1">
               <div className="relative w-full sm:w-80">
-                <span className={FILTER_SEARCH_ICON_CLS}>search</span>
+                <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">search</span>
                 <input
                   value={searchQuery}
                   onChange={(e) => {
@@ -254,7 +255,7 @@ export default function DepartmentDashboard() {
                       : 'text-secondary hover:text-on-surface hover:bg-white'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[18px]">{v.icon}</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{v.icon}</span>
                   {v.label}
                 </button>
               ))}
@@ -262,15 +263,21 @@ export default function DepartmentDashboard() {
           </div>
 
           {/* Department Grid */}
-          {departmentsLoading && filteredDepartments.length === 0 ? (
+          {departmentsError ? (
+            /* UX-01: tải lỗi thì phải NÓI RA, không để màn hình trống — trống khiến người dùng
+               hiểu sai thành "công ty chưa có phòng ban nào". */
+            <div className="border border-dashed border-error/40 rounded-lg bg-error-container/20">
+              <LoadError onRetry={reloadDepartments} />
+            </div>
+          ) : departmentsLoading && filteredDepartments.length === 0 ? (
             /* BE-136: đang tải thì hiện spinner, tránh nhấp nháy "không có dữ liệu" khi mạng chậm */
             <div className="py-12 text-center text-secondary border border-dashed border-outline-variant rounded-lg bg-surface-container-lowest" role="status">
-              <span className="material-symbols-outlined text-[48px] mb-3 animate-spin text-primary">progress_activity</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[48px] mb-3 animate-spin text-primary">progress_activity</span>
               <p className="text-sm">{t('Đang tải danh sách phòng ban...')}</p>
             </div>
           ) : filteredDepartments.length === 0 ? (
             <div className="py-12 text-center text-secondary border border-dashed border-outline-variant rounded-lg bg-surface-container-lowest">
-              <span className="material-symbols-outlined text-[48px] opacity-20 mb-3">account_tree</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[48px] opacity-20 mb-3">account_tree</span>
               <p className="text-sm">{t('Không tìm thấy đơn vị nào phù hợp với bộ lọc.')}</p>
             </div>
           ) : viewMode === 'tree' ? (

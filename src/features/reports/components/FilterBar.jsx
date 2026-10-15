@@ -29,8 +29,9 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
       <div className="flex items-center gap-6 flex-wrap">
         {/* Từ ngày */}
         <div className="flex flex-col gap-2">
-          <label className={labelClass}>{t('Từ ngày')}</label>
+          <label className={labelClass} htmlFor="report-from-date">{t('Từ ngày')}</label>
           <input
+            id="report-from-date"
             type="date"
             className={dateClass}
             value={filters.from || ''}
@@ -40,8 +41,9 @@ export default function FilterBar({ filters, departments, documentTypes = [], po
 
         {/* Đến ngày */}
         <div className="flex flex-col gap-2">
-          <label className={labelClass}>{t('Đến ngày')}</label>
+          <label className={labelClass} htmlFor="report-to-date">{t('Đến ngày')}</label>
           <input
+            id="report-to-date"
             type="date"
             className={dateClass}
             value={filters.to || ''}

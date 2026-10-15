@@ -166,13 +166,13 @@ export default function RequestCard({ request: r }) {
           <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${isApproved ? 'bg-success/10 border-success/20 text-success' : isNeedsSupplement ? 'bg-supplement/10 border-supplement/20 text-supplement' : isPending ? 'bg-warning/10 border-warning/20 text-warning' : 'bg-error/10 border-error/20 text-error'}`}>
             {r.status === 'returned_timeout' ? (
               <div className="relative flex items-center justify-center w-full h-full">
-                <span className="material-symbols-outlined text-[24px]">schedule</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[24px]">schedule</span>
                 <div className="absolute bottom-1 right-1 bg-error text-white rounded-full w-4 h-4 flex items-center justify-center border-2 border-white shadow-sm">
-                  <span className="material-symbols-outlined text-[10px] font-bold">priority_high</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[10px] font-bold">priority_high</span>
                 </div>
               </div>
             ) : (
-              <span className="material-symbols-outlined text-[24px]">
+              <span aria-hidden="true" className="material-symbols-outlined text-[24px]">
                 {isApproved ? 'task_alt' : isPending ? 'pending_actions' : isNeedsSupplement ? 'edit_note' : 'block'}
               </span>
             )}
@@ -186,7 +186,7 @@ export default function RequestCard({ request: r }) {
               </span>
               {isActionable && (
                 <span className="px-2.5 py-0.5 bg-warning-container text-on-warning-container rounded-full text-[10px] uppercase font-bold flex items-center gap-1 animate-pulse shadow-sm">
-                  <span className="material-symbols-outlined text-[12px]">priority_high</span> {t('Cần bạn duyệt')}
+                  <span aria-hidden="true" className="material-symbols-outlined text-[12px]">priority_high</span> {t('Cần bạn duyệt')}
                 </span>
               )}
               {/* BE-76: chủ đơn tự hủy được khi chưa ai duyệt */}
@@ -197,7 +197,7 @@ export default function RequestCard({ request: r }) {
                   className="px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold flex items-center gap-1 border border-error/30 text-error hover:bg-error-container/40 transition-colors cursor-pointer"
                   title={t('Hủy đơn này (chưa ai duyệt)')}
                 >
-                  <span className="material-symbols-outlined text-[12px]">cancel</span> {t('Hủy đơn')}
+                  <span aria-hidden="true" className="material-symbols-outlined text-[12px]">cancel</span> {t('Hủy đơn')}
                 </button>
               )}
             </div>
@@ -209,12 +209,12 @@ export default function RequestCard({ request: r }) {
             
             {/* Metadata */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-secondary">
-              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">tag</span><span className="font-medium text-on-surface">{r.id.substring(0, 8).toUpperCase()}</span></span>
-              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">category</span><span className="font-medium text-on-surface">{t(r.type)}</span></span>
-              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">schedule</span><span className="font-medium text-on-surface">{r.createdAt}</span></span>
+              <span className="flex items-center gap-1"><span aria-hidden="true" className="material-symbols-outlined text-[14px]">tag</span><span className="font-medium text-on-surface">{r.id.substring(0, 8).toUpperCase()}</span></span>
+              <span className="flex items-center gap-1"><span aria-hidden="true" className="material-symbols-outlined text-[14px]">category</span><span className="font-medium text-on-surface">{t(r.type)}</span></span>
+              <span className="flex items-center gap-1"><span aria-hidden="true" className="material-symbols-outlined text-[14px]">schedule</span><span className="font-medium text-on-surface">{r.createdAt}</span></span>
               {targetDeptCodes.length > 0 && (
                 <span className="flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">apartment</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[14px]">apartment</span>
                   {targetDeptCodes.map((code) => (
                     <span key={code} className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wide">{code}</span>
                   ))}
@@ -239,7 +239,7 @@ export default function RequestCard({ request: r }) {
                     </div>
                   )}
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white bg-error flex items-center justify-center">
-                    <span className="material-symbols-outlined text-white text-[10px] font-bold">close</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-white text-[10px] font-bold">close</span>
                   </div>
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
@@ -263,7 +263,7 @@ export default function RequestCard({ request: r }) {
                     </div>
                   )}
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white bg-supplement flex items-center justify-center">
-                    <span className="material-symbols-outlined text-white text-[10px] font-bold">edit_note</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-white text-[10px] font-bold">edit_note</span>
                   </div>
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
@@ -317,7 +317,7 @@ export default function RequestCard({ request: r }) {
                     </div>
                   )}
                   <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${r.status === 'approved' ? 'bg-success' : r.status === 'returned_timeout' ? 'bg-error' : (isPending || r.status === 'needssupplement') ? 'bg-warning' : 'bg-error'}`}>
-                    <span className="material-symbols-outlined text-white text-[10px] font-bold">
+                    <span aria-hidden="true" className="material-symbols-outlined text-white text-[10px] font-bold">
                       {statusIcon}
                     </span>
                   </div>
@@ -340,7 +340,7 @@ export default function RequestCard({ request: r }) {
           className="flex items-center gap-1 text-[11px] font-medium text-secondary hover:text-primary transition-colors py-1 px-4 rounded-full border border-outline-variant hover:bg-surface-container-low cursor-pointer shadow-sm"
         >
           {isExpanded ? t('Ẩn chi tiết luồng duyệt') : t('Xem chi tiết luồng duyệt')}
-          <span className="material-symbols-outlined text-[16px] transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <span aria-hidden="true" className="material-symbols-outlined text-[16px] transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
             keyboard_arrow_down
           </span>
         </button>
@@ -376,7 +376,7 @@ export default function RequestCard({ request: r }) {
               </div>
               
               {r.steps.length > 0 && (
-                <span className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
+                <span aria-hidden="true" className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
                   arrow_forward
                 </span>
               )}
@@ -449,7 +449,7 @@ export default function RequestCard({ request: r }) {
                         </div>
                       )}
                       <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center ${badgeClass}`}>
-                        <span className="material-symbols-outlined text-white text-[8px] font-bold">{badgeIcon}</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-white text-[8px] font-bold">{badgeIcon}</span>
                       </div>
                     </div>
                     <div className="flex flex-col items-center w-full mt-1.5 gap-0.5">
@@ -465,7 +465,7 @@ export default function RequestCard({ request: r }) {
                   {isGroupStep ? (
                     <div className="relative rounded-lg border border-dashed border-outline-variant bg-surface px-2.5 pb-1.5 pt-4">
                       <span className="absolute -top-2 left-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[8px] font-bold uppercase tracking-wider">
-                        <span className="material-symbols-outlined text-[10px]">call_split</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[10px]">call_split</span>
                         {t('Bước')} {s.stepOrder} · {ids.length} {t('người')}
                       </span>
                       <div className="flex items-start gap-2">
@@ -478,7 +478,7 @@ export default function RequestCard({ request: r }) {
                         <div key={aid} className="flex items-center gap-1 shrink-0">
                           {renderPerson(aid, aidx)}
                           {aidx < ids.length - 1 && (
-                            <span className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
+                            <span aria-hidden="true" className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
                               arrow_forward
                             </span>
                           )}
@@ -490,7 +490,7 @@ export default function RequestCard({ request: r }) {
                   )}
 
                   {idx < r.steps.length - 1 && (
-                    <span className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
+                    <span aria-hidden="true" className="material-symbols-outlined text-on-surface/70 text-[18px] mx-1 -mt-6">
                       arrow_forward
                     </span>
                   )}

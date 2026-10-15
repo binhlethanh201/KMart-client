@@ -120,7 +120,7 @@ export default function GeneralTab() {
       <div className={cardCls}>
         <div className={headCls}>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">send</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-primary">send</span>
             <h3 className="text-base font-semibold text-on-surface">{t('Tích hợp Telegram Bot')}</h3>
           </div>
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${connected ? 'bg-success-container text-on-success-container' : 'bg-surface-container-high text-secondary'}`}>
@@ -153,7 +153,7 @@ export default function GeneralTab() {
               onClick={handleSaveTelegram}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-md hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">save</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">save</span>
               {t('Lưu cấu hình')}
             </button>
           </div>
@@ -164,7 +164,7 @@ export default function GeneralTab() {
       <div className={cardCls}>
         <div className={headCls}>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">schedule</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-primary">schedule</span>
             <h3 className="text-base font-semibold text-on-surface">{t('Cách tính 12 giờ quá hạn')}</h3>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default function GeneralTab() {
             </div>
             {generalError && (
               <p className="mt-2 text-xs text-error flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">error</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">error</span>
                 {generalError}
               </p>
             )}

@@ -23,7 +23,7 @@ import LanguageSwitcher from '../../../components/LanguageSwitcher';
  */
 
 const inputCls =
-  'w-full rounded-lg border border-outline-variant bg-[#FFFEFA] px-3.5 py-2.5 text-body-md text-on-surface placeholder:text-outline outline-none transition-colors focus:border-primary focus:ring-4 focus:ring-primary-container';
+  'w-full rounded-lg border border-outline-variant bg-[#FFFEFA] px-3.5 py-2.5 text-body-md text-on-surface placeholder:text-muted outline-none transition-colors focus:border-primary focus:ring-4 focus:ring-primary-container';
 const labelCls = 'block text-label-md text-on-surface mb-1.5';
 
 /** AUTH-11: quy tắc mật khẩu mới — phải khớp validator ở backend. */
@@ -115,7 +115,7 @@ export default function ForcePasswordChange() {
         <div className="w-full max-w-[420px] rounded-2xl border border-white/10 bg-surface p-8 shadow-[0_28px_70px_-28px_rgba(0,0,0,0.65)]">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-full bg-primary-container flex items-center justify-center">
-            <span className="material-symbols-outlined text-on-primary-container">lock_reset</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-on-primary-container">lock_reset</span>
           </div>
           <div>
             <h2 className="text-title-lg font-semibold text-on-surface">{t('Đổi mật khẩu bắt buộc')}</h2>
@@ -180,7 +180,7 @@ export default function ForcePasswordChange() {
               const ok = rule.test(newPassword);
               return (
                 <li key={rule.id} className="flex items-center gap-2 text-body-sm">
-                  <span className={`material-symbols-outlined text-[18px] ${ok ? 'text-emerald-600' : 'text-outline'}`}>
+                  <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${ok ? 'text-emerald-600' : 'text-muted'}`}>
                     {ok ? 'check_circle' : 'radio_button_unchecked'}
                   </span>
                   <span className={ok ? 'text-on-surface' : 'text-secondary'}>{t(rule.label)}</span>

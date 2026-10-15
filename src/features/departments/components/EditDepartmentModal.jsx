@@ -203,7 +203,7 @@ export default function EditDepartmentModal({ department, onClose }) {
         <div className="flex justify-between items-center p-5 border-b border-outline-variant">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <span className="material-symbols-outlined">edit_document</span>
+              <span aria-hidden="true" className="material-symbols-outlined">edit_document</span>
             </div>
             <div>
               <h2 className="font-headline-md text-on-surface">{t('Chỉnh sửa thông tin')}</h2>
@@ -211,11 +211,12 @@ export default function EditDepartmentModal({ department, onClose }) {
             </div>
           </div>
           <button
+            aria-label={t('Đóng')}
             type="button"
             onClick={onClose}
             className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-full hover:bg-surface-variant cursor-pointer"
           >
-            <span className="material-symbols-outlined">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined">close</span>
           </button>
         </div>
 
@@ -313,7 +314,7 @@ export default function EditDepartmentModal({ department, onClose }) {
           <div className="border-t border-outline-variant pt-4 space-y-3">
             <label className={labelCls}>{t('Thành viên phòng ban')}</label>
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
+              <span aria-hidden="true" className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
                 search
               </span>
               <input
@@ -345,7 +346,7 @@ export default function EditDepartmentModal({ department, onClose }) {
                             {e.dateOfBirth ? ` - ${formatDateOfBirth(e.dateOfBirth)}` : ''}
                           </span>
                         </span>
-                        <span className="material-symbols-outlined text-[18px] text-primary">add_circle</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">add_circle</span>
                       </button>
                     </li>
                   ))
@@ -395,7 +396,7 @@ export default function EditDepartmentModal({ department, onClose }) {
                       className="text-on-surface-variant hover:text-error p-1 rounded hover:bg-error-container/40 cursor-pointer flex-shrink-0"
                       aria-label={t('Xóa thành viên')}
                     >
-                      <span className="material-symbols-outlined text-[18px]">remove_circle</span>
+                      <span aria-hidden="true" className="material-symbols-outlined text-[18px]">remove_circle</span>
                     </button>
                   </li>
                 ))}
@@ -404,7 +405,7 @@ export default function EditDepartmentModal({ department, onClose }) {
 
             {membersLoaded && members.length === 0 && !memberQuery && (
               <p className="text-xs text-secondary italic flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">info</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">info</span>
                 {t('Phòng ban chưa có nhân sự trực thuộc.')}
               </p>
             )}
@@ -424,7 +425,7 @@ export default function EditDepartmentModal({ department, onClose }) {
             disabled={saving}
             className="font-label-md text-on-primary bg-primary hover:bg-on-primary-fixed-variant px-5 py-2 rounded-md transition-colors shadow-sm cursor-pointer disabled:opacity-40 flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[18px]">save</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">save</span>
             {t('Lưu thay đổi')}
           </button>
         </div>

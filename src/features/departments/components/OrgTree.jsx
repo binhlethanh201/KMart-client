@@ -82,21 +82,21 @@ export default function OrgTree({
               aria-label={isCollapsed ? t('Mở nhánh') : t('Thu nhánh')}
               title={isCollapsed ? t('Mở nhánh') : t('Thu nhánh')}
             >
-              <span className="material-symbols-outlined text-[18px]">
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">
                 {isCollapsed ? 'chevron_right' : 'expand_more'}
               </span>
             </button>
           ) : (
             // Đơn vị không có cấp dưới: để khoảng trống cho thẳng hàng, không hiện nút vô dụng.
             <span className="w-6 h-6 flex items-center justify-center flex-shrink-0 text-outline/40">
-              <span className="material-symbols-outlined text-[14px]">remove</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[14px]">remove</span>
             </span>
           )}
 
           <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
             {dept.iconImage
               ? <img src={dept.iconImage} alt={t(dept.name)} className="w-full h-full object-cover" />
-              : <span className="material-symbols-outlined text-[20px]">{dept.icon}</span>}
+              : <span aria-hidden="true" className="material-symbols-outlined text-[20px]">{dept.icon}</span>}
           </div>
 
           <div className="min-w-0 flex-1">
@@ -117,12 +117,12 @@ export default function OrgTree({
             <div className="text-[12px] text-secondary mt-0.5 flex items-center gap-3 flex-wrap">
               {leader && (
                 <span className="flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">person</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[14px]">person</span>
                   {leader.title === 'Cửa hàng trưởng' ? t('Cửa hàng trưởng') : t('Trưởng phòng')}: {leader.name}
                 </span>
               )}
               <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">group</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-[14px]">group</span>
                 {t('{v0} nhân sự', { v0: dept.memberCount || 0 })}
                 {children.length > 0 && ` · ${t('{v0} đơn vị trực thuộc', { v0: children.length })}`}
               </span>
@@ -136,7 +136,7 @@ export default function OrgTree({
               title={t('Xem chi tiết')}
               className="p-1.5 rounded-md text-secondary hover:text-primary hover:bg-primary-container/30 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">visibility</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">visibility</span>
             </button>
             {canEdit && (
               <>
@@ -146,7 +146,7 @@ export default function OrgTree({
                   title={t('Chỉnh sửa')}
                   className="p-1.5 rounded-md text-secondary hover:text-primary hover:bg-primary-container/30 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">edit</span>
                 </button>
                 <button
                   type="button"
@@ -154,7 +154,7 @@ export default function OrgTree({
                   title={dept.status === 'Active' ? t('Ngừng hoạt động') : t('Mở hoạt động')}
                   className="p-1.5 rounded-md text-secondary hover:text-warning hover:bg-warning-container/40 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">block</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">block</span>
                 </button>
                 <button
                   type="button"
@@ -162,7 +162,7 @@ export default function OrgTree({
                   title={t('Xóa phòng ban')}
                   className="p-1.5 rounded-md text-secondary hover:text-error hover:bg-error-container/40 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">delete</span>
                 </button>
               </>
             )}
@@ -178,7 +178,7 @@ export default function OrgTree({
     <div className="bg-[#f6f6f4] border border-outline-variant rounded-lg p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3 mb-1">
         <div className="flex items-center gap-2 text-on-surface">
-          <span className="material-symbols-outlined text-primary text-[20px]">account_tree</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-primary text-[20px]">account_tree</span>
           <span className="font-semibold">{t('Sơ đồ tổ chức')}</span>
         </div>
         <span className="text-xs text-secondary">

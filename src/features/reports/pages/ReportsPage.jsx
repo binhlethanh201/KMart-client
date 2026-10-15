@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { reportService } from '../services/reportService';
 import { departmentService } from '../../departments/services/departmentService';
 import { documentTypeService } from '../../../services/documentTypeService';
@@ -7,6 +7,7 @@ import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 import StatCard from '../components/StatCard';
 import FilterBar from '../components/FilterBar';
+import LoadError from '../../../components/LoadError';
 import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
 import BarChart from '../components/BarChart';
 import PieChart from '../components/PieChart';
@@ -16,6 +17,13 @@ import DrillTable from '../components/DrillTable';
 import RosterTable from '../components/RosterTable';
 import ExportModal from '../components/ExportModal';
 import { useI18n } from '../../../i18n/I18nProvider';
+
+/**
+ * BE-53: màu cho từng loại đơn ở chế độ xem "tách theo loại đơn".
+ * Khai báo ở cấp module để mảng có MỘT danh tính ổn định — nếu để trong thân component thì
+ * useMemo dùng nó sẽ bị tính lại mỗi lần render.
+ */
+const TREND_TYPE_COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
 
 /**
  * BE-136: khối "đang tải" dùng chung cho các khu vực dữ liệu của trang Báo cáo.
@@ -30,7 +38,7 @@ function LoadingBlock({ label, dark = false }) {
       role="status"
       aria-live="polite"
     >
-      <span className={`material-symbols-outlined text-[30px] animate-spin ${dark ? 'text-white/70' : 'text-primary'}`}>
+      <span aria-hidden="true" className={`material-symbols-outlined text-[30px] animate-spin ${dark ? 'text-white/70' : 'text-primary'}`}>
         progress_activity
       </span>
       <span className="text-xs font-medium">{label || t('Đang tải dữ liệu...')}</span>
@@ -67,11 +75,22 @@ export default function ReportsPage() {
   const [trendMode, setTrendMode] = useState('total'); // 'total' | 'type'
   const [rosterMode, setRosterMode] = useState('managers'); // 'managers' | 'all'
 
-  useEffect(() => {
-    departmentService.getAll().then(setDepartments).catch(console.error);
-    documentTypeService.getAll().then(setDocumentTypes).catch(console.error);
-    positionService.getAll().then(setPositions).catch(console.error);
+  // UX-01: ba danh sách này chỉ đổ vào các ô LỌC. Lỗi trước đây chỉ ghi console nên ô lọc im lặng
+  // rỗng, người dùng tưởng hệ thống không có phòng ban/loại đơn nào để lọc.
+  const [filterOptionsError, setFilterOptionsError] = useState(false);
+  const loadFilterOptions = useCallback(() => {
+    setFilterOptionsError(false);
+    return Promise.all([
+      departmentService.getAll().then(setDepartments).catch(() => { throw new Error('departments'); }),
+      documentTypeService.getAll().then(setDocumentTypes).catch(() => { throw new Error('docTypes'); }),
+      positionService.getAll().then(setPositions).catch(() => { throw new Error('positions'); }),
+    ]).catch((err) => {
+      console.error('Failed to load report filter options', err);
+      setFilterOptionsError(true);
+    });
   }, []);
+
+  useEffect(() => { loadFilterOptions(); }, [loadFilterOptions]);
 
   const query = useMemo(() => ({
     from: filters.from || undefined,
@@ -84,27 +103,45 @@ export default function ReportsPage() {
 
 
   // KPI + xu hướng + bảng quản lý + so sánh chức vụ
+  /*
+   * RPT-02: trước đây MỌI request đều `.catch(() => null / [])` — lỗi bị nuốt sạch. Hệ quả: máy chủ
+   * lỗi thì `overview`/`stats` thành null và các thẻ KPI hiển thị **số 0** (`StatCard` có `value ?? 0`),
+   * trông y như "kỳ này không có đơn nào được duyệt". Báo cáo này dùng để đối chiếu và tính lương nên
+   * số 0 giả còn nguy hiểm hơn một thông báo lỗi. Nay ghi nhận lỗi để màn hình nói đúng sự thật.
+   */
+  const [dataError, setDataError] = useState(false);
+
+  const loadReportData = useCallback(() => {
+    setDataError(false);
+    setLoading(true);
+    return Promise.all([
+      reportService.getOverview(query).then((r) => r.data).catch(() => { throw new Error('overview'); }),
+      reportService.getDashboardStats(query).then((r) => r.data).catch(() => { throw new Error('stats'); }),
+      reportService.getTrend(query, 12).then((r) => r.data).catch(() => { throw new Error('trend'); }),
+      reportService.getManagers(query, rosterMode).then((r) => r.data).catch(() => { throw new Error('managers'); }),
+      reportService.getByPosition(query).then((r) => r.data).catch(() => { throw new Error('positions'); }),
+    ]);
+  }, [query, rosterMode]);
+
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    Promise.all([
-      reportService.getOverview(query).then((r) => r.data).catch(() => null),
-      reportService.getDashboardStats(query).then((r) => r.data).catch(() => null),
-      reportService.getTrend(query, 12).then((r) => r.data?.points || r.data || []).catch(() => []),
-      reportService.getManagers(query, rosterMode).then((r) => r.data || []).catch(() => []),
-      reportService.getByPosition(query).then((r) => r.data || []).catch(() => []),
-    ])
+    loadReportData()
       .then(([overviewData, statsData, trendData, managerData, positionData]) => {
         if (cancelled) return;
         setOverview(overviewData);
         setStats(statsData);
-        setTrend(Array.isArray(trendData) ? trendData : []);
+        setTrend(Array.isArray(trendData?.points || trendData) ? (trendData?.points || trendData) : []);
         setManagers(Array.isArray(managerData) ? managerData : []);
         setByPosition(Array.isArray(positionData) ? positionData : []);
       })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Không tải được dữ liệu báo cáo', err);
+        setDataError(true);
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [query, rosterMode]);
+  }, [loadReportData]);
 
 
 
@@ -115,7 +152,8 @@ export default function ReportsPage() {
 
   // BE-53: hai chế độ xem — tổng hợp, hoặc TÁCH THEO TỪNG LOẠI ĐƠN để thấy tháng đó
   // loại đơn nào được duyệt nhiều nhất.
-  const TREND_TYPE_COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+  // Khai báo ở cấp module (xem đầu file): nếu để trong thân component thì mảng này đổi danh tính
+  // mỗi lần render, khiến useMemo bên dưới không bao giờ dùng được giá trị đã tính.
 
   const trendTypeNames = useMemo(() => {
     const counts = new Map();
@@ -187,7 +225,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#d94a38] mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">
             {t('Báo cáo & Thống kê')}
           </p>
           <h1 className={`${PAGE_TITLE_CLS} max-w-2xl`}>
@@ -198,7 +236,7 @@ export default function ReportsPage() {
           onClick={() => setExportModalOpen(true)}
           className="flex items-center gap-2 px-6 py-3.5 bg-[#1d1d1f] text-white rounded-full hover:bg-black transition-colors font-semibold tracking-wide w-fit cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[18px]">download</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">download</span>
           {t('Xuất Báo Cáo')}
         </button>
       </div>
@@ -221,12 +259,28 @@ export default function ReportsPage() {
         </CollapsibleOnMobile>
       </div>
 
+      {/* UX-01: bộ lọc không nạp được thì nói rõ, đừng để các ô chọn im lặng rỗng. */}
+      {filterOptionsError && (
+        <div className="mb-4">
+          <LoadError compact message={t('Không tải được danh sách phòng ban / loại đơn để lọc.')} onRetry={loadFilterOptions} />
+        </div>
+      )}
+
       {/* Số liệu tổng quan */}
       {loading ? (
         <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))]">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-36 bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] animate-pulse" />
           ))}
+        </div>
+      ) : dataError ? (
+        /* RPT-02: KHÔNG hiện thẻ KPI toàn số 0 khi tải lỗi — số 0 trông như dữ liệu thật
+           ("kỳ này không có đơn nào") nên người dùng dễ kết luận sai về lương/thưởng. */
+        <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6">
+          <LoadError
+            message={t('Không tải được số liệu báo cáo. Chưa thể kết luận gì về kỳ này.')}
+            onRetry={loadReportData}
+          />
         </div>
       ) : (
         <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))]">
@@ -269,11 +323,20 @@ export default function ReportsPage() {
       {/* BE-162: bỏ khối "Thời gian duyệt trung bình" theo yêu cầu vận hành —
           các chỉ số giờ/ngày trung bình, nhanh nhất, chậm nhất không còn hiển thị. */}
 
+      {/*
+       * RPT-02: khi nạp số liệu thất bại thì BỎ QUA toàn bộ phần biểu đồ / bảng so sánh.
+       * Trước đây chúng vẫn vẽ với dữ liệu rỗng nên hiện "Không có dữ liệu" và các cột 0 —
+       * đọc như "kỳ này không có đơn nào" trong khi thực tế chỉ là máy chủ lỗi.
+       * Bảng "Soi kĩ từng đơn" tự nạp dữ liệu riêng nên có xử lý lỗi riêng (xem DrillTable).
+       */}
+      {!dataError && (
+      <>
+
       {/* Phân bổ theo loại đơn & phòng ban — đặt TRƯỚC xu hướng để nhìn tổng quan trước */}
       <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))]">
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8 flex flex-col h-[420px]">
           <div className="flex items-start justify-between gap-3 mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-accent">
               {t('Đơn đã duyệt theo loại đơn')}
             </h3>
             <ExportTableButton table="byType" filters={query} filePrefix="DonDaDuyet_TheoLoaiDon" />
@@ -294,7 +357,7 @@ export default function ReportsPage() {
 
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8 flex flex-col h-[420px]">
           <div className="flex items-start justify-between gap-3 mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-accent">
               {t('Đơn đã duyệt theo phòng ban')}
             </h3>
             <ExportTableButton table="byDepartment" filters={query} filePrefix="DonDaDuyet_TheoPhongBan" />
@@ -317,7 +380,7 @@ export default function ReportsPage() {
       {/* Xu hướng theo tháng — tổng hợp hoặc tách theo từng loại đơn */}
       <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-accent">
             {t('Xu hướng đơn ĐÃ DUYỆT theo tháng (12 tháng)')}
           </h3>
 
@@ -371,7 +434,7 @@ export default function ReportsPage() {
         {/* Kết luận nhanh: loại đơn được duyệt nhiều nhất trong tháng đang xem */}
         {topTypeOfMonth && (
           <div className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50/70 border border-emerald-100">
-            <span className="material-symbols-outlined text-[16px] text-emerald-600">emoji_events</span>
+            <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-emerald-600">emoji_events</span>
             <span className="text-[11px] text-gray-600">{t('Tháng này duyệt nhiều nhất:')}</span>
             <strong className="text-[12px] text-[#1d1d1f]">{t(topTypeOfMonth.documentType)}</strong>
             <span className="text-[11px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-100">
@@ -415,7 +478,7 @@ export default function ReportsPage() {
       <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))]">
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
           <div className="flex items-start justify-between gap-3 mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-accent">
               {t('So sánh theo phòng ban')}
             </h3>
             <ExportTableButton table="byDepartment" filters={query} filePrefix="SoSanh_PhongBan" />
@@ -431,13 +494,13 @@ export default function ReportsPage() {
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <button
                       onClick={() => handleFilterChange({ departmentId: d.departmentId })}
-                      className="font-bold text-[#1d1d1f] text-[15px] hover:text-[#d94a38] transition-colors text-left cursor-pointer"
+                      className="font-bold text-[#1d1d1f] text-[15px] hover:text-accent transition-colors text-left cursor-pointer"
                       title={t('Lọc báo cáo theo phòng ban này')}
                     >
                       {t(d.departmentName)}
                     </button>
                     <span
-                      className="text-[11px] font-bold text-[#d94a38] bg-[#fdf2f0] px-2 py-1 rounded-full cursor-help"
+                      className="text-[11px] font-bold text-accent bg-[#fdf2f0] px-2 py-1 rounded-full cursor-help"
                       title={t('Tỷ lệ đơn đã duyệt của phòng ban trên tổng đơn đã duyệt')}
                     >
                       {share.toFixed(0)}% {t('tổng đơn')}
@@ -467,7 +530,7 @@ export default function ReportsPage() {
 
         <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] p-6 md:p-8">
           <div className="flex items-start justify-between gap-3 mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#d94a38]">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-accent">
               {t('So sánh theo chức vụ')}
             </h3>
             <ExportTableButton table="byPosition" filters={query} filePrefix="SoSanh_ChucVu" />
@@ -481,13 +544,13 @@ export default function ReportsPage() {
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <button
                       onClick={() => handleFilterChange({ positionId: p.positionId })}
-                      className="font-bold text-[#1d1d1f] text-[15px] hover:text-[#d94a38] transition-colors text-left cursor-pointer"
+                      className="font-bold text-[#1d1d1f] text-[15px] hover:text-accent transition-colors text-left cursor-pointer"
                       title={t('Lọc báo cáo theo chức vụ này')}
                     >
                       {t(p.positionName)}
                     </button>
                     <span
-                      className="text-[11px] font-bold text-[#d94a38] bg-[#fdf2f0] px-2 py-1 rounded-full cursor-help"
+                      className="text-[11px] font-bold text-accent bg-[#fdf2f0] px-2 py-1 rounded-full cursor-help"
                       title={t('Tỷ lệ đơn đã duyệt của chức vụ này trên tổng đơn đã duyệt')}
                     >
                       {share.toFixed(0)}% {t('tổng đơn')}
@@ -512,6 +575,9 @@ export default function ReportsPage() {
           </div>
         </div>
       </div>
+
+      </>
+      )}
 
       {/* Soi kĩ từng đơn (BE-64: tách riêng để tìm kiếm/lọc ngày không vẽ lại cả trang) */}
       <DrillTable query={query} />

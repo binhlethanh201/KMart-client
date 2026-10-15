@@ -96,7 +96,7 @@ export function I18nProvider({ children }) {
 
   // Đồng bộ localStorage + thuộc tính lang của <html>
   useEffect(() => {
-    activeLanguage = language;
+    // Không gán `activeLanguage` ở đây: dòng ngay dưới đã đồng bộ nó ở mỗi lần render.
     try {
       localStorage.setItem(STORAGE_KEY, language);
     } catch {
@@ -105,7 +105,13 @@ export function I18nProvider({ children }) {
     document.documentElement.lang = language;
   }, [language]);
 
-  // Giữ biến cấp module đồng bộ ngay cả trước khi effect chạy
+  /**
+   * Giữ biến cấp module đồng bộ ngay cả trước khi effect chạy — `translate()` và `getActiveLanguage()`
+   * là hàm thuần (không phải hook) nên các chỗ ngoài React như autoTranslate.js đọc được ngôn ngữ
+   * hiện tại. Gán ngay trong render là chủ ý; oxlint coi việc ghi biến ngoài component là lỗi
+   * `react(globals)` nhưng ở đây không có state React nào bị ảnh hưởng.
+   */
+  // oxlint-disable-next-line react/globals
   activeLanguage = language;
 
   const setLanguage = useCallback((code) => {
@@ -115,8 +121,12 @@ export function I18nProvider({ children }) {
   /**
    * Dịch một chuỗi tiếng Việt sang ngôn ngữ hiện tại.
    * Hỗ trợ nội suy tham số: t('Xin chào {name}', { name: 'An' })
-   * `autoVersion` nằm trong deps để t() mới khi có bản dịch tự động về.
+   *
+   * `autoVersion` nằm trong deps để `t` có danh tính MỚI khi một bản dịch tự động về, nhờ đó mọi
+   * component dùng `t` được vẽ lại và đổi ngôn ngữ ngay. Nó không xuất hiện trong thân hàm nên
+   * lint báo "unnecessary dependency" — đây là chủ ý, không phải thừa.
    */
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   const t = useCallback((text, params) => resolve(text, params, language), [language, autoVersion]);
 
   const value = useMemo(

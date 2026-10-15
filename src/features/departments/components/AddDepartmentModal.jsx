@@ -64,14 +64,14 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
         ) : (
           <span className="text-secondary">{placeholder}</span>
         )}
-        <span className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">
+        <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">
           {open ? 'expand_less' : 'expand_more'}
         </span>
       </button>
       {open && (
         <div className="absolute z-30 mt-1 w-full bg-surface border border-outline-variant rounded-md shadow-lg max-h-56 overflow-hidden flex flex-col">
           <div className="p-2 border-b border-outline-variant relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[16px]">
+            <span aria-hidden="true" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[16px]">
               search
             </span>
             <input
@@ -94,7 +94,7 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-left text-error hover:bg-error/10 transition-colors cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">person_remove</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">person_remove</span>
                   <span className="text-sm">{t('Bỏ chọn')} {placeholder}</span>
                 </button>
               </li>
@@ -270,7 +270,7 @@ export default function AddDepartmentModal({ onClose }) {
         <div className="flex justify-between items-center p-5 border-b border-outline-variant flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <span className="material-symbols-outlined">add_business</span>
+              <span aria-hidden="true" className="material-symbols-outlined">add_business</span>
             </div>
             <div>
               <h2 className="font-headline-md text-on-surface">{t('Thêm mới Phòng ban / Đơn vị')}</h2>
@@ -285,7 +285,7 @@ export default function AddDepartmentModal({ onClose }) {
             className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-full hover:bg-surface-variant cursor-pointer"
             aria-label={t('Đóng')}
           >
-            <span className="material-symbols-outlined">close</span>
+            <span aria-hidden="true" className="material-symbols-outlined">close</span>
           </button>
         </div>
 
@@ -294,7 +294,7 @@ export default function AddDepartmentModal({ onClose }) {
           {/* LEFT: Department metadata */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">badge</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">badge</span>
               {t('Thông tin Đơn vị')}
             </h3>
 
@@ -374,7 +374,7 @@ export default function AddDepartmentModal({ onClose }) {
                         : 'border-outline-variant text-secondary hover:bg-surface-container-low'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-[18px]">{s.icon}</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{s.icon}</span>
                     {s.label}
                   </button>
                 ))}
@@ -396,7 +396,7 @@ export default function AddDepartmentModal({ onClose }) {
           {/* RIGHT: Personnel assignment */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">group_add</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[16px]">group_add</span>
               {t('Phân bổ Nhân sự')}
             </h3>
 
@@ -428,7 +428,7 @@ export default function AddDepartmentModal({ onClose }) {
             <div className={`${cardCls} space-y-3`}>
               <label className={labelCls}>{t('Thêm thành viên vào phòng')}</label>
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
+                <span aria-hidden="true" className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
                   search
                 </span>
                 <input
@@ -461,7 +461,7 @@ export default function AddDepartmentModal({ onClose }) {
                               {e.dateOfBirth ? ` - ${formatDateOfBirth(e.dateOfBirth)}` : ''}
                             </span>
                           </span>
-                          <span className="material-symbols-outlined text-[18px] text-primary">add_circle</span>
+                          <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">add_circle</span>
                         </button>
                       </li>
                     ))
@@ -516,7 +516,7 @@ export default function AddDepartmentModal({ onClose }) {
                         className="text-on-surface-variant hover:text-error p-1 rounded hover:bg-error-container/40 cursor-pointer flex-shrink-0"
                         aria-label={t('Xóa thành viên')}
                       >
-                        <span className="material-symbols-outlined text-[18px]">remove_circle</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[18px]">remove_circle</span>
                       </button>
                     </li>
                   ))}
@@ -524,7 +524,7 @@ export default function AddDepartmentModal({ onClose }) {
               )}
               {members.length === 0 && !memberQuery && (
                 <p className="text-xs text-secondary italic flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">info</span>
+                  <span aria-hidden="true" className="material-symbols-outlined text-[14px]">info</span>
                   {t('Chưa chọn thành viên nào. Tìm và thêm nhân sự ở trên.')}
                 </p>
               )}
@@ -550,7 +550,7 @@ export default function AddDepartmentModal({ onClose }) {
               disabled={saving}
               className="font-label-md text-on-primary bg-primary hover:bg-on-primary-fixed-variant px-5 py-2 rounded-md transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">check_circle</span>
               {saving ? t('Đang tạo...') : t('Tạo đơn vị mới')}
             </button>
           </div>

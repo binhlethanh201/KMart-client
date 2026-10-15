@@ -11,7 +11,25 @@
   ],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    // react/only-export-components cảnh báo khi một file vừa export component vừa export hằng/hàm,
+    // vì như vậy Fast Refresh mất trạng thái component. Dự án này TẮT HMR (`dev.hmr: false` trong
+    // rsbuild.config.js — save là full reload), nên không có Fast Refresh để mất trạng thái; giữ
+    // rule này chỉ tạo 5 cảnh báo không bao giờ sửa được mà không tách file vô ích.
+    // Bật lại nếu sau này dự án bật HMR.
+    "react/only-export-components": "off",
+    // react/set-state-in-effect cảnh báo mọi lệnh setState chạy đồng bộ trong thân useEffect.
+    // Đã rà toàn bộ 26 chỗ trong dự án: tất cả đều thuộc 3 nhóm pattern cố ý, không có lỗi logic —
+    //   1. nạp dữ liệu kèm cờ loading (ReportsPage, RequestDetail, NotificationBell, HrProvider,
+    //      DocsPage, DrillTable, ExportModal, RequestDetail);
+    //   2. đưa state cục bộ về mặc định khi bộ lọc/đối tượng đầu vào đổi (DepartmentDetail,
+    //      HumanResources, PersonalRequests, SystemConfig, RosterTable, DrillTable, EditProfileModal,
+    //      DocumentTypeSelect);
+    //   3. đồng bộ state từ prop/tín hiệu bên ngoài (App.jsx đọc token, DelegationsTab mở theo tín
+    //      hiệu, CreateRequestModal suy ra luồng duyệt và ngày công).
+    // Rule muốn thay bằng Suspense / key / giá trị suy ra lúc render — làm vậy là đổi kiến trúc của
+    // MỌI đường nạp dữ liệu, ngoài phạm vi việc sửa lỗi. Bật lại nếu sau này chuyển sang Suspense
+    // hoặc React Query.
+    "react/set-state-in-effect": "off",
     "no-undef": "error"
   }
 }

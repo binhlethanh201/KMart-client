@@ -21,20 +21,21 @@ export default function MainLayout() {
    */
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
+
+    // Khung menu mobile phải đóng lại sau khi chuyển trang: trước đây `Sidebar` nhận prop `onClose`
+    // nhưng không dùng, nên bấm một mục trên điện thoại vẫn để khung mở che trang vừa mở.
+    setIsMobileMenuOpen(false);
+
     const root = contentRef.current;
     if (!root) return;
     root.querySelectorAll('*').forEach((el) => {
       if (el.scrollTop > 0) el.scrollTop = 0;
     });
   }, [location.pathname]);
- 
+
   return (
     <div className="flex h-screen bg-background text-on-background font-body-md overflow-hidden">
-      <Sidebar
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-        currentUser={currentUser}
-      />
+      <Sidebar isOpen={isMobileMenuOpen} currentUser={currentUser} />
  
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -45,7 +46,7 @@ export default function MainLayout() {
             onClick={() => setIsMobileMenuOpen((v) => !v)}
             aria-label="Menu"
           >
-            <span className="material-symbols-outlined">menu</span>
+            <span aria-hidden="true" className="material-symbols-outlined">menu</span>
           </button>
           <BrandLogo size="sm" />
           <NotificationBell variant="header" />

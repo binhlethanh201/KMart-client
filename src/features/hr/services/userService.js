@@ -1,5 +1,6 @@
 import apiClient, { API_URL } from '../../../services/apiClient';
 import { readImageDownscaled } from '../../../utils/readImageDownscaled';
+import { parseJsonField } from '../../../utils/parseJsonField';
 
 /** BE-119: ảnh đại diện nén về tối đa 256px trước khi lưu vào hồ sơ (đủ nét cho avatar, dữ liệu nhỏ). */
 const AVATAR_MAX_SIZE = 256;
@@ -77,7 +78,8 @@ const mapToFrontendModel = (u) => {
     phone: u.phone || '',
     // BE-74: ngày sinh (YYYY-MM-DD) — phân biệt nhân sự trùng họ tên.
     dateOfBirth: u.dateOfBirth || '',
-    profileData: u.profileData ? JSON.parse(u.profileData) : null,
+    // SEC-03: cột profile_data là chuỗi tự do; dữ liệu cũ/rác không được làm hỏng danh sách nhân sự.
+    profileData: parseJsonField(u.profileData),
     createdAt: u.createdAt,
     secondary: secondaryPos.map(p => ({
       departmentId: p.departmentId,

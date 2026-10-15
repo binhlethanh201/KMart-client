@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { ApprovalSystemProvider } from "./context/ApprovalSystemProvider";
 import { HrProvider } from "./features/hr/context/HrProvider";
 import { I18nProvider } from "./i18n/I18nProvider";
@@ -11,12 +12,11 @@ import EmployeeDetail from "./features/hr/pages/EmployeeDetail";
 import SystemConfig from "./features/system-config/pages/SystemConfig";
 import PersonalRequests from "./features/requests/pages/PersonalRequests";
 import RequestDetail from "./features/requests/pages/RequestDetail";
-import ReportsPage from "./features/reports/pages/ReportsPage";
 import DelegationsTab from "./features/system-config/components/DelegationsTab";
 import TimeoutDelegatePage from "./features/system-config/components/TimeoutDelegatePage";
-import DocsPage from "./features/docs/pages/DocsPage";
-
 import ToastHost from "./components/ToastHost";
+import LoadError from "./components/LoadError";
+import ErrorBoundary from "./components/ErrorBoundary";
 import LoginPage from "./features/auth/pages/LoginPage";
 import LandingPage from "./features/landing/pages/LandingPage";
 import ForcePasswordChange from "./features/auth/components/ForcePasswordChange";
@@ -25,6 +25,33 @@ import { useApproval } from "./context/useApproval";
 import { PERMISSIONS, ROLES } from "./constants/permissions";
 import { useI18n } from "./i18n/I18nProvider";
 
+/*
+ * PERF-01 (audit): trước đây MỌI trang được import tĩnh nên toàn bộ ứng dụng gộp vào một tệp
+ * 834 KB (197 KB nén) — người chỉ mở trang đăng nhập vẫn phải tải cả trang báo cáo (kèm 3 biểu đồ
+ * tự vẽ) và cả trang hướng dẫn. Hai trang nặng nhất được tách tải riêng dưới đây.
+ *
+ * ERR-01: kèm THỬ LẠI một lần. Gói JS có thể tải hụt do mạng chập chờn, hoặc do máy chủ vừa
+ * triển khai phiên bản mới (tên tệp đã đổi nên tệp cũ không còn). Thử lại một lần xử lý được
+ * trường hợp mạng; nếu vẫn hỏng thì ErrorBoundary bên dưới hiện nút tải lại trang.
+ */
+const lazyRoute = (factory) =>
+  lazy(() => factory().catch(() => factory()));
+
+const ReportsPage = lazyRoute(() => import("./features/reports/pages/ReportsPage"));
+const DocsPage = lazyRoute(() => import("./features/docs/pages/DocsPage"));
+
+/**
+ * PERF-01: chờ tải xong một trang được tách gói (hiện chỉ trang Báo cáo và trang Hướng dẫn).
+ * Dùng lại đúng kiểu spinner mà các trang khác đang dùng để không lệch phong cách.
+ */
+function RouteLoadingFallback() {
+  return (
+    <div role="status" aria-busy="true" className="flex-1 flex items-center justify-center min-h-[60vh]">
+      <span className="material-symbols-outlined animate-spin text-on-surface-variant">progress_activity</span>
+    </div>
+  );
+}
+
 /**
  * Route guard: kiểm tra quyền (permission) và/hoặc vai trò (role). Wildcard "*" bypasses all.
  * `requiredRoles` dùng cho các trang mà backend chặn theo POLICY VAI TRÒ (ví dụ báo cáo chỉ cho
@@ -32,8 +59,28 @@ import { useI18n } from "./i18n/I18nProvider";
  */
 function ProtectedRoute({ requiredPermissions = [], requiredRoles = [], children }) {
   const { t } = useI18n();
-  const { currentUser, hasPermission } = useApproval();
-  if (!currentUser) return null;
+  const { currentUser, hasPermission, authLoading, authError, reloadCurrentUser } = useApproval();
+  /*
+   * UX-01b: trước đây nhánh này `return null`, nên khi /auth/me lỗi thì mọi trang được bảo vệ
+   * hiện ra màn hình trắng hoàn toàn. Nay phân biệt rõ "đang tải hồ sơ" và "không tải được hồ sơ".
+   */
+  if (!currentUser) {
+    if (authError) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6">
+          <LoadError message={t('Không tải được thông tin tài khoản.')} onRetry={reloadCurrentUser} />
+        </div>
+      );
+    }
+    if (authLoading) {
+      return (
+        <div role="status" aria-busy="true" className="flex-1 flex items-center justify-center min-h-[60vh]">
+          <span className="material-symbols-outlined animate-spin text-on-surface-variant">progress_activity</span>
+        </div>
+      );
+    }
+    return null;
+  }
   const perms = currentUser.permissions || [];
   if (perms.includes(PERMISSIONS.WILDCARD)) return children;
   const userRoles = (currentUser.roles?.length ? currentUser.roles : [currentUser.role])
@@ -45,7 +92,7 @@ function ProtectedRoute({ requiredPermissions = [], requiredRoles = [], children
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6">
         <div className="w-16 h-16 rounded-full bg-error-container flex items-center justify-center">
-          <span className="material-symbols-outlined text-error text-3xl">lock</span>
+          <span aria-hidden="true" className="material-symbols-outlined text-error text-3xl">lock</span>
         </div>
         <h2 className="text-xl font-bold text-on-surface">{t('Không có quyền truy cập')}</h2>
         <p className="text-secondary text-center max-w-sm">
@@ -109,11 +156,19 @@ function App() {
 
   return (
     <I18nProvider>
+      {/*
+       * ERR-01: lưới an toàn bao TRÙM CẢ ỨNG DỤNG, đặt ngoài BrowserRouter và ngoài cả nhánh
+       * đăng nhập/chưa đăng nhập. Lý do đặt ở đây chứ không phải trong từng trang: một lỗi render
+       * ở BẤT KỲ đâu (kể cả trong nhà cung cấp ngữ cảnh hay trang đăng nhập) đều làm React gỡ sạch
+       * cây và để lại màn hình trắng. Có lưới ở gốc thì luôn còn thông báo + nút tải lại.
+       */}
+      <ErrorBoundary>
       <BrowserRouter>
         {isAuthenticated ? (
           <ApprovalSystemProvider>
             <HrProvider>
               <PasswordChangeGate>
+              <Suspense fallback={<RouteLoadingFallback />}>
               <Routes>
                 <Route path="/login" element={<Navigate to="/" replace />} />
               <Route path="/" element={<MainLayout />}>
@@ -198,18 +253,22 @@ function App() {
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
             <ToastHost />
               </PasswordChangeGate>
             </HrProvider>
           </ApprovalSystemProvider>
         ) : (
+          <Suspense fallback={<RouteLoadingFallback />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage onLoginSuccess={() => { window.location.href = "/"; }} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
         )}
       </BrowserRouter>
+      </ErrorBoundary>
     </I18nProvider>
   );
 }

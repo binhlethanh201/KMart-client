@@ -7,6 +7,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import PageHeader from '../../../components/PageHeader';
 import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
 import Select from '../../../components/Select';
+import LoadError from '../../../components/LoadError';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
 import { scopeDepartmentsForUser } from '../../../utils/departmentScope';
 import { matchesSearchText, normalizeSearchText } from '../../../utils/searchText';
@@ -37,7 +38,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
   const { t } = useI18n();
   useDocumentTitle(t(TITLES[mode] || 'Danh sách Đơn từ'));
 
-  const { requests, currentUserId, departments, currentUser } = useApproval();
+  const { requests, currentUserId, departments, currentUser, employees } = useApproval();
 
   /*
    * BE-88: chỉ hiện những phòng ban người dùng thực sự thuộc về. Trước đây ô lọc đổ ra toàn bộ phòng
@@ -65,9 +66,20 @@ export default function PersonalRequests({ mode = 'sent' }) {
   }, [mode]);
   
   // Load document types for filter
-  useEffect(() => {
-    documentTypeService.getAll().then(setDocumentTypes).catch(console.error);
+  // UX-01: lỗi phải hiện ra. Trước đây chỉ console.error nên dropdown "Loại đơn" rỗng im lặng,
+  // người dùng tưởng hệ thống không có loại đơn nào.
+  const [docTypesError, setDocTypesError] = useState(false);
+  const loadDocumentTypes = useCallback(() => {
+    setDocTypesError(false);
+    return documentTypeService.getAll()
+      .then(setDocumentTypes)
+      .catch((err) => {
+        console.error('Failed to load document types', err);
+        setDocTypesError(true);
+      });
   }, []);
+
+  useEffect(() => { loadDocumentTypes(); }, [loadDocumentTypes]);
 
   /* BE-05: đơn thuộc màn hình hiện tại */
   const matchesMode = useCallback((r) => {
@@ -120,6 +132,17 @@ export default function PersonalRequests({ mode = 'sent' }) {
     });
     const departmentNameOf = (id) => (id ? departmentNames.get(id) : '');
 
+    /*
+     * RPT-01: tra được theo MÃ NHÂN SỰ của người tạo. Mã nhân sự = 8 ký tự đầu của id nhân sự viết
+     * hoa (xem `userService.mapToFrontendModel`); đơn chỉ lưu `creatorId` nên phải tra qua danh sách
+     * nhân sự. `employees` lấy từ context đã nạp sẵn nên không phát sinh thêm request.
+     */
+    const employeeCodes = new Map();
+    (employees || []).forEach((e) => {
+      if (e?.id) employeeCodes.set(e.id, e.shortId || e.id.substring(0, 8).toUpperCase());
+    });
+    const creatorCodeOf = (id) => (id ? employeeCodes.get(id) || '' : '');
+
     return requests.filter((r) => {
       if (!matchesMode(r)) return false;
 
@@ -134,6 +157,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
         r.title,
         r.type,
         r.creatorName,
+        creatorCodeOf(r.creatorId),
         r.reasonText,
         departmentNameOf(r.departmentId),
         ...Object.values(r.fields || {}).map((v) => (v === null || v === undefined ? '' : v)),
@@ -143,17 +167,13 @@ export default function PersonalRequests({ mode = 'sent' }) {
       const matchT = !documentTypeFilter || r.documentTypeId === documentTypeFilter;
       return matchQ && matchF && matchD && matchT;
     });
-  }, [requests, statusFilter, search, departmentFilter, documentTypeFilter, matchesMode, departments]);
+  }, [requests, statusFilter, search, departmentFilter, documentTypeFilter, matchesMode, departments, employees]);
 
   /* phân trang / cuộn vô hạn */
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [usePagination, setUsePagination] = useState(false);
   const itemsPerPage = 10;
-
-  useEffect(() => {
-    setPage(1);
-  }, [mode, statusFilter, search, departmentFilter]);
 
   const visibleFiltered = useMemo(() => {
     if (usePagination) {
@@ -166,6 +186,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
 
   const loaderRef = useRef(null);
 
+  /** Đổi bộ lọc or chế độ xem thì quay về trang đầu. */
   useEffect(() => {
     setPage(1);
   }, [mode, statusFilter, search, departmentFilter, documentTypeFilter]);
@@ -182,9 +203,12 @@ export default function PersonalRequests({ mode = 'sent' }) {
     if (loaderRef.current) {
       observer.observe(loaderRef.current);
     }
-    
+
+    // Giữ nút trong biến cục bộ: tới lúc cleanup chạy thì `loaderRef.current` có thể đã trỏ sang
+    // nút khác (hoặc null), nên unobserve đúng nút đã observe ở trên.
+    const observed = loaderRef.current;
     return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
+      if (observed) observer.unobserve(observed);
     };
   }, [filtered.length, itemsPerPage, usePagination]);
 
@@ -202,7 +226,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
               onClick={() => setIsCreateOpen(true)}
               className="bg-primary w-full md:w-auto justify-center text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">add</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
               {t('Tạo đề xuất mới')}
             </button>
           )}
@@ -219,14 +243,14 @@ export default function PersonalRequests({ mode = 'sent' }) {
             <div className="flex items-center gap-3 flex-wrap">
               {/* Search */}
               <div className="relative flex-1 min-w-[220px]">
-                <span className={FILTER_SEARCH_ICON_CLS}>
+                <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">
                   search
                 </span>
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   type="text"
-                  placeholder={t('Tìm theo mã đơn, loại đơn, người tạo, nội dung...')}
+                  placeholder={t('Tìm theo mã đơn, mã nhân sự, loại đơn, người tạo, nội dung...')}
                   aria-label={t('Tìm kiếm đơn từ')}
                   className={FILTER_SEARCH_CLS}
                 />
@@ -238,7 +262,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                     aria-label={t('Xoá từ khoá')}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                   </button>
                 )}
               </div>
@@ -272,6 +296,11 @@ export default function PersonalRequests({ mode = 'sent' }) {
                   ]}
                 />
               </div>
+
+              {/* UX-01: bộ lọc "Loại đơn" không nạp được -> nói rõ thay vì để dropdown rỗng im lặng. */}
+              {docTypesError && (
+                <LoadError compact message={t('Không tải được danh sách loại đơn.')} onRetry={loadDocumentTypes} />
+              )}
 
               {/* Nút xoá nhanh bộ lọc */}
               <div className="flex items-center gap-2 flex-shrink-0">
@@ -313,7 +342,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                   {f.dot ? (
                     <span className={`w-2 h-2 rounded-full ${f.dot}`} />
                   ) : (
-                    <span className="material-symbols-outlined text-[16px]">{f.icon}</span>
+                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{f.icon}</span>
                   )}
                   {t(f.label)}
                   {counts[f.id] > 0 && (
@@ -336,7 +365,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
           {/* BE-05: hướng dẫn nhanh cho màn bổ sung */}
           {mode === 'supplement' && (
             <div className="mb-4 px-4 py-3 rounded-lg bg-warning-container/40 border border-warning/30 flex items-start gap-2.5 text-sm text-on-surface">
-              <span className="material-symbols-outlined text-[20px] text-warning flex-shrink-0">info</span>
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px] text-warning flex-shrink-0">info</span>
               <span>
                 {t('Đây là các đơn của bạn bị người duyệt trả lại để bổ sung thông tin.\n                Mở đơn để xem chi tiết, bổ sung rồi gửi lại cho người duyệt.')}
               </span>
@@ -345,7 +374,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
           <div className="w-full flex flex-col gap-3 pb-8">
             {filtered.length === 0 ? (
               <div className="bg-surface rounded-lg border border-outline-variant p-12 text-center text-secondary">
-                <span className="material-symbols-outlined text-[40px] block mb-2 text-outline">
+                <span aria-hidden="true" className="material-symbols-outlined text-[40px] block mb-2 text-muted">
                   {mode === 'supplement' ? 'task_alt' : 'search_off'}
                 </span>
                 {mode === 'supplement'
@@ -399,7 +428,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                         disabled={page <= 1}
                         className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface disabled:opacity-40 cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_left</span>
                       </button>
                       <span className="text-xs text-secondary px-2">
                         {t('Trang {v0} / {v1}', { v0: page, v1: Math.max(1, Math.ceil(filtered.length / pageSize)) })}
@@ -409,13 +438,13 @@ export default function PersonalRequests({ mode = 'sent' }) {
                         disabled={page >= Math.ceil(filtered.length / pageSize)}
                         className="w-7 h-7 rounded bg-surface border border-outline-variant/50 text-secondary hover:bg-surface-container hover:text-on-surface disabled:opacity-40 cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">chevron_right</span>
                       </button>
                     </div>
                   </div>
                 ) : page * itemsPerPage < filtered.length && (
                   <div ref={loaderRef} className="w-full py-4 flex justify-center items-center text-secondary">
-                    <span className="material-symbols-outlined animate-spin text-[24px]">progress_activity</span>
+                    <span aria-hidden="true" className="material-symbols-outlined animate-spin text-[24px]">progress_activity</span>
                     <span className="ml-2 text-sm font-medium">{t('Đang tải thêm...')}</span>
                   </div>
                 )}
