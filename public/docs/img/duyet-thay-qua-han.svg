@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 268" role="img" aria-label="Hai bước cài người duyệt thay mặc định cho các đơn mình duyệt khi bị quá hạn">
+  <rect width="720" height="268" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#7c3aed"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">Mở Duyệt thay quá hạn</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">Menu Ủy quyền</text>
+      <rect x="46" y="102" width="168" height="36" rx="9" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="119" font-size="9.5" font-weight="600" fill="#5b21b6">Bấm "Cài người duyệt thay"</text>
+      <text x="56" y="132" font-size="9" fill="#6d28d9">hoặc "Đổi người" nếu đã cài</text>
+      <text x="46" y="158" font-size="9.5" fill="#66655f">Trang này chỉ mở được với tài khoản</text>
+      <text x="46" y="172" font-size="9.5" fill="#66655f">thuộc cấp duyệt đơn.</text>
+      <text x="46" y="196" font-size="9.5" fill="#66655f">Chưa cài gì thì đơn quá hạn của bạn</text>
+      <text x="46" y="210" font-size="9.5" fill="#66655f">sẽ bị hủy và trả về người tạo.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#16a34a"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">Lưu người duyệt thay</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">Chọn 1 người rồi bấm lưu</text>
+      <rect x="276" y="102" width="168" height="36" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="286" y="119" font-size="9.5" fill="#3f3e3a">Người duyệt thay</text>
+      <text x="286" y="132" font-size="9" fill="#8c8a83">Chọn từ danh sách nhân sự</text>
+      <rect x="276" y="146" width="168" height="28" rx="8" fill="#16a34a"/>
+      <text x="360" y="164" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="700">Lưu người duyệt thay</text>
+      <text x="276" y="192" font-size="9.5" fill="#66655f">Mỗi người chỉ cài được MỘT người</text>
+      <text x="276" y="206" font-size="9.5" fill="#66655f">duyệt thay; lưu mới ghi đè cấu hình cũ.</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">Phạm vi áp dụng</text>
+      <text x="544" y="86" font-size="10" fill="#66655f">Không phải theo từng cấp</text>
+      <rect x="506" y="102" width="168" height="52" rx="9" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="120" font-size="8" fill="#1d4ed8" font-weight="600">"Đang áp dụng cho mọi đơn bạn duyệt"</text>
+      <text x="516" y="136" font-size="8" fill="#3b5bd6">Một người duyệt thay dùng chung cho</text>
+      <text x="516" y="149" font-size="9.5" fill="#3b5bd6">tất cả các bước bạn phụ trách.</text>
+      <rect x="506" y="166" width="168" height="30" rx="9" fill="#feecec" stroke="#fbd5d5"/>
+      <text x="516" y="185" font-size="9.5" fill="#b91c1c">Muốn khác nhau theo cấp → liên hệ</text>
+      <text x="516" y="200" font-size="9.5" fill="#b91c1c">quản trị viên chỉnh ở luồng duyệt.</text>
+    </g>
+
+    <path d="M236 135 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 135 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="248" font-size="12" fill="#66655f" text-anchor="middle">Cài một lần, dùng lâu dài — mọi lần chuyển đơn quá hạn đều được ghi vào nhật ký</text>
+  </g>
+</svg>

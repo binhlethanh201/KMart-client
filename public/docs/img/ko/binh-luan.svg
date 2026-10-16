@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 210" role="img" aria-label="Khung bình luận trong đơn và cách gõ @ để nhắc tên người dùng">
+  <rect width="720" height="210" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Panel 1: gõ @ -->
+    <g>
+      <rect x="30" y="40" width="310" height="130" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="56" cy="66" r="14" fill="#1d4ed8"/>
+      <text x="56" y="71" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="80" y="70" font-size="11.5" font-weight="700" fill="#111315">댓글 입력란에 @ 입력</text>
+      <text x="46" y="94" font-size="9.5" fill="#66655f">선택할 수 있도록 사용자 목록이 펼쳐집니다.</text>
+      <rect x="46" y="104" width="278" height="28" rx="8" fill="#eef4ff" stroke="#1d4ed8"/>
+      <text x="56" y="123" font-size="10.5" fill="#111315">@tran</text>
+      <rect x="46" y="138" width="278" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="56" y="155" font-size="10" fill="#3f3e3a">Trần Thị B — 팀장</text>
+    </g>
+
+    <!-- Panel 2: kết quả -->
+    <g>
+      <rect x="380" y="40" width="310" height="130" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="406" cy="66" r="14" fill="#16a34a"/>
+      <text x="406" y="71" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="430" y="70" font-size="11.5" font-weight="700" fill="#111315">언급된 사람이 알림을 받습니다</text>
+      <rect x="396" y="84" width="278" height="30" rx="9" fill="#e7f5fd" stroke="#b6e0f5"/>
+      <text x="406" y="103" font-size="9.5" fill="#0c4a6e">팔로우한 요청서에 새 댓글이 있습니다</text>
+      <rect x="396" y="122" width="278" height="34" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="406" y="139" font-size="9.5" fill="#66655f">댓글은 요청서 진행 항목에 표시되며,</text>
+      <text x="406" y="151" font-size="9.5" fill="#66655f">모든 결재 단계에서 읽을 수 있습니다.</text>
+    </g>
+  </g>
+</svg>

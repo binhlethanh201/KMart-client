@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 262" role="img" aria-label="Ba bước xem hàng chờ duyệt và mở đơn cần xử lý">
+  <rect width="720" height="262" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#7c3aed"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">대기 목록 열기</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">요청서 → 내 결재 대기</text>
+      <rect x="46" y="100" width="168" height="42" rx="9" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="118" font-size="10" font-weight="700" fill="#5b21b6">본인이 이 단계의 결재자입니다</text>
+      <text x="56" y="133" font-size="9.5" fill="#6d28d9">본인에게 위임된 요청서 포함</text>
+      <rect x="46" y="150" width="168" height="30" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="169" font-size="8" fill="#3f3e3a">부서 / 요청서 유형으로 필터링 가능</text>
+      <text x="46" y="200" font-size="9.5" fill="#66655f" textLength="178.0" lengthAdjust="spacingAndGlyphs">결재한 요청서는 대기 목록에서 사라집니다.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">요청서 카드 읽기</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">결정하기에 충분한지 여부</text>
+      <rect x="276" y="100" width="168" height="104" rx="10" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="286" y="118" font-size="10" font-weight="700" fill="#111315">휴가 신청서</text>
+      <text x="286" y="134" font-size="9.5" fill="#66655f">기안자: Nguyễn Văn A</text>
+      <text x="286" y="150" font-size="9.5" fill="#66655f">현재 단계: 1/2</text>
+      <rect x="286" y="158" width="86" height="16" rx="8" fill="#feecec"/>
+      <text x="329" y="170" font-size="9" fill="#b91c1c" text-anchor="middle">4시간 남음</text>
+      <text x="286" y="196" font-size="9.5" fill="#66655f">기한이 카드에 바로 표시됩니다</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#16a34a"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">요청서를 열어 처리</text>
+      <text x="544" y="86" font-size="8.5" fill="#66655f" textLength="140.0" lengthAdjust="spacingAndGlyphs">카드를 클릭하거나 알림의 링크를 사용</text>
+      <rect x="506" y="100" width="168" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="116" font-size="9.5" fill="#3b5bd6">작성된 양식</text>
+      <rect x="506" y="130" width="168" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="146" font-size="9.5" fill="#3b5bd6">첨부 문서</text>
+      <rect x="506" y="160" width="168" height="44" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="176" font-size="9.5" fill="#3b5bd6">이력 + 각 단계 진행 상황</text>
+      <text x="516" y="192" font-size="9.5" fill="#3b5bd6">댓글로 기안자에게 다시 질문</text>
+    </g>
+
+    <path d="M236 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="240" font-size="12" fill="#66655f" text-anchor="middle">가장 빠른 방법: 텔레그램의 "자세히 보기" 링크로 바로 열기, 목록을 넘길 필요 없음</text>
+  </g>
+</svg>

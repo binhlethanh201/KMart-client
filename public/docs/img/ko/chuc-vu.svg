@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-label="Chức vụ và cấp bậc: các mốc để chọn người duyệt trong luồng và cách nhân viên kiêm nhiệm nhiều vị trí">
+  <rect width="720" height="300" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Thang cấp bậc -->
+    <g>
+      <rect x="30" y="40" width="410" height="214" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="46" y="66" font-size="11.5" font-weight="700" fill="#111315">결재 기준으로 쓰이는 직급 체계</text>
+      <text x="46" y="82" font-size="9.5" fill="#66655f">설정 → 직위 &amp; 직급</text>
+
+      <rect x="46" y="96" width="378" height="20" rx="10" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="56" y="110" font-size="9.5" fill="#1d4ed8" font-weight="600">사원 → 조장 → 팀장 → 부서장 대리 → 부서장</text>
+
+      <rect x="46" y="124" width="378" height="20" rx="10" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="138" font-size="9.5" fill="#6d28d9" font-weight="600">→ 점장 → 지점장 → 지역 관리자 → 본부장</text>
+
+      <rect x="46" y="156" width="378" height="42" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="56" y="174" font-size="9.5" fill="#0f766e">매장 블록은 다음 기준을 사용: 조장 · 점장 · 지역 관리자</text>
+      <text x="56" y="190" font-size="9.5" fill="#0f766e">사무실 블록은 다음을 사용: 팀장 · 부서장 대리 · 부서장 · 본부장</text>
+
+      <rect x="46" y="208" width="378" height="32" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="56" y="228" font-size="8" fill="#8a5a00">여기서 직위가 틀리면 결재 흐름이 잘못된 사람을 선택합니다 — 실사용 전에 확인하세요.</text>
+    </g>
+
+    <!-- Kiêm nhiệm -->
+    <g>
+      <rect x="460" y="40" width="230" height="214" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="476" y="66" font-size="11.5" font-weight="700" fill="#111315">한 사람, 여러 직위</text>
+      <text x="476" y="82" font-size="9.5" fill="#66655f">직원 프로필에서 수정</text>
+
+      <rect x="476" y="96" width="198" height="34" rx="9" fill="#eceafe" stroke="#c7c2f5"/>
+      <text x="486" y="112" font-size="9.5" font-weight="600" fill="#4338ca">주 직위</text>
+      <text x="486" y="125" font-size="9" fill="#4338ca">예: 기술 부서장</text>
+
+      <rect x="476" y="138" width="198" height="34" rx="9" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="486" y="154" font-size="9.5" font-weight="600" fill="#3f3e3a">겸직 1</text>
+      <text x="486" y="167" font-size="9" fill="#66655f">예: 인사 부서장 대리</text>
+
+      <rect x="476" y="180" width="198" height="28" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="486" y="199" font-size="9.5" fill="#3f3e3a">+ 겸직 직위 추가</text>
+
+      <text x="476" y="228" font-size="9.5" fill="#66655f">"직속 상사" 기준 결재 흐름</text>
+      <text x="476" y="242" font-size="9.5" fill="#66655f">직원의 주 직위에서 상사를 가져옵니다.</text>
+    </g>
+  </g>
+</svg>

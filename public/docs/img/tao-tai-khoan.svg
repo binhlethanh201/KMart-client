@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" role="img" aria-label="Năm bước tạo tài khoản nhân viên mới và gắn vào phòng ban">
+  <rect width="960" height="300" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- 1 -->
+    <g>
+      <rect x="26" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="50" cy="72" r="14" fill="#4f46e5"/>
+      <text x="50" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="70" y="68" font-size="11" font-weight="700" fill="#111315">Mở form tạo mới</text>
+      <text x="70" y="82" font-size="9" fill="#66655f">Menu Nhân sự</text>
+      <rect x="40" y="96" width="140" height="120" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <rect x="52" y="110" width="116" height="24" rx="7" fill="#eceafe"/>
+      <text x="60" y="126" font-size="8" fill="#4338ca">+ Tạo tài khoản nhân viên</text>
+      <text x="52" y="152" font-size="9" fill="#66655f">Nút nằm ở góc màn Nhân sự.</text>
+      <text x="52" y="168" font-size="8" fill="#66655f">Chỉ HR và Quản trị thấy nút này.</text>
+      <text x="52" y="192" font-size="8" fill="#66655f">Chưa có phòng ban nào thì tạo</text>
+      <text x="52" y="206" font-size="9" fill="#66655f">phòng ban trước (mục 4.4).</text>
+    </g>
+
+    <!-- 2 -->
+    <g>
+      <rect x="204" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="228" cy="72" r="14" fill="#4f46e5"/>
+      <text x="228" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="248" y="68" font-size="11" font-weight="700" fill="#111315">Thông tin cá nhân</text>
+      <text x="248" y="82" font-size="9" fill="#66655f">Các ô có dấu *</text>
+      <rect x="218" y="96" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="228" y="113" font-size="9" fill="#3f3e3a">Họ và tên *</text>
+      <rect x="218" y="128" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="228" y="145" font-size="8" fill="#3f3e3a">Email làm việc * (để đăng nhập)</text>
+      <rect x="218" y="160" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="228" y="177" font-size="9" fill="#3f3e3a">Số điện thoại</text>
+      <text x="218" y="204" font-size="9" fill="#66655f">Email trùng với người cũ sẽ bị chặn</text>
+      <text x="218" y="218" font-size="9" fill="#66655f">ngay dưới ô nhập.</text>
+    </g>
+
+    <!-- 3 -->
+    <g>
+      <rect x="382" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="406" cy="72" r="14" fill="#4f46e5"/>
+      <text x="406" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="426" y="68" font-size="8" font-weight="700" fill="#111315">Gắn phòng ban + chức vụ</text>
+      <text x="426" y="82" font-size="8" fill="#66655f">Bước gắn vào phòng ban</text>
+      <rect x="396" y="96" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="406" y="113" font-size="9" fill="#3f3e3a">Phòng ban công tác *</text>
+      <rect x="396" y="128" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="406" y="145" font-size="9" fill="#3f3e3a">Chức vụ chính *</text>
+      <rect x="396" y="160" width="140" height="52" rx="7" fill="#eceafe" stroke="#c7c2f5"/>
+      <text x="406" y="178" font-size="9" fill="#4338ca">+ Thêm vị trí kiêm nhiệm</text>
+      <text x="406" y="194" font-size="8" fill="#4338ca">Kiêm nhiệm vẫn khai 1 vị trí Chính</text>
+      <text x="406" y="206" font-size="8" fill="#4338ca">— luồng duyệt lấy cấp trên từ đây.</text>
+    </g>
+
+    <!-- 4 -->
+    <g>
+      <rect x="560" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="584" cy="72" r="14" fill="#4f46e5"/>
+      <text x="584" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">4</text>
+      <text x="604" y="68" font-size="11" font-weight="700" fill="#111315">Chọn vai trò hệ thống</text>
+      <text x="604" y="82" font-size="9" fill="#66655f">Quyết định menu và quyền</text>
+      <rect x="574" y="96" width="140" height="94" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="584" y="114" font-size="9" fill="#3f3e3a">Nhân viên (STAFF)</text>
+      <text x="584" y="132" font-size="9" fill="#3f3e3a">Trưởng nhóm (TEAM_LEADER)</text>
+      <text x="584" y="150" font-size="9" fill="#3f3e3a">Quản lý (MANAGER)</text>
+      <text x="584" y="168" font-size="9" fill="#3f3e3a">Nhân sự (HR)</text>
+      <text x="584" y="186" font-size="9" fill="#3f3e3a">Quản trị viên (ADMIN)</text>
+      <text x="574" y="210" font-size="9" fill="#66655f">Danh sách còn có thể nhiều hơn, tùy</text>
+      <text x="574" y="222" font-size="9" fill="#66655f">vai trò đã được tạo trong hệ thống.</text>
+    </g>
+
+    <!-- 5 -->
+    <g>
+      <rect x="738" y="46" width="196" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="762" cy="72" r="14" fill="#16a34a"/>
+      <text x="762" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">5</text>
+      <text x="782" y="68" font-size="11" font-weight="700" fill="#111315">Lưu và giao tài khoản</text>
+      <text x="782" y="82" font-size="9" fill="#66655f">Mật khẩu tạm sinh tự động</text>
+      <rect x="752" y="96" width="168" height="42" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="762" y="114" font-size="9" fill="#0f766e">Hệ thống cấp 1 mật khẩu tạm</text>
+      <text x="762" y="128" font-size="9" fill="#0f766e">và hiển thị cho bạn đọc lại.</text>
+      <rect x="752" y="148" width="168" height="52" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="762" y="166" font-size="9" fill="#8a5a00">Nhân viên đăng nhập bằng email</text>
+      <text x="762" y="180" font-size="9" fill="#8a5a00">+ mật khẩu tạm, bị bắt buộc đổi</text>
+      <text x="762" y="194" font-size="9" fill="#8a5a00">ngay ở lần đăng nhập đầu tiên.</text>
+    </g>
+
+    <path d="M198 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M376 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M554 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M732 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="480" y="266" font-size="12" fill="#66655f" text-anchor="middle">Họ tên → email làm việc → phòng ban &amp; chức vụ (kèm kiêm nhiệm) → vai trò hệ thống → lưu</text>
+  </g>
+</svg>

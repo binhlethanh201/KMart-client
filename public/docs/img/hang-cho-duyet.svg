@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 262" role="img" aria-label="Ba bước xem hàng chờ duyệt và mở đơn cần xử lý">
+  <rect width="720" height="262" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#7c3aed"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">Mở hàng chờ</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">Đơn từ → Đơn chờ tôi duyệt</text>
+      <rect x="46" y="100" width="168" height="42" rx="9" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="118" font-size="10" font-weight="700" fill="#5b21b6">Bạn là người duyệt bước này</text>
+      <text x="56" y="133" font-size="9.5" fill="#6d28d9">Kể cả đơn được ủy quyền cho bạn</text>
+      <rect x="46" y="150" width="168" height="30" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="169" font-size="8" fill="#3f3e3a">Có thể lọc theo phòng ban / loại đơn</text>
+      <text x="46" y="200" font-size="9.5" fill="#66655f">Đơn bạn đã duyệt sẽ rời khỏi hàng chờ.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">Đọc thẻ đơn</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">Đủ để quyết định hay chưa</text>
+      <rect x="276" y="100" width="168" height="104" rx="10" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="286" y="118" font-size="10" font-weight="700" fill="#111315">Đơn xin nghỉ phép</text>
+      <text x="286" y="134" font-size="9.5" fill="#66655f">Người tạo: Nguyễn Văn A</text>
+      <text x="286" y="150" font-size="9.5" fill="#66655f">Bước hiện tại: 1/2</text>
+      <rect x="286" y="158" width="86" height="16" rx="8" fill="#feecec"/>
+      <text x="329" y="170" font-size="9" fill="#b91c1c" text-anchor="middle">Còn 4 giờ</text>
+      <text x="286" y="196" font-size="9.5" fill="#66655f">Hạn duyệt hiện ngay trên thẻ</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#16a34a"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">Mở đơn để xử lý</text>
+      <text x="544" y="86" font-size="8.5" fill="#66655f">Bấm thẻ, hoặc link trong thông báo</text>
+      <rect x="506" y="100" width="168" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="116" font-size="9.5" fill="#3b5bd6">Biểu mẫu đã điền</text>
+      <rect x="506" y="130" width="168" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="146" font-size="9.5" fill="#3b5bd6">Tài liệu đính kèm</text>
+      <rect x="506" y="160" width="168" height="44" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="176" font-size="9.5" fill="#3b5bd6">Lịch sử + tiến trình các cấp</text>
+      <text x="516" y="192" font-size="9.5" fill="#3b5bd6">Bình luận để hỏi lại người tạo</text>
+    </g>
+
+    <path d="M236 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="240" font-size="12" fill="#66655f" text-anchor="middle">Cách nhanh nhất: mở đơn từ link "Xem chi tiết" trong tin Telegram, khỏi lật danh sách</text>
+  </g>
+</svg>

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 320" role="img" aria-label="Thanh điều hướng bên trái: thông tin cá nhân, chuông thông báo và menu hiện theo quyền">
+  <rect width="720" height="320" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Khung sidebar mô phỏng -->
+    <rect x="30" y="40" width="250" height="248" rx="14" fill="#0f172a"/>
+    <rect x="46" y="58" width="34" height="34" rx="17" fill="#c9d4e6"/>
+    <text x="90" y="74" font-size="12" font-weight="700" fill="#ffffff">Nguyễn Văn A</text>
+    <text x="90" y="90" font-size="10" fill="#94a3b8">Nhân viên</text>
+    <circle cx="94" cy="103" r="3.5" fill="#22c55e"/>
+    <text x="103" y="106" font-size="9.5" fill="#94a3b8">Trực tuyến</text>
+    <rect x="222" y="58" width="42" height="24" rx="7" fill="#1e293b"/>
+    <text x="243" y="74" font-size="10" fill="#e2e8f0" text-anchor="middle">🔔 3</text>
+
+    <g font-size="11" fill="#94a3b8">
+      <text x="52" y="142">Phòng ban &amp; Nhóm</text>
+      <text x="52" y="168">Đơn từ</text>
+      <text x="52" y="194">Báo Cáo</text>
+      <text x="52" y="220">Ủy quyền</text>
+      <text x="52" y="246">Cấu hình</text>
+      <text x="52" y="272">Hướng dẫn</text>
+    </g>
+    <rect x="44" y="156" width="4" height="16" rx="2" fill="#60a5fa"/>
+    <rect x="44" y="182" width="4" height="16" rx="2" fill="#1e293b"/>
+    <rect x="44" y="208" width="4" height="16" rx="2" fill="#1e293b"/>
+    <rect x="44" y="234" width="4" height="16" rx="2" fill="#1e293b"/>
+    <rect x="44" y="260" width="4" height="16" rx="2" fill="#1e293b"/>
+
+    <!-- Callout 1 -->
+    <g>
+      <path d="M280 72 h20" stroke="#9a968d" stroke-width="2"/>
+      <rect x="306" y="56" width="384" height="46" rx="10" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="328" cy="79" r="10" fill="#e6f5f3"/>
+      <text x="328" y="83" font-size="11" fill="#0f766e" text-anchor="middle" font-weight="700">1</text>
+      <text x="348" y="76" font-size="11.5" font-weight="700" fill="#111315">Tên, vai trò và trạng thái của bạn</text>
+      <text x="348" y="92" font-size="10" fill="#66655f">Bấm vào đây (hoặc ảnh đại diện) để mở trang Tài khoản</text>
+    </g>
+
+    <!-- Callout 2 -->
+    <g>
+      <path d="M280 120 h20" stroke="#9a968d" stroke-width="2"/>
+      <rect x="306" y="104" width="384" height="46" rx="10" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="328" cy="127" r="10" fill="#eef4ff"/>
+      <text x="328" y="131" font-size="11" fill="#1d4ed8" text-anchor="middle" font-weight="700">2</text>
+      <text x="348" y="124" font-size="11.5" font-weight="700" fill="#111315">Chuông thông báo</text>
+      <text x="348" y="140" font-size="10" fill="#66655f">Chấm đỏ = số thông báo chưa đọc trong hệ thống</text>
+    </g>
+
+    <!-- Callout 3 -->
+    <g>
+      <path d="M280 168 h20" stroke="#9a968d" stroke-width="2"/>
+      <rect x="306" y="152" width="384" height="66" rx="10" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="328" cy="175" r="10" fill="#f4eefe"/>
+      <text x="328" y="179" font-size="11" fill="#7c3aed" text-anchor="middle" font-weight="700">3</text>
+      <text x="348" y="172" font-size="11.5" font-weight="700" fill="#111315">Menu chỉ hiện mục bạn có quyền</text>
+      <text x="348" y="188" font-size="10" fill="#66655f">Nhân viên không thấy: Nhân sự · Báo Cáo · Cấu hình</text>
+      <text x="348" y="204" font-size="10" fill="#66655f">Người có quyền duyệt thấy thêm: Đơn chờ tôi duyệt · Ủy quyền</text>
+    </g>
+
+    <!-- Callout 4 -->
+    <g>
+      <path d="M280 232 h20" stroke="#9a968d" stroke-width="2"/>
+      <rect x="306" y="216" width="384" height="72" rx="10" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="328" cy="239" r="10" fill="#feecec"/>
+      <text x="328" y="243" font-size="11" fill="#dc2626" text-anchor="middle" font-weight="700">4</text>
+      <text x="348" y="236" font-size="11.5" font-weight="700" fill="#111315">Trên điện thoại thì gọn lại</text>
+      <text x="348" y="252" font-size="10" fill="#66655f">Menu nằm trong nút ☰, chuông chuyển lên góc trên phải</text>
+      <text x="348" y="270" font-size="10" fill="#66655f">Các khối lọc/thông tin dài tự thu gọn, bấm để mở</text>
+    </g>
+  </g>
+</svg>

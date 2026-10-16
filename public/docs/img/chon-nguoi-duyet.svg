@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" role="img" aria-label="Ba bước chọn người duyệt khi bước đầu tiên của luồng có nhiều người có thể duyệt">
+  <rect width="720" height="260" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="172" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">Luồng báo trước</text>
+      <text x="84" y="86" font-size="8.5" fill="#66655f">Khối "Luồng phê duyệt dự kiến"</text>
+      <rect x="46" y="100" width="168" height="100" rx="10" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="56" y="120" font-size="10" font-weight="700" fill="#1d4ed8">Bước 1 — 3 ứng viên</text>
+      <circle cx="66" cy="142" r="9" fill="#94a3b8"/>
+      <text x="82" y="146" font-size="10" fill="#3f3e3a">Trần Thị B — Trưởng nhóm</text>
+      <circle cx="66" cy="164" r="9" fill="#94a3b8"/>
+      <text x="82" y="168" font-size="10" fill="#3f3e3a">Lê Văn C — Trưởng nhóm</text>
+      <circle cx="66" cy="186" r="9" fill="#94a3b8"/>
+      <text x="82" y="190" font-size="8.5" fill="#3f3e3a">Phạm Văn D — Trưởng nhóm</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="172" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#d97706"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">Chọn 1 người</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">Hệ thống bắt buộc chọn</text>
+      <rect x="276" y="100" width="168" height="34" rx="9" fill="#fff7e6" stroke="#d97706"/>
+      <text x="288" y="121" font-size="10.5" font-weight="700" fill="#8a5a00">Chọn người duyệt *</text>
+      <path d="M424 114 l6 6 6 -6" stroke="#8a5a00" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <rect x="276" y="142" width="168" height="58" rx="9" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="286" y="160" font-size="10" fill="#111315">✓ Trần Thị B — Trưởng nhóm</text>
+      <text x="286" y="176" font-size="10" fill="#66655f">Lê Văn C — Trưởng nhóm</text>
+      <text x="286" y="192" font-size="10" fill="#66655f">Phạm Văn D — Trưởng nhóm</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="172" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#16a34a"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">Gửi yêu cầu</text>
+      <text x="544" y="86" font-size="8.5" fill="#66655f">Đơn chỉ tới đúng người đã chọn</text>
+      <rect x="506" y="104" width="168" height="42" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="518" y="122" font-size="10" font-weight="700" fill="#0f766e">Gửi tới: Trần Thị B</text>
+      <text x="518" y="137" font-size="9.5" fill="#0f766e">Người này nhận thông báo ngay</text>
+      <rect x="506" y="154" width="168" height="46" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="518" y="172" font-size="8.5" fill="#66655f">Nếu luồng đã chỉ định sẵn 1 người</text>
+      <text x="518" y="188" font-size="10" fill="#66655f">thì ô chọn không xuất hiện.</text>
+    </g>
+
+    <path d="M236 130 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 130 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="240" font-size="12" fill="#66655f" text-anchor="middle">Có nhiều ứng viên ở bước 1 → bạn phải chọn 1 người, đơn không tự chia cho tất cả</text>
+  </g>
+</svg>

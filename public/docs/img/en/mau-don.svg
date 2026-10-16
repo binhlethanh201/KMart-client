@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 310" role="img" aria-label="Ba bước tạo mẫu đơn và soạn các ô cần điền trong biểu mẫu">
+  <rect width="720" height="310" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="212" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#e11d48"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">Create a form template</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">Settings → Form Templates</text>
+      <rect x="46" y="102" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="119" font-size="9.5" fill="#3f3e3a">Template name</text>
+      <rect x="46" y="134" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="151" font-size="9.5" fill="#3f3e3a">Template code</text>
+      <rect x="46" y="166" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="183" font-size="9.5" fill="#3f3e3a">Template group</text>
+      <text x="46" y="214" font-size="9.5" fill="#66655f">The group collects templates in</text>
+      <text x="46" y="228" font-size="8.5" fill="#66655f" textLength="178.0" lengthAdjust="spacingAndGlyphs">the picker when an employee creates a request.</text>
+      <text x="46" y="248" font-size="8" fill="#66655f" textLength="178.0" lengthAdjust="spacingAndGlyphs">A template without a workflow cannot be submitted.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="212" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#e11d48"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="11" font-weight="700" fill="#111315" textLength="140.0" lengthAdjust="spacingAndGlyphs">Compose the fields to fill in</text>
+      <text x="314" y="86" font-size="8.5" fill="#66655f" textLength="140.0" lengthAdjust="spacingAndGlyphs">Click the pen icon on the template card</text>
+      <rect x="276" y="102" width="168" height="112" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="286" y="120" font-size="9.5" font-weight="600" fill="#111315">6 field types to choose from:</text>
+      <text x="286" y="138" font-size="9.5" fill="#3f3e3a">Text · Number · Date</text>
+      <text x="286" y="154" font-size="8" fill="#3f3e3a">Choice (dropdown / radio / checkbox)</text>
+      <text x="286" y="170" font-size="9.5" fill="#3f3e3a">File upload · Delegated approver</text>
+      <text x="286" y="192" font-size="8" fill="#66655f" textLength="152.0" lengthAdjust="spacingAndGlyphs">Name the field and mark it "required" if needed —</text>
+      <text x="286" y="206" font-size="8" fill="#66655f">required fields show a * to the requester.</text>
+      <text x="276" y="234" font-size="9.5" fill="#66655f">The "File upload" type lets you attach</text>
+      <text x="276" y="248" font-size="9.5" fill="#66655f">a printable form template for employees.</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="212" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#16a34a"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">Order them &amp; save</text>
+      <text x="544" y="86" font-size="10" fill="#66655f">Drag to reorder fields</text>
+      <rect x="506" y="102" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="118" font-size="9.5" fill="#66655f">⠿ Start date</text>
+      <rect x="506" y="132" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="148" font-size="9.5" fill="#66655f">⠿ End date</text>
+      <rect x="506" y="162" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="178" font-size="9.5" fill="#66655f">⠿ Total days</text>
+      <rect x="506" y="192" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="208" font-size="9.5" fill="#66655f">⠿ Reason *</text>
+      <text x="506" y="236" font-size="8.5" fill="#66655f">The new form applies only to requests created</text>
+      <text x="506" y="250" font-size="8.5" fill="#66655f">onwards; existing requests keep their content.</text>
+    </g>
+
+    <path d="M236 150 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 150 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="288" font-size="12" fill="#66655f" text-anchor="middle">Create a template → compose the fields → order them and save; the next mandatory step is assigning a workflow</text>
+  </g>
+</svg>

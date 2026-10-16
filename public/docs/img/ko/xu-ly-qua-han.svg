@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-label="Cấu hình xử lý quá hạn: hai hành động của bước duyệt và chế độ đếm giờ mặc định toàn hệ thống">
+  <rect width="720" height="300" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Nhánh quyết định -->
+    <g>
+      <rect x="30" y="36" width="330" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="46" y="60" font-size="11.5" font-weight="700" fill="#111315">결재 단계가 기한을 넘김 → 시스템이 2가지 중 하나로 처리</text>
+      <text x="46" y="76" font-size="9.5" fill="#66655f">설정 → 결재 흐름 → "기한 초과 처리" 그룹에서 설정</text>
+
+      <rect x="46" y="90" width="298" height="30" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="56" y="109" font-size="9.5" fill="#8a5a00">☑ 12시간 초과 시 기한 초과 · 연속 / 업무 시간 계산</text>
+
+      <path d="M195 120 v16" stroke="#9a968d" stroke-width="1.5" fill="none"/>
+      <path d="M100 136 h190 M100 136 v14 M290 136 v14" stroke="#9a968d" stroke-width="1.5" fill="none"/>
+
+      <rect x="46" y="152" width="130" height="56" rx="9" fill="#feecec" stroke="#fbd5d5"/>
+      <text x="56" y="170" font-size="9.5" font-weight="700" fill="#b91c1c">요청서를 기안자에게 반환</text>
+      <text x="56" y="186" font-size="8" fill="#b91c1c">요청서는 기안자에게 반환되고,</text>
+      <text x="56" y="199" font-size="8" fill="#b91c1c">아무에게도 넘어가지 않습니다.</text>
+
+      <rect x="214" y="152" width="130" height="56" rx="9" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="224" y="170" font-size="9.5" font-weight="700" fill="#6d28d9">위임으로 결재</text>
+      <text x="224" y="186" font-size="9" fill="#6d28d9">결재자에게 이관</text>
+      <text x="224" y="199" font-size="8" fill="#6d28d9" textLength="114.0" lengthAdjust="spacingAndGlyphs">위임 화면에서 설정한 대리 결재자.</text>
+
+      <rect x="46" y="220" width="298" height="34" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="56" y="236" font-size="9" fill="#0f766e">대리 결재자도 기한을 넘겼거나, 대리 결재자를 설정하지 않은 경우</text>
+      <text x="56" y="249" font-size="9" fill="#0f766e">→ 요청서가 취소되고 기안자에게 반환됩니다.</text>
+    </g>
+
+    <!-- Chế độ đếm giờ -->
+    <g>
+      <rect x="380" y="36" width="310" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="396" y="60" font-size="11.5" font-weight="700" fill="#111315">기본 시간 계산 방식</text>
+      <text x="396" y="76" font-size="9.5" fill="#66655f">설정 → 일반 &amp; 텔레그램</text>
+
+      <rect x="396" y="90" width="278" height="44" rx="9" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="406" y="108" font-size="9.5" font-weight="600" fill="#1d4ed8">◉ 주야간 관계없이 12시간 연속 계산</text>
+      <text x="406" y="124" font-size="9" fill="#3b5bd6">금요일 오후 8시에 상신한 요청서도 주말 동안 시간이 계산됩니다.</text>
+
+      <rect x="396" y="142" width="278" height="44" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="406" y="160" font-size="9.5" font-weight="600" fill="#0f766e">○ 월 → 금, 업무 시간 내에서만 계산</text>
+      <text x="406" y="176" font-size="9" fill="#0f766e">주말과 공휴일은 제외, 시작 / 종료 시간 입력 필요.</text>
+
+      <rect x="396" y="196" width="134" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="463" y="213" font-size="9.5" fill="#3f3e3a" text-anchor="middle">시작 시간</text>
+      <rect x="540" y="196" width="134" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="607" y="213" font-size="9.5" fill="#3f3e3a" text-anchor="middle">종료 시간</text>
+
+      <text x="396" y="244" font-size="9.5" fill="#66655f">이 규칙은 전사 기본값이며, 각 결재 단계에서</text>
+      <text x="396" y="257" font-size="9.5" fill="#66655f">"기한 초과 처리" 그룹에서 다시 덮어쓸 수 있습니다.</text>
+    </g>
+  </g>
+</svg>

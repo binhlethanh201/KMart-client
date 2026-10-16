@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 268" role="img" aria-label="Hai bước cài người duyệt thay mặc định cho các đơn mình duyệt khi bị quá hạn">
+  <rect width="720" height="268" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#7c3aed"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315" textLength="140.0" lengthAdjust="spacingAndGlyphs">Open Overdue approver</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">The Delegation menu</text>
+      <rect x="46" y="102" width="168" height="36" rx="9" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="119" font-size="9.5" font-weight="600" fill="#5b21b6">Click "Set a delegated approver"</text>
+      <text x="56" y="132" font-size="9" fill="#6d28d9">or "Change person" if already set</text>
+      <text x="46" y="158" font-size="9.5" fill="#66655f">This page only opens for accounts</text>
+      <text x="46" y="172" font-size="9.5" fill="#66655f">on an approval level.</text>
+      <text x="46" y="196" font-size="9.5" fill="#66655f">With nothing set, your overdue requests</text>
+      <text x="46" y="210" font-size="9.5" fill="#66655f">is cancelled and returned to the requester.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#16a34a"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315" textLength="140.0" lengthAdjust="spacingAndGlyphs">Save delegated approver</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">Pick one person, then save</text>
+      <rect x="276" y="102" width="168" height="36" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="286" y="119" font-size="9.5" fill="#3f3e3a">Delegated approver</text>
+      <text x="286" y="132" font-size="9" fill="#8c8a83">Choose from the employee list</text>
+      <rect x="276" y="146" width="168" height="28" rx="8" fill="#16a34a"/>
+      <text x="360" y="164" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="700">Save delegated approver</text>
+      <text x="276" y="192" font-size="9.5" fill="#66655f">Each person can set only ONE</text>
+      <text x="276" y="206" font-size="9.5" fill="#66655f">delegate; saving replaces it.</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">Scope</text>
+      <text x="544" y="86" font-size="10" fill="#66655f">Not per level</text>
+      <rect x="506" y="102" width="168" height="52" rx="9" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="120" font-size="8" fill="#1d4ed8" font-weight="600">"Applied to every request you approve"</text>
+      <text x="516" y="136" font-size="8" fill="#3b5bd6">One delegated approver is shared across</text>
+      <text x="516" y="149" font-size="9.5" fill="#3b5bd6">every step you are responsible for.</text>
+      <rect x="506" y="166" width="168" height="30" rx="9" fill="#feecec" stroke="#fbd5d5"/>
+      <text x="516" y="185" font-size="9.5" fill="#b91c1c">Want it to differ per level → ask</text>
+      <text x="516" y="200" font-size="9.5" fill="#b91c1c">the admin to change it in the workflow.</text>
+    </g>
+
+    <path d="M236 135 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 135 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="248" font-size="12" fill="#66655f" text-anchor="middle">Set once, use long term — every overdue handover is written to the audit log</text>
+  </g>
+</svg>

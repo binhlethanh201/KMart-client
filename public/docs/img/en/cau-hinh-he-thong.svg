@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 320" role="img" aria-label="Ba khối trong màn Cấu hình: cấu hình bot Telegram, cách tính giờ quá hạn toàn hệ thống và người duyệt thay mặc định">
+  <rect width="720" height="320" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- 1: Telegram -->
+    <g>
+      <rect x="30" y="44" width="212" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="56" cy="72" r="15" fill="#229ed9"/>
+      <text x="56" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="78" y="68" font-size="11.5" font-weight="700" fill="#111315">Telegram Bot integration</text>
+      <text x="78" y="83" font-size="9" fill="#66655f">General &amp; Telegram</text>
+      <rect x="46" y="98" width="180" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="115" font-size="9.5" fill="#66655f">Telegram Bot Token •••••</text>
+      <rect x="46" y="132" width="180" height="26" rx="8" fill="#1d4ed8"/>
+      <text x="136" y="149" font-size="9.5" fill="#ffffff" text-anchor="middle" font-weight="700">Save settings</text>
+      <rect x="46" y="168" width="180" height="30" rx="8" fill="#e6f5f3" stroke="#a7ded6"/>
+      <circle cx="60" cy="183" r="4" fill="#16a34a"/>
+      <text x="72" y="187" font-size="9.5" fill="#0f766e">Connected · Not connected</text>
+      <text x="46" y="216" font-size="9.5" fill="#66655f" textLength="190.0" lengthAdjust="spacingAndGlyphs">Clicking "Save settings" makes the system call</text>
+      <text x="46" y="230" font-size="9.5" fill="#66655f">Telegram verifies the bot and re-registers</text>
+      <text x="46" y="244" font-size="8.5" fill="#66655f" textLength="190.0" lengthAdjust="spacingAndGlyphs">incoming-message route (webhook, https required).</text>
+      <text x="46" y="262" font-size="9.5" fill="#b91c1c">There is no "send a test message" button.</text>
+    </g>
+
+    <!-- 2: giờ quá hạn -->
+    <g>
+      <rect x="254" y="44" width="212" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="280" cy="72" r="15" fill="#d97706"/>
+      <text x="280" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="302" y="68" font-size="10" font-weight="700" fill="#111315" textLength="158.0" lengthAdjust="spacingAndGlyphs">How the 12 overdue hours are counted</text>
+      <text x="302" y="83" font-size="9" fill="#66655f">System-wide default</text>
+      <rect x="270" y="98" width="180" height="46" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="280" y="115" font-size="8" fill="#8a5a00">◉ Count 12 continuous hours, day and night</text>
+      <text x="280" y="133" font-size="8" fill="#8a5a00">○ Count Mon → Fri office hours only</text>
+      <rect x="270" y="152" width="86" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="313" y="169" font-size="9.5" fill="#3f3e3a" text-anchor="middle">Start time</text>
+      <rect x="364" y="152" width="86" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="407" y="169" font-size="9.5" fill="#3f3e3a" text-anchor="middle">End time</text>
+      <text x="270" y="198" font-size="9.5" fill="#66655f">This rule is the default; each approval step</text>
+      <text x="270" y="212" font-size="8.5" fill="#66655f" textLength="190.0" lengthAdjust="spacingAndGlyphs">can be overridden in the "Overdue handling" group.</text>
+      <text x="270" y="238" font-size="9.5" fill="#66655f">Weekends and holidays are not counted in</text>
+      <text x="270" y="252" font-size="9.5" fill="#66655f">office-hours mode.</text>
+    </g>
+
+    <!-- 3: người duyệt thay -->
+    <g>
+      <rect x="478" y="44" width="212" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="504" cy="72" r="15" fill="#7c3aed"/>
+      <text x="504" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="526" y="68" font-size="10" font-weight="700" fill="#111315" textLength="158.0" lengthAdjust="spacingAndGlyphs">Approval for overdue replacement</text>
+      <text x="526" y="83" font-size="9" fill="#66655f">The Delegation menu</text>
+      <rect x="494" y="98" width="180" height="24" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="504" y="114" font-size="9.5" fill="#3f3e3a" font-weight="600">Approver: You</text>
+      <path d="M584 122 v16" stroke="#9a968d" stroke-width="1.5"/>
+      <rect x="494" y="140" width="180" height="24" rx="8" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="504" y="156" font-size="9.5" fill="#6d28d9" font-weight="600">Overdue replacement approver: …</text>
+      <rect x="494" y="172" width="86" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="537" y="188" font-size="9.5" fill="#3f3e3a" text-anchor="middle">Change person</text>
+      <rect x="588" y="172" width="86" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="631" y="188" font-size="9.5" fill="#b91c1c" text-anchor="middle">Clear the setting</text>
+      <text x="494" y="216" font-size="9.5" fill="#66655f">Set once for every request you approve —</text>
+      <text x="494" y="230" font-size="9.5" fill="#66655f">not set per approval level.</text>
+      <text x="494" y="256" font-size="9.5" fill="#b91c1c">Without one, overdue requests are cancelled.</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-label="Chức vụ và cấp bậc: các mốc để chọn người duyệt trong luồng và cách nhân viên kiêm nhiệm nhiều vị trí">
+  <rect width="720" height="300" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Thang cấp bậc -->
+    <g>
+      <rect x="30" y="40" width="410" height="214" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="46" y="66" font-size="11.5" font-weight="700" fill="#111315">Thang cấp bậc dùng làm mốc duyệt</text>
+      <text x="46" y="82" font-size="9.5" fill="#66655f">Cấu hình → Chức vụ &amp; cấp bậc</text>
+
+      <rect x="46" y="96" width="378" height="20" rx="10" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="56" y="110" font-size="9.5" fill="#1d4ed8" font-weight="600">Nhân viên → Trưởng ca → Trưởng nhóm → Phó phòng → Trưởng phòng</text>
+
+      <rect x="46" y="124" width="378" height="20" rx="10" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="138" font-size="9.5" fill="#6d28d9" font-weight="600">→ Cửa hàng trưởng → Quản lý chi nhánh → Quản lý khu vực → Giám đốc khối</text>
+
+      <rect x="46" y="156" width="378" height="42" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="56" y="174" font-size="9.5" fill="#0f766e">Khối Cửa hàng dùng các mốc: Trưởng ca · Cửa hàng trưởng · Quản lý khu vực</text>
+      <text x="56" y="190" font-size="9.5" fill="#0f766e">Khối Văn phòng dùng: Trưởng nhóm · Phó phòng · Trưởng phòng · Giám đốc khối</text>
+
+      <rect x="46" y="208" width="378" height="32" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="56" y="228" font-size="8" fill="#8a5a00">Sai chức vụ ở đây sẽ làm luồng duyệt chọn nhầm người — kiểm tra trước khi dùng thật.</text>
+    </g>
+
+    <!-- Kiêm nhiệm -->
+    <g>
+      <rect x="460" y="40" width="230" height="214" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="476" y="66" font-size="11.5" font-weight="700" fill="#111315">Một người, nhiều vị trí</text>
+      <text x="476" y="82" font-size="9.5" fill="#66655f">Sửa ở hồ sơ nhân sự</text>
+
+      <rect x="476" y="96" width="198" height="34" rx="9" fill="#eceafe" stroke="#c7c2f5"/>
+      <text x="486" y="112" font-size="9.5" font-weight="600" fill="#4338ca">Vị trí CHÍNH</text>
+      <text x="486" y="125" font-size="9" fill="#4338ca">VD: Trưởng phòng Kỹ thuật</text>
+
+      <rect x="476" y="138" width="198" height="34" rx="9" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="486" y="154" font-size="9.5" font-weight="600" fill="#3f3e3a">Kiêm nhiệm 1</text>
+      <text x="486" y="167" font-size="9" fill="#66655f">VD: Phó phòng Nhân sự</text>
+
+      <rect x="476" y="180" width="198" height="28" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="486" y="199" font-size="9.5" fill="#3f3e3a">+ Thêm vị trí kiêm nhiệm</text>
+
+      <text x="476" y="228" font-size="9.5" fill="#66655f">Luồng duyệt theo "cấp quản lý trực tiếp"</text>
+      <text x="476" y="242" font-size="9.5" fill="#66655f">lấy cấp trên từ vị trí CHÍNH của nhân viên.</text>
+    </g>
+  </g>
+</svg>

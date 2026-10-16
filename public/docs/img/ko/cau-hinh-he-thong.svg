@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 320" role="img" aria-label="Ba khối trong màn Cấu hình: cấu hình bot Telegram, cách tính giờ quá hạn toàn hệ thống và người duyệt thay mặc định">
+  <rect width="720" height="320" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- 1: Telegram -->
+    <g>
+      <rect x="30" y="44" width="212" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="56" cy="72" r="15" fill="#229ed9"/>
+      <text x="56" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="78" y="68" font-size="11.5" font-weight="700" fill="#111315">텔레그램 봇 연동</text>
+      <text x="78" y="83" font-size="9" fill="#66655f">일반 &amp; 텔레그램</text>
+      <rect x="46" y="98" width="180" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="115" font-size="9.5" fill="#66655f">텔레그램 봇 토큰 •••••</text>
+      <rect x="46" y="132" width="180" height="26" rx="8" fill="#1d4ed8"/>
+      <text x="136" y="149" font-size="9.5" fill="#ffffff" text-anchor="middle" font-weight="700">설정 저장</text>
+      <rect x="46" y="168" width="180" height="30" rx="8" fill="#e6f5f3" stroke="#a7ded6"/>
+      <circle cx="60" cy="183" r="4" fill="#16a34a"/>
+      <text x="72" y="187" font-size="9.5" fill="#0f766e">연결됨 · 연결 안 됨</text>
+      <text x="46" y="216" font-size="9.5" fill="#66655f" textLength="190.0" lengthAdjust="spacingAndGlyphs">"설정 저장"을 누르면 시스템이 자동으로 호출</text>
+      <text x="46" y="230" font-size="9.5" fill="#66655f">텔레그램이 봇을 확인하고 다시 등록합니다</text>
+      <text x="46" y="244" font-size="9.5" fill="#66655f">수신 경로(웹훅, https 필요).</text>
+      <text x="46" y="262" font-size="9.5" fill="#b91c1c">"테스트 메시지 보내기" 버튼은 없습니다.</text>
+    </g>
+
+    <!-- 2: giờ quá hạn -->
+    <g>
+      <rect x="254" y="44" width="212" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="280" cy="72" r="15" fill="#d97706"/>
+      <text x="280" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="302" y="68" font-size="11.5" font-weight="700" fill="#111315">기한 초과 12시간 계산 방식</text>
+      <text x="302" y="83" font-size="9" fill="#66655f">전사 기본값</text>
+      <rect x="270" y="98" width="180" height="46" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="280" y="115" font-size="8" fill="#8a5a00">◉ 12시간을 연속으로 계산, 주야간 무관</text>
+      <text x="280" y="133" font-size="8" fill="#8a5a00">○ 월 → 금 업무 시간만 계산</text>
+      <rect x="270" y="152" width="86" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="313" y="169" font-size="9.5" fill="#3f3e3a" text-anchor="middle">시작 시간</text>
+      <rect x="364" y="152" width="86" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="407" y="169" font-size="9.5" fill="#3f3e3a" text-anchor="middle">종료 시간</text>
+      <text x="270" y="198" font-size="9.5" fill="#66655f">이 규칙이 기본값이며, 각 결재 단계에서</text>
+      <text x="270" y="212" font-size="9.5" fill="#66655f" textLength="190.0" lengthAdjust="spacingAndGlyphs">"기한 초과 처리" 그룹에서 덮어쓸 수 있습니다.</text>
+      <text x="270" y="238" font-size="9.5" fill="#66655f">업무 시간 방식을 선택하면 주말과 공휴일은</text>
+      <text x="270" y="252" font-size="9.5" fill="#66655f">업무 시간 방식.</text>
+    </g>
+
+    <!-- 3: người duyệt thay -->
+    <g>
+      <rect x="478" y="44" width="212" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="504" cy="72" r="15" fill="#7c3aed"/>
+      <text x="504" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="526" y="68" font-size="11.5" font-weight="700" fill="#111315">기한 초과 대리 결재</text>
+      <text x="526" y="83" font-size="9" fill="#66655f">위임 메뉴</text>
+      <rect x="494" y="98" width="180" height="24" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="504" y="114" font-size="9.5" fill="#3f3e3a" font-weight="600">결재자: 본인</text>
+      <path d="M584 122 v16" stroke="#9a968d" stroke-width="1.5"/>
+      <rect x="494" y="140" width="180" height="24" rx="8" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="504" y="156" font-size="9.5" fill="#6d28d9" font-weight="600">기한 초과 대리 결재자: …</text>
+      <rect x="494" y="172" width="86" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="537" y="188" font-size="9.5" fill="#3f3e3a" text-anchor="middle">담당자 변경</text>
+      <rect x="588" y="172" width="86" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="631" y="188" font-size="9.5" fill="#b91c1c" text-anchor="middle">설정 삭제</text>
+      <text x="494" y="216" font-size="9.5" fill="#66655f">결재하는 모든 요청서에 한 번만 설정 —</text>
+      <text x="494" y="230" font-size="9.5" fill="#66655f">결재 단계별로 따로 설정하지 않습니다.</text>
+      <text x="494" y="256" font-size="9.5" fill="#b91c1c">설정하지 않으면 기한 초과 시 취소됩니다.</text>
+    </g>
+  </g>
+</svg>

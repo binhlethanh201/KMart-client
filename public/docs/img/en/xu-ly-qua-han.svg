@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-label="Cấu hình xử lý quá hạn: hai hành động của bước duyệt và chế độ đếm giờ mặc định toàn hệ thống">
+  <rect width="720" height="300" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Nhánh quyết định -->
+    <g>
+      <rect x="30" y="36" width="330" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="46" y="60" font-size="10" font-weight="700" fill="#111315">An approval step goes overdue → the system takes 1 of 2 paths</text>
+      <text x="46" y="76" font-size="9.5" fill="#66655f" textLength="308.0" lengthAdjust="spacingAndGlyphs">Configured in Settings → Approval workflow → the "Overdue handling" group</text>
+
+      <rect x="46" y="90" width="298" height="30" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="56" y="109" font-size="9.5" fill="#8a5a00">☑ Overdue after 12 hours · continuous / office hours</text>
+
+      <path d="M195 120 v16" stroke="#9a968d" stroke-width="1.5" fill="none"/>
+      <path d="M100 136 h190 M100 136 v14 M290 136 v14" stroke="#9a968d" stroke-width="1.5" fill="none"/>
+
+      <rect x="46" y="152" width="130" height="56" rx="9" fill="#feecec" stroke="#fbd5d5"/>
+      <text x="56" y="170" font-size="8.5" font-weight="700" fill="#b91c1c" textLength="114.0" lengthAdjust="spacingAndGlyphs">Return the request to the originator</text>
+      <text x="56" y="186" font-size="8" fill="#b91c1c" textLength="114.0" lengthAdjust="spacingAndGlyphs">The request returns to the requester,</text>
+      <text x="56" y="199" font-size="9" fill="#b91c1c">goes to nobody else.</text>
+
+      <rect x="214" y="152" width="130" height="56" rx="9" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="224" y="170" font-size="9.5" font-weight="700" fill="#6d28d9">Approve via delegation</text>
+      <text x="224" y="186" font-size="9" fill="#6d28d9">Handed to the approver</text>
+      <text x="224" y="199" font-size="8" fill="#6d28d9" textLength="114.0" lengthAdjust="spacingAndGlyphs">you set on the Delegation screen.</text>
+
+      <rect x="46" y="220" width="298" height="34" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="56" y="236" font-size="9" fill="#0f766e">The delegated approver also goes overdue, or none was set</text>
+      <text x="56" y="249" font-size="9" fill="#0f766e">→ the request is CANCELLED and returned to the requester.</text>
+    </g>
+
+    <!-- Chế độ đếm giờ -->
+    <g>
+      <rect x="380" y="36" width="310" height="228" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="396" y="60" font-size="11.5" font-weight="700" fill="#111315">Default time-counting mode</text>
+      <text x="396" y="76" font-size="9.5" fill="#66655f">Settings → General &amp; Telegram</text>
+
+      <rect x="396" y="90" width="278" height="44" rx="9" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="406" y="108" font-size="9.5" font-weight="600" fill="#1d4ed8">◉ Count 12 continuous hours — day and night</text>
+      <text x="406" y="124" font-size="9" fill="#3b5bd6">A request sent at 8pm Friday still counts through the weekend.</text>
+
+      <rect x="396" y="142" width="278" height="44" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="406" y="160" font-size="9.5" font-weight="600" fill="#0f766e">○ Count Mon → Fri, within office hours</text>
+      <text x="406" y="176" font-size="9" fill="#0f766e">Skips weekends and holidays; start / end hours must be set.</text>
+
+      <rect x="396" y="196" width="134" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="463" y="213" font-size="9.5" fill="#3f3e3a" text-anchor="middle">Start time</text>
+      <rect x="540" y="196" width="134" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="607" y="213" font-size="9.5" fill="#3f3e3a" text-anchor="middle">End time</text>
+
+      <text x="396" y="244" font-size="9.5" fill="#66655f">This rule is the SYSTEM-WIDE default; each approval step</text>
+      <text x="396" y="257" font-size="9.5" fill="#66655f">can be overridden in the "Overdue handling" group.</text>
+    </g>
+  </g>
+</svg>

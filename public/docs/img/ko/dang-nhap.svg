@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 286" role="img" aria-label="Bốn bước đăng nhập và đổi mật khẩu bắt buộc ở lần đăng nhập đầu">
+  <rect width="960" height="286" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1: mở trang đăng nhập -->
+    <g>
+      <rect x="30" y="50" width="195" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="80" r="16" fill="#1d4ed8"/>
+      <text x="58" y="86" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="76" font-size="12.5" font-weight="700" fill="#111315">로그인 페이지 열기</text>
+      <text x="84" y="92" font-size="10" fill="#66655f">KMart 웹 주소로 접속</text>
+      <rect x="46" y="112" width="163" height="30" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="58" y="131" font-size="10" fill="#66655f">업무 이메일</text>
+      <rect x="46" y="150" width="163" height="30" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="58" y="169" font-size="10" fill="#66655f">비밀번호</text>
+      <rect x="46" y="190" width="163" height="26" rx="8" fill="#1d4ed8"/>
+      <text x="127" y="207" font-size="11" fill="#ffffff" text-anchor="middle" font-weight="700">로그인</text>
+    </g>
+
+    <!-- Bước 2: nhập thông tin -->
+    <g>
+      <rect x="260" y="50" width="195" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="80" r="16" fill="#1d4ed8"/>
+      <text x="288" y="86" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="76" font-size="9" font-weight="700" fill="#111315">이메일 &amp; 비밀번호 입력</text>
+      <text x="314" y="92" font-size="10" fill="#66655f">그다음 로그인 클릭</text>
+      <rect x="276" y="112" width="163" height="30" rx="8" fill="#eef4ff" stroke="#1d4ed8"/>
+      <text x="288" y="131" font-size="10.5" fill="#111315">an.nguyen@kmart.vn</text>
+      <rect x="276" y="150" width="163" height="30" rx="8" fill="#eef4ff" stroke="#1d4ed8"/>
+      <text x="288" y="169" font-size="10.5" fill="#111315">••••••••</text>
+      <text x="276" y="198" font-size="10" fill="#66655f">또는 Enter 키 입력</text>
+      <text x="276" y="214" font-size="9" fill="#66655f" textLength="173.0" lengthAdjust="spacingAndGlyphs">정보가 틀리면 입력란 바로 아래에 표시됩니다</text>
+    </g>
+
+    <!-- Bước 3: đổi mật khẩu bắt buộc -->
+    <g>
+      <rect x="490" y="50" width="195" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="80" r="16" fill="#d97706"/>
+      <text x="518" y="86" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="76" font-size="12.5" font-weight="700" fill="#111315">비밀번호 변경 필수</text>
+      <text x="544" y="92" font-size="8.5" fill="#66655f" textLength="135.0" lengthAdjust="spacingAndGlyphs">인사가 방금 비밀번호를 재설정한 경우에만</text>
+      <rect x="506" y="106" width="163" height="26" rx="8" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="517" y="123" font-size="10" fill="#8a5a00">현재 임시 비밀번호</text>
+      <rect x="506" y="138" width="163" height="26" rx="8" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="517" y="155" font-size="10" fill="#8a5a00">새 비밀번호</text>
+      <rect x="506" y="170" width="163" height="26" rx="8" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="517" y="187" font-size="10" fill="#8a5a00">새 비밀번호 재입력</text>
+      <rect x="506" y="202" width="163" height="20" rx="8" fill="#d97706"/>
+      <text x="587" y="216" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="700">비밀번호 변경 후 계속</text>
+    </g>
+
+    <!-- Bước 4: vào màn chính -->
+    <g>
+      <rect x="720" y="50" width="195" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="748" cy="80" r="16" fill="#16a34a"/>
+      <text x="748" y="86" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">4</text>
+      <text x="774" y="76" font-size="12.5" font-weight="700" fill="#111315">메인 화면 진입</text>
+      <text x="774" y="92" font-size="8.5" fill="#66655f">메뉴는 권한에 따라 표시됩니다</text>
+      <rect x="736" y="106" width="163" height="102" rx="10" fill="#f6f6f4" stroke="#e7e3da"/>
+      <circle cx="762" cy="130" r="13" fill="#c9d4e6"/>
+      <text x="782" y="127" font-size="10.5" font-weight="700" fill="#111315">Nguyễn Văn A</text>
+      <text x="782" y="140" font-size="9.5" fill="#66655f">사원</text>
+      <circle cx="760" cy="152" r="3.5" fill="#16a34a"/>
+      <text x="770" y="155" font-size="9.5" fill="#66655f">접속 중</text>
+      <rect x="748" y="168" width="60" height="26" rx="7" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="756" y="185" font-size="8" fill="#66655f">🔔 알림</text>
+    </g>
+
+    <path d="M228 138 h22 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M458 138 h22 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M688 138 h22 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="480" y="256" font-size="12" fill="#66655f" text-anchor="middle">페이지 열기 → 이메일 &amp; 비밀번호 입력 → (인사가 방금 재설정했다면) 비밀번호 변경 → 시스템 진입</text>
+  </g>
+</svg>

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-label="Hai việc trên màn Phòng ban và Nhóm: xem cây tổ chức và thêm thành viên kèm vị trí chính hay kiêm nhiệm">
+  <rect width="720" height="300" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Panel 1: cây tổ chức -->
+    <g>
+      <rect x="30" y="40" width="320" height="210" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="56" cy="66" r="14" fill="#4f46e5"/>
+      <text x="56" y="71" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="80" y="70" font-size="11.5" font-weight="700" fill="#111315">View the org chart</text>
+      <text x="46" y="90" font-size="9.5" fill="#66655f">Every role can view it, no admin rights needed.</text>
+      <rect x="46" y="102" width="130" height="26" rx="8" fill="#eceafe" stroke="#c7c2f5"/>
+      <text x="56" y="119" font-size="9.5" fill="#4338ca">Operations Support Board</text>
+      <path d="M70 128 v14 h160" stroke="#c7c2f5" stroke-width="1.5" fill="none"/>
+      <rect x="46" y="142" width="106" height="24" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="158" font-size="9" fill="#3f3e3a">Technical department</text>
+      <rect x="164" y="142" width="106" height="24" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="174" y="158" font-size="9" fill="#3f3e3a">HR department</text>
+      <path d="M99 166 v14" stroke="#d9d5cc" stroke-width="1.5" fill="none"/>
+      <rect x="46" y="180" width="106" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="56" y="196" font-size="9" fill="#66655f">Frontend team</text>
+      <text x="46" y="224" font-size="9.5" fill="#66655f">Click a department to see its members,</text>
+      <text x="46" y="238" font-size="9.5" fill="#66655f">requests and reports for that department.</text>
+    </g>
+
+    <!-- Panel 2: thành viên -->
+    <g>
+      <rect x="370" y="40" width="320" height="222" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="396" cy="66" r="14" fill="#4f46e5"/>
+      <text x="396" y="71" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="420" y="70" font-size="11.5" font-weight="700" fill="#111315">Add a member to a department / group</text>
+      <text x="386" y="90" font-size="9.5" fill="#66655f">Requires HR or Admin rights.</text>
+      <rect x="386" y="102" width="288" height="28" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="396" y="121" font-size="9.5" fill="#3f3e3a">Pick the employee to add</text>
+      <rect x="386" y="138" width="138" height="28" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="396" y="157" font-size="9.5" fill="#3f3e3a">Position</text>
+      <rect x="536" y="138" width="138" height="28" rx="8" fill="#eceafe" stroke="#c7c2f5"/>
+      <text x="546" y="157" font-size="9.5" fill="#4338ca">Primary / Secondary</text>
+      <rect x="386" y="174" width="288" height="46" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="396" y="192" font-size="9.5" fill="#1d4ed8">The direct manager used by the approval flow</text>
+      <text x="396" y="208" font-size="9.5" fill="#1d4ed8">is derived from this very position field.</text>
+      <text x="386" y="236" font-size="9.5" fill="#66655f">To move department: edit the position in Employee, or remove</text>
+      <text x="386" y="249" font-size="9.5" fill="#66655f">them from the group and add them to a new one.</text>
+    </g>
+  </g>
+</svg>

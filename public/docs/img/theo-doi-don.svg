@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 262" role="img" aria-label="Ba bước theo dõi đơn: xem tab trạng thái, mở luồng duyệt ngay trên thẻ, mở chi tiết đơn">
+  <rect width="720" height="262" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1: tab trạng thái -->
+    <g>
+      <rect x="30" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">Lọc theo trạng thái</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">Đơn từ → Đơn từ cá nhân</text>
+      <g font-size="10">
+        <rect x="46" y="102" width="168" height="24" rx="7" fill="#eef4ff" stroke="#c7d7fe"/>
+        <text x="57" y="118" fill="#1d4ed8" font-weight="700">Tất cả</text>
+        <rect x="46" y="132" width="168" height="24" rx="7" fill="#f6f6f4" stroke="#e7e3da"/>
+        <circle cx="59" cy="144" r="4" fill="#fbbf24"/><text x="69" y="148" fill="#3f3e3a">Chờ duyệt</text>
+        <rect x="46" y="162" width="168" height="24" rx="7" fill="#f6f6f4" stroke="#e7e3da"/>
+        <circle cx="59" cy="174" r="4" fill="#a855f7"/><text x="69" y="178" fill="#3f3e3a">Cần bổ sung</text>
+        <rect x="46" y="192" width="168" height="24" rx="7" fill="#f6f6f4" stroke="#e7e3da"/>
+        <circle cx="59" cy="204" r="4" fill="#34d399"/><text x="69" y="208" fill="#3f3e3a">Đã phê duyệt · Từ chối</text>
+      </g>
+    </g>
+
+    <!-- Bước 2: thẻ đơn -->
+    <g>
+      <rect x="260" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">Đọc thẻ đơn</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">Không cần mở chi tiết</text>
+      <rect x="276" y="100" width="168" height="102" rx="10" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="286" y="118" font-size="10" font-weight="700" fill="#111315">Đơn xin nghỉ phép</text>
+      <text x="286" y="133" font-size="9.5" fill="#66655f">REQ-000123 · 2 ngày</text>
+      <rect x="286" y="140" width="72" height="15" rx="7" fill="#fef3c7"/>
+      <text x="322" y="151" font-size="9" fill="#8a5a00" text-anchor="middle">Chờ duyệt</text>
+      <text x="286" y="172" font-size="9.5" fill="#66655f">Bước 1/2 · Trần Thị B</text>
+      <path d="M286 184 h118" stroke="#c7d7fe" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="286" y="197" font-size="9.5" fill="#1d4ed8" font-weight="600">▾ Xem chi tiết luồng duyệt</text>
+    </g>
+
+    <!-- Bước 3: chi tiết -->
+    <g>
+      <rect x="490" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">Mở chi tiết đơn</text>
+      <text x="544" y="86" font-size="10" fill="#66655f">Bấm vào thẻ đơn</text>
+      <rect x="506" y="100" width="168" height="30" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="515" y="119" font-size="9.5" fill="#3b5bd6">Nội dung đã điền + tệp đính kèm</text>
+      <rect x="506" y="136" width="168" height="30" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="515" y="155" font-size="9.5" fill="#3b5bd6">Bình luận · gõ @ để nhắc tên</text>
+      <rect x="506" y="172" width="168" height="30" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="515" y="191" font-size="9.5" fill="#3b5bd6">Tiến trình từng cấp: ai duyệt, lúc nào</text>
+    </g>
+
+    <path d="M236 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="240" font-size="12" fill="#66655f" text-anchor="middle">Tab trạng thái → thẻ đơn (mở luồng ngay trong danh sách) → mở chi tiết để bình luận hoặc bổ sung</text>
+  </g>
+</svg>

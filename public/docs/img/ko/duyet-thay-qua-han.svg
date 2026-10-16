@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 268" role="img" aria-label="Hai bước cài người duyệt thay mặc định cho các đơn mình duyệt khi bị quá hạn">
+  <rect width="720" height="268" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#7c3aed"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">기한 초과 대리 결재 열기</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">위임 메뉴</text>
+      <rect x="46" y="102" width="168" height="36" rx="9" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="119" font-size="9.5" font-weight="600" fill="#5b21b6">"대리 결재자 설정" 클릭</text>
+      <text x="56" y="132" font-size="9" fill="#6d28d9">또는 이미 설정했다면 "담당자 변경"</text>
+      <text x="46" y="158" font-size="9.5" fill="#66655f">이 페이지는 다음 계정만 열 수 있습니다:</text>
+      <text x="46" y="172" font-size="9.5" fill="#66655f">결재 단계에 속한 계정만.</text>
+      <text x="46" y="196" font-size="8.5" fill="#66655f" textLength="178.0" lengthAdjust="spacingAndGlyphs">아무것도 설정하지 않으면 기한이 지난 요청서는</text>
+      <text x="46" y="210" font-size="9.5" fill="#66655f">취소되어 기안자에게 반환됩니다.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#16a34a"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">대리 결재자 저장</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">한 명을 선택한 뒤 저장</text>
+      <rect x="276" y="102" width="168" height="36" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="286" y="119" font-size="9.5" fill="#3f3e3a">대리 결재자</text>
+      <text x="286" y="132" font-size="9" fill="#8c8a83">직원 목록에서 선택</text>
+      <rect x="276" y="146" width="168" height="28" rx="8" fill="#16a34a"/>
+      <text x="360" y="164" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="700">대리 결재자 저장</text>
+      <text x="276" y="192" font-size="9.5" fill="#66655f">한 사람당 대리 결재자는 한 명만</text>
+      <text x="276" y="206" font-size="9.5" fill="#66655f">대리 결재자; 저장하면 교체됩니다.</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">적용 범위</text>
+      <text x="544" y="86" font-size="10" fill="#66655f">단계별이 아님</text>
+      <rect x="506" y="102" width="168" height="52" rx="9" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="120" font-size="8" fill="#1d4ed8" font-weight="600">"결재하는 모든 요청서에 적용"</text>
+      <text x="516" y="136" font-size="8" fill="#3b5bd6" textLength="152.0" lengthAdjust="spacingAndGlyphs">대리 결재자 1명이 다음 전체에 공통 적용됩니다:</text>
+      <text x="516" y="149" font-size="9.5" fill="#3b5bd6">담당하는 모든 단계에 적용됩니다.</text>
+      <rect x="506" y="166" width="168" height="30" rx="9" fill="#feecec" stroke="#fbd5d5"/>
+      <text x="516" y="185" font-size="9.5" fill="#b91c1c" textLength="152.0" lengthAdjust="spacingAndGlyphs">단계별로 다르게 하려면 → 관리자에게</text>
+      <text x="516" y="200" font-size="9.5" fill="#b91c1c" textLength="168.0" lengthAdjust="spacingAndGlyphs">관리자가 결재 흐름에서 수정해야 합니다.</text>
+    </g>
+
+    <path d="M236 135 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 135 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="248" font-size="12" fill="#66655f" text-anchor="middle">한 번 설정하면 계속 사용 — 기한 초과 이관은 모두 감사 로그에 기록됩니다</text>
+  </g>
+</svg>

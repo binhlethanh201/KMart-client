@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 262" role="img" aria-label="Ba bước làm việc trên màn Nhân sự: tìm và lọc, mở hồ sơ chi tiết, khóa tài khoản khi nhân viên nghỉ việc">
+  <rect width="720" height="262" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#4f46e5"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">Tìm &amp; lọc nhân sự</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">Menu Nhân sự</text>
+      <rect x="46" y="100" width="168" height="28" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="119" font-size="9.5" fill="#8c8a83">Tìm theo tên, mã NS, email…</text>
+      <rect x="46" y="136" width="80" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="86" y="153" font-size="9.5" fill="#3f3e3a" text-anchor="middle">Phòng ban</text>
+      <rect x="134" y="136" width="80" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="174" y="153" font-size="9.5" fill="#3f3e3a" text-anchor="middle">Trạng thái</text>
+      <text x="46" y="184" font-size="9.5" fill="#66655f">Bộ lọc tự thu gọn trên điện thoại,</text>
+      <text x="46" y="198" font-size="9.5" fill="#66655f">bấm hàng "Bộ lọc" để mở ra.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#4f46e5"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">Mở hồ sơ chi tiết</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">Bấm vào 1 nhân sự</text>
+      <rect x="276" y="100" width="168" height="104" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="286" y="118" font-size="9.5" fill="#3f3e3a">Thông tin liên hệ</text>
+      <text x="286" y="136" font-size="9.5" fill="#3f3e3a">Phòng ban – chức vụ chính</text>
+      <text x="286" y="154" font-size="9.5" fill="#3f3e3a">Các vị trí kiêm nhiệm</text>
+      <text x="286" y="172" font-size="9.5" fill="#3f3e3a">Vai trò hệ thống</text>
+      <text x="286" y="190" font-size="9.5" fill="#66655f">Lịch sử chức vụ theo thời gian</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#d97706"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">Nhân viên nghỉ việc</text>
+      <text x="544" y="86" font-size="8.5" fill="#66655f">Khóa tài khoản (không phải xóa)</text>
+      <rect x="506" y="100" width="168" height="34" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="516" y="118" font-size="9.5" font-weight="600" fill="#8a5a00">Bấm "Khóa tài khoản"</text>
+      <text x="516" y="130" font-size="9" fill="#8a5a00">Nút ghi rõ: đã khóa / mở khóa</text>
+      <rect x="506" y="142" width="168" height="62" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="516" y="160" font-size="8" fill="#3f3e3a">Trạng thái chuyển "Ngừng hoạt động"</text>
+      <text x="516" y="176" font-size="9.5" fill="#3f3e3a">Tài khoản bị chặn đăng nhập nhưng</text>
+      <text x="516" y="190" font-size="8" fill="#3f3e3a">đơn cũ và lịch sử duyệt vẫn giữ nguyên.</text>
+    </g>
+
+    <path d="M236 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="240" font-size="12" fill="#66655f" text-anchor="middle">Không có thao tác "xóa nhân sự" — chỉ khóa, để dữ liệu duyệt cũ không bị mất</text>
+  </g>
+</svg>

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-label="Chức vụ và cấp bậc: các mốc để chọn người duyệt trong luồng và cách nhân viên kiêm nhiệm nhiều vị trí">
+  <rect width="720" height="300" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Thang cấp bậc -->
+    <g>
+      <rect x="30" y="40" width="410" height="214" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="46" y="66" font-size="11.5" font-weight="700" fill="#111315">The grade ladder used as approval checkpoints</text>
+      <text x="46" y="82" font-size="9.5" fill="#66655f">Settings → Positions &amp; grades</text>
+
+      <rect x="46" y="96" width="378" height="20" rx="10" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="56" y="110" font-size="9.5" fill="#1d4ed8" font-weight="600">Staff → Shift Leader → Team Leader → deputy head → department head</text>
+
+      <rect x="46" y="124" width="378" height="20" rx="10" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="138" font-size="9.5" fill="#6d28d9" font-weight="600">→ Store Manager → Branch manager → Area manager → Division Director</text>
+
+      <rect x="46" y="156" width="378" height="42" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="56" y="174" font-size="9.5" fill="#0f766e">The Retail block uses: Shift Leader · Store Manager · Area manager</text>
+      <text x="56" y="190" font-size="9.5" fill="#0f766e" textLength="362.0" lengthAdjust="spacingAndGlyphs">The Office block uses: Team Leader · deputy head · department head · Division Director</text>
+
+      <rect x="46" y="208" width="378" height="32" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="56" y="228" font-size="8" fill="#8a5a00">A wrong position here makes the workflow pick the wrong person — check before going live.</text>
+    </g>
+
+    <!-- Kiêm nhiệm -->
+    <g>
+      <rect x="460" y="40" width="230" height="214" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="476" y="66" font-size="11.5" font-weight="700" fill="#111315">One person, several positions</text>
+      <text x="476" y="82" font-size="9.5" fill="#66655f">Edited in the employee profile</text>
+
+      <rect x="476" y="96" width="198" height="34" rx="9" fill="#eceafe" stroke="#c7c2f5"/>
+      <text x="486" y="112" font-size="9.5" font-weight="600" fill="#4338ca">PRIMARY position</text>
+      <text x="486" y="125" font-size="9" fill="#4338ca">E.g. department head of Technical</text>
+
+      <rect x="476" y="138" width="198" height="34" rx="9" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="486" y="154" font-size="9.5" font-weight="600" fill="#3f3e3a">Secondary 1</text>
+      <text x="486" y="167" font-size="9" fill="#66655f">E.g. deputy head of HR</text>
+
+      <rect x="476" y="180" width="198" height="28" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="486" y="199" font-size="9.5" fill="#3f3e3a">+ Add a secondary position</text>
+
+      <text x="476" y="228" font-size="9.5" fill="#66655f">A workflow using "direct manager"</text>
+      <text x="476" y="242" font-size="8.5" fill="#66655f" textLength="208.0" lengthAdjust="spacingAndGlyphs">takes the manager from the employee PRIMARY position.</text>
+    </g>
+  </g>
+</svg>

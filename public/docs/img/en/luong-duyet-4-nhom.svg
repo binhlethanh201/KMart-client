@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-label="Bốn nhóm thiết lập của một bước duyệt: hình thức duyệt, quy tắc nhiều người, thời hạn xử lý và thứ tự bước">
+  <rect width="720" height="420" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <text x="30" y="30" font-size="13" font-weight="700" fill="#111315">An approval step has 4 groups of settings — not 5</text>
+
+    <!-- A -->
+    <g>
+      <rect x="30" y="44" width="320" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="44" y="58" width="26" height="26" rx="8" fill="#1d4ed8"/>
+      <text x="57" y="76" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">A</text>
+      <text x="80" y="68" font-size="11.5" font-weight="700" fill="#111315">Approval type</text>
+      <text x="80" y="82" font-size="9.5" fill="#66655f">Who approves this step</text>
+      <rect x="44" y="94" width="292" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="54" y="110" font-size="8.5" fill="#1d4ed8" textLength="276.0" lengthAdjust="spacingAndGlyphs">Direct manager — choose: direct manager / deputy head / department head</text>
+      <rect x="44" y="122" width="292" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="54" y="138" font-size="9.5" fill="#1d4ed8">Management chain — choose the first and last level</text>
+      <rect x="44" y="150" width="292" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="54" y="166" font-size="9.5" fill="#1d4ed8">Arranged approvers — choose positions / a specific group</text>
+      <text x="44" y="188" font-size="9.5" fill="#66655f">Or: name exactly 1 person — the request always goes to them</text>
+    </g>
+
+    <!-- B -->
+    <g>
+      <rect x="370" y="44" width="320" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="384" y="58" width="26" height="26" rx="8" fill="#7c3aed"/>
+      <text x="397" y="76" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">B</text>
+      <text x="420" y="68" font-size="11.5" font-weight="700" fill="#111315">Rule when several people approve</text>
+      <text x="420" y="82" font-size="9.5" fill="#66655f">Only used by the "arranged approvers" type</text>
+      <rect x="384" y="94" width="292" height="24" rx="8" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="394" y="110" font-size="9.5" fill="#6d28d9">Sequential  A ➔ B ➔ C  (the full ordered list is required)</text>
+      <rect x="384" y="122" width="292" height="24" rx="8" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="394" y="138" font-size="9.5" fill="#6d28d9">Parallel — ALL must agree before the step passes</text>
+      <rect x="384" y="150" width="292" height="24" rx="8" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="394" y="166" font-size="9.5" fill="#6d28d9">Parallel — ANY ONE approval passes the step</text>
+      <text x="384" y="188" font-size="9.5" fill="#66655f">If a step names a single person, this group does not apply.</text>
+    </g>
+
+    <!-- C -->
+    <g>
+      <rect x="30" y="208" width="320" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="44" y="222" width="26" height="26" rx="8" fill="#d97706"/>
+      <text x="57" y="240" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">C</text>
+      <text x="80" y="232" font-size="11.5" font-weight="700" fill="#111315">Overdue handling</text>
+      <text x="80" y="246" font-size="9.5" fill="#66655f">Toggle it on, then enter the hours</text>
+      <rect x="44" y="258" width="292" height="24" rx="8" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="54" y="274" font-size="9.5" fill="#8a5a00">☑ Auto-handle the request when the deadline passes · 12 hours</text>
+      <rect x="44" y="286" width="292" height="24" rx="8" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="54" y="302" font-size="9.5" fill="#8a5a00">Mode: 12 continuous hours · or office hours only</text>
+      <rect x="44" y="314" width="292" height="24" rx="8" fill="#feecec" stroke="#fbd5d5"/>
+      <text x="54" y="330" font-size="8" fill="#b91c1c">Action: Return the request to the originator · Approve via overdue delegation</text>
+      <text x="44" y="352" font-size="8" fill="#66655f">Only 2 actions. "Auto-escalate to the level above" no longer exists.</text>
+    </g>
+
+    <!-- D -->
+    <g>
+      <rect x="370" y="208" width="320" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="384" y="222" width="26" height="26" rx="8" fill="#16a34a"/>
+      <text x="397" y="240" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">D</text>
+      <text x="420" y="232" font-size="11.5" font-weight="700" fill="#111315">Step order &amp; scope</text>
+      <text x="420" y="246" font-size="9.5" fill="#66655f">Beyond those 3 groups, each step also has:</text>
+      <rect x="384" y="258" width="292" height="24" rx="8" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="394" y="274" font-size="9.5" fill="#0f766e">Drag to reorder steps · flip the switch to disable a step</text>
+      <rect x="384" y="286" width="292" height="24" rx="8" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="394" y="302" font-size="9.5" fill="#0f766e">Scope: auto by workplace · Office only · Retail only</text>
+      <text x="384" y="330" font-size="8.5" fill="#66655f" textLength="300.0" lengthAdjust="spacingAndGlyphs">Rejection reason is ALWAYS mandatory — the system does not allow disabling it.</text>
+      <text x="384" y="352" font-size="8" fill="#66655f">Conditional steps (by leave days / OT hours) are not available in the UI yet.</text>
+    </g>
+  </g>
+</svg>

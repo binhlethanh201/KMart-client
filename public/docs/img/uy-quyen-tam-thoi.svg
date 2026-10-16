@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 262" role="img" aria-label="Ba bước tạo ủy quyền tạm thời cho người duyệt khác trong khoảng thời gian vắng mặt">
+  <rect width="720" height="262" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#7c3aed"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">Mở Ủy quyền tạm thời</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">Ủy quyền → Ủy quyền tạm thời</text>
+      <rect x="46" y="104" width="168" height="72" rx="9" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="122" font-size="9.5" fill="#6d28d9">Dùng khi bạn vắng mặt dài ngày</text>
+      <text x="56" y="140" font-size="9.5" fill="#6d28d9">để đơn không bị dồn lại.</text>
+      <text x="56" y="162" font-size="9.5" fill="#66655f">Bấm nút "Tạo ủy quyền" màu chính.</text>
+      <text x="46" y="200" font-size="9.5" fill="#66655f">Chỉ hiện với tài khoản có quyền duyệt.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#7c3aed"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">Điền 3 thông tin</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">Tất cả đều bắt buộc</text>
+      <rect x="276" y="102" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="286" y="119" font-size="9.5" fill="#3f3e3a">Người được ủy quyền</text>
+      <rect x="276" y="134" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="286" y="151" font-size="9.5" fill="#3f3e3a">Từ ngày – Đến ngày</text>
+      <rect x="276" y="166" width="168" height="44" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="286" y="183" font-size="9.5" fill="#3f3e3a">Lý do ủy quyền</text>
+      <text x="286" y="199" font-size="9" fill="#8c8a83">VD: Nghỉ phép từ 20/10…</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#16a34a"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="9" font-weight="700" fill="#111315">Trong thời gian hiệu lực</text>
+      <text x="544" y="86" font-size="10" fill="#66655f">Và cách kết thúc sớm</text>
+      <rect x="506" y="102" width="168" height="42" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="516" y="120" font-size="9.5" fill="#0f766e">Đơn tới bạn → người nhận xử lý,</text>
+      <text x="516" y="135" font-size="9.5" fill="#0f766e">ghi rõ "duyệt thay cho ai"</text>
+      <rect x="506" y="152" width="80" height="26" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="546" y="169" font-size="9.5" fill="#3f3e3a" text-anchor="middle">Đổi người</text>
+      <rect x="594" y="152" width="80" height="26" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="634" y="169" font-size="9.5" fill="#b91c1c" text-anchor="middle">Thu hồi</text>
+      <text x="506" y="196" font-size="9.5" fill="#66655f">Hết thời gian, quyền tự trở về bạn.</text>
+      <text x="506" y="210" font-size="9.5" fill="#66655f">Thu hồi là mất hiệu lực ngay.</text>
+    </g>
+
+    <path d="M236 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="240" font-size="12" fill="#66655f" text-anchor="middle">Ủy quyền tạm thời chuyển cả việc duyệt đơn mới lẫn đơn đang chờ bạn</text>
+  </g>
+</svg>

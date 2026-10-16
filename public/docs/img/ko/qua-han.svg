@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" role="img" aria-label="Vòng đời xử lý quá hạn: nhắc trước hạn một lần, quá hạn thì trả về hoặc chuyển người duyệt thay, quá hạn lần hai thì hủy đơn">
+  <rect width="720" height="360" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <text x="30" y="30" font-size="13" font-weight="700" fill="#111315">시간이 지나면서 결재 단계에 일어나는 일</text>
+
+    <!-- Trục thời gian -->
+    <line x1="60" y1="96" x2="672" y2="96" stroke="#d9d5cc" stroke-width="2"/>
+    <path d="M672 96 l-8 -4 v8 z" fill="#d9d5cc"/>
+
+    <!-- Mốc 1: trước hạn -->
+    <circle cx="130" cy="96" r="9" fill="#1d4ed8"/>
+    <rect x="52" y="118" width="156" height="96" rx="12" fill="#ffffff" stroke="#e7e3da"/>
+    <text x="64" y="138" font-size="10.5" font-weight="700" fill="#1d4ed8">기한 임박</text>
+    <text x="64" y="156" font-size="9.5" fill="#3f3e3a">현재 결재자는 다음을 받습니다</text>
+    <text x="64" y="170" font-size="9.5" fill="#3f3e3a">"결재 기한이 임박했습니다"</text>
+    <text x="64" y="188" font-size="9.5" fill="#66655f">· 요청서 링크 포함</text>
+    <text x="64" y="204" font-size="9.5" fill="#66655f">· 단계당 정확히 1회만 알림</text>
+
+    <!-- Mốc 2: hết hạn -->
+    <circle cx="360" cy="96" r="9" fill="#d97706"/>
+    <rect x="272" y="118" width="176" height="96" rx="12" fill="#ffffff" stroke="#e7e3da"/>
+    <text x="284" y="138" font-size="10.5" font-weight="700" fill="#b45309">기한 초과</text>
+    <text x="284" y="156" font-size="8.5" fill="#3f3e3a">시스템이 다음 기준으로 자동 처리합니다</text>
+    <text x="284" y="170" font-size="9.5" fill="#3f3e3a">단계에 설정된 처리 방식에 따라</text>
+    <text x="284" y="188" font-size="8.5" fill="#66655f">결재자가 아무것도 하지 않아도 요청서는</text>
+    <text x="284" y="202" font-size="8.5" fill="#66655f" textLength="158.0" lengthAdjust="spacingAndGlyphs">대신 처리됩니다 — 요청서가 멈추지 않습니다.</text>
+
+    <!-- Nhánh A -->
+    <g>
+      <path d="M400 118 v-14 h132 v14" stroke="#9a968d" stroke-width="1.5" fill="none"/>
+      <rect x="470" y="60" width="202" height="46" rx="10" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="480" y="72" width="8" height="22" rx="4" fill="#dc2626"/>
+      <text x="498" y="80" font-size="10.5" font-weight="700" fill="#111315">A · 요청서를 기안자에게 반환</text>
+      <text x="498" y="95" font-size="8.5" fill="#66655f" textLength="168.0" lengthAdjust="spacingAndGlyphs">기안자는 "결재 기한이 지났습니다" 알림을 받습니다</text>
+    </g>
+
+    <!-- Nhánh B -->
+    <g>
+      <path d="M400 214 v14 h132 v-14" stroke="#9a968d" stroke-width="1.5" fill="none"/>
+      <rect x="470" y="228" width="202" height="46" rx="10" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="480" y="240" width="8" height="22" rx="4" fill="#7c3aed"/>
+      <text x="498" y="248" font-size="10.5" font-weight="700" fill="#111315">B · 기한 초과 위임으로 결재</text>
+      <text x="498" y="263" font-size="9.5" fill="#66655f">설정한 대리 결재자에게 이관</text>
+    </g>
+
+    <!-- Mốc 3: quá hạn lần 2 -->
+    <circle cx="620" cy="96" r="9" fill="#dc2626"/>
+    <rect x="512" y="118" width="160" height="96" rx="12" fill="#fff1f1" stroke="#fbd5d5"/>
+    <text x="524" y="138" font-size="10.5" font-weight="700" fill="#b91c1c">두 번째 기한 초과</text>
+    <text x="524" y="156" font-size="9.5" fill="#7f1d1d">대리 결재자도</text>
+    <text x="524" y="170" font-size="8.5" fill="#7f1d1d">처리하지 못하면 → 요청서가 취소됨</text>
+    <text x="524" y="188" font-size="9.5" fill="#b91c1c">대리 결재자 미설정</text>
+    <text x="524" y="202" font-size="9.5" fill="#b91c1c">마찬가지로 취소됩니다.</text>
+    <text x="360" y="220" font-size="0" fill="#66655f">.</text>
+
+    <!-- Ghi chú dưới -->
+    <rect x="30" y="292" width="660" height="50" rx="12" fill="#eef4ff" stroke="#c7d7fe"/>
+    <text x="46" y="312" font-size="10.5" font-weight="700" fill="#1d4ed8">함께 발송되는 텔레그램 알림</text>
+    <text x="46" y="330" font-size="10" fill="#3b5bd6">"기한이 지난 요청서를 대리 결재자에게 넘겼습니다" · "요청서가 취소되어 기안자에게 반환되었습니다" — 기안자와 관련 결재자 모두에게 발송</text>
+  </g>
+</svg>

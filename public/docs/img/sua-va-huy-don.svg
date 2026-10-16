@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 470" role="img" aria-label="Hai luồng: bổ sung hồ sơ theo yêu cầu và hủy đơn khi chưa ai duyệt">
+  <rect width="720" height="470" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <text x="30" y="30" font-size="13" font-weight="700" fill="#7c3aed">A · Bổ sung hồ sơ khi người duyệt yêu cầu</text>
+    <g>
+      <rect x="30" y="42" width="200" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="56" cy="70" r="14" fill="#7c3aed"/>
+      <text x="56" y="75" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="80" y="66" font-size="11.5" font-weight="700" fill="#111315">Nhận yêu cầu bổ sung</text>
+      <text x="80" y="80" font-size="9.5" fill="#66655f">Trong danh sách hoặc Telegram</text>
+      <rect x="46" y="94" width="168" height="22" rx="7" fill="#f4eefe" stroke="#ddd0fb"/>
+      <circle cx="59" cy="105" r="4" fill="#a855f7"/>
+      <text x="70" y="109" font-size="8.5" fill="#5b21b6">Yêu cầu bổ sung — REQ-000123</text>
+      <rect x="46" y="124" width="168" height="22" rx="7" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="57" y="139" font-size="10" fill="#3f3e3a">Thiếu giấy xác nhận của bác sĩ</text>
+      <text x="46" y="166" font-size="9.5" fill="#66655f">Đơn vẫn nằm ở đúng bước đang dở.</text>
+      <text x="46" y="180" font-size="8" fill="#66655f">Chỉ mình bạn, không ai khác, nhận thông báo.</text>
+    </g>
+
+    <g>
+      <rect x="260" y="42" width="200" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="286" cy="70" r="14" fill="#7c3aed"/>
+      <text x="286" y="75" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="310" y="66" font-size="11.5" font-weight="700" fill="#111315">Mở đơn → bấm Bổ sung</text>
+      <text x="310" y="80" font-size="9.5" fill="#66655f">Hộp thoại "Bổ Sung Đơn Từ"</text>
+      <rect x="276" y="94" width="168" height="22" rx="7" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="287" y="109" font-size="10" fill="#3b5bd6">Cập nhật trường còn thiếu</text>
+      <rect x="276" y="124" width="168" height="22" rx="7" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="287" y="139" font-size="10" fill="#3b5bd6">Thêm / đổi tệp đính kèm</text>
+      <text x="276" y="166" font-size="9.5" fill="#66655f">Ô bắt buộc có dấu * — còn thiếu thì</text>
+      <text x="276" y="180" font-size="9.5" fill="#66655f">form chặn lại và báo ngay.</text>
+    </g>
+
+    <g>
+      <rect x="490" y="42" width="200" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="516" cy="70" r="14" fill="#16a34a"/>
+      <text x="516" y="75" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="540" y="66" font-size="11.5" font-weight="700" fill="#111315">Gửi lại</text>
+      <text x="540" y="80" font-size="9.5" fill="#66655f">Nút "Bổ sung &amp; gửi lại"</text>
+      <rect x="506" y="94" width="168" height="44" rx="9" fill="#fef3c7" stroke="#f0d9a8"/>
+      <text x="518" y="113" font-size="10" font-weight="700" fill="#8a5a00">Đơn quay về "Chờ duyệt"</text>
+      <text x="518" y="128" font-size="9.5" fill="#8a5a00">tại đúng bước đang dở</text>
+      <text x="506" y="166" font-size="9.5" fill="#66655f">Người duyệt bước đó nhận thông báo</text>
+      <text x="506" y="180" font-size="9.5" fill="#66655f">để quay lại xử lý.</text>
+    </g>
+
+    <path d="M236 116 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 116 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <line x1="30" y1="222" x2="690" y2="222" stroke="#e7e3da" stroke-width="1.5"/>
+
+    <text x="30" y="258" font-size="13" font-weight="700" fill="#dc2626">B · Hủy đơn của chính mình (chỉ khi chưa có ai duyệt)</text>
+    <g>
+      <rect x="30" y="270" width="200" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="56" cy="298" r="14" fill="#16a34a"/>
+      <text x="56" y="303" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="80" y="294" font-size="11.5" font-weight="700" fill="#111315">Kiểm tra điều kiện</text>
+      <text x="80" y="308" font-size="9.5" fill="#66655f">Nút "Hủy đơn" chỉ hiện khi…</text>
+      <rect x="46" y="322" width="168" height="86" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="57" y="340" font-size="10" fill="#0f766e">✓ Chưa ai duyệt bước nào</text>
+      <text x="57" y="358" font-size="10" fill="#0f766e">✓ Đơn ở Chờ duyệt / Cần bổ sung</text>
+      <text x="57" y="376" font-size="10" fill="#0f766e">✓ Bạn là người tạo đơn</text>
+      <text x="57" y="398" font-size="9.5" fill="#66655f">Đã có người duyệt → nút biến mất.</text>
+    </g>
+
+    <g>
+      <rect x="260" y="270" width="200" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="286" cy="298" r="14" fill="#dc2626"/>
+      <text x="286" y="303" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="310" y="294" font-size="11.5" font-weight="700" fill="#111315">Nhập lý do hủy</text>
+      <text x="310" y="308" font-size="9.5" fill="#66655f">Không bắt buộc, nhưng nên ghi</text>
+      <rect x="276" y="322" width="168" height="56" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="286" y="340" font-size="10" fill="#66655f">Lý do hủy (không bắt buộc)</text>
+      <text x="286" y="358" font-size="9.5" fill="#8c8a83">VD: Nhập nhầm ngày…</text>
+      <rect x="276" y="388" width="168" height="20" rx="7" fill="#feecec" stroke="#fbd5d5"/>
+      <text x="286" y="402" font-size="9.5" fill="#b91c1c">Tối đa 1000 ký tự</text>
+    </g>
+
+    <g>
+      <rect x="490" y="270" width="200" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="516" cy="298" r="14" fill="#dc2626"/>
+      <text x="516" y="303" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="540" y="294" font-size="11.5" font-weight="700" fill="#111315">Xác nhận hủy đơn</text>
+      <text x="540" y="308" font-size="9.5" fill="#66655f">Hoặc bấm "Giữ đơn" để thoát</text>
+      <rect x="506" y="322" width="168" height="40" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="516" y="340" font-size="10" fill="#111315">Trạng thái mới: Đã hủy</text>
+      <text x="516" y="355" font-size="9.5" fill="#66655f">Không thể hoàn tác</text>
+      <rect x="506" y="372" width="168" height="28" rx="8" fill="#dc2626"/>
+      <text x="590" y="390" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="700">Xác nhận hủy đơn</text>
+      <text x="506" y="414" font-size="8" fill="#66655f">Người đang chờ duyệt cũng nhận thông báo.</text>
+    </g>
+
+    <path d="M236 344 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 344 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="452" font-size="11.5" fill="#66655f" text-anchor="middle">Bổ sung thì đơn đi tiếp; hủy thì đơn dừng hẳn — cả hai đều không cần quản trị viên can thiệp</text>
+  </g>
+</svg>

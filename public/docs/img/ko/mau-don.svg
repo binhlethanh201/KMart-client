@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 310" role="img" aria-label="Ba bước tạo mẫu đơn và soạn các ô cần điền trong biểu mẫu">
+  <rect width="720" height="310" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="212" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#e11d48"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">양식 생성</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">설정 → 서식 양식</text>
+      <rect x="46" y="102" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="119" font-size="9.5" fill="#3f3e3a">양식 이름</text>
+      <rect x="46" y="134" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="151" font-size="9.5" fill="#3f3e3a">양식 코드</text>
+      <rect x="46" y="166" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="183" font-size="9.5" fill="#3f3e3a">양식 그룹</text>
+      <text x="46" y="214" font-size="9.5" fill="#66655f" textLength="178.0" lengthAdjust="spacingAndGlyphs">그룹은 양식을 묶어 표시하는 데 사용됩니다:</text>
+      <text x="46" y="228" font-size="8.5" fill="#66655f" textLength="178.0" lengthAdjust="spacingAndGlyphs">직원이 요청서를 만들 때의 선택 상자에 사용됩니다.</text>
+      <text x="46" y="248" font-size="8" fill="#66655f">결재 흐름이 없는 양식은 상신할 수 없습니다.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="212" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#e11d48"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">입력할 항목 작성</text>
+      <text x="314" y="86" font-size="8.5" fill="#66655f">양식 카드의 연필 아이콘 클릭</text>
+      <rect x="276" y="102" width="168" height="112" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="286" y="120" font-size="9.5" font-weight="600" fill="#111315">선택 가능한 6가지 입력 유형:</text>
+      <text x="286" y="138" font-size="9.5" fill="#3f3e3a">텍스트 · 숫자 · 날짜</text>
+      <text x="286" y="154" font-size="8" fill="#3f3e3a">선택 (드롭다운 / 라디오 / 체크박스)</text>
+      <text x="286" y="170" font-size="9.5" fill="#3f3e3a">파일 업로드 · 대리 결재자</text>
+      <text x="286" y="192" font-size="8" fill="#66655f" textLength="152.0" lengthAdjust="spacingAndGlyphs">입력란 이름을 정하고 필요하면 "필수"를 켭니다 —</text>
+      <text x="286" y="206" font-size="8" fill="#66655f">필수 입력란은 기안자에게 * 로 표시됩니다.</text>
+      <text x="276" y="234" font-size="9.5" fill="#66655f">"파일 업로드" 유형은 첨부를 허용합니다</text>
+      <text x="276" y="248" font-size="9.5" fill="#66655f" textLength="178.0" lengthAdjust="spacingAndGlyphs">직원용 인쇄 양식 파일을 첨부할 수 있습니다.</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="212" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#16a34a"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">순서 정렬 &amp; 저장</text>
+      <text x="544" y="86" font-size="10" fill="#66655f">끌어서 입력란 순서 변경</text>
+      <rect x="506" y="102" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="118" font-size="9.5" fill="#66655f">⠿ 시작일</text>
+      <rect x="506" y="132" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="148" font-size="9.5" fill="#66655f">⠿ 종료일</text>
+      <rect x="506" y="162" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="178" font-size="9.5" fill="#66655f">⠿ 총 일수</text>
+      <rect x="506" y="192" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="208" font-size="9.5" fill="#66655f">⠿ 사유 *</text>
+      <text x="506" y="236" font-size="9.5" fill="#66655f">새 양식은 이후 생성되는 요청서에만 적용</text>
+      <text x="506" y="250" font-size="8.5" fill="#66655f" textLength="178.0" lengthAdjust="spacingAndGlyphs">이후 생성분부터; 기존 요청서는 내용이 그대로 유지됩니다.</text>
+    </g>
+
+    <path d="M236 150 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 150 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="288" font-size="12" fill="#66655f" text-anchor="middle">양식 생성 → 입력란 작성 → 순서 정렬 후 저장; 다음 필수 단계는 결재 흐름 지정</text>
+  </g>
+</svg>

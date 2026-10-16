@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" role="img" aria-label="Vòng đời xử lý quá hạn: nhắc trước hạn một lần, quá hạn thì trả về hoặc chuyển người duyệt thay, quá hạn lần hai thì hủy đơn">
+  <rect width="720" height="360" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <text x="30" y="30" font-size="13" font-weight="700" fill="#111315">What happens to an approval step over time</text>
+
+    <!-- Trục thời gian -->
+    <line x1="60" y1="96" x2="672" y2="96" stroke="#d9d5cc" stroke-width="2"/>
+    <path d="M672 96 l-8 -4 v8 z" fill="#d9d5cc"/>
+
+    <!-- Mốc 1: trước hạn -->
+    <circle cx="130" cy="96" r="9" fill="#1d4ed8"/>
+    <rect x="52" y="118" width="156" height="96" rx="12" fill="#ffffff" stroke="#e7e3da"/>
+    <text x="64" y="138" font-size="10.5" font-weight="700" fill="#1d4ed8">Deadline approaching</text>
+    <text x="64" y="156" font-size="9.5" fill="#3f3e3a">The current approver gets</text>
+    <text x="64" y="170" font-size="9.5" fill="#3f3e3a" textLength="138.0" lengthAdjust="spacingAndGlyphs">"Approval deadline approaching"</text>
+    <text x="64" y="188" font-size="9.5" fill="#66655f">· with a link to the request</text>
+    <text x="64" y="204" font-size="9.5" fill="#66655f">· reminded exactly once per step</text>
+
+    <!-- Mốc 2: hết hạn -->
+    <circle cx="360" cy="96" r="9" fill="#d97706"/>
+    <rect x="272" y="118" width="176" height="96" rx="12" fill="#ffffff" stroke="#e7e3da"/>
+    <text x="284" y="138" font-size="10.5" font-weight="700" fill="#b45309">Overdue</text>
+    <text x="284" y="156" font-size="9.5" fill="#3f3e3a">The system acts on its own using</text>
+    <text x="284" y="170" font-size="9.5" fill="#3f3e3a">the configured action on the step</text>
+    <text x="284" y="188" font-size="8.5" fill="#66655f" textLength="158.0" lengthAdjust="spacingAndGlyphs">Even if the approver does nothing, the request</text>
+    <text x="284" y="202" font-size="8.5" fill="#66655f" textLength="158.0" lengthAdjust="spacingAndGlyphs">handled instead — the request never stalls.</text>
+
+    <!-- Nhánh A -->
+    <g>
+      <path d="M400 118 v-14 h132 v14" stroke="#9a968d" stroke-width="1.5" fill="none"/>
+      <rect x="470" y="60" width="202" height="46" rx="10" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="480" y="72" width="8" height="22" rx="4" fill="#dc2626"/>
+      <text x="498" y="80" font-size="9" font-weight="700" fill="#111315">A · Return the request to the originator</text>
+      <text x="498" y="95" font-size="8.5" fill="#66655f" textLength="168.0" lengthAdjust="spacingAndGlyphs">The requester gets "the approval deadline passed"</text>
+    </g>
+
+    <!-- Nhánh B -->
+    <g>
+      <path d="M400 214 v14 h132 v-14" stroke="#9a968d" stroke-width="1.5" fill="none"/>
+      <rect x="470" y="228" width="202" height="46" rx="10" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="480" y="240" width="8" height="22" rx="4" fill="#7c3aed"/>
+      <text x="498" y="248" font-size="9" font-weight="700" fill="#111315">B · Approve via the overdue delegation</text>
+      <text x="498" y="263" font-size="9.5" fill="#66655f" textLength="168.0" lengthAdjust="spacingAndGlyphs">Handed to the delegated approver you set</text>
+    </g>
+
+    <!-- Mốc 3: quá hạn lần 2 -->
+    <circle cx="620" cy="96" r="9" fill="#dc2626"/>
+    <rect x="512" y="118" width="160" height="96" rx="12" fill="#fff1f1" stroke="#fbd5d5"/>
+    <text x="524" y="138" font-size="10.5" font-weight="700" fill="#b91c1c">Overdue a second time</text>
+    <text x="524" y="156" font-size="9.5" fill="#7f1d1d">The delegated approver also does</text>
+    <text x="524" y="170" font-size="8.5" fill="#7f1d1d">in time → the request is CANCELLED</text>
+    <text x="524" y="188" font-size="9.5" fill="#b91c1c">No delegated approver set</text>
+    <text x="524" y="202" font-size="9.5" fill="#b91c1c">is cancelled the same way.</text>
+    <text x="360" y="220" font-size="0" fill="#66655f">.</text>
+
+    <!-- Ghi chú dưới -->
+    <rect x="30" y="292" width="660" height="50" rx="12" fill="#eef4ff" stroke="#c7d7fe"/>
+    <text x="46" y="312" font-size="10.5" font-weight="700" fill="#1d4ed8">Telegram messages that go with it</text>
+    <text x="46" y="330" font-size="10" fill="#3b5bd6" textLength="638.0" lengthAdjust="spacingAndGlyphs">"Overdue request handed to a delegated approver" · "The request was cancelled and returned to you" — sent to the requester and the approvers involved</text>
+  </g>
+</svg>

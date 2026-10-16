@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 310" role="img" aria-label="Ba bước tạo mẫu đơn và soạn các ô cần điền trong biểu mẫu">
+  <rect width="720" height="310" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="212" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#e11d48"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">Tạo mẫu đơn</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">Cấu hình → Mẫu đơn &amp; Form</text>
+      <rect x="46" y="102" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="119" font-size="9.5" fill="#3f3e3a">Tên mẫu đơn</text>
+      <rect x="46" y="134" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="151" font-size="9.5" fill="#3f3e3a">Mã mẫu đơn</text>
+      <rect x="46" y="166" width="168" height="26" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="183" font-size="9.5" fill="#3f3e3a">Nhóm mẫu đơn</text>
+      <text x="46" y="214" font-size="9.5" fill="#66655f">Nhóm dùng để gom mẫu đơn trong</text>
+      <text x="46" y="228" font-size="9.5" fill="#66655f">hộp chọn khi nhân viên tạo đơn.</text>
+      <text x="46" y="248" font-size="8" fill="#66655f">Mẫu chưa có luồng duyệt thì chưa gửi được đơn.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="212" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#e11d48"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">Soạn các ô cần điền</text>
+      <text x="314" y="86" font-size="8.5" fill="#66655f">Bấm biểu tượng bút trên thẻ mẫu</text>
+      <rect x="276" y="102" width="168" height="112" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="286" y="120" font-size="9.5" font-weight="600" fill="#111315">6 kiểu ô để chọn:</text>
+      <text x="286" y="138" font-size="9.5" fill="#3f3e3a">Văn bản · Số · Ngày</text>
+      <text x="286" y="154" font-size="8" fill="#3f3e3a">Lựa chọn (dropdown / radio / checkbox)</text>
+      <text x="286" y="170" font-size="9.5" fill="#3f3e3a">Tải file · Người duyệt thay</text>
+      <text x="286" y="192" font-size="8" fill="#66655f">Đặt tên ô và bật "bắt buộc" nếu cần —</text>
+      <text x="286" y="206" font-size="8" fill="#66655f">ô bắt buộc hiện dấu * cho người tạo.</text>
+      <text x="276" y="234" font-size="9.5" fill="#66655f">Kiểu "Tải file" cho phép đính kèm</text>
+      <text x="276" y="248" font-size="9.5" fill="#66655f">file mẫu biểu mẫu in cho nhân viên.</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="212" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#16a34a"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="12.5" font-weight="700" fill="#111315">Sắp thứ tự &amp; lưu</text>
+      <text x="544" y="86" font-size="10" fill="#66655f">Kéo thả để đổi thứ tự ô</text>
+      <rect x="506" y="102" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="118" font-size="9.5" fill="#66655f">⠿ Từ ngày</text>
+      <rect x="506" y="132" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="148" font-size="9.5" fill="#66655f">⠿ Đến ngày</text>
+      <rect x="506" y="162" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="178" font-size="9.5" fill="#66655f">⠿ Tổng số ngày</text>
+      <rect x="506" y="192" width="168" height="24" rx="8" fill="#ffffff" stroke="#e7e3da"/>
+      <text x="516" y="208" font-size="9.5" fill="#66655f">⠿ Lý do *</text>
+      <text x="506" y="236" font-size="9.5" fill="#66655f">Biểu mẫu mới chỉ áp dụng cho đơn tạo</text>
+      <text x="506" y="250" font-size="9.5" fill="#66655f">sau đó; đơn cũ giữ nguyên nội dung.</text>
+    </g>
+
+    <path d="M236 150 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 150 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="288" font-size="12" fill="#66655f" text-anchor="middle">Tạo mẫu đơn → soạn các ô → sắp thứ tự và lưu; bước tiếp theo bắt buộc là gán luồng duyệt</text>
+  </g>
+</svg>

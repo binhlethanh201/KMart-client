@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-label="Bốn nhóm thiết lập của một bước duyệt: hình thức duyệt, quy tắc nhiều người, thời hạn xử lý và thứ tự bước">
+  <rect width="720" height="420" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <text x="30" y="30" font-size="13" font-weight="700" fill="#111315">결재 단계에는 4개 설정 그룹이 있습니다 — 5개가 아닙니다</text>
+
+    <!-- A -->
+    <g>
+      <rect x="30" y="44" width="320" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="44" y="58" width="26" height="26" rx="8" fill="#1d4ed8"/>
+      <text x="57" y="76" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">A</text>
+      <text x="80" y="68" font-size="11.5" font-weight="700" fill="#111315">결재 유형</text>
+      <text x="80" y="82" font-size="9.5" fill="#66655f">이 단계의 결재자</text>
+      <rect x="44" y="94" width="292" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="54" y="110" font-size="9.5" fill="#1d4ed8">직속 상사 — 선택: 직속 상사 / 부서장 대리 / 부서장</text>
+      <rect x="44" y="122" width="292" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="54" y="138" font-size="9.5" fill="#1d4ed8">연속 관리 체인 — 시작 단계와 끝 단계 선택</text>
+      <rect x="44" y="150" width="292" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="54" y="166" font-size="9.5" fill="#1d4ed8">지정 결재 — 직위 / 특정 그룹 선택</text>
+      <text x="44" y="188" font-size="9.5" fill="#66655f">또는: 특정 1명 지정 — 요청서는 항상 그 사람에게 갑니다</text>
+    </g>
+
+    <!-- B -->
+    <g>
+      <rect x="370" y="44" width="320" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="384" y="58" width="26" height="26" rx="8" fill="#7c3aed"/>
+      <text x="397" y="76" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">B</text>
+      <text x="420" y="68" font-size="11.5" font-weight="700" fill="#111315">여러 명이 결재할 때의 규칙</text>
+      <text x="420" y="82" font-size="9.5" fill="#66655f">"지정 결재" 유형에만 사용</text>
+      <rect x="384" y="94" width="292" height="24" rx="8" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="394" y="110" font-size="9.5" fill="#6d28d9">순차 결재  A ➔ B ➔ C  (순서대로 전원 선택 필수)</text>
+      <rect x="384" y="122" width="292" height="24" rx="8" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="394" y="138" font-size="9.5" fill="#6d28d9">동시 — 전원 동의해야 단계 통과</text>
+      <rect x="384" y="150" width="292" height="24" rx="8" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="394" y="166" font-size="9.5" fill="#6d28d9">동시 — 1명만 동의해도 단계 통과</text>
+      <text x="384" y="188" font-size="9.5" fill="#66655f">한 명만 지정된 단계는 이 그룹이 적용되지 않습니다.</text>
+    </g>
+
+    <!-- C -->
+    <g>
+      <rect x="30" y="208" width="320" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="44" y="222" width="26" height="26" rx="8" fill="#d97706"/>
+      <text x="57" y="240" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">C</text>
+      <text x="80" y="232" font-size="11.5" font-weight="700" fill="#111315">기한 초과 처리</text>
+      <text x="80" y="246" font-size="9.5" fill="#66655f">켠 다음 시간을 입력</text>
+      <rect x="44" y="258" width="292" height="24" rx="8" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="54" y="274" font-size="9.5" fill="#8a5a00">☑ 기한 내 미결재 시 자동 처리 · 12시간</text>
+      <rect x="44" y="286" width="292" height="24" rx="8" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="54" y="302" font-size="9.5" fill="#8a5a00">방식: 12시간 연속 계산 · 또는 업무 시간만 계산</text>
+      <rect x="44" y="314" width="292" height="24" rx="8" fill="#feecec" stroke="#fbd5d5"/>
+      <text x="54" y="330" font-size="8" fill="#b91c1c">처리: 요청서를 기안자에게 반환 · 기한 초과 위임으로 결재</text>
+      <text x="44" y="352" font-size="8" fill="#66655f">행동은 2가지뿐입니다. "상위 단계로 자동 이관"은 없습니다.</text>
+    </g>
+
+    <!-- D -->
+    <g>
+      <rect x="370" y="208" width="320" height="150" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <rect x="384" y="222" width="26" height="26" rx="8" fill="#16a34a"/>
+      <text x="397" y="240" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">D</text>
+      <text x="420" y="232" font-size="11.5" font-weight="700" fill="#111315">단계 순서 &amp; 범위</text>
+      <text x="420" y="246" font-size="9.5" fill="#66655f">위 3개 그룹 외에 각 단계에는 다음도 있습니다:</text>
+      <rect x="384" y="258" width="292" height="24" rx="8" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="394" y="274" font-size="9.5" fill="#0f766e">끌어서 단계 순서 변경 · 스위치로 단계 비활성화</text>
+      <rect x="384" y="286" width="292" height="24" rx="8" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="394" y="302" font-size="9.5" fill="#0f766e">범위: 근무지 자동 · 사무실 전용 · 매장 전용</text>
+      <text x="384" y="330" font-size="9.5" fill="#66655f">반려 사유는 항상 필수 — 시스템에서 끌 수 없습니다.</text>
+      <text x="384" y="352" font-size="8" fill="#66655f">조건부 단계(휴가 일수 / OT 시간 기준)는 아직 화면에서 설정할 수 없습니다.</text>
+    </g>
+  </g>
+</svg>

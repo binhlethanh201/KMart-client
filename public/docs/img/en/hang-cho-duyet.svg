@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 262" role="img" aria-label="Ba bước xem hàng chờ duyệt và mở đơn cần xử lý">
+  <rect width="720" height="262" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#7c3aed"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="12.5" font-weight="700" fill="#111315">Open the queue</text>
+      <text x="84" y="86" font-size="9" fill="#66655f">Requests → Requests Awaiting Me</text>
+      <rect x="46" y="100" width="168" height="42" rx="9" fill="#f4eefe" stroke="#ddd0fb"/>
+      <text x="56" y="118" font-size="10" font-weight="700" fill="#5b21b6" textLength="152.0" lengthAdjust="spacingAndGlyphs">You are the approver of this step</text>
+      <text x="56" y="133" font-size="9.5" fill="#6d28d9">Including requests delegated to you</text>
+      <rect x="46" y="150" width="168" height="30" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="169" font-size="8" fill="#3f3e3a" textLength="152.0" lengthAdjust="spacingAndGlyphs">Can be filtered by department / request type</text>
+      <text x="46" y="200" font-size="9.5" fill="#66655f">Requests you approved leave the queue.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#1d4ed8"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="12.5" font-weight="700" fill="#111315">Read the request card</text>
+      <text x="314" y="86" font-size="10" fill="#66655f">Enough to decide or not</text>
+      <rect x="276" y="100" width="168" height="104" rx="10" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="286" y="118" font-size="10" font-weight="700" fill="#111315">Leave request</text>
+      <text x="286" y="134" font-size="9.5" fill="#66655f">Requester: Nguyễn Văn A</text>
+      <text x="286" y="150" font-size="9.5" fill="#66655f">Current step: 1/2</text>
+      <rect x="286" y="158" width="86" height="16" rx="8" fill="#feecec"/>
+      <text x="329" y="170" font-size="9" fill="#b91c1c" text-anchor="middle">4 hours left</text>
+      <text x="286" y="196" font-size="9.5" fill="#66655f" textLength="152.0" lengthAdjust="spacingAndGlyphs">The deadline shows right on the card</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#16a34a"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="11" font-weight="700" fill="#111315" textLength="140.0" lengthAdjust="spacingAndGlyphs">Open the request to act on it</text>
+      <text x="544" y="86" font-size="8.5" fill="#66655f" textLength="140.0" lengthAdjust="spacingAndGlyphs">Click the card, or the link in the notification</text>
+      <rect x="506" y="100" width="168" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="116" font-size="9.5" fill="#3b5bd6">The completed form</text>
+      <rect x="506" y="130" width="168" height="24" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="146" font-size="9.5" fill="#3b5bd6">Attachments</text>
+      <rect x="506" y="160" width="168" height="44" rx="8" fill="#eef4ff" stroke="#c7d7fe"/>
+      <text x="516" y="176" font-size="9.5" fill="#3b5bd6">History + progress of every level</text>
+      <text x="516" y="192" font-size="9.5" fill="#3b5bd6">Comment to ask the requester</text>
+    </g>
+
+    <path d="M236 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="240" font-size="12" fill="#66655f" text-anchor="middle">Fastest way: open the request from the "View details" link in Telegram, no need to scroll the list</text>
+  </g>
+</svg>

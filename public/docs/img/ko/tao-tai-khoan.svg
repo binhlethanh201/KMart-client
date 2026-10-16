@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" role="img" aria-label="Năm bước tạo tài khoản nhân viên mới và gắn vào phòng ban">
+  <rect width="960" height="300" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- 1 -->
+    <g>
+      <rect x="26" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="50" cy="72" r="14" fill="#4f46e5"/>
+      <text x="50" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="70" y="68" font-size="11" font-weight="700" fill="#111315">생성 양식 열기</text>
+      <text x="70" y="82" font-size="9" fill="#66655f">인사 메뉴</text>
+      <rect x="40" y="96" width="140" height="120" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <rect x="52" y="110" width="116" height="24" rx="7" fill="#eceafe"/>
+      <text x="60" y="126" font-size="8" fill="#4338ca">+ 직원 계정 생성</text>
+      <text x="52" y="152" font-size="8" fill="#66655f" textLength="122.0" lengthAdjust="spacingAndGlyphs">버튼은 인사 화면 모서리에 있습니다.</text>
+      <text x="52" y="168" font-size="8" fill="#66655f" textLength="122.0" lengthAdjust="spacingAndGlyphs">인사와 관리자만 이 버튼을 볼 수 있습니다.</text>
+      <text x="52" y="192" font-size="8" fill="#66655f">부서가 하나도 없으면 먼저</text>
+      <text x="52" y="206" font-size="8" fill="#66655f" textLength="122.0" lengthAdjust="spacingAndGlyphs">부서를 먼저 만들어야 합니다 (4.4장).</text>
+    </g>
+
+    <!-- 2 -->
+    <g>
+      <rect x="204" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="228" cy="72" r="14" fill="#4f46e5"/>
+      <text x="228" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="248" y="68" font-size="11" font-weight="700" fill="#111315">개인 정보</text>
+      <text x="248" y="82" font-size="9" fill="#66655f">* 표시된 입력란</text>
+      <rect x="218" y="96" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="228" y="113" font-size="9" fill="#3f3e3a">성명 *</text>
+      <rect x="218" y="128" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="228" y="145" font-size="8" fill="#3f3e3a">업무 이메일 * (로그인용)</text>
+      <rect x="218" y="160" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="228" y="177" font-size="9" fill="#3f3e3a">전화번호</text>
+      <text x="218" y="204" font-size="8" fill="#66655f">기존 직원과 중복된 이메일은 차단됩니다</text>
+      <text x="218" y="218" font-size="9" fill="#66655f">입력란 바로 아래에 표시됩니다.</text>
+    </g>
+
+    <!-- 3 -->
+    <g>
+      <rect x="382" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="406" cy="72" r="14" fill="#4f46e5"/>
+      <text x="406" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="426" y="68" font-size="8" font-weight="700" fill="#111315">부서 + 직위 지정</text>
+      <text x="426" y="82" font-size="8" fill="#66655f">직원을 부서에 배치</text>
+      <rect x="396" y="96" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="406" y="113" font-size="9" fill="#3f3e3a">근무 부서 *</text>
+      <rect x="396" y="128" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="406" y="145" font-size="9" fill="#3f3e3a">주 직위 *</text>
+      <rect x="396" y="160" width="140" height="52" rx="7" fill="#eceafe" stroke="#c7c2f5"/>
+      <text x="406" y="178" font-size="9" fill="#4338ca">+ 겸직 직위 추가</text>
+      <text x="406" y="194" font-size="8" fill="#4338ca" textLength="124.0" lengthAdjust="spacingAndGlyphs">겸직이 있어도 주 직위 1개는 반드시 입력</text>
+      <text x="406" y="206" font-size="8" fill="#4338ca">— 결재 흐름의 기준</text>
+    </g>
+
+    <!-- 4 -->
+    <g>
+      <rect x="560" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="584" cy="72" r="14" fill="#4f46e5"/>
+      <text x="584" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">4</text>
+      <text x="604" y="68" font-size="11" font-weight="700" fill="#111315">시스템 역할 선택</text>
+      <text x="604" y="82" font-size="9" fill="#66655f">메뉴와 권한을 결정합니다</text>
+      <rect x="574" y="96" width="140" height="94" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="584" y="114" font-size="9" fill="#3f3e3a">STAFF</text>
+      <text x="584" y="132" font-size="9" fill="#3f3e3a">TEAM_LEADER</text>
+      <text x="584" y="150" font-size="9" fill="#3f3e3a">MANAGER</text>
+      <text x="584" y="168" font-size="9" fill="#3f3e3a">인사 (HR)</text>
+      <text x="584" y="186" font-size="9" fill="#3f3e3a">ADMIN</text>
+      <text x="574" y="210" font-size="9" fill="#66655f">목록은 더 길 수 있으며,</text>
+      <text x="574" y="222" font-size="8" fill="#66655f">시스템에 생성된 역할에 따라 달라집니다.</text>
+    </g>
+
+    <!-- 5 -->
+    <g>
+      <rect x="738" y="46" width="196" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="762" cy="72" r="14" fill="#16a34a"/>
+      <text x="762" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">5</text>
+      <text x="782" y="68" font-size="11" font-weight="700" fill="#111315">저장 후 계정 전달</text>
+      <text x="782" y="82" font-size="9" fill="#66655f">임시 비밀번호가 자동 생성됩니다</text>
+      <rect x="752" y="96" width="168" height="42" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="762" y="114" font-size="9" fill="#0f766e">시스템이 임시 비밀번호를 발급합니다</text>
+      <text x="762" y="128" font-size="9" fill="#0f766e" textLength="152.0" lengthAdjust="spacingAndGlyphs">표시되어 직원에게 읽어줄 수 있습니다.</text>
+      <rect x="752" y="148" width="168" height="52" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="762" y="166" font-size="9" fill="#8a5a00">직원은 이메일로 로그인합니다</text>
+      <text x="762" y="180" font-size="8" fill="#8a5a00">+ 임시 비밀번호, 최초 로그인 시 변경 필수</text>
+      <text x="762" y="194" font-size="9" fill="#8a5a00">최초 로그인 시 즉시.</text>
+    </g>
+
+    <path d="M198 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M376 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M554 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M732 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="480" y="266" font-size="12" fill="#66655f" text-anchor="middle">성명 → 업무 이메일 → 부서 &amp; 직위 (겸직 포함) → 시스템 역할 → 저장</text>
+  </g>
+</svg>

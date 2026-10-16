@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" role="img" aria-label="Năm bước tạo tài khoản nhân viên mới và gắn vào phòng ban">
+  <rect width="960" height="300" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- 1 -->
+    <g>
+      <rect x="26" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="50" cy="72" r="14" fill="#4f46e5"/>
+      <text x="50" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="70" y="68" font-size="11" font-weight="700" fill="#111315">Open the create form</text>
+      <text x="70" y="82" font-size="9" fill="#66655f">The Employee menu</text>
+      <rect x="40" y="96" width="140" height="120" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <rect x="52" y="110" width="116" height="24" rx="7" fill="#eceafe"/>
+      <text x="60" y="126" font-size="8" fill="#4338ca">+ Create employee account</text>
+      <text x="52" y="152" font-size="9" fill="#66655f">On the Employee screen.</text>
+      <text x="52" y="168" font-size="8" fill="#66655f" textLength="122.0" lengthAdjust="spacingAndGlyphs">Only HR and Admin see this button.</text>
+      <text x="52" y="192" font-size="8" fill="#66655f">If no department exists yet, create</text>
+      <text x="52" y="206" font-size="8" fill="#66655f">the department first (section 4.4).</text>
+    </g>
+
+    <!-- 2 -->
+    <g>
+      <rect x="204" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="228" cy="72" r="14" fill="#4f46e5"/>
+      <text x="228" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="248" y="68" font-size="11" font-weight="700" fill="#111315">Personal details</text>
+      <text x="248" y="82" font-size="9" fill="#66655f">Fields marked with *</text>
+      <rect x="218" y="96" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="228" y="113" font-size="9" fill="#3f3e3a">Full name *</text>
+      <rect x="218" y="128" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="228" y="145" font-size="8" fill="#3f3e3a">Work email * (used to sign in)</text>
+      <rect x="218" y="160" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="228" y="177" font-size="9" fill="#3f3e3a">Phone number</text>
+      <text x="218" y="204" font-size="9" fill="#66655f">An email already used is blocked</text>
+      <text x="218" y="218" font-size="9" fill="#66655f">right below the field.</text>
+    </g>
+
+    <!-- 3 -->
+    <g>
+      <rect x="382" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="406" cy="72" r="14" fill="#4f46e5"/>
+      <text x="406" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="426" y="68" font-size="8" font-weight="700" fill="#111315">Attach department + position</text>
+      <text x="426" y="82" font-size="8" fill="#66655f">Puts them in a department</text>
+      <rect x="396" y="96" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="406" y="113" font-size="9" fill="#3f3e3a">Department *</text>
+      <rect x="396" y="128" width="140" height="26" rx="7" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="406" y="145" font-size="9" fill="#3f3e3a">Primary position *</text>
+      <rect x="396" y="160" width="140" height="52" rx="7" fill="#eceafe" stroke="#c7c2f5"/>
+      <text x="406" y="178" font-size="9" fill="#4338ca">+ Add a secondary position</text>
+      <text x="406" y="194" font-size="8" fill="#4338ca">Still need one Primary position</text>
+      <text x="406" y="206" font-size="8" fill="#4338ca">— used by the approval flow.</text>
+    </g>
+
+    <!-- 4 -->
+    <g>
+      <rect x="560" y="46" width="168" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="584" cy="72" r="14" fill="#4f46e5"/>
+      <text x="584" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">4</text>
+      <text x="604" y="68" font-size="11" font-weight="700" fill="#111315">Choose a system role</text>
+      <text x="604" y="82" font-size="8" fill="#66655f" textLength="118.0" lengthAdjust="spacingAndGlyphs">Determines the menu and permissions</text>
+      <rect x="574" y="96" width="140" height="94" rx="9" fill="#f6f6f4" stroke="#e7e3da"/>
+      <text x="584" y="114" font-size="9" fill="#3f3e3a">STAFF</text>
+      <text x="584" y="132" font-size="9" fill="#3f3e3a">TEAM_LEADER</text>
+      <text x="584" y="150" font-size="9" fill="#3f3e3a">MANAGER</text>
+      <text x="584" y="168" font-size="9" fill="#3f3e3a">HR</text>
+      <text x="584" y="186" font-size="9" fill="#3f3e3a">ADMIN</text>
+      <text x="574" y="210" font-size="9" fill="#66655f">The list can be longer, depending on</text>
+      <text x="574" y="222" font-size="9" fill="#66655f">the roles that exist in the system.</text>
+    </g>
+
+    <!-- 5 -->
+    <g>
+      <rect x="738" y="46" width="196" height="182" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="762" cy="72" r="14" fill="#16a34a"/>
+      <text x="762" y="77" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">5</text>
+      <text x="782" y="68" font-size="9.5" font-weight="700" fill="#111315">Save and hand over the account</text>
+      <text x="782" y="82" font-size="9" fill="#66655f">A temporary password is generated</text>
+      <rect x="752" y="96" width="168" height="42" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="762" y="114" font-size="9" fill="#0f766e" textLength="152.0" lengthAdjust="spacingAndGlyphs">The system issues a temporary password</text>
+      <text x="762" y="128" font-size="9" fill="#0f766e">and shows it so you can read it out.</text>
+      <rect x="752" y="148" width="168" height="52" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="762" y="166" font-size="9" fill="#8a5a00">The employee signs in with the email</text>
+      <text x="762" y="180" font-size="8" fill="#8a5a00" textLength="152.0" lengthAdjust="spacingAndGlyphs">+ a temporary password, and must change it</text>
+      <text x="762" y="194" font-size="9" fill="#8a5a00">on the very first sign-in.</text>
+    </g>
+
+    <path d="M198 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M376 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M554 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M732 138 h8 m0 0 l-4 -4 m4 4 l-4 4" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="480" y="266" font-size="12" fill="#66655f" text-anchor="middle">Full name → work email → department &amp; position (plus secondary) → system role → save</text>
+  </g>
+</svg>

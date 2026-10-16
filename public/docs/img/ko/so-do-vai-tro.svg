@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 344" role="img" aria-label="Bản đồ bốn vai trò trong hệ thống KMart và việc chính của từng vai trò">
+  <rect width="720" height="344" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <text x="30" y="30" font-size="14" font-weight="700" fill="#111315">네 가지 역할 — 필요한 부분만 읽으세요</text>
+
+    <!-- Nhân viên -->
+    <g>
+      <rect x="30" y="44" width="150" height="206" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="60" cy="76" r="15" fill="#0d9488"/>
+      <text x="60" y="81" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">NV</text>
+      <text x="84" y="72" font-size="12" font-weight="700" fill="#111315">사원</text>
+      <text x="84" y="88" font-size="10" fill="#66655f">STAFF</text>
+      <line x1="44" y1="104" x2="166" y2="104" stroke="#eeece7"/>
+      <circle cx="52" cy="124" r="3" fill="#0d9488"/><text x="62" y="128" font-size="10.5" fill="#3f3e3a">본인 요청서 생성</text>
+      <circle cx="52" cy="146" r="3" fill="#0d9488"/><text x="62" y="150" font-size="10.5" fill="#3f3e3a">진행 상황 확인</text>
+      <circle cx="52" cy="168" r="3" fill="#0d9488"/><text x="62" y="172" font-size="10.5" fill="#3f3e3a">서류 보완</text>
+      <circle cx="52" cy="190" r="3" fill="#0d9488"/><text x="62" y="194" font-size="9" fill="#3f3e3a" textLength="112.0" lengthAdjust="spacingAndGlyphs">아무도 결재하지 않은 요청서 취소</text>
+      <circle cx="52" cy="212" r="3" fill="#0d9488"/><text x="62" y="216" font-size="10.5" fill="#3f3e3a">텔레그램 연결</text>
+      <rect x="44" y="224" width="122" height="18" rx="9" fill="#e6f5f3"/>
+      <text x="105" y="237" font-size="10" fill="#0f766e" text-anchor="middle" font-weight="600">2장</text>
+    </g>
+
+    <!-- Người duyệt -->
+    <g>
+      <rect x="200" y="44" width="150" height="206" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="230" cy="76" r="15" fill="#7c3aed"/>
+      <text x="230" y="81" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">D</text>
+      <text x="254" y="72" font-size="12" font-weight="700" fill="#111315">결재자</text>
+      <text x="254" y="88" font-size="9" fill="#66655f" textLength="90.0" lengthAdjust="spacingAndGlyphs">관리자 / 팀장 / 부서장 / 임원</text>
+      <line x1="214" y1="104" x2="336" y2="104" stroke="#eeece7"/>
+      <circle cx="222" cy="124" r="3" fill="#7c3aed"/><text x="232" y="128" font-size="10.5" fill="#3f3e3a">내 대기 목록</text>
+      <circle cx="222" cy="146" r="3" fill="#7c3aed"/><text x="232" y="150" font-size="10.5" fill="#3f3e3a">결재 / 반려</text>
+      <circle cx="222" cy="168" r="3" fill="#7c3aed"/><text x="232" y="172" font-size="10.5" fill="#3f3e3a">보완 요청</text>
+      <circle cx="222" cy="190" r="3" fill="#7c3aed"/><text x="232" y="194" font-size="10.5" fill="#3f3e3a">임시 위임</text>
+      <circle cx="222" cy="212" r="3" fill="#7c3aed"/><text x="232" y="216" font-size="10.5" fill="#3f3e3a">기한 초과 대리 결재</text>
+      <rect x="214" y="224" width="122" height="18" rx="9" fill="#f4eefe"/>
+      <text x="275" y="237" font-size="10" fill="#6d28d9" text-anchor="middle" font-weight="600">3장</text>
+    </g>
+
+    <!-- Nhân sự -->
+    <g>
+      <rect x="370" y="44" width="150" height="206" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="400" cy="76" r="15" fill="#4f46e5"/>
+      <text x="400" y="81" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">HR</text>
+      <text x="424" y="72" font-size="12" font-weight="700" fill="#111315">인사</text>
+      <text x="424" y="88" font-size="10" fill="#66655f">HR</text>
+      <line x1="384" y1="104" x2="506" y2="104" stroke="#eeece7"/>
+      <circle cx="392" cy="124" r="3" fill="#4f46e5"/><text x="402" y="128" font-size="10.5" fill="#3f3e3a">직원 목록 &amp; 필터</text>
+      <circle cx="392" cy="146" r="3" fill="#4f46e5"/><text x="402" y="150" font-size="10.5" fill="#3f3e3a">계정 생성</text>
+      <circle cx="392" cy="168" r="3" fill="#4f46e5"/><text x="402" y="172" font-size="10.5" fill="#3f3e3a">비밀번호 재설정</text>
+      <circle cx="392" cy="190" r="3" fill="#4f46e5"/><text x="402" y="194" font-size="10.5" fill="#3f3e3a">부서 &amp; 그룹</text>
+      <circle cx="392" cy="212" r="3" fill="#4f46e5"/><text x="402" y="216" font-size="10.5" fill="#3f3e3a">보고서, 엑셀 내보내기</text>
+      <rect x="384" y="224" width="122" height="18" rx="9" fill="#eceafe"/>
+      <text x="445" y="237" font-size="10" fill="#4338ca" text-anchor="middle" font-weight="600">4장</text>
+    </g>
+
+    <!-- Quản trị -->
+    <g>
+      <rect x="540" y="44" width="150" height="206" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="570" cy="76" r="15" fill="#e11d48"/>
+      <text x="570" y="81" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">Q</text>
+      <text x="594" y="72" font-size="12" font-weight="700" fill="#111315">관리자</text>
+      <text x="594" y="88" font-size="10" fill="#66655f">ADMIN</text>
+      <line x1="554" y1="104" x2="676" y2="104" stroke="#eeece7"/>
+      <circle cx="562" cy="124" r="3" fill="#e11d48"/><text x="572" y="128" font-size="10.5" fill="#3f3e3a">서식 양식</text>
+      <circle cx="562" cy="146" r="3" fill="#e11d48"/><text x="572" y="150" font-size="10.5" fill="#3f3e3a">직위 &amp; 직급</text>
+      <circle cx="562" cy="168" r="3" fill="#e11d48"/><text x="572" y="172" font-size="10.5" fill="#3f3e3a">결재 흐름</text>
+      <circle cx="562" cy="190" r="3" fill="#e11d48"/><text x="572" y="194" font-size="10.5" fill="#3f3e3a">일반 &amp; 텔레그램</text>
+      <circle cx="562" cy="212" r="3" fill="#e11d48"/><text x="572" y="216" font-size="10.5" fill="#3f3e3a">전사 보고서</text>
+      <rect x="554" y="224" width="122" height="18" rx="9" fill="#feecec"/>
+      <text x="615" y="237" font-size="10" fill="#be123c" text-anchor="middle" font-weight="600">5장</text>
+    </g>
+
+    <!-- Dùng chung -->
+    <rect x="30" y="264" width="660" height="56" rx="12" fill="#eef4ff" stroke="#c7d7fe"/>
+    <text x="46" y="288" font-size="12" font-weight="700" fill="#1d4ed8">모든 역할 공통 (1장과 6장)</text>
+    <text x="46" y="306" font-size="11" fill="#3b5bd6">로그인 · 비밀번호 변경 필수 · 알림 벨 · 텔레그램 연결 · 언어 변경 VI / EN / KO</text>
+  </g>
+</svg>

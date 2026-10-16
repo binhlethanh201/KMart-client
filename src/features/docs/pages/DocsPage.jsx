@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { useApproval } from '../../../context/useApproval';
 import PageHeader from '../../../components/PageHeader';
 import { markdownToHtml, slug } from '../markdown';
+import { filterSectionsByRole, VISIBILITY } from '../roleSections';
+import { pickActiveId, createTocLock } from '../tocScroll';
 
 /**
  * DOCS-01: trang HƯỚNG DẪN riêng trong ứng dụng.
@@ -14,6 +17,7 @@ import { markdownToHtml, slug } from '../markdown';
  */
 export default function DocsPage() {
   const { t, language } = useI18n();
+  const { currentUser, hasPermission } = useApproval();
   const [md, setMd] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,54 +43,83 @@ export default function DocsPage() {
     return () => { cancelled = true; };
   }, [language]);
 
-  const html = useMemo(() => (md ? markdownToHtml(md) : ''), [md]);
+  // DOCS-07: chỉ giữ những mục mà vai trò đang đăng nhập được xem (xem roleSections.js).
+  // Đặt trước phần render markdown nên mục lục, rail phải và nội dung luôn khớp nhau.
+  const visibleMd = useMemo(
+    () => filterSectionsByRole(md, (label) => {
+      const rule = VISIBILITY[label];
+      return rule ? rule(currentUser, hasPermission) : true;
+    }),
+    [md, currentUser, hasPermission],
+  );
+
+  const html = useMemo(() => (visibleMd ? markdownToHtml(visibleMd) : ''), [visibleMd]);
 
   const toc = useMemo(() => {
-    if (!md) return [];
-    return md
+    if (!visibleMd) return [];
+    return visibleMd
       .split('\n')
       .filter((l) => /^##\s+/.test(l))
       .map((l) => {
         const text = l.replace(/^##\s+/, '').trim();
         return { id: slug(text), text };
       });
-  }, [md]);
+  }, [visibleMd]);
 
   // Mục con (###) cho rail phải — giúp lấp khoảng trống màn rộng và nhảy nhanh tới tiểu mục.
   const sections = useMemo(() => {
-    if (!md) return [];
+    if (!visibleMd) return [];
     const out = [];
-    md.split('\n').forEach((l) => {
+    visibleMd.split('\n').forEach((l) => {
       const h2 = l.match(/^##\s+(.*)$/);
       const h3 = l.match(/^###\s+(.*)$/);
       if (h2) out.push({ id: slug(h2[1].trim()), text: h2[1].trim(), subs: [] });
       else if (h3 && out.length) out[out.length - 1].subs.push({ id: slug(h3[1].trim()), text: h3[1].trim() });
     });
     return out;
-  }, [md]);
+  }, [visibleMd]);
 
   const activeSection = useMemo(
     () => sections.find((s) => s.id === activeId) || sections[0] || null,
     [sections, activeId]
   );
 
-  // Tô sáng mục lục theo vị trí cuộn: lấy mục cuối cùng có heading đã lướt qua.
+  /**
+   * DOCS-09: xem createTocLock (tocScroll.js). `onCommit` được gọi gián tiếp nên lock giữ được
+   * tham chiếu ổn định qua các lần render.
+   */
+  const [lock] = useState(() => createTocLock({ onCommit: setActiveId }));
+
+  useEffect(() => {
+    // Người dùng chủ động cuộn (chuột / chạm / bàn phím) thì trả quyền lại cho quy tắc theo vị trí.
+    const release = () => lock.release();
+    window.addEventListener('wheel', release, { passive: true });
+    window.addEventListener('touchstart', release, { passive: true });
+    window.addEventListener('keydown', release);
+    return () => {
+      window.removeEventListener('wheel', release);
+      window.removeEventListener('touchstart', release);
+      window.removeEventListener('keydown', release);
+    };
+  }, [lock]);
+
+  // Tô sáng mục lục theo vị trí cuộn: xem pickActiveId (tocScroll.js) — có xử lý riêng cho
+  // trường hợp đã cuộn tới đáy, nếu không thì các mục cuối tài liệu không bao giờ được tô sáng.
   const handleScroll = () => {
     const root = scrollRef.current;
     if (!root || toc.length === 0) return;
     const rootTop = root.getBoundingClientRect().top;
-    let current = toc[0].id;
-    for (const item of toc) {
+    const tops = toc.map((item) => {
       const el = root.querySelector(`#${CSS.escape(item.id)}`);
-      if (!el) continue;
-      if (el.getBoundingClientRect().top - rootTop <= 120) current = item.id;
-    }
-    setActiveId((prev) => (prev === current ? prev : current));
+      return el ? el.getBoundingClientRect().top - rootTop : Number.POSITIVE_INFINITY;
+    });
+    lock.commit(pickActiveId(toc.map((i) => i.id), tops, root));
   };
 
   // Cuộn mượt tới một mục: trang cuộn trong khung riêng nên không dùng jump mặc định của anchor.
   const goTo = (event, id) => {
     event.preventDefault();
+    lock.lock(id);
     const root = scrollRef.current;
     const el = root && root.querySelector(`#${CSS.escape(id)}`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });

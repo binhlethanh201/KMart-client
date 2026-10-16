@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 262" role="img" aria-label="Ba bước đặt lại mật khẩu cho nhân viên quên mật khẩu">
+  <rect width="720" height="262" rx="16" fill="#f6f6f4"/>
+  <g font-family="Inter, 'Segoe UI', Arial, sans-serif">
+    <!-- Bước 1 -->
+    <g>
+      <rect x="30" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="58" cy="74" r="16" fill="#4f46e5"/>
+      <text x="58" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">1</text>
+      <text x="84" y="70" font-size="11" font-weight="700" fill="#111315">Open the employee profile</text>
+      <text x="84" y="86" font-size="10" fill="#66655f">Employee → click their name</text>
+      <rect x="46" y="102" width="168" height="28" rx="8" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="56" y="121" font-size="9.5" fill="#8c8a83">Search by name or employee code</text>
+      <rect x="46" y="138" width="168" height="30" rx="8" fill="#eceafe" stroke="#c7c2f5"/>
+      <text x="56" y="157" font-size="9.5" fill="#4338ca">The "Reset password" button</text>
+      <text x="46" y="186" font-size="9.5" fill="#66655f" textLength="178.0" lengthAdjust="spacingAndGlyphs">Only shown while that person is still active.</text>
+      <text x="46" y="202" font-size="9.5" fill="#66655f">A locked account must be unlocked first.</text>
+    </g>
+
+    <!-- Bước 2 -->
+    <g>
+      <rect x="260" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="288" cy="74" r="16" fill="#d97706"/>
+      <text x="288" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">2</text>
+      <text x="314" y="70" font-size="9" font-weight="700" fill="#111315">Temp password generated</text>
+      <text x="314" y="86" font-size="9" fill="#66655f" textLength="140.0" lengthAdjust="spacingAndGlyphs">You do not set the password yourself</text>
+      <rect x="276" y="102" width="168" height="46" rx="9" fill="#fff7e6" stroke="#f0d9a8"/>
+      <text x="286" y="120" font-size="8.5" fill="#8a5a00" textLength="152.0" lengthAdjust="spacingAndGlyphs">The temporary password appears on screen</text>
+      <text x="286" y="136" font-size="8.5" fill="#8a5a00">so you can read it out to the employee.</text>
+      <rect x="276" y="156" width="168" height="52" rx="9" fill="#e7f5fd" stroke="#b6e0f5"/>
+      <text x="286" y="174" font-size="9.5" font-weight="600" fill="#0c4a6e">It is also sent to Telegram</text>
+      <text x="286" y="190" font-size="8.5" fill="#0c4a6e" textLength="152.0" lengthAdjust="spacingAndGlyphs">of the employee — if they have connected.</text>
+      <text x="286" y="204" font-size="8" fill="#66655f" textLength="152.0" lengthAdjust="spacingAndGlyphs">If not connected, you can only read it out directly.</text>
+    </g>
+
+    <!-- Bước 3 -->
+    <g>
+      <rect x="490" y="44" width="200" height="176" rx="14" fill="#ffffff" stroke="#e7e3da"/>
+      <circle cx="518" cy="74" r="16" fill="#16a34a"/>
+      <text x="518" y="80" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">3</text>
+      <text x="544" y="70" font-size="9" font-weight="700" fill="#111315">The employee signs in again</text>
+      <text x="544" y="86" font-size="10" fill="#66655f">Forced to change it right away</text>
+      <rect x="506" y="102" width="168" height="30" rx="9" fill="#f6f6f4" stroke="#d9d5cc"/>
+      <text x="516" y="121" font-size="9.5" fill="#3f3e3a">Work email + temporary password</text>
+      <rect x="506" y="138" width="168" height="50" rx="9" fill="#e6f5f3" stroke="#a7ded6"/>
+      <text x="516" y="156" font-size="8.5" fill="#0f766e" textLength="152.0" lengthAdjust="spacingAndGlyphs">The "Mandatory password change" screen opens</text>
+      <text x="516" y="172" font-size="9.5" fill="#0f766e">This step cannot be skipped —</text>
+      <text x="516" y="184" font-size="9.5" fill="#0f766e">no menu is reachable.</text>
+      <text x="506" y="208" font-size="9.5" fill="#66655f">After that the temporary password is void.</text>
+    </g>
+
+    <path d="M236 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M466 132 h18 m0 0 l-6 -5 m6 5 l-6 5" stroke="#9a968d" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <text x="360" y="240" font-size="12" fill="#66655f" text-anchor="middle">A forgotten password cannot be self-reset — it always goes through HR to verify identity</text>
+  </g>
+</svg>
