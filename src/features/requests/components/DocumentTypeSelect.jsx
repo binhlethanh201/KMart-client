@@ -146,7 +146,8 @@ export default function DocumentTypeSelect({ documentTypes = [], value, onChange
             <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-secondary flex-shrink-0">search</span>
             <input
               ref={inputRef}
-              type="text"
+              type="search"
+              aria-label={t('Tìm loại đề xuất')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('Tìm loại đề xuất...')}

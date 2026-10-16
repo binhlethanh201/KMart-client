@@ -57,11 +57,12 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
         <div className="relative">
           <span aria-hidden="true" className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-[18px]">search</span>
           <input
+            type="search"
+            aria-label={t('Tìm theo mã, tiêu đề')}
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 bg-slate-800/60 border border-slate-700 rounded-md text-sm text-white outline-none focus:border-primary placeholder:text-slate-500"
             placeholder={t('Tìm theo mã, tiêu đề...')}
-            type="text"
           />
         </div>
       </div>

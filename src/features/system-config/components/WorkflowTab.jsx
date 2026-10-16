@@ -211,6 +211,7 @@ function SequentialOrderList({ role, order, onChange, isSequential = true }) {
                 type="text"
                 autoFocus
                 placeholder={t('Tìm tên hoặc mã nhân sự...')}
+                aria-label={t('Tìm tên hoặc mã nhân sự')}
                 className="flex-1 bg-transparent text-xs text-on-surface outline-none py-1 border-b border-transparent focus:border-primary"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -309,6 +310,7 @@ function UserSelect({ value, onChange }) {
                 type="text"
                 autoFocus
                 placeholder={t('Tìm tên hoặc mã nhân sự...')}
+                aria-label={t('Tìm tên hoặc mã nhân sự')}
                 className="flex-1 bg-transparent text-xs text-on-surface outline-none py-1 border-b border-transparent focus:border-primary"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -520,10 +522,11 @@ function AdvancedApproverModal({ step, onConfirm, onClose }) {
               <div className="flex items-center gap-1.5 flex-1 min-w-[200px] bg-surface border border-outline-variant rounded-md px-2.5 py-1.5">
                 <span aria-hidden="true" className="material-symbols-outlined text-secondary text-[18px]">search</span>
                 <input
-                  type="text"
+                  type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t('Tìm theo tên / mã / chức vụ...')}
+                  aria-label={t('Tìm theo tên / mã / chức vụ')}
                   className="flex-1 bg-transparent text-sm text-on-surface outline-none py-1 border-b border-transparent focus:border-primary"
                 />
               </div>
@@ -578,6 +581,7 @@ function AdvancedApproverModal({ step, onConfirm, onClose }) {
                   <input
                     type="checkbox"
                     checked={isSel}
+                    aria-label={`${t('Chọn người duyệt')} ${e.name}`}
                     onChange={() => toggle(e.id)}
                     onClick={(e2) => e2.stopPropagation()}
                     className="mt-1 text-primary focus:ring-primary rounded cursor-pointer"
@@ -1641,6 +1645,7 @@ export default function WorkflowTab() {
                       </span>
                       <input
                         className="flex-1 bg-transparent text-sm font-semibold text-on-surface outline-none border-b border-transparent focus:border-primary"
+                        aria-label={t('Tên bước duyệt')}
                         value={step.name}
                         onChange={(e) => updateStep(step.id, { name: e.target.value })}
                       />
@@ -1828,7 +1833,7 @@ export default function WorkflowTab() {
                                             newList.splice(index, 1);
                                             updateStep(step.id, { chainList: newList });
                                           }}
-                                          className="p-2 text-muted hover:text-error hover:bg-error/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                          className="p-2 text-muted hover:text-error hover:bg-error/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
                                           title={t('Xóa cấp duyệt')}
                                         >
                                           <span aria-hidden="true" className="material-symbols-outlined text-[20px]">delete</span>
@@ -1921,6 +1926,8 @@ export default function WorkflowTab() {
                                 <input
                                   type="number"
                                   min="1"
+                                  aria-label={t('Thời gian xử lý quá hạn (giờ)')}
+                                  inputMode="numeric"
                                   value={step.maxDurationHours ?? 12}
                                   onChange={(e) => updateStep(step.id, { maxDurationHours: Number(e.target.value) || 1 })}
                                   className={`${selectCls} max-w-[80px]`}

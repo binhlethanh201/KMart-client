@@ -128,8 +128,9 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
         </h2>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-secondary">{t('Từ ngày:')}</label>
+            <label className="text-sm font-medium text-secondary" htmlFor="dept-report-from">{t('Từ ngày:')}</label>
             <input
+              id="dept-report-from"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
@@ -137,8 +138,9 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-secondary">{t('Đến ngày:')}</label>
+            <label className="text-sm font-medium text-secondary" htmlFor="dept-report-to">{t('Đến ngày:')}</label>
             <input
+              id="dept-report-to"
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
@@ -265,7 +267,8 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
           <div className="relative w-full sm:w-64">
             <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">search</span>
             <input
-              type="text"
+              type="search"
+              aria-label={t('Tìm nhân viên')}
               placeholder={t('Tìm nhân viên...')}
               value={memberSearch}
               onChange={(e) => handleMemberSearch(e.target.value)}
@@ -364,7 +367,8 @@ export default function DepartmentReport({ deptRequests, members, employees, isD
                         {isExpanded && (
                           <div className="mt-2 pl-2 ml-1.5 border-l-2 border-outline-variant/60 flex flex-col gap-2">
                             <input
-                              type="text"
+                              type="search"
+                              aria-label={t('Tìm mã đơn, tiêu đề')}
                               value={searchQuery}
                               onChange={(e) => handleSearchChange(expandKey, e.target.value)}
                               placeholder="Tìm mã đơn, tiêu đề..."

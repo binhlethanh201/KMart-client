@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { TIME_RULES } from '../data/mockData';
 import apiClient, { API_URL } from '../../../services/apiClient';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -10,6 +10,9 @@ const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1
 
 export default function GeneralTab() {
   const { t } = useI18n();
+  /* UX-01: id duy nhất để <label> nối với <input> bằng htmlFor — trước đây nhãn là thẻ chữ trơ. */
+  const uid = useId();
+  const uiFieldId = (name) => `gen-${name}-${uid}`;
   const [telegram, setTelegram] = useState({
     status: 'disconnected',
     botToken: ''
@@ -131,9 +134,11 @@ export default function GeneralTab() {
 
         <div className="p-5 flex flex-col gap-4">
           <div>
-            <label className={labelCls}>{t('Telegram Bot Token')}</label>
+            <label className={labelCls} htmlFor={uiFieldId('botToken')}>{t('Telegram Bot Token')}</label>
             <input
+              id={uiFieldId('botToken')}
               type="password"
+              autoComplete="off"
               className={fieldCls}
               value={telegram.botToken}
               onChange={(e) => setTelegram((z) => ({ ...z, botToken: e.target.value }))}
@@ -193,8 +198,9 @@ export default function GeneralTab() {
             <div className="text-xs font-semibold uppercase tracking-wide text-secondary mb-3">{t('Giờ hành chính mặc định')}</div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>{t('Giờ bắt đầu')}</label>
+                <label className={labelCls} htmlFor={uiFieldId('bizStart')}>{t('Giờ bắt đầu')}</label>
                 <input
+                  id={uiFieldId('bizStart')}
                   className={fieldCls}
                   type="time"
                   value={businessHoursStart}
@@ -202,8 +208,9 @@ export default function GeneralTab() {
                 />
               </div>
               <div>
-                <label className={labelCls}>{t('Giờ kết thúc')}</label>
+                <label className={labelCls} htmlFor={uiFieldId('bizEnd')}>{t('Giờ kết thúc')}</label>
                 <input
+                  id={uiFieldId('bizEnd')}
                   className={fieldCls}
                   type="time"
                   value={businessHoursEnd}

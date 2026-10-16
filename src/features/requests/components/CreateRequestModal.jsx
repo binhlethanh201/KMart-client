@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
@@ -44,6 +44,15 @@ function validateAttachment(file, t) {
 
 export default function CreateRequestModal({ onClose, existingRequest = null, onSubmitted }) {
   const { t } = useI18n();
+  /*
+   * UX-01: id duy nhất cho các ô nhập của hộp thoại, để <label> nối được với <input> bằng htmlFor.
+   * Trước đây mọi nhãn chỉ là thẻ chữ trơ nên trình đọc màn hình đọc ô nhập là "edit text, blank"
+   * — nhân viên khiếm thị không biết đang điền "Lý do" hay "Số ngày".
+   * Đặt tên `uiFieldId` (không phải `fieldId`) vì trong vòng lặp field động bên dưới đã có biến
+   * `fieldId` mang khoá field do BE trả về — trùng tên sẽ che mất helper.
+   */
+  const uid = useId();
+  const uiFieldId = (name) => `req-${name}-${uid}`;
   const { createRequest, updateRequest, submitDraft, retryDraftUploads, finalizePendingDraft, departments, currentUser, pushToast } = useApproval();
   const { employees } = useHr();
 
@@ -836,8 +845,11 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
           {/* Lý do/Yêu cầu */}
           <div className="flex flex-col gap-2" data-field-error="__reason">
-            <label className={labelCls}>{t('Lý do / Mô tả')} <span className="text-error">*</span></label>
+            <label className={labelCls} htmlFor={uiFieldId('reason')}>
+              {t('Lý do / Mô tả')} <span className="text-error">*</span>
+            </label>
             <textarea
+              id={uiFieldId('reason')}
               className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
               value={form.reason}
               onChange={set('reason')}
@@ -859,14 +871,18 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               const isAuto = f.options?.includes('auto') || f.options?.includes('tự động');
               return (
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
-                  <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  <label className={labelCls} htmlFor={uiFieldId(fieldId)}>
+                    {t(labelKey)} {f.required && <span className="text-error">*</span>}
+                  </label>
                   {renderFieldError(fieldId)}
                   <input
+                    id={uiFieldId(fieldId)}
                     className={fieldCls}
                     type="number"
                     required={f.required}
                     min="0"
                     step="any"
+                    inputMode="decimal"
                     value={form.dynamic[fieldId] || ''}
                     onChange={(e) => setDynamic(fieldId, e.target.value)}
                     placeholder={f.placeholder || ''}
@@ -887,9 +903,12 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
 
               return (
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
-                  <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  <label className={labelCls} htmlFor={uiFieldId(fieldId)}>
+                    {t(labelKey)} {f.required && <span className="text-error">*</span>}
+                  </label>
                   {renderFieldError(fieldId)}
                   <input 
+                    id={uiFieldId(fieldId)}
                     className={fieldCls} 
                     type={inputType} 
                     required={f.required} 
@@ -905,9 +924,12 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               const fieldId = resolveFieldKey(f);
               return (
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
-                  <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  <label className={labelCls} htmlFor={uiFieldId(fieldId)}>
+                    {t(labelKey)} {f.required && <span className="text-error">*</span>}
+                  </label>
                   {renderFieldError(fieldId)}
                   <textarea
+                    id={uiFieldId(fieldId)}
                     className="w-full rounded-md border border-outline-variant bg-surface-container-lowest p-3 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none min-h-[80px]"
                     required={f.required}
                     value={form.dynamic[fieldId] || ''}
@@ -924,9 +946,13 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
               const options = f.options || [];
               return (
                 <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
-                  <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                  <label className={labelCls} htmlFor={uiFieldId(fieldId)}>
+                    {t(labelKey)} {f.required && <span className="text-error">*</span>}
+                  </label>
                   {renderFieldError(fieldId)}
                   <Select
+                    id={uiFieldId(fieldId)}
+                    ariaLabel={t(labelKey)}
                     className={fieldCls}
                     value={form.dynamic[fieldId] || ''}
                     onChange={(v) => setDynamic(fieldId, v)}
@@ -1066,9 +1092,12 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             const fieldId = resolveFieldKey(f);
             return (
               <div key={fieldId} data-field-error={fieldId} className="flex flex-col gap-2">
-                <label className={labelCls}>{t(labelKey)} {f.required && <span className="text-error">*</span>}</label>
+                <label className={labelCls} htmlFor={uiFieldId(fieldId)}>
+                  {t(labelKey)} {f.required && <span className="text-error">*</span>}
+                </label>
                   {renderFieldError(fieldId)}
                 <input
+                  id={uiFieldId(fieldId)}
                   className={fieldCls}
                   type="text"
                   required={f.required}

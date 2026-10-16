@@ -306,7 +306,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => { setUsePagination(!usePagination); setPage(1); }}
-                  className="text-xs font-medium text-primary hover:underline whitespace-nowrap cursor-pointer"
+                  className="tap-target text-xs font-medium text-primary hover:underline whitespace-nowrap cursor-pointer"
                   title={usePagination ? 'Chuyển sang cuộn vô hạn' : 'Chuyển sang phân trang'}
                 >
                   {usePagination ? t('Cuộn vô hạn') : t('Phân trang')}
@@ -315,7 +315,7 @@ export default function PersonalRequests({ mode = 'sent' }) {
                   <button
                     type="button"
                     onClick={() => { setSearch(''); setDepartmentFilter(null); setDocumentTypeFilter(null); }}
-                    className="text-xs font-medium text-primary hover:underline whitespace-nowrap cursor-pointer"
+                    className="tap-target text-xs font-medium text-primary hover:underline whitespace-nowrap cursor-pointer"
                   >
                     {t('Xoá bộ lọc')}
                   </button>

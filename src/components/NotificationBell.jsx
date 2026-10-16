@@ -206,7 +206,7 @@ export default function NotificationBell({ variant = 'sidebar' }) {
                     type="button"
                     title={t('Xóa thông báo')}
                     onClick={(e) => handleDelete(e, n)}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-full text-secondary hover:bg-error-container hover:text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full text-secondary hover:bg-error-container hover:text-error flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all cursor-pointer"
                     aria-label={t('Xóa thông báo')}
                   >
                     <span aria-hidden="true" className="material-symbols-outlined text-[14px]">delete</span>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
@@ -76,6 +76,8 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
             </span>
             <input
               autoFocus
+              type="search"
+              aria-label={t('Tìm nhân sự')}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="w-full pl-8 pr-2 py-1.5 bg-surface-container-lowest border border-outline-variant rounded text-sm outline-none focus:border-primary"
@@ -135,6 +137,9 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
 
 export default function AddDepartmentModal({ onClose }) {
   const { t } = useI18n();
+  /* UX-01: id duy nhất để <label> nối với <input> bằng htmlFor — xem ghi chú ở EmployeeModal. */
+  const uid = useId();
+  const uiFieldId = (name) => `dept-${name}-${uid}`;
   const { employees, departments = [], addDepartment } = useApproval();
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -299,10 +304,11 @@ export default function AddDepartmentModal({ onClose }) {
             </h3>
 
             <div>
-              <label className={labelCls}>
+              <label className={labelCls} htmlFor={uiFieldId('code')}>
                 {t('Mã đơn vị')} <span className="text-error">*</span>
               </label>
               <input
+                id={uiFieldId('code')}
                 data-field="dept-code"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -315,10 +321,11 @@ export default function AddDepartmentModal({ onClose }) {
             </div>
 
             <div>
-              <label className={labelCls}>
+              <label className={labelCls} htmlFor={uiFieldId('name')}>
                 {t('Tên đơn vị / Phòng ban')} <span className="text-error">*</span>
               </label>
               <input
+                id={uiFieldId('name')}
                 data-field="dept-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -426,17 +433,18 @@ export default function AddDepartmentModal({ onClose }) {
             </div>
 
             <div className={`${cardCls} space-y-3`}>
-              <label className={labelCls}>{t('Thêm thành viên vào phòng')}</label>
+              <label className={labelCls} htmlFor={uiFieldId('memberQuery')}>{t('Thêm thành viên vào phòng')}</label>
               <div className="relative">
                 <span aria-hidden="true" className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
                   search
                 </span>
                 <input
+                  id={uiFieldId('memberQuery')}
+                  type="search"
                   value={memberQuery}
                   onChange={(e) => setMemberQuery(e.target.value)}
                   className={`${inputCls} pl-9`}
                   placeholder={t('Tìm nhân sự theo tên, mã NV...')}
-                  type="text"
                 />
               </div>
 

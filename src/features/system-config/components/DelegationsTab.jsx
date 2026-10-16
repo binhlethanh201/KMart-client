@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { delegationService } from '../../../services/delegationService';
 import { userService } from '../../hr/services/userService';
@@ -106,6 +106,7 @@ export function UserSelect({ value, onChange, excludeId, openSignal = 0 }) {
               autoFocus
               type="text"
               placeholder={t('Tìm tên hoặc mã nhân sự...')}
+              aria-label={t('Tìm tên hoặc mã nhân sự')}
               className="flex-1 bg-transparent text-xs text-on-surface outline-none py-1 border-b border-transparent focus:border-primary"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -165,6 +166,9 @@ export function UserSelect({ value, onChange, excludeId, openSignal = 0 }) {
 export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultStartDate = null }) {
   const { t } = useI18n();
   const { currentUser } = useApproval();
+  /* UX-01: id duy nhất để <label> nối với <input> bằng htmlFor. */
+  const uid = useId();
+  const uiFieldId = (name) => `deleg-${name}-${uid}`;
 
   const today = useMemo(() => {
     const d = new Date();
@@ -320,10 +324,11 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
           {/* Date range */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>
+              <label className={labelCls} htmlFor={uiFieldId('startDate')}>
                 {t('Ngày bắt đầu')} <span className="text-error">*</span>
               </label>
               <input
+                id={uiFieldId('startDate')}
                 type="date"
                 value={startDate}
                 min={today}
@@ -336,10 +341,11 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
               {errors.startDate && <p className="text-xs text-error mt-1">{errors.startDate}</p>}
             </div>
             <div>
-              <label className={labelCls}>
+              <label className={labelCls} htmlFor={uiFieldId('endDate')}>
                 {t('Ngày kết thúc')} <span className="text-error">*</span>
               </label>
               <input
+                id={uiFieldId('endDate')}
                 type="date"
                 value={endDate}
                 min={startDate || today}
@@ -355,8 +361,9 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
 
           {/* Reason */}
           <div>
-            <label className={labelCls}>{t('Lý do ủy quyền')}</label>
+            <label className={labelCls} htmlFor={uiFieldId('reason')}>{t('Lý do ủy quyền')}</label>
             <textarea
+              id={uiFieldId('reason')}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}

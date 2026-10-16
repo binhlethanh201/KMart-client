@@ -16,6 +16,33 @@
   #root {
     @apply flex-1 min-w-0;
   }
+
+  /*
+   * UX-02: chỉ báo focus cho phần tử tương tác KHÔNG có kiểu focus riêng.
+   *
+   * Hai điều bắt buộc phải đúng, nếu không sẽ hỏng giao diện:
+   *
+   * 1) Phải là `:where()` để độ ưu tiên bằng 0. Nếu viết `:focus-visible` trần thì nó mạnh hơn
+   *    `.outline-none` của Tailwind và ĐÈ MẤT — ô nhập vốn đã có chỉ báo riêng (khung cha dùng
+   *    `focus-within:ring-4`) sẽ bị vẽ thêm một viền xanh nữa bên trong, thành HAI tầng viền
+   *    chồng nhau. `:where()` giữ nguyên hành vi cũ ở mọi chỗ đã tự lo focus.
+   *
+   * 2) Phải nằm trong `@layer base`. Tailwind chỉ phát ra `@layer base` TRƯỚC utilities, nên quy
+   *    tắc ở đây luôn thua `outline-none` (utilities) dù viết ở đâu trong file — đây là lý do
+   *    đặt trong `base` chứ không phải khối cuối file.
+   *
+   * Có cả ô nhập: ô nào chưa tự lo focus (không `focus:` và khung cha không `focus-within:`) vẫn
+   * phải thấy được vị trí con trỏ bàn phím (WCAG 2.4.7). Ô nào đã có `outline-none` thì như mục 1,
+   * quy tắc này không chen vào.
+   */
+  :where(
+    a, button, summary, [role='button'], [tabindex]:not([tabindex='-1']),
+    input, select, textarea
+  ):focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }
 
 @layer components {
@@ -187,6 +214,22 @@
       --stack-grid-label: rgb(156 163 175);
     }
   }
+
+  /*
+   * Vùng chạm tối thiểu 24x24 theo WCAG 2.2 SC 2.5.8 cho nút biểu tượng nhỏ.
+   *
+   * Phải nằm trong `@layer components`, KHÔNG phải `@layer utilities`: nút "Xóa thông báo"
+   * dùng cả `.absolute` (để neo vào góc phải trên hàng thông báo) lẫn `.tap-target`. Tailwind
+   * xếp components trước utilities, nên `.absolute` thắng; nếu để trong utilities thì
+   * `position: relative` ở đây sẽ đè `.absolute` và nút rơi khỏi vị trí.
+   *
+   * KHÔNG mở rộng vùng chạm bằng lớp phủ `::after { inset: -6px }`: trong cặp nút Sửa/Xóa
+   * (cách nhau 2px), lớp phủ của nút Sửa trùm lên nút Xóa và cướp cú bấm — bấm lệch là xóa
+   * mất dữ liệu. Tăng kích thước thật của nút là cách duy nhất không sinh vùng chồng lấn.
+   */
+  .tap-target {
+    @apply min-h-6 min-w-6 inline-flex items-center justify-center;
+  }
 }
 
 @layer utilities {
@@ -221,6 +264,34 @@ button, a, input[type="radio"], input[type="checkbox"] {
 }
 button:active, a:active {
   transform: scale(0.99); /* Subtler scale for enterprise */
+}
+
+/*
+ * UX-02: chỉ báo focus cho phần tử tương tác không có kiểu focus riêng — xem `@layer base` ở đầu file.
+ * KHÔNG đặt quy tắc `:focus-visible` toàn cục ở đây: ngoài `@layer` nó sẽ mạnh hơn `.outline-none`
+ * (utilities) và đè mất chỉ báo riêng của ô nhập, sinh ra hai tầng viền chồng nhau.
+ */
+
+/*
+ * UX-03: tôn trọng `prefers-reduced-motion`.
+ *
+ * Ứng dụng có hiệu ứng trượt, thu/mở sidebar và co nút khi bấm; người bị rối loạn tiền đình
+ * (vestibular disorder) có thể bị khó chịu. Người dùng đã bật "giảm chuyển động" trong hệ điều hành
+ * thì mọi hiệu ứng phải gần như tắt hẳn, không chỉ nhanh hơn.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  button:active,
+  a:active {
+    transform: none;
+  }
 }
 
 @keyframes slideFadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }

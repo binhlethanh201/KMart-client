@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../i18n/I18nProvider';
 
 /**
@@ -20,12 +20,20 @@ export default function SearchableSelect({
   className = '',
   renderLabel = (item) => item.label,
   testId,
+  ariaLabel,
+  id,
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const boxRef = useRef(null);
   const inputRef = useRef(null);
+  /*
+   * UX-01: nút mở danh sách lấy tên truy cập từ chính chữ bên trong nó, nên không cần aria-label
+   * cho trường hợp thường. Chỉ cần thêm trạng thái mở/đóng (`aria-haspopup`/`aria-expanded`) và
+   * tên riêng cho Ô TÌM KIẾM bên trong (nó chỉ có placeholder, mà placeholder không phải nhãn).
+   */
+  const searchId = useId();
 
   const selected = options.find((o) => o.value === value) || null;
 
@@ -63,8 +71,14 @@ export default function SearchableSelect({
     <div className="relative" ref={boxRef}>
       <button
         type="button"
+        id={id || undefined}
         data-testid={testId}
         disabled={disabled}
+        /* UX-01: <button> lấy tên truy cập từ chính chữ bên trong, nên không cần aria-label
+           cho trường hợp thường; chỉ bổ sung trạng thái mở/đóng cho trình đọc màn hình. */
+        aria-label={ariaLabel || undefined}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={`${className} flex items-center justify-between gap-2 text-left ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
       >
@@ -81,6 +95,7 @@ export default function SearchableSelect({
               <span aria-hidden="true" className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[16px] text-secondary">search</span>
               <input
                 ref={inputRef}
+                id={searchId}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -89,6 +104,7 @@ export default function SearchableSelect({
                   if (e.key === 'Enter' && visible.length === 1) pick(visible[0].value);
                 }}
                 placeholder={t('Tìm kiếm...')}
+                aria-label={t('Tìm kiếm trong danh sách')}
                 className="w-full pl-7 pr-2 py-1.5 text-sm border border-outline-variant rounded-md outline-none focus:border-primary bg-surface"
               />
             </div>

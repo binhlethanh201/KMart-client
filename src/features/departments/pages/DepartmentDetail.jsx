@@ -278,11 +278,12 @@ export default function DepartmentDetail() {
                     search
                   </span>
                   <input
+                    type="search"
+                    aria-label={t('Tìm theo mã đơn, mã nhân sự, tên nhân viên')}
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     className={FILTER_SEARCH_CLS}
                     placeholder={t('Tìm theo mã đơn, mã nhân sự, tên nhân viên...')}
-                    type="text"
                   />
                 </div>
                 <Select

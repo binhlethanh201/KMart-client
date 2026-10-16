@@ -153,11 +153,12 @@ export default function HumanResources() {
           <div className="relative flex-1 lg:max-w-sm">
             <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">search</span>
             <input
+              type="search"
+              aria-label={t('Tìm theo mã NV, họ tên, email, sđt')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className={FILTER_SEARCH_CLS}
               placeholder={t('Tìm theo mã NV, họ tên, email, sđt...')}
-              type="text"
             />
           </div>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">

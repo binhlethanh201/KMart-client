@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../i18n/I18nProvider';
 
@@ -36,6 +36,8 @@ export default function Select({
   maxHeight = 280,
   dropdownClassName = '',
   testId,
+  ariaLabel,
+  id,
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -44,6 +46,15 @@ export default function Select({
   const boxRef = useRef(null);
   const dropdownRef = useRef(null);
   const listRef = useRef(null);
+  /*
+   * UX-01: nút mở danh sách LẤY SẴN tên truy cập từ chính chữ bên trong nó (`<button>` dùng text
+   * content làm accessible name), nên KHÔNG cần aria-label cho trường hợp thường — bản vá đầu của
+   * tôi thêm `aria-labelledby` trỏ vào <span> nội bộ là thừa và còn ghi đè tên đúng.
+   * Hai thứ thật sự còn thiếu, thêm ở dưới: `aria-haspopup`/`aria-expanded` để biết đây là ô chọn
+   * và đang mở hay đóng; và `ariaLabel` cho trường hợp nhãn nằm ngoài component.
+   * Ô tìm kiếm bên trong thì CẦN tên riêng vì nó chỉ có placeholder (placeholder không phải nhãn).
+   */
+  const searchId = useId();
 
   const selected = options.find((o) => o.value === value) || null;
   const withSearch = searchable ?? options.length > 8;
@@ -171,11 +182,15 @@ export default function Select({
     <div className="relative" ref={boxRef}>
       <button
         type="button"
+        id={id || undefined}
         data-testid={testId}
         // BE-153: dấu phiên bản component trên DOM — giúp xác nhận tab trình duyệt đã nạp
         // bundle MỚI (chứa bản sửa dropdown) hay vẫn giữ bundle cũ.
         data-select-ver="153"
         disabled={disabled}
+        aria-label={ariaLabel || undefined}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         onClick={() => {
           if (open) {
             close();
@@ -225,6 +240,7 @@ export default function Select({
                 </span>
                 <input
                   autoFocus
+                  id={searchId}
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -232,6 +248,7 @@ export default function Select({
                     if (e.key === 'Enter' && visible.length === 1) pick(visible[0].value);
                   }}
                   placeholder={t('Tìm kiếm...')}
+                  aria-label={t('Tìm kiếm trong danh sách')}
                   className="w-full pl-7 pr-2 py-1.5 text-sm border border-outline-variant rounded-md outline-none focus:border-primary bg-surface text-on-surface"
                 />
               </div>

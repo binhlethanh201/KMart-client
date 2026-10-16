@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { positionService } from '../../hr/services/positionService';
 import { useHr } from '../../hr/context/HrProvider';
@@ -39,6 +39,9 @@ const CODE_RE = /^[A-Z0-9_]+$/;
 
 function PositionModal({ position, onClose, onSaved }) {
   const { t } = useI18n();
+  /* UX-01: id duy nhất để <label> nối với <input> bằng htmlFor. */
+  const uid = useId();
+  const uiFieldId = (name) => `pos-${name}-${uid}`;
   const isEdit = Boolean(position);
   const [name, setName] = useState(position?.name || '');
   const [code, setCode] = useState(position?.code || '');
@@ -119,8 +122,9 @@ function PositionModal({ position, onClose, onSaved }) {
 
         <div className="p-5 flex flex-col gap-4">
           <div>
-            <label className={labelCls}>{t('Tên chức vụ')} <span className="text-error">*</span></label>
+            <label className={labelCls} htmlFor={uiFieldId('name')}>{t('Tên chức vụ')} <span className="text-error">*</span></label>
             <input
+              id={uiFieldId('name')}
               data-field="pos-name"
               autoFocus
               value={name}
@@ -138,8 +142,9 @@ function PositionModal({ position, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className={labelCls}>{t('Mã chức vụ')} <span className="text-error">*</span></label>
+            <label className={labelCls} htmlFor={uiFieldId('code')}>{t('Mã chức vụ')} <span className="text-error">*</span></label>
             <input
+              id={uiFieldId('code')}
               data-field="pos-code"
               value={code}
               onChange={(e) => { setCode(e.target.value.toUpperCase()); setErrors((x) => ({ ...x, code: null, submit: null })); }}
@@ -150,9 +155,10 @@ function PositionModal({ position, onClose, onSaved }) {
           </div>
 
           <div>
-            <label className={labelCls}>{t('Cấp bậc')}</label>
+            <label className={labelCls} id={uiFieldId('levelLabel')}>{t('Cấp bậc')}</label>
             <Select
               data-field="pos-level"
+              ariaLabel={t('Cấp bậc')}
               value={level}
               onChange={(v) => { setLevel(Number(v)); setErrors((x) => ({ ...x, level: null, submit: null })); }}
               className={inputCls}
@@ -296,11 +302,12 @@ export default function PositionsTab() {
         <div className="relative w-full sm:w-80">
           <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">search</span>
           <input
+            type="search"
+            aria-label={t('Tìm theo tên hoặc mã chức vụ')}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className={FILTER_SEARCH_CLS}
             placeholder={t('Tìm theo tên hoặc mã chức vụ...')}
-            type="text"
           />
         </div>
         <Select

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 
@@ -7,6 +7,8 @@ import { useI18n } from '../../../i18n/I18nProvider';
 export default function RejectReasonModal({ requestId, onClose, onConfirm }) {
   const { t } = useI18n();
   const [reason, setReason] = useState('');
+  /* UX-01: id nối <label> với <textarea> — trước đây nhãn là thẻ chữ trơ. */
+  const reasonId = useId();
 
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
@@ -47,8 +49,9 @@ export default function RejectReasonModal({ requestId, onClose, onConfirm }) {
           </button>
         </div>
         <div className="p-5">
-          <label className="block font-label-md text-label-md text-on-surface-variant mb-1.5">{t('Lý do từ chối')}</label>
+          <label className="block font-label-md text-label-md text-on-surface-variant mb-1.5" htmlFor={reasonId}>{t('Lý do từ chối')}</label>
           <textarea
+            id={reasonId}
             autoFocus
             value={reason}
             onChange={(e) => setReason(e.target.value)}

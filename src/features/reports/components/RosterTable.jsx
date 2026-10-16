@@ -104,16 +104,17 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
       {/* Tìm kiếm + lọc chức vụ ngay trong bảng (lọc tại chỗ, không gọi lại máy chủ) */}
       <div className="flex items-end gap-3 flex-wrap mb-5 pb-4 border-b border-white/10">
         <div className="flex flex-col gap-1.5 flex-1 min-w-[220px]">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{t('Tìm kiếm nhân sự')}</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500" htmlFor="roster-search">{t('Tìm kiếm nhân sự')}</label>
           <div className="relative">
             <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-gray-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
               search
             </span>
             <input
-              type="text"
+              id="roster-search"
+              type="search"
               value={query_}
               onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('Tên, mã nhân sự, phòng công tác, chức vụ...')}
+              placeholder={t('Tên, mã nhân sự, phòng công tác, chức vụ...')}
               className="w-full h-[38px] pl-10 pr-9 bg-white/5 border border-white/15 rounded-lg text-[13px] text-white placeholder:text-gray-500 outline-none focus:border-white/40 transition-colors"
             />
             {query_ && (

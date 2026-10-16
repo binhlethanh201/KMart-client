@@ -6,8 +6,7 @@ import { clearSessionStorage } from '../../../utils/session';
 import { describeApiError } from '../../../utils/apiError';
 import { useApproval } from '../../../context/useApproval';
 import AuthBackground from './AuthBackground';
-import BrandLogo from '../../../components/BrandLogo';
-import LanguageSwitcher from '../../../components/LanguageSwitcher';
+import { motion, useReducedMotion } from 'motion/react';
 
 /**
  * AUTH-10: màn ĐỔI MẬT KHẨU BẮT BUỘC.
@@ -23,20 +22,31 @@ import LanguageSwitcher from '../../../components/LanguageSwitcher';
  */
 
 const inputCls =
-  'w-full rounded-lg border border-outline-variant bg-[#FFFEFA] px-3.5 py-2.5 text-body-md text-on-surface placeholder:text-muted outline-none transition-colors focus:border-primary focus:ring-4 focus:ring-primary-container';
+  'w-full rounded-lg border border-outline-variant bg-[#FFFEFA] px-3.5 py-2 text-body-md text-on-surface placeholder:text-muted outline-none transition-colors focus:border-primary focus:ring-4 focus:ring-primary-container';
 const labelCls = 'block text-label-md text-on-surface mb-1.5';
 
-/** AUTH-11: quy tắc mật khẩu mới — phải khớp validator ở backend. */
-const passwordRules = [
-  { id: 'length', label: 'Tối thiểu 8 ký tự', test: (v) => v.length >= 8 },
-  { id: 'upper', label: 'Có chữ hoa', test: (v) => /[A-Z]/.test(v) },
-  { id: 'lower', label: 'Có chữ thường', test: (v) => /[a-z]/.test(v) },
-  { id: 'digit', label: 'Có chữ số', test: (v) => /[0-9]/.test(v) },
-  { id: 'special', label: 'Có ký tự đặc biệt', test: (v) => /[^a-zA-Z0-9]/.test(v) },
+/**
+ * AUTH-11: quy tắc mật khẩu mới — phải khớp validator ở backend.
+ *
+ * AUTH-18: ở đây chỉ giữ `id` + hàm kiểm tra. Nhãn hiển thị tách ra `RULE_LABEL_KEYS` và được dịch
+ * bằng `t()` với CHUỖI HẰNG ngay trong thân component.
+ *
+ * Vì sao không để nhãn ở đây: trước đây mảng này có `label: 'Có chữ hoa'` rồi render bằng
+ * `t(rule.label)`. `scripts/i18n-sync.mjs` chỉ quét được `t('chuỗi hằng')`, nên 5 nhãn này KHÔNG
+ * bao giờ được đưa vào từ điển — kiểm tra thật ở EN/KO thì thấy nhãn vẫn nguyên tiếng Việt. Đây
+ * đúng là lỗi BE-78 đã ghi trong LandingPage, lặp lại ở file này.
+ */
+const PASSWORD_RULES = [
+  { id: 'length', test: (v) => v.length >= 8 },
+  { id: 'upper', test: (v) => /[A-Z]/.test(v) },
+  { id: 'lower', test: (v) => /[a-z]/.test(v) },
+  { id: 'digit', test: (v) => /[0-9]/.test(v) },
+  { id: 'special', test: (v) => /[^a-zA-Z0-9]/.test(v) },
 ];
 
 export default function ForcePasswordChange() {
   const { t } = useI18n();
+  const reduceMotion = useReducedMotion();
   const { currentUser } = useApproval();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -44,7 +54,20 @@ export default function ForcePasswordChange() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const passed = passwordRules.filter((r) => r.test(newPassword));
+  /*
+   * AUTH-18: nhãn quy tắc dùng `t()` với CHUỖI HẰNG để scripts/i18n-sync.mjs quét được, và tra theo
+   * `id` của quy tắc. Lý do phải viết dài dòng thế này thay vì đặt nhãn trong `PASSWORD_RULES`:
+   * xem ghi chú ở định nghĩa `PASSWORD_RULES`.
+   */
+  const RULE_LABELS = {
+    length: t('Tối thiểu 8 ký tự'),
+    upper: t('Có chữ hoa'),
+    lower: t('Có chữ thường'),
+    digit: t('Có chữ số'),
+    special: t('Có ký tự đặc biệt'),
+  };
+
+  const passed = PASSWORD_RULES.filter((r) => r.test(newPassword));
   const confirmMismatch = confirmPassword !== '' && confirmPassword !== newPassword;
   const sameAsCurrent = newPassword !== '' && newPassword === currentPassword;
 
@@ -52,7 +75,7 @@ export default function ForcePasswordChange() {
     event.preventDefault();
     setError('');
 
-    if (passed.length !== passwordRules.length) {
+    if (passed.length !== PASSWORD_RULES.length) {
       setError(t('Mật khẩu mới chưa đủ mạnh. Vui lòng kiểm tra các yêu cầu bên dưới.'));
       return;
     }
@@ -103,33 +126,24 @@ export default function ForcePasswordChange() {
 
   return (
     <AuthBackground>
-      <div className="absolute top-6 right-6 z-20">
-        <LanguageSwitcher variant="onDark" />
-      </div>
-
-      <div className="relative z-10 flex w-full flex-col items-center">
-        <h1 className="mb-7 flex justify-center">
-          <BrandLogo size="lg" tone="onDark" glow tagline={t('Hệ thống quản trị nội bộ')} />
-        </h1>
-
-        <div className="w-full max-w-[420px] rounded-2xl border border-white/10 bg-surface p-8 shadow-[0_28px_70px_-28px_rgba(0,0,0,0.65)]">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-full bg-primary-container flex items-center justify-center">
-            <span aria-hidden="true" className="material-symbols-outlined text-on-primary-container">lock_reset</span>
-          </div>
-          <div>
-            <h2 className="text-title-lg font-semibold text-on-surface">{t('Đổi mật khẩu bắt buộc')}</h2>
-            <p className="text-body-sm text-secondary">
-              {t('Tài khoản của bạn đang dùng mật khẩu tạm do Nhân sự cấp.')}
+      {/* AUTH-17: cùng khung "viền trên gradient" và cùng hiệu ứng trượt đẩy với trang đăng nhập,
+          để hai màn xác thực vào trang giống hệt nhau. */}
+      <motion.div
+        initial={reduceMotion ? false : { x: 96, y: -12, rotate: -1.1, opacity: 0 }}
+        animate={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 170, damping: 20, mass: 0.9 }}
+        className="flex w-full justify-center"
+      >
+        <div className="w-full overflow-hidden rounded-xl">
+          <div className="h-1 w-full bg-[linear-gradient(90deg,#1d4ed8_0%,#60a5fa_52%,#15803d_100%)]" />
+          <div className="border-x border-b border-outline-variant bg-surface p-6 shadow-[0_30px_70px_-30px_rgba(0,0,0,0.6)] sm:p-7">
+            <h1 className="text-headline-sm text-on-surface">{t('Đổi mật khẩu bắt buộc')}</h1>
+            <p className="mt-1 text-body-md text-secondary">
+              {t('Tài khoản của bạn đang dùng mật khẩu tạm do Nhân sự cấp.')}{' '}
+              {t('Vì lý do an toàn, bạn phải đặt mật khẩu mới trước khi tiếp tục sử dụng hệ thống.')}
             </p>
-          </div>
-        </div>
 
-        <p className="mt-4 text-body-sm text-secondary">
-          {t('Vì lý do an toàn, bạn phải đặt mật khẩu mới trước khi tiếp tục sử dụng hệ thống.')}
-        </p>
-
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            <form className="mt-5 space-y-3.5" onSubmit={handleSubmit}>
           <div>
             <label className={labelCls} htmlFor="force-current">{t('Mật khẩu tạm hiện tại')}</label>
             <input
@@ -175,22 +189,40 @@ export default function ForcePasswordChange() {
             )}
           </div>
 
-          <ul className="space-y-1">
-            {passwordRules.map((rule) => {
-              const ok = rule.test(newPassword);
-              return (
-                <li key={rule.id} className="flex items-center gap-2 text-body-sm">
-                  <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${ok ? 'text-emerald-600' : 'text-muted'}`}>
-                    {ok ? 'check_circle' : 'radio_button_unchecked'}
-                  </span>
-                  <span className={ok ? 'text-on-surface' : 'text-secondary'}>{t(rule.label)}</span>
-                </li>
-              );
-            })}
-          </ul>
+            {/*
+             * AUTH-18: 2 cột từ `sm` trở lên. Thẻ này có 3 ô nhập + 5 quy tắc nên cao 651px; cùng với
+             * logo và nút ngôn ngữ là vượt màn 768px của laptop phổ thông, buộc phải cuộn ở màn chặn
+             * bắt buộc — rất khó chịu. Xếp 5 quy tắc thành 2 cột (3 hàng thay vì 5) tiết kiệm ~52px,
+             * vừa đủ để không phải cuộn. Màn hẹp giữ 1 cột vì chữ sẽ phải ngắt dòng.
+             */}
+            <ul className="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
+              {PASSWORD_RULES.map((rule) => {
+                const ok = rule.test(newPassword);
+                /*
+                 * AUTH-18: trước đây chưa đạt dùng `radio_button_unchecked` — vòng tròn rỗng đó trông
+                 * y hệt một ô radio chưa tích nên người dùng tưởng phải bấm vào. Nay dùng `circle`
+                 * (chấm đặc), đọc ra là gạch đầu dòng chứ không phải điều khiển.
+                 *
+                 * Trạng thái còn được đọc thành chữ (`sr-only`) chứ không chỉ khác màu: WCAG 1.4.1 cấm
+                 * dùng riêng màu sắc để truyền thông tin, và trước đây trình đọc màn hình chỉ nghe được
+                 * tên quy tắc mà không biết đã đạt hay chưa.
+                 */
+                return (
+                  <li key={rule.id} className="flex items-center gap-2 text-body-md">
+                    <span aria-hidden="true" className={`material-symbols-outlined shrink-0 text-[17px] ${ok ? 'text-emerald-600' : 'text-muted'}`}>
+                      {ok ? 'check_circle' : 'circle'}
+                    </span>
+                    <span className={ok ? 'text-on-surface' : 'text-secondary'}>{RULE_LABELS[rule.id]}</span>
+                    <span className="sr-only">{ok ? t('Đã đạt') : t('Chưa đạt')}</span>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <p className="text-[12px] text-muted">{t('Đủ cả 5 điều kiện trên là mật khẩu hợp lệ.')}</p>
 
           {error ? (
-            <div className="rounded-lg bg-error-container px-3.5 py-2.5 text-body-sm text-on-error-container">
+            <div className="rounded-lg bg-error-container px-3.5 py-2.5 text-body-md text-on-error-container">
               {error}
             </div>
           ) : null}
@@ -210,13 +242,10 @@ export default function ForcePasswordChange() {
           >
             {t('Đăng xuất')}
           </button>
-        </form>
+            </form>
+          </div>
         </div>
-
-        <p className="mt-6 text-[12px] text-white/50">
-          {t('Cần hỗ trợ? Liên hệ bộ phận Nhân sự để được cấp lại quyền truy cập.')}
-        </p>
-      </div>
+      </motion.div>
     </AuthBackground>
   );
 }

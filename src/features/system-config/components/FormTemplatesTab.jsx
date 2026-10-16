@@ -12,7 +12,7 @@ function Toggle({ checked, onChange, label, disabled }) {
       type="button"
       onClick={() => { if (!disabled) onChange(!checked); }}
       disabled={disabled}
-      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${
+      className={`tap-target relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${
         checked ? 'bg-primary' : 'bg-surface-container-highest'
       }`}
       aria-pressed={checked}
@@ -583,14 +583,15 @@ export default function FormTemplatesTab() {
                         t(cat.name)
                       )}
                     </button>
+                    {/* group-focus-within: nút chỉ hiện khi hover thì người dùng bàn phím không bao giờ thấy được. */}
                     {!isEditing && (
-                      <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 flex-shrink-0 transition-opacity">
+                      <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex items-center gap-0.5 flex-shrink-0 transition-opacity">
                         <button 
                           onClick={() => {
                             setEditCatName(cat.name);
                             setEditingCatId(cat.id);
                           }}
-                          className="text-secondary hover:text-primary p-1 rounded hover:bg-surface-container-low cursor-pointer"
+                          className="tap-target text-secondary hover:text-primary p-1 rounded hover:bg-surface-container-low cursor-pointer"
                           title={t('Đổi tên danh mục')}
                         >
                           <span aria-hidden="true" className="material-symbols-outlined text-[14px]">edit</span>
@@ -602,7 +603,7 @@ export default function FormTemplatesTab() {
                             }
                           }}
                           disabled={cat.items.length > 0}
-                          className={`p-1 rounded transition-colors flex-shrink-0 ${
+                          className={`tap-target p-1 rounded transition-colors flex-shrink-0 ${
                             cat.items.length > 0 
                               ? 'text-outline opacity-50 cursor-not-allowed' 
                               : 'text-secondary hover:text-error hover:bg-error-container/30 cursor-pointer'
@@ -632,7 +633,8 @@ export default function FormTemplatesTab() {
                               <span aria-hidden="true" className="material-symbols-outlined text-[16px]">{active ? 'description' : 'draft'}</span>
                               <span className="truncate">{t(f)}</span>
                             </button>
-                            <div className="absolute right-1 opacity-0 group-hover/item:opacity-100 flex items-center transition-all bg-surface">
+                            {/* group-focus-within/item: nút chỉ hiện khi hover thì người dùng bàn phím không thấy được. */}
+                            <div className="absolute right-1 opacity-0 group-hover/item:opacity-100 group-focus-within/item:opacity-100 flex items-center transition-all bg-surface">
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -645,7 +647,7 @@ export default function FormTemplatesTab() {
                                     setIsAddingType(true);
                                   }
                                 }}
-                                className="text-secondary hover:text-primary transition-all p-1.5 rounded hover:bg-primary-container/30 cursor-pointer flex-shrink-0"
+                                className="tap-target text-secondary hover:text-primary transition-all p-1.5 rounded hover:bg-primary-container/30 cursor-pointer flex-shrink-0"
                                 title={t('Sửa mẫu đơn')}
                               >
                                 <span aria-hidden="true" className="material-symbols-outlined text-[14px]">edit</span>
@@ -655,7 +657,7 @@ export default function FormTemplatesTab() {
                                   e.stopPropagation();
                                   handleDeleteForm(cat.id, f);
                                 }}
-                                className="text-secondary hover:text-error transition-all p-1.5 rounded hover:bg-error-container/30 cursor-pointer flex-shrink-0"
+                                className="tap-target text-secondary hover:text-error transition-all p-1.5 rounded hover:bg-error-container/30 cursor-pointer flex-shrink-0"
                                 title={t('Xóa mẫu đơn')}
                               >
                                 <span aria-hidden="true" className="material-symbols-outlined text-[14px]">delete</span>

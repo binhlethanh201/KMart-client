@@ -860,6 +860,7 @@ export default function RequestDetail() {
                   <div className="flex-1">
                     <textarea
                       ref={commentRef}
+                      aria-label={t('Nhập ghi chú hoặc thảo luận')}
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) postComment(); }}

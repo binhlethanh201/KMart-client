@@ -200,6 +200,8 @@ export default function DepartmentDashboard() {
               <div className="relative w-full sm:w-80">
                 <span className={FILTER_SEARCH_ICON_CLS} aria-hidden="true">search</span>
                 <input
+                  type="search"
+                  aria-label={t('Tìm kiếm mã, tên đơn vị')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -207,7 +209,6 @@ export default function DepartmentDashboard() {
                   }}
                   className={FILTER_SEARCH_CLS}
                   placeholder={t('Tìm kiếm mã, tên đơn vị...')}
-                  type="text"
                 />
               </div>
               <Select

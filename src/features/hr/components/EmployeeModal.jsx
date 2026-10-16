@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { roleStyle } from '../../../utils/roleLabels';
 import Select from '../../../components/Select';
@@ -107,6 +107,15 @@ function validateEmployee(form, isEdit, t) {
 
 export default function EmployeeModal({ employee, departments = [], positions = [], roles = [], currentUser, onClose, onSave }) {
   const { t } = useI18n();
+  /*
+   * UX-01: tiền tố id duy nhất cho mọi ô nhập của form này.
+   *
+   * Trước đây các <label> chỉ là thẻ chữ trơ (không htmlFor) và <input> không có id, nên trình đọc
+   * màn hình đọc mỗi ô là "edit text, blank" — người khiếm thị phải đoán đang điền họ tên hay
+   * email. useId() của React 19 cho id ổn định và KHÔNG trùng khi hai modal cùng loại cùng tồn tại.
+   */
+  const uid = useId();
+  const fieldId = (name) => `emp-${name}-${uid}`;
   const [form, setForm] = useState(() => {
     if (!employee) return EMPTY_EMPLOYEE;
     // Resolve the existing role to its id so the select is pre-selected on edit.
@@ -211,8 +220,9 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 {t('Tài khoản & Cá nhân')}
               </div>
               <div>
-                <label className={labelCls}>{t('Họ và tên')}</label>
+                <label className={labelCls} htmlFor={fieldId('name')}>{t('Họ và tên')}</label>
                 <input
+                  id={fieldId('name')}
                   required
                   data-field="name"
                   className={errors.name ? fieldErrCls : fieldCls}
@@ -233,8 +243,9 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 </div>
               )}
               <div>
-                <label className={labelCls}>{t('Email công ty')}</label>
+                <label className={labelCls} htmlFor={fieldId('email')}>{t('Email công ty')}</label>
                 <input
+                  id={fieldId('email')}
                   required
                   data-field="email"
                   className={errors.email ? fieldErrCls : fieldCls}
@@ -247,8 +258,9 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 {errors.email && <p className="text-xs text-error mt-1">{errors.email}</p>}
               </div>
               <div>
-                <label className={labelCls}>{t('Email cá nhân')}</label>
+                <label className={labelCls} htmlFor={fieldId('personalEmail')}>{t('Email cá nhân')}</label>
                 <input
+                  id={fieldId('personalEmail')}
                   data-field="personalEmail"
                   className={errors.personalEmail ? fieldErrCls : fieldCls}
                   type="email"
@@ -259,8 +271,9 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 {errors.personalEmail && <p className="text-xs text-error mt-1">{errors.personalEmail}</p>}
               </div>
               <div>
-                <label className={labelCls}>{t('Telegram Chat ID')}</label>
+                <label className={labelCls} htmlFor={fieldId('telegramChatId')}>{t('Telegram Chat ID')}</label>
                 <input
+                  id={fieldId('telegramChatId')}
                   data-field="telegramChatId"
                   className={errors.telegramChatId ? fieldErrCls : fieldCls}
                   type="text"
@@ -271,8 +284,9 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 {errors.telegramChatId && <p className="text-xs text-error mt-1">{errors.telegramChatId}</p>}
               </div>
               <div>
-                <label className={labelCls}>{t('Số điện thoại')}</label>
+                <label className={labelCls} htmlFor={fieldId('phone')}>{t('Số điện thoại')}</label>
                 <input
+                  id={fieldId('phone')}
                   data-field="phone"
                   className={errors.phone ? fieldErrCls : fieldCls}
                   value={form.phone || ''}
@@ -282,8 +296,9 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 {errors.phone && <p className="text-xs text-error mt-1">{errors.phone}</p>}
               </div>
               <div>
-                <label className={labelCls}>{t('Ngày sinh')}</label>
+                <label className={labelCls} htmlFor={fieldId('dateOfBirth')}>{t('Ngày sinh')}</label>
                 <input
+                  id={fieldId('dateOfBirth')}
                   data-field="dateOfBirth"
                   className={errors.dateOfBirth ? fieldErrCls : fieldCls}
                   type="date"
@@ -298,8 +313,9 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </div>
               {!isEdit && (
                 <div>
-                  <label className={labelCls}>{t('Mật khẩu')}</label>
+                  <label className={labelCls} htmlFor={fieldId('password')}>{t('Mật khẩu')}</label>
                   <input
+                    id={fieldId('password')}
                     required
                     data-field="password"
                     className={errors.password ? fieldErrCls : fieldCls}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 
@@ -16,6 +16,8 @@ const MAX_LENGTH = 1000;
 export default function SupplementReasonModal({ requestId, onClose, onConfirm }) {
   const { t } = useI18n();
   const [reason, setReason] = useState('');
+  /* UX-01: id nối <label> với <textarea>. */
+  const reasonId = useId();
   const [sending, setSending] = useState(false);
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState('');
@@ -73,8 +75,9 @@ export default function SupplementReasonModal({ requestId, onClose, onConfirm })
           </button>
         </div>
         <div className="p-5">
-          <label className="block font-label-md text-label-md text-on-surface-variant mb-1.5">{t('Lý do / Thông tin cần bổ sung')}</label>
+          <label className="block font-label-md text-label-md text-on-surface-variant mb-1.5" htmlFor={reasonId}>{t('Lý do / Thông tin cần bổ sung')}</label>
           <textarea
+            id={reasonId}
             autoFocus
             value={reason}
             maxLength={MAX_LENGTH}

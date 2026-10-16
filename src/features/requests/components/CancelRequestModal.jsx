@@ -73,10 +73,11 @@ export default function CancelRequestModal({ requestId, requestTitle, onClose, o
             {t('Đơn sẽ được hủy và không ai cần duyệt nữa. Thao tác này không thể hoàn tác.')}
           </p>
           <div>
-            <label className="block font-label-md text-label-md text-on-surface-variant mb-1.5">
+            <label className="block font-label-md text-label-md text-on-surface-variant mb-1.5" htmlFor="cancel-reason">
               {t('Lý do hủy')} <span className="text-secondary font-normal">({t('không bắt buộc')})</span>
             </label>
             <textarea
+              id="cancel-reason"
               autoFocus
               value={reason}
               onChange={(e) => setReason(e.target.value)}

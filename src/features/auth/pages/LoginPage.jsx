@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import { authService } from "../services/authService";
-import { motion } from "motion/react";
 import { useI18n } from '../../../i18n/I18nProvider';
-import LanguageSwitcher from '../../../components/LanguageSwitcher';
-import BrandLogo from '../../../components/BrandLogo';
+import { motion, useReducedMotion } from 'motion/react';
 import { createLoginErrorTranslator } from '../loginErrors';
 import AuthBackground from '../components/AuthBackground';
 
@@ -26,19 +24,38 @@ const primaryBtnCls =
   'w-full rounded-lg bg-primary py-2.5 text-label-md text-on-primary shadow-sm transition-colors hover:bg-on-primary-fixed-variant disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer';
 
 /** Ô nhập có icon bên trái, tuỳ chọn nút hiện/ẩn mật khẩu bên phải. */
-function Field({ icon, label, type = 'text', value, onChange, placeholder, autoComplete, revealToggle = false }) {
+function Field({ icon, label, id, type = 'text', value, onChange, placeholder, autoComplete, revealToggle = false }) {
   const [revealed, setRevealed] = useState(false);
   const { t } = useI18n();
   const actualType = revealToggle ? (revealed ? 'text' : 'password') : type;
 
+  /*
+   * UX-01: nối <label> với <input> bằng id/htmlFor.
+   *
+   * Trước đây label chỉ là thẻ chữ trơ (không htmlFor, input không id) nên trình đọc màn hình đọc
+   * ô nhập là "edit text, blank" — người khiếm thị không biết đang điền ô nào, dù nhìn thì có nhãn.
+   * Ô "Mật khẩu" còn không truyền `label` nên còn tệ hơn: nhãn nằm ngoài component.
+   * useId() của React 19 sinh id ổn định, không đụng vào id nghiệp vụ nào; `id` truyền vào sẽ đè
+   * khi nhãn nằm NGOÀI component và cần htmlFor trỏ tới.
+   * `placeholder` vẫn giữ vì hữu ích cho người nhìn, nhưng KHÔNG thay thế được nhãn.
+   */
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const revealLabel = revealed ? t('Ẩn mật khẩu') : t('Hiện mật khẩu');
+
   return (
     <div>
-      {label ? <label className={labelCls}>{label}</label> : null}
+      {label ? (
+        <label className={labelCls} htmlFor={inputId}>
+          {label}
+        </label>
+      ) : null}
       <div className={inputWrapCls}>
         <span aria-hidden="true" className="material-symbols-outlined pl-3.5 text-[19px] text-muted pointer-events-none">
           {icon}
         </span>
         <input
+          id={inputId}
           type={actualType}
           required
           autoComplete={autoComplete}
@@ -48,11 +65,15 @@ function Field({ icon, label, type = 'text', value, onChange, placeholder, autoC
           onChange={onChange}
         />
         {revealToggle && (
+          /* tap-target: nút con mắt chỉ 19px rộng. WCAG 2.2 SC 2.5.8 yêu cầu vùng chạm tối thiểu
+             24x24; lớp phủ ::after nới vùng bấm lên mà không đổi kích thước nhìn thấy. */
           <button
             type="button"
             onClick={() => setRevealed((v) => !v)}
-            className="absolute right-2.5 text-muted hover:text-on-surface transition-colors cursor-pointer"
-            aria-label={revealed ? t('Ẩn mật khẩu') : t('Hiện mật khẩu')}
+            className="tap-target absolute right-2.5 grid h-6 w-6 place-items-center text-muted hover:text-on-surface transition-colors cursor-pointer"
+            aria-label={revealLabel}
+            aria-pressed={revealed}
+            title={revealLabel}
             tabIndex={-1}
           >
             <span aria-hidden="true" className="material-symbols-outlined text-[19px]">
@@ -67,6 +88,7 @@ function Field({ icon, label, type = 'text', value, onChange, placeholder, autoC
 
 const LoginPage = ({ onLoginSuccess }) => {
   const { t } = useI18n();
+  const reduceMotion = useReducedMotion();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -156,42 +178,28 @@ const LoginPage = ({ onLoginSuccess }) => {
 
   return (
     <AuthBackground>
-      {/* AUTH-12: nền gradient/lưới lấy từ component dùng chung AuthBackground để màn
-          đăng nhập và màn đổi mật khẩu bắt buộc luôn đồng nhất. */}
-
-      <div className="absolute top-6 right-6 z-20">
-        <LanguageSwitcher variant="onDark" />
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        className="relative z-10 flex w-full flex-col items-center"
-      >
-        {/* Thương hiệu — dùng chung component BrandLogo với header/footer landing.
-            BE-78: logo phải NỔI BẬT; ô logo là dải chuyển sắc xanh + chữ K trắng, kèm quầng sáng
-            nên đọc rõ trên nền navy mà vẫn đồng nhất với logo ở trang landing. */}
-        <h1 className="mb-7 flex justify-center">
-          <BrandLogo size="lg" tone="onDark" glow tagline={t('Hệ thống quản trị nội bộ')} />
-        </h1>
-
-        <div
-          className={`w-full rounded-2xl border border-white/10 bg-surface shadow-[0_28px_70px_-28px_rgba(0,0,0,0.65)] ${
-            isResetPassword ? 'max-w-[360px] p-6' : 'max-w-[420px] p-8'
-          }`}
+        {/* AUTH-17: thẻ trượt vào theo kiểu "đẩy" — trượt sang trái để về chỗ, hơi nghiêng rồi
+            tự thẳng lại, lò xo có quán tính nhẹ. Toàn bộ hiệu ứng tắt khi bật giảm chuyển động
+            (xem TiltCard: cùng lý do — người rối loạn tiền đình). */}
+        <motion.div
+          initial={reduceMotion ? false : { x: 96, y: -12, rotate: -1.1, opacity: 0 }}
+          animate={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 170, damping: 20, mass: 0.9, delay: 0.08 }}
+          className="flex w-full justify-center"
         >
-          <div className={isResetPassword ? 'mb-5' : 'mb-7'}>
-            <h2 className={isResetPassword ? 'text-headline-sm text-on-surface' : 'text-headline-md text-on-surface'}>
-              {isResetPassword ? t('Đặt lại mật khẩu') : t('Đăng nhập')}
-            </h2>
-            <p className={`mt-1 text-secondary ${isResetPassword ? 'text-[13px]' : 'text-body-md'}`}>
-              {isResetPassword
-                ? t('Dùng mật khẩu tạm do HR cấp để đổi sang mật khẩu mới.')
-                : t('Nhập thông tin tài khoản để tiếp tục.')}
-            </p>
-          </div>
+          <div className="w-full overflow-hidden rounded-xl">
+            <div className="h-1 w-full bg-[linear-gradient(90deg,#1d4ed8_0%,#60a5fa_52%,#15803d_100%)]" />
+            <div className="border-x border-b border-outline-variant bg-surface p-8 shadow-[0_30px_70px_-30px_rgba(0,0,0,0.6)] sm:p-10">
+              <h1 className={`text-on-surface ${isResetPassword ? 'text-headline-sm' : 'text-headline-md'}`}>
+                {isResetPassword ? t('Đặt lại mật khẩu') : t('Đăng nhập')}
+              </h1>
+              <p className="mt-1 text-body-md text-secondary">
+                {isResetPassword
+                  ? t('Dùng mật khẩu tạm do HR cấp để đổi sang mật khẩu mới.')
+                  : t('Nhập thông tin tài khoản để tiếp tục.')}
+              </p>
 
+              <div className="mt-7">
           {error && (
             <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-error/20 bg-error-container p-3 text-body-md text-on-error-container">
               <span aria-hidden="true" className="material-symbols-outlined text-[18px] leading-none">error</span>
@@ -213,12 +221,17 @@ const LoginPage = ({ onLoginSuccess }) => {
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <label className="block text-label-md text-on-surface">{t('Mật khẩu')}</label>
+                  {/* UX-01: nhãn "Mật khẩu" nằm ngoài Field nên phải nối tay bằng htmlFor —
+                      trước đây nó là thẻ chữ trơ, không gắn với ô nhập nào. */}
+                  <label className="block text-label-md text-on-surface" htmlFor="login-password">
+                    {t('Mật khẩu')}
+                  </label>
+                  {/* tap-target: nút chỉ cao 20px, dưới ngưỡng chạm 24px của WCAG 2.2 SC 2.5.8. */}
                   <button
                     type="button"
                     onClick={startReset}
                     title={t('Đặt lại mật khẩu')}
-                    className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-4 text-primary/75 transition-colors hover:bg-primary/5 hover:text-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 cursor-pointer"
+                    className="tap-target inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium leading-4 text-primary/75 transition-colors hover:bg-primary/5 hover:text-primary cursor-pointer"
                   >
                     <span aria-hidden="true" className="material-symbols-outlined text-[13px] leading-none">lock_reset</span>
                     {t('Đặt lại mật khẩu')}
@@ -226,6 +239,7 @@ const LoginPage = ({ onLoginSuccess }) => {
                 </div>
                 <Field
                   icon="lock"
+                  id="login-password"
                   revealToggle
                   autoComplete="current-password"
                   placeholder="••••••••"
@@ -329,18 +343,10 @@ const LoginPage = ({ onLoginSuccess }) => {
               )}
             </form>
           )}
+            </div>
+          </div>
         </div>
-
-        <p
-          className={`mt-6 text-center text-[12px] text-white/55 ${isResetPassword ? 'max-w-[360px]' : 'max-w-[420px]'}`}
-        >
-          {t('Cần hỗ trợ? Liên hệ bộ phận Nhân sự để được cấp lại quyền truy cập.')}
-        </p>
       </motion.div>
-
-      <div className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap text-[11px] uppercase tracking-[2px] text-white/40">
-        {t('© 2026 Kmart Internal Systems. Bảo lưu mọi quyền lợi.')}
-      </div>
     </AuthBackground>
   );
 };

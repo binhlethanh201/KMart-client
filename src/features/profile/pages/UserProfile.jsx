@@ -197,7 +197,7 @@ export default function UserProfile({ userId, onClose }) {
               <div className="px-4 sm:px-5 border-b border-slate-100 flex justify-between items-center bg-surface-bright rounded-t py-2.5">
                 <h2 className="font-label-md text-secondary uppercase">{section.title}</h2>
                 {(!userId || userId === currentUser.id) && section.id !== 'group' && (
-                  <button onClick={() => setShowEditModal(true)} className="text-muted hover:text-primary transition-colors cursor-pointer">
+                  <button onClick={() => setShowEditModal(true)} className="tap-target text-muted hover:text-primary transition-colors cursor-pointer">
                     <span aria-hidden="true" className="material-symbols-outlined text-[20px]">edit</span>
                   </button>
                 )}
