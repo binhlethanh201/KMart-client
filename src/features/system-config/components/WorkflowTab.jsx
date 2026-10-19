@@ -881,7 +881,7 @@ export default function WorkflowTab() {
   useEffect(() => {
     workflowService.getAll().then(data => {
       setAllWorkflows(data || []);
-    }).catch(err => console.error('Failed to load all workflows', err));
+    }).catch(err => { console.error('Failed to load all workflows', err); });
   }, []);
 
   /**
@@ -1503,7 +1503,7 @@ export default function WorkflowTab() {
       // để chú thích trong dropdown đúng ngay sau khi lưu (khối vừa gỡ không còn bị đánh dấu).
       workflowService.getAll()
         .then(data => setAllWorkflows(data || []))
-        .catch(err => console.error('Failed to refresh workflows', err));
+        .catch(err => { console.error('Failed to refresh workflows', err); });
 
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
