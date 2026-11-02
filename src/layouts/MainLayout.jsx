@@ -5,11 +5,13 @@ import NotificationBell from '../components/NotificationBell';
 import BrandLogo from '../components/BrandLogo';
 import RotateHint from '../components/RotateHint';
 import { useApproval } from '../context/useApproval';
+import useMediaQuery from "../hooks/useMediaQuery";
  
 export default function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const contentRef = useRef(null);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
  
   // currentUser comes from your existing ApprovalSystemProvider
   const { currentUser } = useApproval();
@@ -55,7 +57,7 @@ export default function MainLayout() {
             <span aria-hidden="true" className="material-symbols-outlined">menu</span>
           </button>
           <BrandLogo size="sm" />
-          <NotificationBell variant="header" />
+          {!isDesktop && <NotificationBell variant="header" />}
         </header>
  
         <div ref={contentRef} className="flex-1 flex flex-col min-h-0">

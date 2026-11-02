@@ -1,37 +1,72 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { notificationService } from '../services/notificationService';
-import { useI18n, translate } from '../i18n/I18nProvider';
-import { useApproval } from '../context/useApproval';
-import useNow from '../hooks/useNow';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { notificationService } from "../services/notificationService";
+import { useI18n, translate } from "../i18n/I18nProvider";
+import { useApproval } from "../context/useApproval";
+import useNow from "../hooks/useNow";
 
 // BE-22: chuông thông báo. Backend đã ghi thông báo (ApplicationService/NotificationService)
 // nhưng FE chưa hiển thị. Component này lấy danh sách + số chưa đọc, cho phép đọc và điều hướng.
 const TYPE_META = {
-  ApplicationSubmitted: { icon: 'upload_file', color: 'text-primary', bg: 'bg-primary/10' },
-  ApplicationApproved: { icon: 'task_alt', color: 'text-success', bg: 'bg-success/10' },
-  ApplicationRejected: { icon: 'block', color: 'text-error', bg: 'bg-error/10' },
-  ApprovalPending: { icon: 'pending_actions', color: 'text-warning', bg: 'bg-warning/10' },
-  Reminder: { icon: 'alarm', color: 'text-warning', bg: 'bg-warning/10' },
-  SystemAnnouncement: { icon: 'campaign', color: 'text-secondary', bg: 'bg-surface-container' },
-  ReturnTimeout: { icon: 'history_toggle_off', color: 'text-error', bg: 'bg-error/10' },
-  ApplicationStepAdvanced: { icon: 'moving', color: 'text-primary', bg: 'bg-primary/10' },
-  TimeoutAlert: { icon: 'schedule', color: 'text-error', bg: 'bg-error/10' },
-  CommentAdded: { icon: 'forum', color: 'text-secondary', bg: 'bg-surface-container' },
+  ApplicationSubmitted: {
+    icon: "upload_file",
+    color: "text-primary",
+    bg: "bg-primary/10",
+  },
+  ApplicationApproved: {
+    icon: "task_alt",
+    color: "text-success",
+    bg: "bg-success/10",
+  },
+  ApplicationRejected: {
+    icon: "block",
+    color: "text-error",
+    bg: "bg-error/10",
+  },
+  ApprovalPending: {
+    icon: "pending_actions",
+    color: "text-warning",
+    bg: "bg-warning/10",
+  },
+  Reminder: { icon: "alarm", color: "text-warning", bg: "bg-warning/10" },
+  SystemAnnouncement: {
+    icon: "campaign",
+    color: "text-secondary",
+    bg: "bg-surface-container",
+  },
+  ReturnTimeout: {
+    icon: "history_toggle_off",
+    color: "text-error",
+    bg: "bg-error/10",
+  },
+  ApplicationStepAdvanced: {
+    icon: "moving",
+    color: "text-primary",
+    bg: "bg-primary/10",
+  },
+  TimeoutAlert: { icon: "schedule", color: "text-error", bg: "bg-error/10" },
+  CommentAdded: {
+    icon: "forum",
+    color: "text-secondary",
+    bg: "bg-surface-container",
+  },
 };
 
 const timeAgo = (iso, now) => {
-  if (!iso) return '';
+  if (!iso) return "";
   const d = new Date(iso);
   const diff = Math.floor((now - d.getTime()) / 1000);
-  if (diff < 60) return translate('Vừa xong');
-  if (diff < 3600) return translate('{v0} phút trước', { v0: Math.floor(diff / 60) });
-  if (diff < 86400) return translate('{v0} giờ trước', { v0: Math.floor(diff / 3600) });
-  if (diff < 604800) return translate('{v0} ngày trước', { v0: Math.floor(diff / 86400) });
-  return d.toLocaleDateString('vi-VN');
+  if (diff < 60) return translate("Vừa xong");
+  if (diff < 3600)
+    return translate("{v0} phút trước", { v0: Math.floor(diff / 60) });
+  if (diff < 86400)
+    return translate("{v0} giờ trước", { v0: Math.floor(diff / 3600) });
+  if (diff < 604800)
+    return translate("{v0} ngày trước", { v0: Math.floor(diff / 86400) });
+  return d.toLocaleDateString("vi-VN");
 };
 
-export default function NotificationBell({ variant = 'sidebar' }) {
+export default function NotificationBell({ variant = "sidebar" }) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { pushToast } = useApproval();
@@ -69,26 +104,51 @@ export default function NotificationBell({ variant = 'sidebar' }) {
   // Đóng khi bấm ra ngoài
   useEffect(() => {
     if (!open) return;
-    const onClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    window.addEventListener('mousedown', onClick);
-    return () => window.removeEventListener('mousedown', onClick);
+    const onClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    window.addEventListener("mousedown", onClick);
+    return () => window.removeEventListener("mousedown", onClick);
   }, [open]);
+
+  useEffect(() => {
+    load();
+    const id = setInterval(
+      () => {
+        if (!document.hidden) load();
+      },
+      2 * 60 * 1000,
+    );
+    return () => clearInterval(id);
+  }, []);
 
   const handleOpenItem = async (n) => {
     if (!n.isRead) {
       try {
         await notificationService.markAsRead(n.id);
-        setItems((l) => l.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)));
+        setItems((l) =>
+          l.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)),
+        );
         setUnread((c) => Math.max(0, c - 1));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     setOpen(false);
     // BE-22: điều hướng tới đúng đơn. Backend có thể lưu referenceType='Application'
     // hoặc link dạng "/applications/{id}" (route FE là "/requests/{id}").
-    if (n.referenceId && (n.referenceType === 'Application' || (n.link || '').includes('/applications/'))) {
+    if (
+      n.referenceId &&
+      (n.referenceType === "Application" ||
+        (n.link || "").includes("/applications/"))
+    ) {
       navigate(`/requests/${n.referenceId}`);
     } else if (n.link) {
-      navigate(n.link.startsWith('/applications/') ? n.link.replace('/applications/', '/requests/') : n.link);
+      navigate(
+        n.link.startsWith("/applications/")
+          ? n.link.replace("/applications/", "/requests/")
+          : n.link,
+      );
     }
   };
 
@@ -97,20 +157,22 @@ export default function NotificationBell({ variant = 'sidebar' }) {
       await notificationService.markAllAsRead();
       setItems((l) => l.map((x) => ({ ...x, isRead: true })));
       setUnread(0);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   /** Xóa một thông báo. */
   const handleDelete = async (e, n) => {
     e.stopPropagation();
-    if (!window.confirm(t('Xóa thông báo này?'))) return;
+    if (!window.confirm(t("Xóa thông báo này?"))) return;
     try {
       await notificationService.remove(n.id);
       setItems((l) => l.filter((x) => x.id !== n.id));
       if (!n.isRead) setUnread((c) => Math.max(0, c - 1));
-      pushToast(t('Đã xóa thông báo'), 'success');
+      pushToast(t("Đã xóa thông báo"), "success");
     } catch {
-      pushToast(t('Không xóa được thông báo'), 'error');
+      pushToast(t("Không xóa được thông báo"), "error");
     }
   };
 
@@ -118,18 +180,28 @@ export default function NotificationBell({ variant = 'sidebar' }) {
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => { setOpen((o) => !o); if (!open) load(); }}
+        onClick={() => {
+          setOpen((o) => !o);
+          if (!open) load();
+        }}
         className={`relative flex items-center justify-center w-7 h-7 rounded-full transition-colors cursor-pointer ${
-          variant === 'header'
-            ? 'text-on-surface-variant hover:bg-surface-container-high'
-            : 'text-slate-400 hover:text-white hover:bg-white/10'
+          variant === "header"
+            ? "text-on-surface-variant hover:bg-surface-container-high"
+            : "text-slate-400 hover:text-white hover:bg-white/10"
         }`}
-        aria-label={t('Thông báo')}
+        aria-label={t("Thông báo")}
       >
-        <span aria-hidden="true" className="material-symbols-outlined text-[16px]">notifications</span>
+        <span
+          aria-hidden="true"
+          className="material-symbols-outlined text-[16px]"
+        >
+          notifications
+        </span>
         {unread > 0 && (
-          <span className={`absolute -top-0.5 -right-0.5 min-w-[13px] h-[13px] px-0.5 rounded-full bg-error text-white text-[8px] font-bold flex items-center justify-center leading-none ring-2 ${variant === 'header' ? 'ring-surface' : 'ring-[#0F172A]'}`}>
-            {unread > 99 ? '99+' : unread}
+          <span
+            className={`absolute -top-0.5 -right-0.5 min-w-[13px] h-[13px] px-0.5 rounded-full bg-error text-white text-[8px] font-bold flex items-center justify-center leading-none ring-2 ${variant === "header" ? "ring-surface" : "ring-[#0F172A]"}`}
+          >
+            {unread > 99 ? "99+" : unread}
           </span>
         )}
       </button>
@@ -145,71 +217,129 @@ export default function NotificationBell({ variant = 'sidebar' }) {
            * lên giữ nguyên `absolute right-0 w-[360px]` như cũ.
            */
           className={`bg-surface border border-outline-variant/70 rounded-2xl shadow-2xl overflow-hidden z-[130] flex flex-col ${
-            variant === 'header'
-              ? 'fixed top-16 left-3 right-3 w-auto sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-[360px]'
-              : 'absolute left-0 mt-2 w-[360px]'
+            variant === "header"
+              ? "fixed top-16 left-3 right-3 w-auto sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-[360px]"
+              : "absolute left-0 mt-2 w-[360px]"
           }`}
-          style={{ maxHeight: '480px' }}
+          style={{ maxHeight: "480px" }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant/50 bg-surface-container-lowest/60">
             <div className="flex items-center gap-2">
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px] text-primary">notifications</span>
-              <span className="text-sm font-bold text-on-surface">{t('Thông báo')}</span>
+              <span
+                aria-hidden="true"
+                className="material-symbols-outlined text-[18px] text-primary"
+              >
+                notifications
+              </span>
+              <span className="text-sm font-bold text-on-surface">
+                {t("Thông báo")}
+              </span>
               {unread > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-error/10 text-error text-[10px] font-bold">{unread} {t('mới')}</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-error/10 text-error text-[10px] font-bold">
+                  {unread} {t("mới")}
+                </span>
               )}
             </div>
             {unread > 0 && (
-              <button type="button" onClick={handleMarkAll} className="text-xs text-primary hover:underline cursor-pointer font-medium">
-                {t('Đọc tất cả')}
+              <button
+                type="button"
+                onClick={handleMarkAll}
+                className="text-xs text-primary hover:underline cursor-pointer font-medium"
+              >
+                {t("Đọc tất cả")}
               </button>
             )}
           </div>
 
           <div className="flex-1 overflow-y-auto">
             {loading && items.length === 0 && (
-              <p className="text-sm text-secondary text-center py-6">{t('Đang tải...')}</p>
+              <p className="text-sm text-secondary text-center py-6">
+                {t("Đang tải...")}
+              </p>
             )}
             {!loading && items.length === 0 && (
               <div className="text-center py-10">
-                <span aria-hidden="true" className="material-symbols-outlined text-[32px] text-muted block mb-1">notifications_off</span>
-                <p className="text-sm text-secondary">{t('Không có thông báo nào')}</p>
+                <span
+                  aria-hidden="true"
+                  className="material-symbols-outlined text-[32px] text-muted block mb-1"
+                >
+                  notifications_off
+                </span>
+                <p className="text-sm text-secondary">
+                  {t("Không có thông báo nào")}
+                </p>
               </div>
             )}
             {items.map((n) => {
-              const meta = TYPE_META[n.type] || { icon: 'info', color: 'text-secondary', bg: 'bg-surface-container' };
+              const meta = TYPE_META[n.type] || {
+                icon: "info",
+                color: "text-secondary",
+                bg: "bg-surface-container",
+              };
               return (
                 <div
                   key={n.id}
-                  className={`relative px-4 py-3 border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors flex gap-3 cursor-pointer group ${n.isRead ? '' : 'bg-primary/[0.035]'}`}
+                  className={`relative px-4 py-3 border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors flex gap-3 cursor-pointer group ${n.isRead ? "" : "bg-primary/[0.035]"}`}
                   onClick={() => handleOpenItem(n)}
                 >
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${meta.bg}`}>
-                    <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${meta.color}`}>{meta.icon}</span>
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${meta.bg}`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`material-symbols-outlined text-[18px] ${meta.color}`}
+                    >
+                      {meta.icon}
+                    </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <span className={`text-[13px] leading-snug line-clamp-1 ${n.isRead ? 'font-medium text-on-surface-variant' : 'font-semibold text-on-surface'}`}>{n.title}</span>
-                      {!n.isRead && <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />}
+                      <span
+                        className={`text-[13px] leading-snug line-clamp-1 ${n.isRead ? "font-medium text-on-surface-variant" : "font-semibold text-on-surface"}`}
+                      >
+                        {n.title}
+                      </span>
+                      {!n.isRead && (
+                        <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                      )}
                     </div>
-                    <p className="text-xs text-secondary mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
+                    <p className="text-xs text-secondary mt-0.5 line-clamp-2 leading-relaxed">
+                      {n.message}
+                    </p>
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <span aria-hidden="true" className="material-symbols-outlined text-[12px] text-muted">schedule</span>
-                      <span className="text-[10px] text-muted font-medium">{timeAgo(n.createdAt, now)}</span>
+                      <span
+                        aria-hidden="true"
+                        className="material-symbols-outlined text-[12px] text-muted"
+                      >
+                        schedule
+                      </span>
+                      <span className="text-[10px] text-muted font-medium">
+                        {timeAgo(n.createdAt, now)}
+                      </span>
                     </div>
                   </div>
-                  {(n.referenceType === 'Application' && n.referenceId) && (
-                    <span aria-hidden="true" className="material-symbols-outlined text-[16px] text-muted opacity-0 group-hover:opacity-100 transition-opacity self-center flex-shrink-0">chevron_right</span>
+                  {n.referenceType === "Application" && n.referenceId && (
+                    <span
+                      aria-hidden="true"
+                      className="material-symbols-outlined text-[16px] text-muted opacity-0 group-hover:opacity-100 transition-opacity self-center flex-shrink-0"
+                    >
+                      chevron_right
+                    </span>
                   )}
                   <button
                     type="button"
-                    title={t('Xóa thông báo')}
+                    title={t("Xóa thông báo")}
                     onClick={(e) => handleDelete(e, n)}
                     className="absolute top-2 right-2 w-7 h-7 rounded-full text-secondary hover:bg-error-container hover:text-error flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all cursor-pointer"
-                    aria-label={t('Xóa thông báo')}
+                    aria-label={t("Xóa thông báo")}
                   >
-                    <span aria-hidden="true" className="material-symbols-outlined text-[14px]">delete</span>
+                    <span
+                      aria-hidden="true"
+                      className="material-symbols-outlined text-[14px]"
+                    >
+                      delete
+                    </span>
                   </button>
                 </div>
               );

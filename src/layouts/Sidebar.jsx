@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useApproval } from '../context/useApproval';
-import { useI18n } from '../i18n/I18nProvider';
-import { clearSessionStorage } from '../utils/session';
-import NotificationBell from '../components/NotificationBell';
-import LanguageSwitcher from '../components/LanguageSwitcher';
-import SidebarDelegationCard from '../components/SidebarDelegationCard';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useApproval } from "../context/useApproval";
+import { useI18n } from "../i18n/I18nProvider";
+import { clearSessionStorage } from "../utils/session";
+import NotificationBell from "../components/NotificationBell";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import SidebarDelegationCard from "../components/SidebarDelegationCard";
 
 /* ─── Sub-panel: chỉ 2 link điều hướng ──────────────────────── */
 
@@ -19,15 +19,15 @@ function RequestsSubPanel({ pendingCount, supplementCount, onClose }) {
   // quyền duyệt thì chỉ hiện danh sách trống thay vì ẩn cả menu.
   const links = [
     {
-      to: '/my-requests',
-      icon: 'folder_shared',
-      label: t('Đơn từ cá nhân'),
+      to: "/my-requests",
+      icon: "folder_shared",
+      label: t("Đơn từ cá nhân"),
       badge: supplementCount,
     },
     {
-      to: '/my-requests/approvals',
-      icon: 'pending_actions',
-      label: t('Đơn chờ tôi duyệt'),
+      to: "/my-requests/approvals",
+      icon: "pending_actions",
+      label: t("Đơn chờ tôi duyệt"),
       badge: pendingCount,
     },
   ];
@@ -37,16 +37,21 @@ function RequestsSubPanel({ pendingCount, supplementCount, onClose }) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">
-          {t('Đơn từ')}
+          {t("Đơn từ")}
         </span>
         <button
           type="button"
           onClick={onClose}
-          title={t('Đóng bảng')}
-          aria-label={t('Đóng bảng')}
+          title={t("Đóng bảng")}
+          aria-label={t("Đóng bảng")}
           className="text-slate-400 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
         >
-          <span aria-hidden="true" className="material-symbols-outlined text-[16px] leading-none">close</span>
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined text-[16px] leading-none"
+          >
+            close
+          </span>
         </button>
       </div>
 
@@ -60,15 +65,20 @@ function RequestsSubPanel({ pendingCount, supplementCount, onClose }) {
                 to={item.to}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors border-l-2 ${
                   active
-                    ? 'border-primary bg-primary/10 text-white'
-                    : 'border-transparent text-slate-400 hover:bg-white/5 hover:text-white'
+                    ? "border-primary bg-primary/10 text-white"
+                    : "border-transparent text-slate-400 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <span className="flex items-center gap-2.5 min-w-0">
-                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] flex-shrink-0">
+                  <span
+                    aria-hidden="true"
+                    className="material-symbols-outlined text-[18px] flex-shrink-0"
+                  >
                     {item.icon}
                   </span>
-                  <span className="text-sm font-medium break-words text-left min-w-0">{t(item.label)}</span>
+                  <span className="text-sm font-medium break-words text-left min-w-0">
+                    {t(item.label)}
+                  </span>
                 </span>
                 {item.badge > 0 && (
                   <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none flex-shrink-0 ml-2">
@@ -92,24 +102,24 @@ function SettingsSubPanel({ onClose }) {
 
   const links = [
     {
-      to: '/settings/forms',
-      icon: 'description',
-      label: t('Mẫu đơn & Form'),
+      to: "/settings/forms",
+      icon: "description",
+      label: t("Mẫu đơn & Form"),
     },
     {
-      to: '/settings/workflow',
-      icon: 'account_tree',
-      label: t('Luồng duyệt'),
+      to: "/settings/workflow",
+      icon: "account_tree",
+      label: t("Luồng duyệt"),
     },
     {
-      to: '/settings/positions',
-      icon: 'badge',
-      label: t('Chức vụ & cấp bậc'),
+      to: "/settings/positions",
+      icon: "badge",
+      label: t("Chức vụ & cấp bậc"),
     },
     {
-      to: '/settings/general',
-      icon: 'settings',
-      label: t('Chung & Telegram'),
+      to: "/settings/general",
+      icon: "settings",
+      label: t("Chung & Telegram"),
     },
   ];
 
@@ -118,16 +128,21 @@ function SettingsSubPanel({ onClose }) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">
-          {t('Cấu hình')}
+          {t("Cấu hình")}
         </span>
         <button
           type="button"
           onClick={onClose}
-          title={t('Đóng bảng')}
-          aria-label={t('Đóng bảng')}
+          title={t("Đóng bảng")}
+          aria-label={t("Đóng bảng")}
           className="text-slate-400 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
         >
-          <span aria-hidden="true" className="material-symbols-outlined text-[16px] leading-none">close</span>
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined text-[16px] leading-none"
+          >
+            close
+          </span>
         </button>
       </div>
 
@@ -141,15 +156,20 @@ function SettingsSubPanel({ onClose }) {
                 to={item.to}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors border-l-2 ${
                   active
-                    ? 'border-primary bg-primary/10 text-white'
-                    : 'border-transparent text-slate-400 hover:bg-white/5 hover:text-white'
+                    ? "border-primary bg-primary/10 text-white"
+                    : "border-transparent text-slate-400 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <span className="flex items-center gap-2.5 min-w-0">
-                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] flex-shrink-0">
+                  <span
+                    aria-hidden="true"
+                    className="material-symbols-outlined text-[18px] flex-shrink-0"
+                  >
                     {item.icon}
                   </span>
-                  <span className="text-sm font-medium break-words text-left min-w-0">{t(item.label)}</span>
+                  <span className="text-sm font-medium break-words text-left min-w-0">
+                    {t(item.label)}
+                  </span>
                 </span>
               </Link>
             </li>
@@ -172,14 +192,14 @@ function DelegationsSubPanel({ onClose }) {
 
   const links = [
     {
-      to: '/delegations',
-      icon: 'assignment_ind',
-      label: t('Ủy quyền tạm thời'),
+      to: "/delegations",
+      icon: "assignment_ind",
+      label: t("Ủy quyền tạm thời"),
     },
     {
-      to: '/timeout-delegate',
-      icon: 'hourglass_bottom',
-      label: t('Duyệt thay quá hạn'),
+      to: "/timeout-delegate",
+      icon: "hourglass_bottom",
+      label: t("Duyệt thay quá hạn"),
     },
   ];
 
@@ -188,16 +208,21 @@ function DelegationsSubPanel({ onClose }) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <span className="text-slate-400 text-[11px] uppercase tracking-widest font-semibold">
-          {t('Ủy quyền')}
+          {t("Ủy quyền")}
         </span>
         <button
           type="button"
           onClick={onClose}
-          title={t('Đóng bảng')}
-          aria-label={t('Đóng bảng')}
+          title={t("Đóng bảng")}
+          aria-label={t("Đóng bảng")}
           className="text-slate-400 hover:text-white hover:bg-white/10 rounded-md p-0.5 transition-colors cursor-pointer"
         >
-          <span aria-hidden="true" className="material-symbols-outlined text-[16px] leading-none">close</span>
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined text-[16px] leading-none"
+          >
+            close
+          </span>
         </button>
       </div>
 
@@ -211,15 +236,20 @@ function DelegationsSubPanel({ onClose }) {
                 to={item.to}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors border-l-2 ${
                   active
-                    ? 'border-primary bg-primary/10 text-white'
-                    : 'border-transparent text-slate-400 hover:bg-white/5 hover:text-white'
+                    ? "border-primary bg-primary/10 text-white"
+                    : "border-transparent text-slate-400 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <span className="flex items-center gap-2.5 min-w-0">
-                  <span aria-hidden="true" className="material-symbols-outlined text-[18px] flex-shrink-0">
+                  <span
+                    aria-hidden="true"
+                    className="material-symbols-outlined text-[18px] flex-shrink-0"
+                  >
                     {item.icon}
                   </span>
-                  <span className="text-sm font-medium break-words text-left min-w-0">{item.label}</span>
+                  <span className="text-sm font-medium break-words text-left min-w-0">
+                    {item.label}
+                  </span>
                 </span>
               </Link>
             </li>
@@ -237,42 +267,51 @@ function DelegationsSubPanel({ onClose }) {
  * Items with `subPanel: 'requests'` trigger the flyout instead of navigating.
  */
 const NAV_ITEMS = [
-  { name: 'Phòng ban & Nhóm', icon: 'account_tree', path: '/' },
-  { name: 'Nhân sự',           icon: 'group',        path: '/personnel', permission: 'USER_VIEW' },
+  { name: "Phòng ban & Nhóm", icon: "account_tree", path: "/" },
   {
-    name: 'Đơn từ',
-    icon: 'description',
-    subPanel: 'requests',
-    /* paths that should highlight this rail item */
-    matchPaths: ['/my-requests', '/my-requests/approvals', '/my-requests/supplements'],
-    badge: null, /* optionally set dynamically */
+    name: "Nhân sự",
+    icon: "group",
+    path: "/personnel",
+    permission: "USER_VIEW",
   },
   {
-    name: 'Báo Cáo',
-    icon: 'analytics',
-    path: '/reports',
-    permission: 'APPLICATION_VIEW',
+    name: "Đơn từ",
+    icon: "description",
+    subPanel: "requests",
+    /* paths that should highlight this rail item */
+    matchPaths: [
+      "/my-requests",
+      "/my-requests/approvals",
+      "/my-requests/supplements",
+    ],
+    badge: null /* optionally set dynamically */,
+  },
+  {
+    name: "Báo Cáo",
+    icon: "analytics",
+    path: "/reports",
+    permission: "APPLICATION_VIEW",
   },
   {
     // BE-166: mục Ủy quyền mở bảng con giống "Đơn từ": ủy quyền tạm thời + duyệt thay quá hạn.
-    name: 'Ủy quyền',
-    icon: 'assignment_ind',
-    subPanel: 'delegations',
-    matchPaths: ['/delegations', '/timeout-delegate'],
-    permission: 'APPLICATION_APPROVE',
+    name: "Ủy quyền",
+    icon: "assignment_ind",
+    subPanel: "delegations",
+    matchPaths: ["/delegations", "/timeout-delegate"],
+    permission: "APPLICATION_APPROVE",
   },
   {
-    name: 'Cấu hình',
-    icon: 'settings',
-    subPanel: 'settings',
-    matchPaths: ['/settings'],
-    permission: 'ROLE_VIEW',
+    name: "Cấu hình",
+    icon: "settings",
+    subPanel: "settings",
+    matchPaths: ["/settings"],
+    permission: "ROLE_VIEW",
   },
   {
     // DOCS-01: trang hướng dẫn sử dụng hệ thống — mở cho mọi tài khoản đã đăng nhập.
-    name: 'Hướng dẫn',
-    icon: 'menu_book',
-    path: '/docs',
+    name: "Hướng dẫn",
+    icon: "menu_book",
+    path: "/docs",
   },
 ];
 
@@ -308,13 +347,15 @@ export default function UnifiedSidebar({
    * (hành vi trạng thái, không phải đo width để tính toán bố cục thủ công).
    */
   const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 768px)").matches,
   );
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)');
+    const mq = window.matchMedia("(min-width: 768px)");
     const onChange = (e) => setIsDesktop(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
   const railCollapsed = isDesktop ? desktopCollapsed : !isOpen;
   /** Alias cho phần render: trạng thái thu của rail ở khổ màn hình hiện tại. */
@@ -346,12 +387,15 @@ export default function UnifiedSidebar({
     }
   }, []);
 
-  const openPanel = useCallback((key) => {
-    cancelClose();
-    // Giữ nội dung trong DOM ngay khi mở, tránh 1 nhịp khung rỗng rồi mới có chữ.
-    setRenderedSubPanel((prev) => (prev === key ? prev : key));
-    setOpenSubPanel((prev) => (prev === key ? prev : key));
-  }, [cancelClose]);
+  const openPanel = useCallback(
+    (key) => {
+      cancelClose();
+      // Giữ nội dung trong DOM ngay khi mở, tránh 1 nhịp khung rỗng rồi mới có chữ.
+      setRenderedSubPanel((prev) => (prev === key ? prev : key));
+      setOpenSubPanel((prev) => (prev === key ? prev : key));
+    },
+    [cancelClose],
+  );
 
   /**
    * BE-135: hẹn giờ đóng SAU KHI GIỮ 2 giây (không đóng tức thì). Chuột quay lại
@@ -362,7 +406,10 @@ export default function UnifiedSidebar({
     closeTimer.current = setTimeout(() => {
       closeTimer.current = null;
       setOpenSubPanel(null); // khung bắt đầu thu chậm
-      unmountTimer.current = setTimeout(() => setRenderedSubPanel(null), SIDEBAR_PANEL_COLLAPSE_MS);
+      unmountTimer.current = setTimeout(
+        () => setRenderedSubPanel(null),
+        SIDEBAR_PANEL_COLLAPSE_MS,
+      );
     }, SIDEBAR_PANEL_CLOSE_DELAY_MS);
   }, [cancelClose]);
 
@@ -375,7 +422,10 @@ export default function UnifiedSidebar({
     cancelClose();
     setOpenSubPanel(null); // khung bắt đầu thu chậm
     clearTimeout(unmountTimer.current);
-    unmountTimer.current = setTimeout(() => setRenderedSubPanel(null), SIDEBAR_PANEL_COLLAPSE_MS);
+    unmountTimer.current = setTimeout(
+      () => setRenderedSubPanel(null),
+      SIDEBAR_PANEL_COLLAPSE_MS,
+    );
   }, [cancelClose]);
 
   useEffect(() => cancelClose, [cancelClose]);
@@ -383,7 +433,7 @@ export default function UnifiedSidebar({
   const handleLogout = () => {
     // BE-14: xoa toan bo trang thai phien (token + formFields + requests cache)
     clearSessionStorage();
-    window.location.href = '/login';
+    window.location.href = "/login";
   };
 
   // Tính số đơn chờ tôi duyệt trực tiếp từ context — luôn đồng bộ với trang
@@ -392,24 +442,24 @@ export default function UnifiedSidebar({
     () =>
       requests.filter(
         (r) =>
-          r.status === 'pending' &&
-          r.steps[r.currentStep]?.approverId === currentUserId
+          r.status === "pending" &&
+          r.steps[r.currentStep]?.approverId === currentUserId,
       ).length,
-    [requests, currentUserId]
+    [requests, currentUserId],
   );
 
   // BE-05: so don cua toi dang bi yeu cau bo sung
   const supplementCount = useMemo(
     () =>
       requests.filter(
-        (r) => r.status === 'needssupplement' && r.creatorId === currentUserId
+        (r) => r.status === "needssupplement" && r.creatorId === currentUserId,
       ).length,
-    [requests, currentUserId]
+    [requests, currentUserId],
   );
 
   // Filter nav items by permission
   const visibleNavs = NAV_ITEMS.filter(
-    (item) => !item.permission || hasPermission(item.permission)
+    (item) => !item.permission || hasPermission(item.permission),
   );
 
   const toggleSubPanel = (key) => {
@@ -433,7 +483,7 @@ export default function UnifiedSidebar({
       >
         {/* ── Rail ── */}
         <nav
-          className={`relative bg-[#0F172A] ${railCollapsed ? 'w-[72px]' : 'w-[240px]'} h-full flex-shrink-0 flex flex-col justify-between shadow-sm transition-all duration-300`}
+          className={`relative bg-[#0F172A] ${railCollapsed ? "w-[72px]" : "w-[240px]"} h-full flex-shrink-0 flex flex-col justify-between shadow-sm transition-all duration-300`}
           id="sidebar"
         >
           {/* BE-85: nút thu gọn / mở rộng nằm TRONG rail.
@@ -449,28 +499,43 @@ export default function UnifiedSidebar({
                 - nâng lên z-[70] để không bị bảng con che mất. */}
           <button
             type="button"
-            onPointerDown={(e) => { e.preventDefault(); setDesktopCollapsed((v) => !v); }}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              setDesktopCollapsed((v) => !v);
+            }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDesktopCollapsed((v) => !v); }
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setDesktopCollapsed((v) => !v);
+              }
             }}
             className="hidden md:flex absolute top-1/2 -right-[22px] -translate-y-1/2 w-11 h-11 items-center justify-center z-[70] cursor-pointer group"
-            title={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
-            aria-label={isCollapsed ? t('Mở rộng') : t('Thu gọn')}
+            title={isCollapsed ? t("Mở rộng") : t("Thu gọn")}
+            aria-label={isCollapsed ? t("Mở rộng") : t("Thu gọn")}
           >
             <span className="w-8 h-8 bg-white text-slate-600 border border-slate-200 rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] group-hover:text-primary group-hover:bg-slate-50 group-hover:border-primary/20 transition-colors">
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110">
-                {isCollapsed ? 'chevron_right' : 'chevron_left'}
+              <span
+                aria-hidden="true"
+                className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:scale-110"
+              >
+                {isCollapsed ? "chevron_right" : "chevron_left"}
               </span>
             </span>
           </button>
 
           <div>
             {/* User profile — BE-22: chuông tách RIÊNG khỏi Link để không bị điều hướng sang profile */}
-            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-1'} px-4 py-3 border-b border-white/10`}>
+            <div
+              className={`flex items-center ${isCollapsed ? "justify-center" : "gap-1"} px-4 py-3 border-b border-white/10`}
+            >
               <Link
                 to="/profile"
-                className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'} hover:opacity-90 transition-opacity`}
-                title={isCollapsed ? (currentUser?.name || t('Nguyễn Văn A')) : undefined}
+                className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3 flex-1 min-w-0"} hover:opacity-90 transition-opacity`}
+                title={
+                  isCollapsed
+                    ? currentUser?.name 
+                    : undefined
+                }
               >
                 <div className="relative shrink-0">
                   <img
@@ -478,34 +543,51 @@ export default function UnifiedSidebar({
                     className="w-9 h-9 rounded-full object-cover"
                     src={
                       currentUser?.avatar ||
-                      'https://ui-avatars.com/api/?name=User&background=random&color=fff&size=128'
+                      "https://ui-avatars.com/api/?name=User&background=random&color=fff&size=128"
                     }
                   />
                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#0F172A]" />
                 </div>
                 {!isCollapsed && (
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-white text-sm font-semibold break-words leading-tight min-w-0">
-                      {currentUser?.name || t('Nguyễn Văn A')}
-                    </h2>
-                    <div className="flex flex-col gap-1 mt-1">
-                      <span className="text-xs text-slate-400 font-medium tracking-wide">
-                        {t(currentUser?.role === 'ADMIN' ? 'Quản trị viên' :
-                           currentUser?.role === 'HR' ? 'Nhân sự' :
-                           currentUser?.role === 'MANAGER' ? 'Quản lý' :
-                           currentUser?.role === 'TEAM_LEADER' ? 'Trưởng nhóm' : 'Nhân viên')}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                        <span className="text-[11px] text-slate-400 font-medium">{t('Trực tuyến')}</span>
+                    {currentUser ? (
+                      <>
+                        <h2 className="text-white text-sm font-semibold break-words leading-tight min-w-0">
+                          {currentUser.name}
+                        </h2>
+                        <div className="flex flex-col gap-1 mt-1">
+                          <span className="text-xs text-slate-400 font-medium tracking-wide">
+                            {t(
+                              currentUser.role === "ADMIN"
+                                ? "Quản trị viên"
+                                : currentUser.role === "HR"
+                                  ? "Nhân sự"
+                                  : currentUser.role === "MANAGER"
+                                    ? "Quản lý"
+                                    : currentUser.role === "TEAM_LEADER"
+                                      ? "Trưởng nhóm"
+                                      : "Nhân viên",
+                            )}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+                            <span className="text-[11px] text-slate-400 font-medium">
+                              {t("Trực tuyến")}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        <span className="block h-4 w-28 rounded bg-white/10 animate-pulse" />
+                        <span className="block h-3 w-16 rounded bg-white/10 animate-pulse" />
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </Link>
-              {!isCollapsed && (
+              {!isCollapsed && isDesktop && (
                 <div className="shrink-0">
-                  {/* BE-22: chuông thông báo thật (đếm chưa đọc, xem danh sách) */}
                   <NotificationBell />
                 </div>
               )}
@@ -513,96 +595,137 @@ export default function UnifiedSidebar({
 
             {/* Nav items */}
             <ul className="flex flex-col py-2">
-              {visibleNavs.filter(item => {
-                // item.name là hằng cấp module (chưa dịch) nên so sánh bằng chuỗi gốc,
-                // KHÔNG bọc t() ở đây vì t() sẽ đổi theo ngôn ngữ và làm sai điều kiện.
-                if (item.name === 'Nhân sự' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
-                if (item.name === 'Cấu hình' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
-                if (item.name === 'Báo Cáo' && currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') return false;
-                
-                return true;
-              }).map((item) => {
-                /* Determine active state */
-                const isActive = item.subPanel
-                  ? item.matchPaths?.some((p) => location.pathname.startsWith(p))
-                  : location.pathname === item.path;
+              {visibleNavs
+                .filter((item) => {
+                  // item.name là hằng cấp module (chưa dịch) nên so sánh bằng chuỗi gốc,
+                  // KHÔNG bọc t() ở đây vì t() sẽ đổi theo ngôn ngữ và làm sai điều kiện.
+                  if (
+                    item.name === "Nhân sự" &&
+                    currentUser?.role !== "ADMIN" &&
+                    currentUser?.role !== "HR"
+                  )
+                    return false;
+                  if (
+                    item.name === "Cấu hình" &&
+                    currentUser?.role !== "ADMIN" &&
+                    currentUser?.role !== "HR"
+                  )
+                    return false;
+                  if (
+                    item.name === "Báo Cáo" &&
+                    currentUser?.role !== "ADMIN" &&
+                    currentUser?.role !== "HR"
+                  )
+                    return false;
 
-                const isSubPanelOpen = openSubPanel === item.subPanel;
+                  return true;
+                })
+                .map((item) => {
+                  /* Determine active state */
+                  const isActive = item.subPanel
+                    ? item.matchPaths?.some((p) =>
+                        location.pathname.startsWith(p),
+                      )
+                    : location.pathname === item.path;
 
-                const badge =
-                  item.subPanel === 'requests' ? pendingCount : item.badge;
+                  const isSubPanelOpen = openSubPanel === item.subPanel;
 
-                if (item.subPanel) {
-                  /* BE-135: rê chuột vào là thòi ra; bấm vẫn mở/đóng được (cảm ứng). */
+                  const badge =
+                    item.subPanel === "requests" ? pendingCount : item.badge;
+
+                  if (item.subPanel) {
+                    /* BE-135: rê chuột vào là thòi ra; bấm vẫn mở/đóng được (cảm ứng). */
+                    return (
+                      <li
+                        key={item.name}
+                        onMouseEnter={() => openPanel(item.subPanel)}
+                      >
+                        <button
+                          onClick={() => toggleSubPanel(item.subPanel)}
+                          title={isCollapsed ? t(item.name) : undefined}
+                          className={`w-full flex items-center ${isCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
+                            isActive || isSubPanelOpen
+                              ? "border-primary bg-primary-container/10 text-white font-semibold"
+                              : "border-l-transparent text-slate-400 hover:text-white hover:bg-white/5"
+                          }`}
+                        >
+                          <div
+                            className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3 flex-1 min-w-0"}`}
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="material-symbols-outlined text-[20px] relative"
+                            >
+                              {item.icon}
+                              {isCollapsed && badge > 0 && (
+                                <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
+                              )}
+                            </span>
+                            {!isCollapsed && (
+                              <span className="text-sm break-words text-left min-w-0">
+                                {t(item.name)}
+                              </span>
+                            )}
+                          </div>
+                          {!isCollapsed && badge > 0 && (
+                            <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none mr-1">
+                              {badge}
+                            </span>
+                          )}
+                          {!isCollapsed && (
+                            <span
+                              aria-hidden="true"
+                              className={`material-symbols-outlined text-[16px] flex-shrink-0 transition-transform duration-200 ${
+                                isSubPanelOpen ? "rotate-180" : ""
+                              }`}
+                            >
+                              chevron_right
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  }
+
                   return (
-                    <li key={item.name} onMouseEnter={() => openPanel(item.subPanel)}>
-                      <button
-                        onClick={() => toggleSubPanel(item.subPanel)}
+                    <li key={item.name} onMouseEnter={scheduleClose}>
+                      <Link
+                        to={item.path}
+                        onClick={closePanel}
                         title={isCollapsed ? t(item.name) : undefined}
-                        className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
-                          isActive || isSubPanelOpen
-                            ? 'border-primary bg-primary-container/10 text-white font-semibold'
-                            : 'border-l-transparent text-slate-400 hover:text-white hover:bg-white/5'
+                        className={`flex items-center ${isCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
+                          isActive
+                            ? "border-primary bg-primary-container/10 text-white font-semibold"
+                            : "border-l-transparent text-slate-400 hover:text-white hover:bg-white/5"
                         }`}
                       >
-                        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'}`}>
-                          <span aria-hidden="true" className="material-symbols-outlined text-[20px] relative">
+                        <div
+                          className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3 flex-1 min-w-0"}`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="material-symbols-outlined text-[20px] relative"
+                          >
                             {item.icon}
                             {isCollapsed && badge > 0 && (
                               <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
                             )}
                           </span>
-                          {!isCollapsed && <span className="text-sm break-words text-left min-w-0">{t(item.name)}</span>}
+                          {!isCollapsed && (
+                            <span className="text-sm break-words text-left min-w-0">
+                              {t(item.name)}
+                            </span>
+                          )}
                         </div>
                         {!isCollapsed && badge > 0 && (
-                          <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none mr-1">
+                          <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                             {badge}
                           </span>
                         )}
-                        {!isCollapsed && (
-                          <span aria-hidden="true"
-                            className={`material-symbols-outlined text-[16px] flex-shrink-0 transition-transform duration-200 ${
-                              isSubPanelOpen ? 'rotate-180' : ''
-                            }`}
-                          >
-                            chevron_right
-                          </span>
-                        )}
-                      </button>
+                      </Link>
                     </li>
                   );
-                }
-
-                return (
-                  <li key={item.name} onMouseEnter={scheduleClose}>
-                    <Link
-                      to={item.path}
-                      onClick={closePanel}
-                      title={isCollapsed ? t(item.name) : undefined}
-                      className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 cursor-pointer active:opacity-80 transition-colors border-l-4 ${
-                        isActive
-                          ? 'border-primary bg-primary-container/10 text-white font-semibold'
-                          : 'border-l-transparent text-slate-400 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 flex-1 min-w-0'}`}>
-                        <span aria-hidden="true" className="material-symbols-outlined text-[20px] relative">
-                          {item.icon}
-                          {isCollapsed && badge > 0 && (
-                            <span className="absolute -top-1.5 -right-2 w-2 h-2 bg-error rounded-full"></span>
-                          )}
-                        </span>
-                        {!isCollapsed && <span className="text-sm break-words text-left min-w-0">{t(item.name)}</span>}
-                      </div>
-                      {!isCollapsed && badge > 0 && (
-                        <span className="bg-error text-on-error text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                          {badge}
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
+                })}
             </ul>
           </div>
 
@@ -615,11 +738,18 @@ export default function UnifiedSidebar({
             <div className="p-3 border-t border-white/10">
               <button
                 onClick={handleLogout}
-                title={isCollapsed ? t('Đăng xuất') : undefined}
-                className={`w-full text-slate-400 hover:text-white flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-center px-4 gap-2'} py-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer`}
+                title={isCollapsed ? t("Đăng xuất") : undefined}
+                className={`w-full text-slate-400 hover:text-white flex items-center ${isCollapsed ? "justify-center px-0" : "justify-center px-4 gap-2"} py-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer`}
               >
-                <span aria-hidden="true" className="material-symbols-outlined text-[20px]">logout</span>
-                {!isCollapsed && <span className="text-sm font-medium">{t('Đăng xuất')}</span>}
+                <span
+                  aria-hidden="true"
+                  className="material-symbols-outlined text-[20px]"
+                >
+                  logout
+                </span>
+                {!isCollapsed && (
+                  <span className="text-sm font-medium">{t("Đăng xuất")}</span>
+                )}
               </button>
             </div>
           </div>
@@ -631,21 +761,31 @@ export default function UnifiedSidebar({
         <div
           onMouseEnter={cancelClose}
           className={`h-full overflow-hidden flex transition-[width,opacity] duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] max-md:absolute max-md:top-0 max-md:left-full max-md:z-40 max-md:shadow-2xl ${
-            openSubPanel ? 'w-[200px] opacity-100' : 'w-0 opacity-0'
+            openSubPanel ? "w-[200px] opacity-100" : "w-0 opacity-0"
           }`}
         >
-          {renderedSubPanel === 'requests' && (
-            <div className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === 'requests' ? 'translate-x-0' : '-translate-x-4'}`}>
-              <RequestsSubPanel pendingCount={pendingCount} supplementCount={supplementCount} onClose={closePanel} />
+          {renderedSubPanel === "requests" && (
+            <div
+              className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === "requests" ? "translate-x-0" : "-translate-x-4"}`}
+            >
+              <RequestsSubPanel
+                pendingCount={pendingCount}
+                supplementCount={supplementCount}
+                onClose={closePanel}
+              />
             </div>
           )}
-          {renderedSubPanel === 'settings' && (
-            <div className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === 'settings' ? 'translate-x-0' : '-translate-x-4'}`}>
+          {renderedSubPanel === "settings" && (
+            <div
+              className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === "settings" ? "translate-x-0" : "-translate-x-4"}`}
+            >
               <SettingsSubPanel onClose={closePanel} />
             </div>
           )}
-          {renderedSubPanel === 'delegations' && (
-            <div className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === 'delegations' ? 'translate-x-0' : '-translate-x-4'}`}>
+          {renderedSubPanel === "delegations" && (
+            <div
+              className={`h-full flex-shrink-0 transition-transform duration-[650ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${openSubPanel === "delegations" ? "translate-x-0" : "-translate-x-4"}`}
+            >
               <DelegationsSubPanel onClose={closePanel} />
             </div>
           )}

@@ -71,7 +71,7 @@ export default function SidebarDelegationCard({ isCollapsed }) {
   }, []);
 
   // BE-147: tải lại khi đổi trang và mỗi khi có thao tác tạo/thu hồi ủy quyền ở bất kỳ màn hình nào.
-  useEffect(() => { load(); }, [load, location.pathname]);
+  useEffect(() => { load(); }, [load]);
   useEffect(() => onDelegationsChanged(load), [load]);
 
   /** Đồng hồ chung: ủy quyền vừa tới hạn phải tự chuyển từ "sắp tới" sang "đang chạy". */
