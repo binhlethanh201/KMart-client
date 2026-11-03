@@ -8,20 +8,25 @@ import Button from '../../../components/Button';
 import LoadError from '../../../components/LoadError';
 
 function Toggle({ checked, onChange, label, disabled }) {
+  /*
+   * Không dùng class `tap-target` chung: class đó thêm `justify-center` khiến núm trượt bị căn
+   * giữa rồi mới translate nên trồi ra khỏi rãnh. Tự đảm bảo vùng chạm 24px bằng h-6 (WCAG 2.2
+   * SC 2.5.8) và giữ núm trượt trong rãnh bằng padding + translate chuẩn.
+   */
   return (
     <button
       type="button"
       onClick={() => { if (!disabled) onChange(!checked); }}
       disabled={disabled}
-      className={`tap-target relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${
-        checked ? 'bg-primary' : 'bg-surface-container-highest'
-      }`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full p-0.5 transition-colors flex-shrink-0 ${
+        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+      } ${checked ? 'bg-primary' : 'bg-surface-container-highest'}`}
       aria-pressed={checked}
       aria-label={label}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-4' : 'translate-x-0.5'
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+          checked ? 'translate-x-5' : 'translate-x-0'
         }`}
       />
     </button>
