@@ -15,6 +15,7 @@ import { resolveFormRows, describeSupplementChanges, parseSupplementChanges } fr
 import { documentTypeService } from '../../../services/documentTypeService';
 import CancelRequestModal from '../components/CancelRequestModal';
 import { useI18n } from '../../../i18n/I18nProvider';
+import TranslatedText from '../../../i18n/TranslatedText';
 import { PAGE_TITLE_CLS } from '../../../components/PageHeader';
 import LoadError from '../../../components/LoadError';
 import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
@@ -39,7 +40,7 @@ const stepTone = {
 };
 
 export default function RequestDetail() {
-  const { t } = useI18n();
+  const { t, tContent } = useI18n();
   const { id } = useParams();
   const navigate = useNavigate();
   const { requests, currentUser, currentUserId, canApprove, approveRequest, rejectRequest, cancelRequest, requestSupplement, addComment, simulateTimeout, pushToast, departments } = useApproval();
@@ -125,7 +126,9 @@ export default function RequestDetail() {
   const formatFieldValue = (value, deptNames, translate) => {
     const toText = (v) => {
       const s = String(v);
-      return deptNames.has(s) ? translate(deptNames.get(s)) : s;
+      // Giá trị tự do (lý do, ghi chú...) do người dùng nhập -> dịch nội dung; ngày/số được
+      // isUntranslatable() bảo vệ nên không bị gửi đi dịch.
+      return deptNames.has(s) ? translate(deptNames.get(s)) : tContent(s);
     };
     if (Array.isArray(value)) return value.map(toText).join(', ');
     if (typeof value === 'object' && value !== null) return JSON.stringify(value);
@@ -221,7 +224,9 @@ export default function RequestDetail() {
     ? { badge: 'text-pink-700', dot: 'bg-pink-600' }
     : meta;
   const creatorName = request.creatorName || employees.find((u) => u.id === request.creatorId)?.name;
-  const creatorRole = employees.find((u) => u.id === request.creatorId)?.position || t('Nhân viên');
+  // Giữ giá trị thô (không t() ở đây) để dịch lúc render — kèm phòng ban THẬT của người tạo.
+  const creatorRole = employees.find((u) => u.id === request.creatorId)?.position || 'Nhân viên';
+  const creatorDept = employees.find((u) => u.id === request.creatorId)?.department;
   const creatorAvatar = employees.find((u) => u.id === request.creatorId)?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(creatorName || 'User')}&background=random&color=fff&size=128`;
   const actionable = canApprove(request);
   // BE-76: chủ đơn hủy được khi chưa ai duyệt (quy tắc phải khớp backend).
@@ -487,7 +492,7 @@ export default function RequestDetail() {
           <CollapsibleOnMobile title="Thông tin đơn" icon="info" defaultOpen>
           <div>
             <div className="flex items-center gap-3 mb-1 flex-wrap">
-              <h1 className={PAGE_TITLE_CLS}>{request.title}</h1>
+              <h1 className={PAGE_TITLE_CLS}>{tContent(request.title)}</h1>
               <span className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${statusBadge.badge}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot}`} />
                 {t(meta.label)}
@@ -643,7 +648,7 @@ export default function RequestDetail() {
                     <h2 className="text-sm text-on-surface font-semibold">{t('Đơn đang chờ bổ sung thông tin')}</h2>
                     {lastSupplementReason ? (
                       <p className="text-sm text-on-surface mt-1">
-                        <strong className="font-semibold">{t('Lý do cần bổ sung:')}</strong> {lastSupplementReason.text}
+                        <strong className="font-semibold">{t('Lý do cần bổ sung:')}</strong> <TranslatedText text={lastSupplementReason.text} allowViewOriginal />
                         {lastSupplementReason.at && <span className="text-xs text-secondary ml-1">({lastSupplementReason.at})</span>}
                       </p>
                     ) : (
@@ -665,7 +670,7 @@ export default function RequestDetail() {
                   <div className="flex-1 min-w-0">
                     <h2 className="text-sm text-on-surface font-semibold">{t('Đơn đã bị từ chối')}</h2>
                     <p className="text-sm text-on-surface mt-1">
-                      <strong className="font-semibold">{t('Lý do từ chối:')}</strong> {lastRejectReason.text}
+                      <strong className="font-semibold">{t('Lý do từ chối:')}</strong> <TranslatedText text={lastRejectReason.text} allowViewOriginal />
                       {lastRejectReason.at && <span className="text-xs text-secondary ml-1">({lastRejectReason.at})</span>}
                     </p>
                   </div>
@@ -691,7 +696,7 @@ export default function RequestDetail() {
                           <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={creatorAvatar} alt={creatorName} />
                           <div>
                             <p className="font-medium text-on-surface">{creatorName} ({String(request.creatorId).substring(0, 8).toUpperCase()})</p>
-                            <p className="text-xs text-secondary">{creatorRole} {t('- Kmart Siêu thị Cầu Giấy')}</p>
+                            <p className="text-xs text-secondary">{t(creatorRole)}{creatorDept ? ` - ${t(creatorDept)}` : ''}</p>
                           </div>
                         </div>
                         <button
@@ -706,13 +711,13 @@ export default function RequestDetail() {
                   </tr>
                   <tr>
                     <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{t('Loại đơn từ')}</th>
-                    <td className="py-3 px-4 text-on-surface">{request.type}</td>
+                    <td className="py-3 px-4 text-on-surface">{t(request.type)}</td>
                   </tr>
                   {/* BE-89: lý do cấp đơn hiện riêng, không lẫn với field động cùng tên `reason`. */}
                   {request.reasonText ? (
                     <tr>
                       <th className="py-3 px-4 font-medium text-secondary bg-surface-container-lowest align-top border-r border-outline-variant">{t('Lý do / Mô tả')}</th>
-                      <td className="py-3 px-4 text-on-surface whitespace-pre-wrap">{request.reasonText}</td>
+                      <td className="py-3 px-4 text-on-surface whitespace-pre-wrap"><TranslatedText text={request.reasonText} allowViewOriginal /></td>
                     </tr>
                   ) : null}
                   {formRows.map(({ key, label, value, translatable }) => {
@@ -747,7 +752,7 @@ export default function RequestDetail() {
                   {request.rejectReason && (
                     <tr>
                       <th className="py-3 px-4 font-medium text-error bg-error-container/10 align-top border-r border-error/20">{t('Lý do từ chối')}</th>
-                      <td className="py-3 px-4 text-on-error-container bg-error-container/10">{request.rejectReason}</td>
+                      <td className="py-3 px-4 text-on-error-container bg-error-container/10"><TranslatedText text={request.rejectReason} allowViewOriginal /></td>
                     </tr>
                   )}
                   <tr>
@@ -815,7 +820,7 @@ export default function RequestDetail() {
                             <span className="text-xs text-secondary">{c.at}</span>
                           </div>
                           <p className="text-xs text-secondary mb-1">{t('Người gửi:')} {authorName}</p>
-                          <p className="text-sm text-on-surface whitespace-pre-wrap">{reason}</p>
+                          <p className="text-sm text-on-surface whitespace-pre-wrap"><TranslatedText text={reason} allowViewOriginal /></p>
                         </div>
                       </div>
                     );
@@ -834,7 +839,7 @@ export default function RequestDetail() {
                             <span className="text-xs text-secondary">{c.at}</span>
                           </div>
                           <p className="text-xs text-secondary mb-1">{t('Người duyệt:')} {authorName}</p>
-                          <p className="text-sm text-on-surface whitespace-pre-wrap">{reason}</p>
+                          <p className="text-sm text-on-surface whitespace-pre-wrap"><TranslatedText text={reason} allowViewOriginal /></p>
                         </div>
                       </div>
                     );
@@ -847,7 +852,7 @@ export default function RequestDetail() {
                           <span className="font-medium text-sm text-on-surface">{authorName}</span>
                           <span className="text-xs text-secondary">{c.at}</span>
                         </div>
-                        <p className="text-sm text-on-surface whitespace-pre-wrap">{c.text}</p>
+                        <p className="text-sm text-on-surface whitespace-pre-wrap"><TranslatedText text={c.text} /></p>
                       </div>
                     </div>
                   );
@@ -975,7 +980,7 @@ export default function RequestDetail() {
                             <span className="text-[11px] font-medium text-pink-700 flex-shrink-0">{h.at}</span>
                           </div>
                           <p className="text-sm text-on-surface font-medium mt-0.5">{nameOf(h.userId)} {t('(Người duyệt)')}</p>
-                          {reason && <p className="text-[11px] text-pink-700 mt-1">{reason}</p>}
+                          {reason && <p className="text-[11px] text-pink-700 mt-1"><TranslatedText text={reason} /></p>}
                         </div>
                       </li>
                     );
@@ -1270,7 +1275,8 @@ export default function RequestDetail() {
                       const label = isTimeoutWorkflow ? t('Trả về nơi khởi tạo') : request.status === 'canceled' ? t('Đã hủy đơn') : t('Đã từ chối');
                       const desc = isTimeoutWorkflow ? t('Quá hạn xử lý 12h')
                         : request.status === 'canceled' ? t('Người gửi đã hủy đơn này')
-                          : (lastRejectReason ? t('Lý do: {v0}', { v0: lastRejectReason.text }) : t('Đơn đã bị từ chối'));
+                          // Lý do từ chối là nội dung người dùng nhập -> hiển thị qua dịch tự động.
+                          : (lastRejectReason ? <>{t('Lý do:')} <TranslatedText text={lastRejectReason.text} allowViewOriginal /></> : t('Đơn đã bị từ chối'));
                       return (
                         <li key={item.key} className="flex items-start gap-3">
                           <div className="w-6 h-6 rounded-full bg-error text-on-error flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">

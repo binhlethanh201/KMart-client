@@ -26,10 +26,15 @@ const STORAGE_PREFIX = 'kmart.i18n.auto.';
  * Khi từ điển/bản dịch phía máy chủ thay đổi đáng kể thì TĂNG số này để mọi trình duyệt
  * tự bỏ bộ nhớ đệm cũ và lấy bản dịch đúng.
  */
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const FLUSH_DELAY_MS = 150;
-const MAX_TEXT_LENGTH = 400;
+const MAX_TEXT_LENGTH = 2000;
+/** Mỗi request chỉ gửi tối đa 150 nhãn để body không quá lớn. */
+const MAX_TEXTS_PER_REQUEST = 150;
 const MAX_PENDING = 400;
+
+/** Chữ Hàn (Hangul) — nội dung chứa chữ Hàn mới cần dịch ngược về tiếng Việt. */
+export const HANGUL_RE = /[\uAC00-\uD7AF\u3130-\u318F]/;
 
 /** lang -> Map(nhãn tiếng Việt -> bản dịch) */
 const cache = new Map();
@@ -97,7 +102,12 @@ export function subscribeAutoTranslate(listener) {
 
 /** Xếp một nhãn vào hàng đợi dịch (chỉ gửi đi khi thật sự cần). */
 export function requestAutoTranslation(lang, text) {
-  if (lang !== 'en' && lang !== 'ko') return;
+  // 'ko'/'en': nhãn tiếng Việt luôn được dịch. 'vi': CHỈ dịch khi nội dung chứa chữ Hàn.
+  if (lang === 'vi') {
+    if (!HANGUL_RE.test(text || '')) return;
+  } else if (lang !== 'en' && lang !== 'ko') {
+    return;
+  }
   if (!text || text.length > MAX_TEXT_LENGTH) return;
 
   const key = `${lang}:${text}`;
@@ -112,8 +122,9 @@ export function requestAutoTranslation(lang, text) {
   }
 
   attempts.set(key, (attempts.get(key) || 0) + 1);
+  // Chỉ đánh dấu `requested` khi nhãn thật sự được xếp vào lô sẽ gửi đi.
+  if (requested.size >= MAX_PENDING) return;
   requested.add(key);
-  if (requested.size > MAX_PENDING) return;
 
   if (!queue.has(lang)) queue.set(lang, new Set());
   queue.get(lang).add(text);
@@ -130,41 +141,49 @@ async function flush() {
 
   for (const [lang, texts] of batches) {
     if (!texts.length) continue;
-    try {
-      const response = await fetch(`${API_URL}/api/translations/lookup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('kmart_token') || ''}`,
-        },
-        body: JSON.stringify({ language: lang, texts }),
-      });
-      if (!response.ok) continue;
-
-      const body = await response.json();
-      const items = body?.items || {};
-      const bucket = getCache(lang);
-      let changed = false;
-      Object.entries(items).forEach(([key, value]) => {
-        if (typeof value === 'string' && !bucket.has(key)) {
-          bucket.set(key, value);
-          changed = true;
+    // Chia lô tối đa MAX_TEXTS_PER_REQUEST nhãn — mỗi lô gửi một request riêng.
+    for (let i = 0; i < texts.length; i += MAX_TEXTS_PER_REQUEST) {
+      const chunk = texts.slice(i, i + MAX_TEXTS_PER_REQUEST);
+      try {
+        const response = await fetch(`${API_URL}/api/translations/lookup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('kmart_token') || ''}`,
+          },
+          body: JSON.stringify({ language: lang, texts: chunk }),
+        });
+        if (!response.ok) {
+          // Lô này chưa gửi được: gỡ đúng nhãn của lô khỏi `requested` để lần sau thử lại.
+          chunk.forEach((text) => requested.delete(`${lang}:${text}`));
+          continue;
         }
-      });
 
-      if (changed) {
-        persist(lang);
-        notify();
+        const body = await response.json();
+        const items = body?.items || {};
+        const bucket = getCache(lang);
+        let changed = false;
+        Object.entries(items).forEach(([key, value]) => {
+          if (typeof value === 'string' && !bucket.has(key)) {
+            bucket.set(key, value);
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          persist(lang);
+          notify();
+        }
+
+        // Nhãn KHÔNG dịch được (máy chủ không gọi được dịch vụ) phải được thử lại ở lần render sau —
+        // kể cả khi những nhãn khác trong cùng lô đã dịch xong.
+        chunk.forEach((text) => {
+          if (!Object.prototype.hasOwnProperty.call(items, text)) requested.delete(`${lang}:${text}`);
+        });
+      } catch {
+        // Không có mạng: thử lại ở lần render sau (chỉ gỡ nhãn của lô vừa lỗi).
+        chunk.forEach((text) => requested.delete(`${lang}:${text}`));
       }
-
-      // Nhãn KHÔNG dịch được (máy chủ không gọi được dịch vụ) phải được thử lại ở lần render sau —
-      // kể cả khi những nhãn khác trong cùng lô đã dịch xong.
-      texts.forEach((text) => {
-        if (!Object.prototype.hasOwnProperty.call(items, text)) requested.delete(`${lang}:${text}`);
-      });
-    } catch {
-      // Không có mạng: thử lại ở lần render sau.
-      texts.forEach((text) => requested.delete(`${lang}:${text}`));
     }
   }
 }

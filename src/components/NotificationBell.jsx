@@ -67,7 +67,7 @@ const timeAgo = (iso, now) => {
 };
 
 export default function NotificationBell({ variant = "sidebar" }) {
-  const { t } = useI18n();
+  const { t, tContent } = useI18n();
   const navigate = useNavigate();
   const { pushToast } = useApproval();
   const [open, setOpen] = useState(false);
@@ -298,14 +298,14 @@ export default function NotificationBell({ variant = "sidebar" }) {
                       <span
                         className={`text-[13px] leading-snug line-clamp-1 ${n.isRead ? "font-medium text-on-surface-variant" : "font-semibold text-on-surface"}`}
                       >
-                        {n.title}
+                        {tContent(n.title)}
                       </span>
                       {!n.isRead && (
                         <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
                       )}
                     </div>
                     <p className="text-xs text-secondary mt-0.5 line-clamp-2 leading-relaxed">
-                      {n.message}
+                      {tContent(n.message)}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <span

@@ -56,7 +56,8 @@ const mapToFrontendModel = (u) => {
 
   return {
     id: u.id,
-    shortId: u.id ? u.id.substring(0, 8).toUpperCase() : '',
+    // Ưu tiên mã nhân viên thật (employeeCode) làm mã ngắn hiển thị; fallback 8 ký tự UUID cho dữ liệu cũ.
+    shortId: u.employeeCode || (u.id ? u.id.substring(0, 8).toUpperCase() : ''),
     name: u.fullName,
     avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`,
     status: blockedByNoPrimary ? 'inactive' : dbStatus,
@@ -245,5 +246,65 @@ export const userService = {
   getPositionHistory: async (userId, page = 1, pageSize = 50) => {
     const response = await apiClient.get(`/users/${userId}/position-history?page=${page}&pageSize=${pageSize}`);
     return response.data;
+  },
+
+  /**
+   * Nhập Excel Nhân sự — bước 1: xem trước (dryRun=true).
+   * Máy chủ đọc file .xlsx và trả về báo cáo đối soát, KHÔNG ghi gì vào CSDL.
+   */
+  importExcelDryRun: async (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await apiClient.post('/users/import-excel?dryRun=true', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  /** Nhập Excel Nhân sự — bước 2: chốt nhập (dryRun=false), trả về { jobId, status } để theo dõi. */
+  importExcelCommit: async (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await apiClient.post('/users/import-excel?dryRun=false', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  /** Trạng thái job nhập Excel: queued|hashing|committing|completed|failed. */
+  getImportJobStatus: async (jobId) => {
+    const response = await apiClient.get(`/users/import-excel/${jobId}/status`);
+    return response.data;
+  },
+
+  /**
+   * Tải file .xlsx chứa mật khẩu tạm của đợt nhập.
+   * Endpoint có [Authorize] nên phải tải qua axios rồi bơm vào object URL (không dùng <a href> được).
+   */
+  downloadImportCredentials: async (jobId) => {
+    const response = await apiClient.get(`/users/import-excel/${jobId}/credentials`, {
+      responseType: 'blob'
+    });
+    const blob = response.data;
+    // Blob trả về có thể là JSON lỗi (vd 404) -> kiểm tra để báo đúng thay vì tải file rác.
+    if (blob && blob.type && blob.type.includes('application/json')) {
+      const text = await blob.text();
+      let msg = 'Không tải được file mật khẩu';
+      try { msg = JSON.parse(text)?.error || msg; } catch { /* ignore */ }
+      throw new Error(msg);
+    }
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `credentials-${jobId}.xlsx`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    // Trễ một nhịp rồi mới thu hồi URL — nếu không trình duyệt chưa kịp tải (xem applicationService).
+    setTimeout(() => {
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    }, 0);
   }
 };

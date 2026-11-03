@@ -9,7 +9,7 @@ import CancelRequestModal from './CancelRequestModal';
 
 // Status-driven request card. Clicking navigates to the detail page.
 export default function RequestCard({ request: r }) {
-  const { t } = useI18n();
+  const { t, tContent } = useI18n();
   const navigate = useNavigate();
   const { canApprove, departments, currentUserId, cancelRequest } = useApproval();
   const { employees } = useHr();
@@ -203,8 +203,8 @@ export default function RequestCard({ request: r }) {
             </div>
             
             {/* Title */}
-            <h3 className="text-base text-on-surface font-bold group-hover:text-primary transition-colors break-words mb-2" title={t(r.title)}>
-              {t(r.title)}
+            <h3 className="text-base text-on-surface font-bold group-hover:text-primary transition-colors break-words mb-2" title={tContent(r.title)}>
+              {tContent(r.title)}
             </h3>
             
             {/* Metadata */}

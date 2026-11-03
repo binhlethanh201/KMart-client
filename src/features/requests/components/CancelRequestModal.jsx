@@ -11,7 +11,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
  * Cha chỉ mount khi cần nên state tự reset mỗi lần mở.
  */
 export default function CancelRequestModal({ requestId, requestTitle, onClose, onConfirm }) {
-  const { t } = useI18n();
+  const { t, tContent } = useI18n();
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -53,7 +53,7 @@ export default function CancelRequestModal({ requestId, requestTitle, onClose, o
               <h2 className="font-headline-sm text-headline-sm text-on-surface">{t('Hủy đơn này?')}</h2>
               <p className="text-xs text-secondary mt-0.5">
                 {t('Đơn')} <span className="font-medium text-on-surface">{requestId}</span>
-                {requestTitle ? ` · ${requestTitle}` : ''}
+                {requestTitle ? ` · ${tContent(requestTitle)}` : ''}
               </p>
             </div>
           </div>

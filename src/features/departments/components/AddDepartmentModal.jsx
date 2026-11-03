@@ -5,8 +5,9 @@ import DepartmentIconPicker from './DepartmentIconPicker';
 import Select from '../../../components/Select';
 import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { headTitleForType } from '../services/departmentService';
 
-const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
+const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Chi nhánh', 'Khu vực', 'Siêu thị / Chi nhánh'];
 
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 const inputCls =
@@ -410,7 +411,7 @@ export default function AddDepartmentModal({ onClose }) {
             <div className={`${cardCls} space-y-3`}>
               <div>
                 <label className={labelCls}>
-                  {type === 'Siêu thị / Chi nhánh' ? t('Cửa hàng trưởng') : t('Trưởng phòng')}
+                  {t(headTitleForType(type))}
                 </label>
                 <EmployeeSelect
                   employees={employees}

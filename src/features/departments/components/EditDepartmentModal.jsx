@@ -4,11 +4,11 @@ import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
 import { EmployeeSelect } from './AddDepartmentModal';
 import Select from '../../../components/Select';
-import { departmentService } from '../services/departmentService';
+import { departmentService, headTitleForType } from '../services/departmentService';
 import { formatDateOfBirth } from '../../../utils/dateFormat';
 import { useI18n } from '../../../i18n/I18nProvider';
 
-const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Siêu thị / Chi nhánh'];
+const TYPES = ['Phòng ban', 'Khối chuyên môn', 'Chi nhánh', 'Khu vực', 'Siêu thị / Chi nhánh'];
 
 const labelCls = 'block font-label-md text-label-md text-on-surface-variant mb-1.5';
 const inputCls =
@@ -55,7 +55,6 @@ export default function EditDepartmentModal({ department, onClose }) {
   const [deputy, setDeputy] = useState(
     employees.find((e) => e.id === department.deputyManagerId) || null
   );
-  const isStore = type === 'Siêu thị / Chi nhánh';
   // BE-73: nạp danh sách nhân sự trực thuộc để có thể thêm/bớt ngay trong màn Chỉnh sửa.
   const [members, setMembers] = useState([]); // [{ employee, assignment }]
   const [memberQuery, setMemberQuery] = useState('');
@@ -290,7 +289,7 @@ export default function EditDepartmentModal({ department, onClose }) {
 
           <div className="grid grid-cols-1 gap-3">
             <div>
-              <label className={labelCls}>{isStore ? t('Cửa hàng trưởng') : t('Trưởng phòng')}</label>
+              <label className={labelCls}>{t(headTitleForType(type))}</label>
               <EmployeeSelect
                 employees={employees}
                 value={head}

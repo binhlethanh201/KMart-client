@@ -32,7 +32,7 @@ export default function RequestsSidebar({ filter, onFilter, counts = {}, search,
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-body-md text-body-md font-bold text-white truncate">{currentUser.name}</p>
-            <p className="text-xs text-slate-400 truncate">{currentUser.role} - {currentUser.subtitle}</p>
+            <p className="text-xs text-slate-400 truncate">{t(currentUser.role)} - {t(currentUser.subtitle)}</p>
           </div>
         </div>
       </div>

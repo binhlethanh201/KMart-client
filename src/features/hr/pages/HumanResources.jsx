@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmployeeModal from '../components/EmployeeModal';
+import ImportExcelModal from '../components/ImportExcelModal';
 import { useHr } from '../context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
@@ -53,6 +54,7 @@ export default function HumanResources() {
   const [role, setRole] = useState('all');
   const [status, setStatus] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [popoverId, setPopoverId] = useState(null);
   const [page, setPage] = useState(1);
@@ -134,13 +136,22 @@ export default function HumanResources() {
         icon="group"
         title="Quản lý Nhân sự"
         actions={canAddEmployee && (
-          <button
-            onClick={openAdd}
-            className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
-          >
-            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">person_add</span>
-            {t('Tạo tài khoản nhân viên')}
-          </button>
+          <>
+            <button
+              onClick={() => setImportOpen(true)}
+              className="w-full justify-center bg-surface text-on-surface border border-outline-variant hover:bg-surface-container-low transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">upload_file</span>
+              {t('Nhập Excel Nhân sự')}
+            </button>
+            <button
+              onClick={openAdd}
+              className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">person_add</span>
+              {t('Tạo tài khoản nhân viên')}
+            </button>
+          </>
         )}
       />
 
@@ -423,6 +434,8 @@ export default function HumanResources() {
         onClose={() => setModalOpen(false)} 
         onSave={handleSave} 
       />}
+
+      {importOpen && <ImportExcelModal onClose={() => setImportOpen(false)} />}
     </section>
   );
 }

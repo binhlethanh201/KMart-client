@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { en } from './translations/en';
 import { ko } from './translations/ko';
-import { getAutoTranslation, requestAutoTranslation, subscribeAutoTranslate } from './autoTranslate';
+import { getAutoTranslation, requestAutoTranslation, subscribeAutoTranslate, HANGUL_RE } from './autoTranslate';
 
 /**
  * Hệ thống đa ngôn ngữ (Việt - Anh - Hàn).
@@ -74,6 +74,82 @@ export function translate(text, params) {
   return resolve(text, params, activeLanguage);
 }
 
+/**
+ * Nội dung KHÔNG BAO GIỜ được gửi đi dịch tự động: ngày giờ, số điện thoại, email,
+ * mã hệ thống (UUID, mã nhân viên, mã đơn trong ngoặc)... Dịch chúng vừa phí vừa dễ sai.
+ */
+const NO_LETTERS_RE = /^[^\p{L}]*$/u;
+const ISO_DATE_RE = /^\d{4}-\d{1,2}-\d{1,2}([T ]\d{1,2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{1,2}:?\d{2})?)?$/;
+const DMY_DATE_RE = /^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$/;
+const TIME_RE = /^\d{1,2}:\d{2}(:\d{2})?$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^0?\d{9,12}$/;
+const INTL_PHONE_RE = /^\+\d{6,15}$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const HEX8_RE = /^[0-9A-F]{8}$/;
+const EMPLOYEE_CODE_RE = /^[A-Z]{1,4}\d{4,10}$/;
+const BRACKET_CODE_RE = /^\[[A-Z0-9_-]+\]$/;
+
+export function isUntranslatable(text) {
+  if (text == null) return true;
+  const s = String(text).trim();
+  if (s.length < 2) return true;
+  return (
+    NO_LETTERS_RE.test(s) ||
+    ISO_DATE_RE.test(s) ||
+    DMY_DATE_RE.test(s) ||
+    TIME_RE.test(s) ||
+    EMAIL_RE.test(s) ||
+    PHONE_RE.test(s) ||
+    INTL_PHONE_RE.test(s) ||
+    UUID_RE.test(s) ||
+    HEX8_RE.test(s) ||
+    EMPLOYEE_CODE_RE.test(s) ||
+    BRACKET_CODE_RE.test(s)
+  );
+}
+
+/**
+ * Dịch NỘI DUNG do người dùng nhập (lý do, bình luận, tiêu đề đơn...) — khác nhãn UI ở chỗ
+ * KHÔNG tra từ điển tĩnh (từ điển chỉ chứa nhãn), ngoại lệ duy nhất: cả chuỗi trùng khớp
+ * một nhãn đã biên tập sẵn thì dùng bản dịch tĩnh vì nó chuẩn hơn dịch tự động.
+ */
+function resolveContent(text, params, language) {
+  if (text == null) return '';
+  const key = String(text);
+  let out = key;
+  if (!isUntranslatable(key)) {
+    if (language === 'vi') {
+      // VI: chỉ dịch ngược về tiếng Việt khi nội dung thật sự chứa chữ Hàn.
+      if (HANGUL_RE.test(key)) {
+        const auto = getAutoTranslation('vi', key);
+        if (auto) out = auto;
+        else requestAutoTranslation('vi', key);
+      }
+    } else if (language === 'ko' || language === 'en') {
+      const staticTranslation = DICTIONARIES[language]?.[key];
+      if (staticTranslation) {
+        out = staticTranslation;
+      } else {
+        const auto = getAutoTranslation(language, key);
+        if (auto) out = auto;
+        else requestAutoTranslation(language, key);
+      }
+    }
+  }
+  if (params && typeof params === 'object') {
+    out = out.replace(/\{(\w+)\}/g, (m, name) =>
+      Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m
+    );
+  }
+  return out;
+}
+
+/** Dịch nội dung người dùng nhập không cần hook — dùng trong helper/hằng số cấp module. */
+export function translateContent(text, params) {
+  return resolveContent(text, params, activeLanguage);
+}
+
 /** Ngôn ngữ hiện tại (dùng ngoài React). */
 export function getLanguage() {
   return activeLanguage;
@@ -129,9 +205,16 @@ export function I18nProvider({ children }) {
   // oxlint-disable-next-line react-hooks/exhaustive-deps
   const t = useCallback((text, params) => resolve(text, params, language), [language, autoVersion]);
 
+  /**
+   * Dịch NỘI DUNG người dùng nhập (tContent) — cùng cơ chế vẽ lại như `t`: `autoVersion` trong
+   * deps để khi bản dịch tự động về, component dùng `tContent` được vẽ lại với bản dịch mới.
+   */
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
+  const tContent = useCallback((text, params) => resolveContent(text, params, language), [language, autoVersion]);
+
   const value = useMemo(
-    () => ({ language, setLanguage, t, languages: LANGUAGES }),
-    [language, setLanguage, t]
+    () => ({ language, setLanguage, t, tContent, languages: LANGUAGES }),
+    [language, setLanguage, t, tContent]
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
@@ -141,7 +224,7 @@ export function useI18n() {
   const ctx = useContext(I18nContext);
   if (!ctx) {
     // Cho phép dùng t() ngoài provider (trả về nguyên văn tiếng Việt) để tránh crash.
-    return { language: DEFAULT_LANG, setLanguage: () => {}, t: (s) => s, languages: LANGUAGES };
+    return { language: DEFAULT_LANG, setLanguage: () => {}, t: (s) => s, tContent: (s) => s, languages: LANGUAGES };
   }
   return ctx;
 }

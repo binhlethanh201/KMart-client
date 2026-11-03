@@ -222,6 +222,8 @@ export default function DepartmentDashboard() {
                   { value: 'all', label: t('Loại đơn vị: Tất cả') },
                   { value: 'Phòng ban', label: t('Phòng ban') },
                   { value: 'Khối chuyên môn', label: t('Khối chuyên môn') },
+                  { value: 'Chi nhánh', label: t('Chi nhánh') },
+                  { value: 'Khu vực', label: t('Khu vực') },
                   { value: 'Siêu thị / Chi nhánh', label: t('Siêu thị / Chi nhánh') },
                 ]}
               />

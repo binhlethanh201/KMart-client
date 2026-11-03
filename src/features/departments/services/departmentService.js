@@ -1,5 +1,16 @@
 import apiClient, { API_URL } from '../../../services/apiClient';
 
+/**
+ * Nhãn chức danh người đứng đầu theo LOẠI đơn vị (chuỗi tiếng Việt do API trao đổi).
+ * Dùng chung cho danh sách phòng ban, form thêm/sửa để không nhân bản chuỗi điều kiện.
+ */
+export const headTitleForType = (type) =>
+  ({
+    'Siêu thị / Chi nhánh': 'Cửa hàng trưởng',
+    'Khu vực': 'Quản lý khu vực',
+    'Chi nhánh': 'Quản lý chi nhánh',
+  }[type] || 'Trưởng phòng');
+
 const mapToFrontendModel = (d) => ({
   id: d.id,
   name: d.name,
@@ -11,7 +22,7 @@ const mapToFrontendModel = (d) => ({
   parentDepartmentName: d.parentDepartmentName || null,
   childCount: d.childCount || 0,
   leaders: [
-    ...(d.managerName ? [{ title: d.type === 'Siêu thị / Chi nhánh' ? 'Cửa hàng trưởng' : 'Trưởng phòng', name: d.managerName }] : []),
+    ...(d.managerName ? [{ title: headTitleForType(d.type), name: d.managerName }] : []),
     ...(d.deputyManagerName ? [{ title: 'Phó phòng', name: d.deputyManagerName }] : []),
   ],
   managerId: d.managerId || null,
