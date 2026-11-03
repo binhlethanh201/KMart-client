@@ -34,6 +34,8 @@ export default function RequestCard({ request: r }) {
   const creatorEmp = employees.find((u) => u.id === r.creatorId);
   const creatorName = r.creatorName || creatorEmp?.name || t('Người gửi ẩn danh');
   const creatorAvatar = creatorEmp?.avatar;
+  // Mã NV hiển thị trên card: ưu tiên mã thật, fallback 8 ký tự UUID như mọi bảng khác.
+  const codeOf = (u) => u?.shortId || (u?.id ? String(u.id).substring(0, 8).toUpperCase() : '');
   const isActionable = canApprove(r);
   
   const isPending = r.status === 'pending' || r.status === 'submitted' || r.status === 'pendingapproval';
@@ -247,6 +249,9 @@ export default function RequestCard({ request: r }) {
                   <span className="text-[13px] font-bold text-on-surface break-words w-full" title={rejectedByUser?.name}>
                     {rejectedByUser?.name || currentActorName}
                   </span>
+                  {rejectedByUser && (
+                    <span className="text-[10px] font-mono text-secondary break-words w-full">{codeOf(rejectedByUser)}</span>
+                  )}
                   <span className="text-[10px] text-secondary break-words w-full uppercase tracking-wide font-medium mt-0.5">
                     {rejectedByUser ? `${roleLabel(rejectedByUser)}${rejectedStepOrder ? t(' · Bước {v0}', { v0: rejectedStepOrder }) : ''}` : currentActorRole}
                   </span>
@@ -271,6 +276,9 @@ export default function RequestCard({ request: r }) {
                   <span className="text-[13px] font-bold text-on-surface break-words w-full" title={suppByUser?.name || creatorName}>
                     {suppByUser?.name || t('Người duyệt')}
                   </span>
+                  {suppByUser && (
+                    <span className="text-[10px] font-mono text-secondary break-words w-full">{codeOf(suppByUser)}</span>
+                  )}
                   <span className="text-[10px] text-secondary break-words w-full uppercase tracking-wide font-medium mt-0.5">
                     {suppByUser ? `${roleLabel(suppByUser)}${suppStepOrder ? t(' · Bước {v0}', { v0: suppStepOrder }) : ''}` : t('Yêu cầu người gửi bổ sung')}
                   </span>
@@ -325,6 +333,9 @@ export default function RequestCard({ request: r }) {
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${summaryColor}`}>{summaryText}</span>
                   <span className="text-[13px] font-bold text-on-surface break-words w-full" title={currentActorName}>{currentActorName}</span>
+                  {currentActorUser && (
+                    <span className="text-[10px] font-mono text-secondary break-words w-full">{codeOf(currentActorUser)}</span>
+                  )}
                   <span className="text-[10px] text-secondary break-words w-full uppercase tracking-wide font-medium mt-0.5">{currentActorRole}</span>
                 </div>
               </>
@@ -369,6 +380,9 @@ export default function RequestCard({ request: r }) {
                   <span className="text-[11px] font-bold text-on-surface text-center w-full break-words leading-tight" title={creatorName}>
                     {creatorName}
                   </span>
+                  {creatorEmp && (
+                    <span className="text-[9px] font-mono text-secondary text-center w-full break-words">{codeOf(creatorEmp)}</span>
+                  )}
                   <span className="text-[9px] text-secondary text-center w-full break-words uppercase font-medium tracking-wide">
                     {t('NGƯỜI GỬI')}
                   </span>
@@ -454,6 +468,9 @@ export default function RequestCard({ request: r }) {
                     </div>
                     <div className="flex flex-col items-center w-full mt-1.5 gap-0.5">
                       <span className="text-[11px] font-bold text-on-surface text-center w-full break-words leading-tight" title={nm}>{nm}</span>
+                      {u && (
+                        <span className="text-[9px] font-mono text-secondary text-center w-full break-words">{codeOf(u)}</span>
+                      )}
                       <span className="text-[9px] text-primary text-center w-full break-words uppercase font-medium tracking-wide">{role}</span>
                     </div>
                   </div>
