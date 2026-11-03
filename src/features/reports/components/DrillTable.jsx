@@ -176,7 +176,7 @@ export default function DrillTable({ query }) {
               <th className="py-3 pr-4 font-bold">{t('Mã đơn')}</th>
               <th className="py-3 pr-4 font-bold">{t('Loại đơn')}</th>
               {/* RPT-01: cột mã nhân sự — hai người trùng họ tên phải phân biệt được ngay trên bảng */}
-              <th className="py-3 pr-4 font-bold">{t('Mã nhân sự')}</th>
+              <th className="py-3 pr-4 font-bold">{t('Mã NV')}</th>
               <th className="py-3 pr-4 font-bold">{t('Người tạo')}</th>
               <th className="py-3 pr-4 font-bold">{t('Phòng ban')}</th>
               <th className="py-3 pr-4 font-bold">{t('Chức vụ')}</th>
@@ -200,7 +200,7 @@ export default function DrillTable({ query }) {
                   {(a.code || a.id || '').toString().substring(0, 8).toUpperCase()}
                 </td>
                 <td data-label={t('Loại đơn')} className="py-3 pr-4 text-[12px] text-[#1d1d1f]">{t(a.documentTypeName || '—')}</td>
-                <td data-label={t('Mã nhân sự')} className="py-3 pr-4 text-[12px] font-mono text-gray-500">
+                <td data-label={t('Mã NV')} className="py-3 pr-4 text-[12px] font-mono text-gray-500">
                   {/* RPT-01: mã nhân sự do máy chủ trả về (`applicantCode`); DTO không có
                       `applicantId` nên trước đây nhánh dự phòng đó là code chết. */}
                   {a.applicantCode || '—'}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
+import Button from '../../../components/Button';
 import { delegationService } from '../../../services/delegationService';
 import { userService } from '../../hr/services/userService';
 import { useApproval } from '../../../context/useApproval';
@@ -86,7 +87,7 @@ export function UserSelect({ value, onChange, excludeId, openSignal = 0 }) {
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium text-on-surface truncate">{selected.name}</div>
               <div className="text-[11px] text-secondary truncate">
-                {selected.id?.substring(0, 8).toUpperCase()} · {t(selected.position || 'Nhân viên')}
+                {selected.shortId || selected.id?.substring(0, 8).toUpperCase()} · {t(selected.position || 'Nhân viên')}
               </div>
             </div>
           </div>
@@ -149,7 +150,7 @@ export function UserSelect({ value, onChange, excludeId, openSignal = 0 }) {
                       {u.name}
                     </div>
                     <div className="text-[10px] text-secondary truncate">
-                      {u.id?.substring(0, 8).toUpperCase()} · {t(u.position || 'Nhân viên')}
+                      {u.shortId || u.id?.substring(0, 8).toUpperCase()} · {t(u.position || 'Nhân viên')}
                     </div>
                   </div>
                 </button>
@@ -382,24 +383,12 @@ export function CreateDelegationModal({ onClose, onSuccess, pushToast, defaultSt
 
         {/* Footer */}
         <div className="p-5 pt-0 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer disabled:opacity-40"
-          >
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
             {t('Hủy')}
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="font-label-md text-on-primary bg-primary px-5 py-2 rounded-md hover:bg-primary/90 transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${saving ? 'animate-spin' : ''}`}>
-              {saving ? 'progress_activity' : 'add_task'}
-            </span>
+          </Button>
+          <Button type="submit" disabled={saving} icon={saving ? 'progress_activity' : 'add_task'}>
             {saving ? t('Đang tạo...') : t('Tạo ủy quyền')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>,
@@ -712,13 +701,9 @@ export default function DelegationsTab() {
                 </div>
               </div>
               {canApprove && (
-                <button
-                  onClick={() => setShowCreate(true)}
-                  className="bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
-                >
-                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
+                <Button icon="add" onClick={() => setShowCreate(true)}>
                   {t('Tạo ủy quyền')}
-                </button>
+                </Button>
               )}
             </div>
           )}

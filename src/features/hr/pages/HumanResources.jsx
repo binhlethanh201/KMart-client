@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmployeeModal from '../components/EmployeeModal';
-import ImportExcelModal from '../components/ImportExcelModal';
 import { useHr } from '../context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
@@ -10,6 +9,7 @@ import { roleStyle } from '../../../utils/roleLabels';
 import { PERMISSIONS } from '../../../constants/permissions';
 import { useI18n } from '../../../i18n/I18nProvider';
 import PageHeader from '../../../components/PageHeader';
+import Button from '../../../components/Button';
 import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
 import Select from '../../../components/Select';
 import { FILTER_SELECT_CLS, FILTER_SEARCH_CLS, FILTER_SEARCH_ICON_CLS } from '../../../styles/filterControls';
@@ -54,7 +54,6 @@ export default function HumanResources() {
   const [role, setRole] = useState('all');
   const [status, setStatus] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [popoverId, setPopoverId] = useState(null);
   const [page, setPage] = useState(1);
@@ -136,22 +135,9 @@ export default function HumanResources() {
         icon="group"
         title="Quản lý Nhân sự"
         actions={canAddEmployee && (
-          <>
-            <button
-              onClick={() => setImportOpen(true)}
-              className="w-full justify-center bg-surface text-on-surface border border-outline-variant hover:bg-surface-container-low transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">upload_file</span>
-              {t('Nhập Excel Nhân sự')}
-            </button>
-            <button
-              onClick={openAdd}
-              className="w-full justify-center bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">person_add</span>
-              {t('Tạo tài khoản nhân viên')}
-            </button>
-          </>
+          <Button icon="person_add" onClick={openAdd}>
+            {t('Tạo tài khoản nhân viên')}
+          </Button>
         )}
       />
 
@@ -211,10 +197,11 @@ export default function HumanResources() {
         <div className="w-full p-4 md:p-6">
           <div className="bg-surface rounded-lg border border-outline-variant shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="stack-grid w-full sm:min-w-[1100px] text-sm">
+              <table className="stack-grid w-full sm:min-w-[1200px] text-sm">
                 <thead>
                   <tr className="bg-surface-container-low text-left border-b border-outline-variant">
-                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Mã & Họ tên')}</th>
+                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Mã NV')}</th>
+                    <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Họ tên')}</th>
                     <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Liên hệ')}</th>
                     <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Phòng ban & Chức vụ')}</th>
                     <th className="font-label-md text-on-surface-variant font-semibold uppercase tracking-wide px-4 py-3">{t('Kiêm nhiệm')}</th>
@@ -228,14 +215,14 @@ export default function HumanResources() {
                       "Đang tải" để chiều cao trang không tụt (tránh bị nhảy lên đầu bảng). */}
                   {loading && employees.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-secondary">
+                      <td colSpan={8} className="px-4 py-12 text-center text-secondary">
                         <span aria-hidden="true" className="material-symbols-outlined text-[32px] block mb-2 animate-spin">progress_activity</span>
                         {t('Đang tải danh sách nhân sự...')}
                       </td>
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-error">
+                      <td colSpan={8} className="px-4 py-12 text-center text-error">
                         <span aria-hidden="true" className="material-symbols-outlined text-[32px] block mb-2">error</span>
                         {t(error)}
                       </td>
@@ -248,16 +235,19 @@ export default function HumanResources() {
                         className="border-b border-outline-variant/50 last:border-0 hover:bg-surface-container-low/60 transition-colors cursor-pointer"
                         onClick={() => openView(e)}
                       >
-                        {/* Mã & Họ tên */}
-                        <td data-label={t('Mã & Họ tên')} className="px-4 py-3">
+                        {/* Mã NV — cột riêng theo mẫu file HR */}
+                        <td data-label={t('Mã NV')} className="px-4 py-3">
+                          <span className="font-mono text-xs text-on-surface-variant whitespace-nowrap">
+                            {e.shortId || e.id.substring(0, 8).toUpperCase()}
+                          </span>
+                        </td>
+                        {/* Họ tên */}
+                        <td data-label={t('Họ tên')} className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <img className="w-9 h-9 rounded-full object-cover flex-shrink-0" src={e.avatar} alt={e.name} />
                             <div className="min-w-0">
                               <div className="font-semibold text-on-surface sm:truncate">{e.name}</div>
-                              <div className="text-xs text-secondary" title={e.id}>
-                                {e.id.substring(0, 8).toUpperCase()}
-                                {/* BE-163: ngày sinh CHỈ hiển thị ở trang chi tiết nhân sự. */}
-                              </div>
+                              {/* BE-163: ngày sinh CHỈ hiển thị ở trang chi tiết nhân sự. */}
                             </div>
                           </div>
                         </td>
@@ -369,7 +359,7 @@ export default function HumanResources() {
                   })}
                   {filtered.length === 0 && !loading && !error && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-secondary">
+                      <td colSpan={8} className="px-4 py-12 text-center text-secondary">
                         <span aria-hidden="true" className="material-symbols-outlined text-[32px] block mb-2 text-muted">search_off</span>
                         {t('Không tìm thấy nhân sự phù hợp bộ lọc.')}
                       </td>
@@ -434,8 +424,6 @@ export default function HumanResources() {
         onClose={() => setModalOpen(false)} 
         onSave={handleSave} 
       />}
-
-      {importOpen && <ImportExcelModal onClose={() => setImportOpen(false)} />}
     </section>
   );
 }

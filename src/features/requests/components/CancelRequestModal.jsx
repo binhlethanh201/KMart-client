@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import Button from '../../../components/Button';
 
 /**
  * BE-76: hộp thoại xác nhận hủy đơn của chính người tạo.
@@ -90,22 +91,12 @@ export default function CancelRequestModal({ requestId, requestTitle, onClose, o
         </div>
 
         <div className="p-5 pt-0 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer disabled:opacity-40"
-          >
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
             {t('Giữ đơn')}
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="font-label-md text-on-error bg-error px-5 py-2 rounded-md hover:bg-error/90 transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{saving ? 'hourglass_top' : 'cancel'}</span>
+          </Button>
+          <Button type="submit" variant="danger" disabled={saving} icon={saving ? 'hourglass_top' : 'cancel'}>
             {saving ? t('Đang hủy...') : t('Xác nhận hủy đơn')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>,

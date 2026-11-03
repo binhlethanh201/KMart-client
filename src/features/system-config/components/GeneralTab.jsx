@@ -1,4 +1,5 @@
 import { useState, useEffect, useId } from 'react';
+import Button from '../../../components/Button';
 import { TIME_RULES } from '../data/mockData';
 import apiClient, { API_URL } from '../../../services/apiClient';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -154,13 +155,9 @@ export default function GeneralTab() {
             </div>
           )}
           <div className="flex justify-end">
-            <button
-              onClick={handleSaveTelegram}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-md hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">save</span>
+            <Button icon="save" onClick={handleSaveTelegram}>
               {t('Lưu cấu hình')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -225,16 +222,9 @@ export default function GeneralTab() {
               </p>
             )}
             <div className="flex justify-end pt-3">
-              <button
-                onClick={handleSaveGeneral}
-                disabled={savingGeneral}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary text-sm font-medium rounded-md hover:bg-primary/90 transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <span className={`material-symbols-outlined text-[18px] ${savingGeneral ? 'animate-spin' : ''}`}>
-                  {savingGeneral ? 'progress_activity' : 'save'}
-                </span>
+              <Button icon={savingGeneral ? 'progress_activity' : 'save'} onClick={handleSaveGeneral} disabled={savingGeneral}>
                 <span>{savingGeneral ? t('Đang lưu...') : t('Lưu cấu hình')}</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>

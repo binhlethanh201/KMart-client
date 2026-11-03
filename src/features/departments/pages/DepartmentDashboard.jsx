@@ -4,6 +4,7 @@ import OrgTree from '../components/OrgTree';
 import AddDepartmentModal from '../components/AddDepartmentModal';
 import EditDepartmentModal from '../components/EditDepartmentModal';
 import Pagination from '../../../components/Pagination';
+import Button from '../../../components/Button';
 import Select from '../../../components/Select';
 import LoadError from '../../../components/LoadError';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
@@ -183,13 +184,9 @@ export default function DepartmentDashboard() {
             </div>
             <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
               {canEdit && (
-                <button
-                  onClick={() => setModalOpen(true)}
-                  className="w-full sm:w-auto justify-center bg-primary text-on-primary hover:bg-primary-fixed-variant px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer"
-                >
-                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">add</span>
+                <Button size="sm" icon="add" onClick={() => setModalOpen(true)} className="w-full sm:w-auto">
                   {t('Thêm phòng ban')}
-                </button>
+                </Button>
               )}
             </div>
           </div>

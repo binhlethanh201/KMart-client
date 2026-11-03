@@ -56,7 +56,7 @@ const mapMemberToFrontend = (u, targetDeptId = null) => {
   const actualAvatar = getFullAvatarUrl(u.avatarUrl);
   return {
     id: u.id,
-    shortId: u.id ? u.id.substring(0, 8).toUpperCase() : '',
+    shortId: u.employeeCode || (u.id ? u.id.substring(0, 8).toUpperCase() : ''),
     name: u.fullName,
     avatar: actualAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName || 'User')}&background=random&color=fff&size=128`,
     role: primaryPos?.positionName || 'Nhân viên',

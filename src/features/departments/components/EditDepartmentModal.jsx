@@ -1,5 +1,6 @@
 import { useState, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
+import Button from '../../../components/Button';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
 import { EmployeeSelect } from './AddDepartmentModal';
@@ -347,7 +348,7 @@ export default function EditDepartmentModal({ department, onClose }) {
                         <span className="flex-1 min-w-0">
                           <span className="block text-sm text-on-surface truncate">{e.name}</span>
                           <span className="block text-xs text-secondary truncate">
-                            {e.id.substring(0, 8).toUpperCase()} - {t(e.position)}
+                            {e.shortId || e.id.substring(0, 8).toUpperCase()} - {t(e.position)}
                             {e.dateOfBirth ? ` - ${formatDateOfBirth(e.dateOfBirth)}` : ''}
                           </span>
                         </span>
@@ -373,7 +374,7 @@ export default function EditDepartmentModal({ department, onClose }) {
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-on-surface truncate">{m.employee.name}</p>
-                      <p className="text-xs text-secondary truncate">{m.employee.id.substring(0, 8).toUpperCase()}</p>
+                      <p className="text-xs text-secondary truncate">{m.employee.shortId || m.employee.id.substring(0, 8).toUpperCase()}</p>
                     </div>
                     <div className="flex bg-surface-container-highest rounded-md p-0.5 flex-shrink-0">
                       {[
@@ -418,21 +419,12 @@ export default function EditDepartmentModal({ department, onClose }) {
         </div>
 
         <div className="p-5 pt-0 mt-2 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
-          >
+          <Button variant="ghost" onClick={onClose}>
             {t('Hủy')}
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="font-label-md text-on-primary bg-primary hover:bg-on-primary-fixed-variant px-5 py-2 rounded-md transition-colors shadow-sm cursor-pointer disabled:opacity-40 flex items-center gap-2"
-          >
-            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">save</span>
+          </Button>
+          <Button type="submit" disabled={saving} icon="save">
             {t('Lưu thay đổi')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>,

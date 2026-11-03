@@ -55,6 +55,8 @@ const mapToFrontendModel = (u) => {
   const actualAvatar = getFullAvatarUrl(u.avatarUrl);
 
   return {
+    // Mã NV người dùng nhập trên form (mẫu file HR); rỗng = chưa có mã.
+    employeeCode: u.employeeCode || '',
     id: u.id,
     // Ưu tiên mã nhân viên thật (employeeCode) làm mã ngắn hiển thị; fallback 8 ký tự UUID cho dữ liệu cũ.
     shortId: u.employeeCode || (u.id ? u.id.substring(0, 8).toUpperCase() : ''),
@@ -128,6 +130,8 @@ export const userService = {
       email: data.email,
       personalEmail: data.personalEmail || null,
       fullName: data.name,
+      // Mã NV theo mẫu file HR do người tạo nhập; rỗng gửi null để BE hiểu là chưa có mã.
+      employeeCode: data.employeeCode?.trim() || null,
       // BE-68: gửi kèm số điện thoại — trước đây bị bỏ quên nên nhập xong là mất.
       phone: data.phone || null,
       // BE-74: ngày sinh để phân biệt nhân sự trùng họ tên.
@@ -167,6 +171,8 @@ export const userService = {
     const payload = {
       fullName: data.name,
       personalEmail: data.personalEmail || null,
+      // Mã NV sửa được sau khi tạo; chuỗi rỗng = xoá mã (null mới là "giữ nguyên" bên BE).
+      employeeCode: data.employeeCode == null ? null : data.employeeCode.trim(),
       // BE-68: cập nhật được số điện thoại
       phone: data.phone || null,
       // BE-74: ngày sinh — gửi null để xoá được khi người dùng bỏ trống.
@@ -246,65 +252,5 @@ export const userService = {
   getPositionHistory: async (userId, page = 1, pageSize = 50) => {
     const response = await apiClient.get(`/users/${userId}/position-history?page=${page}&pageSize=${pageSize}`);
     return response.data;
-  },
-
-  /**
-   * Nhập Excel Nhân sự — bước 1: xem trước (dryRun=true).
-   * Máy chủ đọc file .xlsx và trả về báo cáo đối soát, KHÔNG ghi gì vào CSDL.
-   */
-  importExcelDryRun: async (file) => {
-    const form = new FormData();
-    form.append('file', file);
-    const response = await apiClient.post('/users/import-excel?dryRun=true', form, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
-  },
-
-  /** Nhập Excel Nhân sự — bước 2: chốt nhập (dryRun=false), trả về { jobId, status } để theo dõi. */
-  importExcelCommit: async (file) => {
-    const form = new FormData();
-    form.append('file', file);
-    const response = await apiClient.post('/users/import-excel?dryRun=false', form, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
-  },
-
-  /** Trạng thái job nhập Excel: queued|hashing|committing|completed|failed. */
-  getImportJobStatus: async (jobId) => {
-    const response = await apiClient.get(`/users/import-excel/${jobId}/status`);
-    return response.data;
-  },
-
-  /**
-   * Tải file .xlsx chứa mật khẩu tạm của đợt nhập.
-   * Endpoint có [Authorize] nên phải tải qua axios rồi bơm vào object URL (không dùng <a href> được).
-   */
-  downloadImportCredentials: async (jobId) => {
-    const response = await apiClient.get(`/users/import-excel/${jobId}/credentials`, {
-      responseType: 'blob'
-    });
-    const blob = response.data;
-    // Blob trả về có thể là JSON lỗi (vd 404) -> kiểm tra để báo đúng thay vì tải file rác.
-    if (blob && blob.type && blob.type.includes('application/json')) {
-      const text = await blob.text();
-      let msg = 'Không tải được file mật khẩu';
-      try { msg = JSON.parse(text)?.error || msg; } catch { /* ignore */ }
-      throw new Error(msg);
-    }
-
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `credentials-${jobId}.xlsx`;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    // Trễ một nhịp rồi mới thu hồi URL — nếu không trình duyệt chưa kịp tải (xem applicationService).
-    setTimeout(() => {
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    }, 0);
   }
 };

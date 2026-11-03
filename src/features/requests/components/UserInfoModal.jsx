@@ -60,7 +60,7 @@ export default function UserInfoModal({ user, onClose }) {
         {/* Body */}
         <div className="p-6 flex flex-col gap-5">
           <div>
-            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">{t('Mã nhân sự')}</label>
+            <label className="block text-xs font-semibold text-secondary uppercase tracking-wider mb-1">{t('Mã NV')}</label>
             <p className="text-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant/50">
               {user.shortId || user.employeeId || 'EMP-0000'}
             </p>

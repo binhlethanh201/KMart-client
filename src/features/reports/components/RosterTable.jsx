@@ -169,8 +169,8 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
               <thead>
                 <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-white/10">
                   {/* RPT-01: mã nhân sự đứng trước tên để hai người trùng họ tên phân biệt được */}
-                  <th className="py-3 pr-4 font-bold">{t('Mã nhân sự')}</th>
-                  <th className="py-3 pr-4 font-bold">{t('Nhân sự')}</th>
+                  <th className="py-3 pr-4 font-bold">{t('Mã NV')}</th>
+                  <th className="py-3 pr-4 font-bold">{t('Họ tên')}</th>
                   <th className="py-3 pr-4 font-bold">{t('Phòng công tác chính')}</th>
                   <th className="py-3 pr-4 font-bold">{t('Chức vụ')}</th>
                   <th className="py-3 pr-4 font-bold text-right">{t('Đơn được duyệt')}</th>
@@ -190,10 +190,10 @@ export default function RosterTable({ managers, rosterMode, total, onPickDepartm
                          vào hồ sơ nhân sự. Bảng giờ chỉ để xem; lọc vẫn dùng thanh bộ lọc chung. */
                       className="border-b border-white/5 transition-colors"
                     >
-                      <td data-label={t('Mã nhân sự')} className="py-3 pr-4 text-[12px] font-mono text-gray-400">
+                      <td data-label={t('Mã NV')} className="py-3 pr-4 text-[12px] font-mono text-gray-400">
                         {m.code || (m.userId || '').toString().substring(0, 8).toUpperCase() || '—'}
                       </td>
-                      <td data-label={t('Nhân sự')} className="py-3 pr-4">
+                      <td data-label={t('Họ tên')} className="py-3 pr-4">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0">
                             {(m.fullName || '?').trim().split(' ').slice(-1)[0].charAt(0)}

@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useRef, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
+import Button from '../../../components/Button';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { documentTypeService } from '../../../services/documentTypeService';
@@ -1220,21 +1221,12 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
             </div>
           )}
           <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-md border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
-            >
+            <Button variant="secondary" onClick={onClose}>
               {t('Hủy')}
-            </button>
-            <button
-              type="button"
-              onClick={submit}
-              disabled={saving}
-              className="px-5 py-2.5 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            </Button>
+            <Button onClick={submit} disabled={saving}>
               {saving ? t('Đang gửi...') : (isEdit ? t('Bổ sung & gửi lại') : t('Gửi yêu cầu'))}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -1267,30 +1259,15 @@ export default function CreateRequestModal({ onClose, existingRequest = null, on
                 ))}
               </ul>
               <div className="flex justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={handleStayAndEdit}
-                  disabled={saving}
-                  className="px-4 py-2 rounded-md border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer disabled:opacity-50"
-                >
+                <Button variant="secondary" onClick={handleStayAndEdit} disabled={saving}>
                   {t('Ở lại chỉnh sửa')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRetryUploads}
-                  disabled={saving}
-                  className="px-4 py-2 rounded-md border border-primary text-primary hover:bg-primary-container/20 transition-colors font-medium cursor-pointer disabled:opacity-50"
-                >
+                </Button>
+                <Button variant="secondary" onClick={handleRetryUploads} disabled={saving}>
                   {t('Thử tải lại')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSendWithoutFiles}
-                  disabled={saving}
-                  className="px-4 py-2 rounded-md bg-primary text-on-primary hover:bg-primary/90 transition-colors font-medium cursor-pointer disabled:opacity-50"
-                >
+                </Button>
+                <Button onClick={handleSendWithoutFiles} disabled={saving}>
                   {saving ? t('Đang gửi...') : t('Gửi không kèm tệp')}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

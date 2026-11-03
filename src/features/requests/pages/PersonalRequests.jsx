@@ -5,6 +5,7 @@ import { useApproval } from '../../../context/useApproval';
 import useDocumentTitle from '../../../hooks/useDocumentTitle';
 import { useI18n } from '../../../i18n/I18nProvider';
 import PageHeader from '../../../components/PageHeader';
+import Button from '../../../components/Button';
 import CollapsibleOnMobile from '../../../components/CollapsibleOnMobile';
 import Select from '../../../components/Select';
 import LoadError from '../../../components/LoadError';
@@ -222,13 +223,9 @@ export default function PersonalRequests({ mode = 'sent' }) {
           title={TITLES[mode] || 'Danh sách Đơn từ'}
           contentClassName="px-6 pt-5 pb-0"
           actions={mode === 'sent' && (
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="bg-primary w-full md:w-auto justify-center text-on-primary hover:bg-on-primary-fixed-variant transition-colors font-label-md px-5 py-2.5 rounded-md flex items-center gap-2 self-start flex-shrink-0 shadow-sm cursor-pointer"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
+            <Button icon="add" onClick={() => setIsCreateOpen(true)}>
               {t('Tạo đề xuất mới')}
-            </button>
+            </Button>
           )}
         >
           {/* ── Toolbar: search + department filter ── */}

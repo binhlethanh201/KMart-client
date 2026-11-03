@@ -3,6 +3,7 @@ import { delegationService } from '../../../services/delegationService';
 import { useApproval } from '../../../context/useApproval';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { describeApiError } from '../../../utils/apiError';
+import Button from '../../../components/Button';
 import PageHeader from '../../../components/PageHeader';
 import { isApproverAccount } from '../../../utils/approverAccounts';
 import { UserSelect, PersonBlock, StepCard, TipCard } from './DelegationsTab';
@@ -182,13 +183,9 @@ export default function TimeoutDelegatePage() {
               </div>
               {/* BE-167: nút tạo đặt TRONG khung xanh, đúng kiểu nút "Tạo ủy quyền" bên ủy quyền tạm thời. */}
               {canApprove && (
-                <button
-                  onClick={openPicker}
-                  className="bg-primary text-on-primary hover:bg-primary/90 transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap"
-                >
-                  <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
+                <Button icon="add" onClick={openPicker}>
                   {t('Cài người duyệt thay')}
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -207,19 +204,15 @@ export default function TimeoutDelegatePage() {
                   openSignal={openSignal}
                 />
               </div>
-              <button
+              <Button
+                icon="save"
                 onClick={save}
                 disabled={!dirty || saving}
-                /*
-                 * MOBILE-06: bỏ `whitespace-nowrap` + cho nút co giãn. Ở 320px (iPhone SE) nhãn
-                 * "Lưu người duyệt thay" bị cắt còn "Lưu người duyệt th..." nên người dùng không
-                 * biết nút làm gì; cho chữ xuống dòng và nút rộng bằng ô chọn bên trên.
-                 */
-                className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto sm:flex-shrink-0"
+                /* MOBILE-06: ở 320px nút phải rộng bằng ô chọn để nhãn không bị cắt. */
+                className="w-full sm:w-auto whitespace-normal"
               >
-                <span aria-hidden="true" className="material-symbols-outlined text-[18px]">save</span>
                 {saving ? t('Đang lưu...') : t('Lưu người duyệt thay')}
-              </button>
+              </Button>
             </div>
           )}
 

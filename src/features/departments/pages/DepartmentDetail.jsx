@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import Button from '../../../components/Button';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import { departmentService } from '../services/departmentService';
@@ -402,17 +403,15 @@ export default function DepartmentDetail() {
                             </td>
                             <td className="py-3 px-4 text-right whitespace-nowrap">
                               {canQuick ? (
-                                <button
+                                <Button
+                                  size="sm"
+                                  icon={quickApprovingId === r.id ? 'hourglass_top' : 'bolt'}
                                   onClick={() => quickApprove(r)}
                                   disabled={quickApprovingId === r.id}
-                                  className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant px-3 py-1.5 rounded-md text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                   title={t('Duyệt nhanh (bước hiện tại: {v0})', { v0: currentUser.name })}
                                 >
-                                  <span aria-hidden="true" className="material-symbols-outlined text-[14px]">
-                                    {quickApprovingId === r.id ? 'hourglass_top' : 'bolt'}
-                                  </span>
                                   {quickApprovingId === r.id ? t('Đang duyệt...') : t('Duyệt nhanh')}
-                                </button>
+                                </Button>
                               ) : (
                                 <Link
                                   to={`/requests/${r.id}`}
@@ -478,7 +477,8 @@ export default function DepartmentDetail() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-surface-container-lowest text-secondary border-b border-outline-variant uppercase text-xs">
                     <tr>
-                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Mã & Họ tên')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Mã NV')}</th>
+                      <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Họ tên')}</th>
                       <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Liên hệ')}</th>
                       <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Phòng ban & Chức vụ')}</th>
                       <th className="py-3 px-4 font-medium whitespace-nowrap">{t('Kiêm nhiệm')}</th>
@@ -490,7 +490,7 @@ export default function DepartmentDetail() {
                   <tbody className="divide-y divide-outline-variant">
                     {membersError ? (
                       <tr>
-                        <td colSpan={7} className="py-6 px-4">
+                        <td colSpan={8} className="py-6 px-4">
                           <LoadError
                             compact
                             message={t('Không tải được danh sách nhân sự của phòng ban.')}
@@ -500,7 +500,7 @@ export default function DepartmentDetail() {
                       </tr>
                     ) : members.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-10 px-4 text-center text-secondary">
+                        <td colSpan={8} className="py-10 px-4 text-center text-secondary">
                           <span aria-hidden="true" className="material-symbols-outlined text-[36px] block mb-2 text-muted">
                             group_off
                           </span>
@@ -515,16 +515,16 @@ export default function DepartmentDetail() {
                         return (
                           <tr key={s.id} className="hover:bg-surface-container-low transition-colors">
                             <td className="py-3 px-4 whitespace-nowrap">
+                              <span className="font-mono text-xs text-on-surface-variant">{s.shortId}</span>
+                            </td>
+                            <td className="py-3 px-4 whitespace-nowrap">
                               <div className="flex items-center gap-3">
                                 <img
                                   className="w-10 h-10 rounded-full border border-outline-variant object-cover"
                                   src={s.avatar}
                                   alt={s.name}
                                 />
-                                <div className="flex flex-col">
-                                  <span className="text-on-surface font-medium">{s.name}</span>
-                                  <span className="text-xs text-secondary">{s.shortId}</span>
-                                </div>
+                                <span className="text-on-surface font-medium">{s.name}</span>
                               </div>
                             </td>
                             <td className="py-3 px-4 whitespace-nowrap">

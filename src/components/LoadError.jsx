@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n/I18nProvider';
+import Button from './Button';
 
 /**
  * UX-01: trạng thái "tải dữ liệu thất bại" kèm nút thử lại.
@@ -33,14 +34,9 @@ export default function LoadError({ message, onRetry, compact = false }) {
       <span aria-hidden="true" className="material-symbols-outlined text-[40px] text-error">cloud_off</span>
       <p className="font-medium text-on-surface">{text}</p>
       {onRetry && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-label-md text-on-primary shadow-sm transition-colors hover:bg-on-primary-fixed-variant cursor-pointer"
-        >
-          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">refresh</span>
+        <Button icon="refresh" onClick={onRetry}>
           {t('Thử lại')}
-        </button>
+        </Button>
       )}
     </div>
   );

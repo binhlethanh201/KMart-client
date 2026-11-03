@@ -1,6 +1,7 @@
 import { useState, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import Button from '../../../components/Button';
 
 /**
  * BE-94: hộp thoại người duyệt yêu cầu bổ sung thông tin.
@@ -106,19 +107,12 @@ export default function SupplementReasonModal({ requestId, onClose, onConfirm })
           )}
         </div>
         <div className="p-5 pt-0 flex justify-end gap-2">
-          <button type="button" onClick={onClose} disabled={sending} className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer disabled:opacity-40">
+          <Button variant="ghost" onClick={onClose} disabled={sending}>
             {t('Hủy')}
-          </button>
-          <button
-            type="submit"
-            disabled={sending}
-            className="font-label-md text-on-primary bg-primary px-5 py-2 rounded-md hover:bg-primary/90 transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <span aria-hidden="true" className={`material-symbols-outlined text-[18px] ${sending ? 'animate-spin' : ''}`}>
-              {sending ? 'progress_activity' : 'send'}
-            </span>
+          </Button>
+          <Button type="submit" disabled={sending} icon={sending ? 'progress_activity' : 'send'}>
             {sending ? t('Đang gửi...') : t('Gửi yêu cầu')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>,

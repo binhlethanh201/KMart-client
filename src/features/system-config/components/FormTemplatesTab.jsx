@@ -4,6 +4,7 @@ import { documentTypeService } from '../../../services/documentTypeService';
 import { useI18n } from '../../../i18n/I18nProvider';
 import describeApiError from '../../../utils/apiError';
 import Select from '../../../components/Select';
+import Button from '../../../components/Button';
 import LoadError from '../../../components/LoadError';
 
 function Toggle({ checked, onChange, label, disabled }) {
@@ -696,23 +697,12 @@ export default function FormTemplatesTab() {
             <p className="text-xs text-secondary mt-0.5">{t('Cấu hình trường dữ liệu và điều kiện hiển thị động')}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={handleSaveToServer}
-              disabled={isSaving}
-              className="bg-surface border border-outline-variant text-on-surface hover:bg-surface-container-low transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5 cursor-pointer flex-shrink-0"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">
-                {isSaving ? 'sync' : 'save'}
-              </span>
+            <Button variant="secondary" size="sm" icon={isSaving ? 'sync' : 'save'} onClick={handleSaveToServer} disabled={isSaving}>
               {isSaving ? t('Đang lưu...') : t('Lưu đồng bộ DB')}
-            </button>
-            <button
-              onClick={addField}
-              className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5 cursor-pointer flex-shrink-0"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
+            </Button>
+            <Button size="sm" icon="add" onClick={addField}>
               {t('Thêm trường mới')}
-            </button>
+            </Button>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -878,18 +868,12 @@ export default function FormTemplatesTab() {
             </div>
             
             <div className="p-4 bg-surface-container-lowest border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-lg">
-              <button 
-                onClick={() => { setIsAddingType(false); setEditingDocType(null); }}
-                className="text-on-surface-variant text-sm font-medium px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
-              >
+              <Button variant="ghost" onClick={() => { setIsAddingType(false); setEditingDocType(null); }}>
                 {t('Hủy')}
-              </button>
-              <button 
-                onClick={handleAddFormType}
-                className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center shadow-sm cursor-pointer"
-              >
+              </Button>
+              <Button onClick={handleAddFormType}>
                 {editingDocType ? t('Cập nhật') : t('Thêm mẫu đơn')}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -934,18 +918,12 @@ export default function FormTemplatesTab() {
             </div>
             
             <div className="p-4 bg-surface-container-lowest border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-lg">
-              <button 
-                onClick={() => setIsAddingCat(false)}
-                className="text-on-surface-variant text-sm font-medium px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
-              >
+              <Button variant="ghost" onClick={() => setIsAddingCat(false)}>
                 {t('Hủy')}
-              </button>
-              <button 
-                onClick={handleAddCategory}
-                className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center shadow-sm cursor-pointer"
-              >
+              </Button>
+              <Button onClick={handleAddCategory}>
                 {t('Lưu danh mục')}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1162,18 +1140,12 @@ export default function FormTemplatesTab() {
             </div>
 
             <div className="p-4 bg-surface-container-lowest border-t border-outline-variant/30 flex justify-end gap-3 rounded-b-lg flex-shrink-0">
-              <button 
-                onClick={() => setEditingTypeIdx(null)}
-                className="text-on-surface-variant text-sm font-medium px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
-              >
+              <Button variant="ghost" onClick={() => setEditingTypeIdx(null)}>
                 {t('Hủy')}
-              </button>
-              <button 
-                onClick={handleSaveTypeModal}
-                className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-4 py-2 rounded-md flex items-center shadow-sm cursor-pointer"
-              >
+              </Button>
+              <Button onClick={handleSaveTypeModal}>
                 {t('Lưu cấu hình')}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import Button from '../../../components/Button';
 import { APPROVAL_TYPES, MULTI_RULES, TIME_RULES } from '../data/mockData';
 import { useHr } from '../../hr/context/HrProvider';
 import { useApproval } from '../../../context/useApproval';
@@ -180,7 +181,7 @@ function SequentialOrderList({ role, order, onChange, isSequential = true }) {
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-secondary truncate">
-                  <span className="truncate">({emp.id.substring(0, 8).toUpperCase()}){emp.department ? ` · ${t(emp.department)}` : ''}</span>
+                  <span className="truncate">({emp.shortId || emp.id.substring(0, 8).toUpperCase()}){emp.department ? ` · ${t(emp.department)}` : ''}</span>
                 </div>
               </div>
             </div>
@@ -251,7 +252,7 @@ function SequentialOrderList({ role, order, onChange, isSequential = true }) {
                         )}
                       </div>
                       <div className="text-[10px] text-secondary truncate">
-                        {e.id.substring(0, 8).toUpperCase()}{e.department ? ` • ${t(e.department)}` : ''}
+                        {e.shortId || e.id.substring(0, 8).toUpperCase()}{e.department ? ` • ${t(e.department)}` : ''}
                       </div>
                     </div>
                   </button>
@@ -290,7 +291,7 @@ function UserSelect({ value, onChange }) {
             <div className="flex flex-col">
               <span className="text-sm font-medium text-on-surface leading-tight">{selectedEmp.name}</span>
               <span className="text-[10px] text-secondary leading-tight">
-                {selectedEmp.id.substring(0, 8).toUpperCase()} - {selectedEmp.role}
+                {selectedEmp.shortId || selectedEmp.id.substring(0, 8).toUpperCase()} - {selectedEmp.role}
               </span>
             </div>
           </div>
@@ -341,7 +342,7 @@ function UserSelect({ value, onChange }) {
                         {e.name}
                       </div>
                       <div className="text-[10px] text-secondary truncate">
-                        {e.id.substring(0, 8).toUpperCase()} • {e.role}
+                        {e.shortId || e.id.substring(0, 8).toUpperCase()} • {e.role}
                       </div>
                     </div>
                   </button>
@@ -590,7 +591,7 @@ function AdvancedApproverModal({ step, onConfirm, onClose }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-sm font-semibold text-on-surface truncate">{e.name}</span>
-                      <span className="text-[10px] text-secondary">({e.id.substring(0, 8).toUpperCase()})</span>
+                      <span className="text-[10px] text-secondary">({e.shortId || e.id.substring(0, 8).toUpperCase()})</span>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap text-[11px] text-secondary mt-0.5">
                       <span className="flex items-center gap-0.5">
@@ -647,18 +648,16 @@ function AdvancedApproverModal({ step, onConfirm, onClose }) {
             >
               {t('Huỷ')}
             </button>
-            <button
-              type="button"
+            <Button
+              icon="check"
               onClick={() => onConfirm({
                 arrangementMode,
                 role: arrangementMode === 'role' ? role : '',
                 approvers: arrangementMode === 'specific' ? Array.from(selected) : [],
               })}
-              className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant text-sm font-medium px-4 py-2 rounded-md flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">check</span>
               {t('Xác nhận')} {arrangementMode === 'specific' && `(${selected.size})`}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -2011,13 +2010,9 @@ export default function WorkflowTab() {
 
       {/* Bottom actions */}
       <div className="flex items-center justify-between gap-3 pt-2">
-        <button
-          onClick={addStep}
-          className="bg-surface text-primary border border-primary/40 hover:bg-primary-container/30 transition-colors text-sm font-medium px-4 py-2.5 rounded-md flex items-center gap-2 cursor-pointer"
-        >
-          <span aria-hidden="true" className="material-symbols-outlined text-[18px]">add</span>
+        <Button variant="secondary" icon="add" onClick={addStep}>
           {t('Thêm bước duyệt tiếp theo')}
-        </button>
+        </Button>
         <div className="flex items-center gap-3">
           {saved && (
             <span className="text-success text-sm flex items-center gap-1.5">
@@ -2025,13 +2020,9 @@ export default function WorkflowTab() {
               {t('Đã lưu cấu hình')}
             </span>
           )}
-          <button
-            onClick={save}
-            className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors text-sm font-medium px-5 py-2.5 rounded-md flex items-center gap-2 shadow-sm cursor-pointer"
-          >
-            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">save</span>
+          <Button icon="save" onClick={save}>
             {t('Lưu cấu hình luồng duyệt')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

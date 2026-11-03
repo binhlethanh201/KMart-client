@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import Button from '../../../components/Button';
 import { useApproval } from '../../../context/useApproval';
 import { useHr } from '../../hr/context/HrProvider';
 import useNow from '../../../hooks/useNow';
@@ -224,6 +225,9 @@ export default function RequestDetail() {
     ? { badge: 'text-pink-700', dot: 'bg-pink-600' }
     : meta;
   const creatorName = request.creatorName || employees.find((u) => u.id === request.creatorId)?.name;
+  // Mã NV thật của người tạo (K230521); fallback 8 ký tự UUID cho tài khoản chưa có mã.
+  const creatorCode = employees.find((u) => u.id === request.creatorId)?.shortId
+    || String(request.creatorId || '').substring(0, 8).toUpperCase();
   // Giữ giá trị thô (không t() ở đây) để dịch lúc render — kèm phòng ban THẬT của người tạo.
   const creatorRole = employees.find((u) => u.id === request.creatorId)?.position || 'Nhân viên';
   const creatorDept = employees.find((u) => u.id === request.creatorId)?.department;
@@ -526,14 +530,16 @@ export default function RequestDetail() {
           <div className="flex flex-wrap items-center gap-2">
             {/* BE-76: chủ đơn tự hủy khi chưa ai duyệt — hiện ở nhánh nào cũng được */}
             {canCancel && !isSupplementOwner && (
-              <button
+              <Button
+                size="sm"
+                variant="secondary"
+                icon="cancel"
+                className="border-error/40 text-error hover:bg-error-container/40"
                 onClick={() => setCancelOpen(true)}
-                className="px-4 py-1.5 rounded text-sm font-medium border border-error/40 text-error hover:bg-error-container/40 transition-colors flex items-center gap-2 bg-surface cursor-pointer"
                 title={t('Hủy đơn này (chưa ai duyệt)')}
               >
-                <span aria-hidden="true" className="material-symbols-outlined text-[16px]">cancel</span>
                 {t('Hủy đơn')}
-              </button>
+              </Button>
             )}
             {/* BE-15: đơn đang chờ chính người tạo bổ sung -> cho bổ sung & gửi lại ngay tại đây */}
             {isSupplementOwner ? (
@@ -542,54 +548,55 @@ export default function RequestDetail() {
                   <span aria-hidden="true" className="material-symbols-outlined text-[16px]">edit_note</span>
                   {t('Người duyệt yêu cầu bạn bổ sung thông tin')}
                 </span>
-                <button
-                  onClick={() => setSupplementEditOpen(true)}
-                  className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer"
-                >
-                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">edit_note</span>
+                <Button size="sm" icon="edit_note" onClick={() => setSupplementEditOpen(true)}>
                   {t('Bổ sung & gửi lại')}
-                </button>
+                </Button>
               </>
             ) : (
               <>
                 {canSimulateTimeout && (
-                  <button
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon="bolt"
+                    className="border-warning text-warning hover:bg-warning-container"
                     onClick={() => simulateTimeout(request.id)}
-                    className="px-3 py-1.5 rounded text-sm font-medium border border-warning text-warning hover:bg-warning-container transition-colors flex items-center gap-2 bg-surface cursor-pointer"
                     title={t('Giả lập đơn quá hạn để thử luồng xử lý quá hạn (chỉ ADMIN/HR)')}
                   >
-                    <span aria-hidden="true" className="material-symbols-outlined text-[16px]">bolt</span>
                     {t('Giả lập quá hạn')}
-                  </button>
+                  </Button>
                 )}
                 <div className="w-px h-6 bg-outline-variant mx-1"></div>
-                <button
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon="edit_note"
                   onClick={() => setSupplementOpen(true)}
                   disabled={!actionable}
-                  className="px-3 py-1.5 rounded text-sm font-medium border border-outline-variant text-on-surface hover:bg-surface-container transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   title={actionable ? t('Yêu cầu người gửi bổ sung thông tin') : t('Bạn không phải người duyệt bước này')}
                 >
-                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">edit_note</span>
                   {t('Yêu cầu bổ sung')}
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon="close"
+                  className="border-error text-error hover:bg-error-container"
                   onClick={() => setRejectOpen(true)}
                   disabled={!actionable}
-                  className="px-4 py-1.5 rounded text-sm font-medium border border-error text-error hover:bg-error-container transition-colors flex items-center gap-2 bg-surface cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   title={actionable ? t('Từ chối yêu cầu') : t('Bạn không phải người duyệt bước này')}
                 >
-                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">close</span>
                   {t('Từ chối')}
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="sm"
+                  icon="check_circle"
                   onClick={() => setShowApproveConfirm(true)}
                   disabled={!actionable}
-                  className="px-5 py-1.5 rounded text-sm font-medium bg-primary text-on-primary hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 border border-transparent shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   title={actionable ? t('Phê duyệt yêu cầu') : t('Bạn không phải người duyệt bước này')}
                 >
-                  <span aria-hidden="true" className="material-symbols-outlined text-[16px]">check_circle</span>
                   {t('Duyệt yêu cầu')}
-                </button>
+                </Button>
               </>
             )}
           </div>
@@ -611,23 +618,19 @@ export default function RequestDetail() {
                   {t('Bạn có chắc chắn muốn phê duyệt yêu cầu này không?')}
                 </p>
                 <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => setShowApproveConfirm(false)}
-                    className="px-4 py-2 rounded border border-outline-variant text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
-                  >
+                  <Button variant="secondary" onClick={() => setShowApproveConfirm(false)}>
                     {t('Hủy')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={async () => {
                       setShowApproveConfirm(false);
                       // chờ API xong rồi mới tải lại chi tiết (tránh race -> UI bị stale)
                       await approveRequest(request.id);
                       refreshDetail();
                     }}
-                    className="px-4 py-2 rounded bg-primary text-on-primary hover:bg-primary/90 transition-colors cursor-pointer"
                   >
                     {t('Xác nhận duyệt')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -695,7 +698,7 @@ export default function RequestDetail() {
                         <div className="flex items-center gap-3">
                           <img className="w-8 h-8 rounded-full border border-outline-variant object-cover" src={creatorAvatar} alt={creatorName} />
                           <div>
-                            <p className="font-medium text-on-surface">{creatorName} ({String(request.creatorId).substring(0, 8).toUpperCase()})</p>
+                            <p className="font-medium text-on-surface">{creatorName} ({creatorCode})</p>
                             <p className="text-xs text-secondary">{t(creatorRole)}{creatorDept ? ` - ${t(creatorDept)}` : ''}</p>
                           </div>
                         </div>
@@ -1376,7 +1379,7 @@ export default function RequestDetail() {
             name: creatorName,
             role: creatorRole,
             avatar: creatorAvatar,
-            employeeId: String(request.creatorId).substring(0, 8).toUpperCase(),
+            employeeId: creatorCode,
             email: null,
             personalEmail: null,
             phone: null,

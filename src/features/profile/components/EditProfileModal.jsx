@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import Button from '../../../components/Button';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { userService, getFullAvatarUrl } from '../../hr/services/userService';
 
@@ -312,12 +313,12 @@ export default function EditProfileModal({ user, onClose, onSave }) {
         </div>
 
         <div className="p-4 sm:p-6 border-t border-outline-variant/30 bg-surface flex flex-wrap justify-end items-center gap-2 sm:gap-3 rounded-b-lg shrink-0">
-          <button type="button" onClick={onClose} className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer">
+          <Button variant="ghost" onClick={onClose}>
             {t('Hủy bỏ')}
-          </button>
-          <button type="submit" disabled={loading} className="font-label-md text-on-primary bg-primary px-6 py-2 rounded-md hover:bg-on-primary-fixed-variant transition-colors shadow-sm cursor-pointer disabled:opacity-50">
+          </Button>
+          <Button type="submit" disabled={loading}>
             {loading ? t('Đang lưu...') : t('Lưu thay đổi')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>,

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
+import Button from '../../../components/Button';
 import { useApproval } from '../../../context/useApproval';
 import DepartmentIconPicker from './DepartmentIconPicker';
 import Select from '../../../components/Select';
@@ -60,7 +61,7 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
           <span className="flex items-center gap-2 min-w-0">
             <img className="w-6 h-6 rounded-full object-cover flex-shrink-0" src={value.avatar} alt={value.name} />
             <span className="truncate text-on-surface">{value.name}</span>
-            <span className="text-xs text-secondary">- {value.id.substring(0, 8).toUpperCase()}</span>
+            <span className="text-xs text-secondary">- {value.shortId || value.id.substring(0, 8).toUpperCase()}</span>
           </span>
         ) : (
           <span className="text-secondary">{placeholder}</span>
@@ -120,7 +121,7 @@ export function EmployeeSelect({ employees, value, onChange, placeholder, exclud
                     <span className="flex-1 min-w-0">
                       <span className="block text-sm text-on-surface truncate">{e.name}</span>
                       <span className="block text-xs text-secondary truncate">
-                        {e.id.substring(0, 8).toUpperCase()} - {t(e.position)} - {t(e.department)}
+                        {e.shortId || e.id.substring(0, 8).toUpperCase()} - {t(e.position)} - {t(e.department)}
                         {/* BE-74: hai người trùng tên trông giống hệt nhau — kèm ngày sinh để chọn đúng. */}
                         {e.dateOfBirth ? ` - ${formatDateOfBirth(e.dateOfBirth)}` : ''}
                       </span>
@@ -466,7 +467,7 @@ export default function AddDepartmentModal({ onClose }) {
                           <span className="flex-1 min-w-0">
                             <span className="block text-sm text-on-surface truncate">{e.name}</span>
                             <span className="block text-xs text-secondary truncate">
-                              {e.id.substring(0, 8).toUpperCase()} - {t(e.position)}
+                              {e.shortId || e.id.substring(0, 8).toUpperCase()} - {t(e.position)}
                               {e.dateOfBirth ? ` - ${formatDateOfBirth(e.dateOfBirth)}` : ''}
                             </span>
                           </span>
@@ -494,7 +495,7 @@ export default function AddDepartmentModal({ onClose }) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-on-surface truncate">{m.employee.name}</p>
                         <p className="text-xs text-secondary truncate">
-                          {m.employee.id.substring(0, 8).toUpperCase()}
+                          {m.employee.shortId || m.employee.id.substring(0, 8).toUpperCase()}
                           {m.employee.dateOfBirth ? ` · ${formatDateOfBirth(m.employee.dateOfBirth)}` : ''}
                         </p>
                       </div>
@@ -547,21 +548,12 @@ export default function AddDepartmentModal({ onClose }) {
             {members.length + (head ? 1 : 0) + (deputy ? 1 : 0)} {t('nhân sự sẽ được phân bổ.')}
           </p>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
-            >
+            <Button variant="ghost" onClick={onClose}>
               {t('Hủy')}
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="font-label-md text-on-primary bg-primary hover:bg-on-primary-fixed-variant px-5 py-2 rounded-md transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <span aria-hidden="true" className="material-symbols-outlined text-[18px]">check_circle</span>
+            </Button>
+            <Button type="submit" disabled={saving} icon="check_circle">
               {saving ? t('Đang tạo...') : t('Tạo đơn vị mới')}
-            </button>
+            </Button>
           </div>
         </div>
       </form>

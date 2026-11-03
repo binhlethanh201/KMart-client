@@ -4,6 +4,7 @@ import { roleStyle } from '../../../utils/roleLabels';
 import Select from '../../../components/Select';
 import { useI18n } from '../../../i18n/I18nProvider';
 import SearchableSelect from '../../../components/SearchableSelect';
+import Button from '../../../components/Button';
 
 const EMPTY_EMPLOYEE = {
   name: '',
@@ -13,6 +14,8 @@ const EMPTY_EMPLOYEE = {
   personalEmail: '',
   telegramChatId: '',
   dateOfBirth: '',
+  // Mã NV theo mẫu file HR (K250627); bỏ trống = chưa có mã. Người tạo/sửa nhân sự tự nhập được.
+  employeeCode: '',
   departmentId: '',
   positionId: '',
   roleId: '', // For now we allow selecting 1 role
@@ -43,6 +46,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_RE = /^0\d{9}$/;
 /** Ngày dạng YYYY-MM-DD (giá trị của <input type="date">). */
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+/** Mã NV theo mẫu file HR: tiền tố chữ + dãy số (K250627, KP250502, SK130006) — khớp quy tắc bên BE. */
+const EMPLOYEE_CODE_RE = /^[A-Za-z]{1,3}\d{4,7}$/;
 
 /**
  * BE-68: kiểm tra dữ liệu nhân sự NGAY TRÊN FORM (trước đây chỉ dựa vào `required` của HTML,
@@ -91,6 +96,11 @@ function validateEmployee(form, isEdit, t) {
     } else if (form.dateOfBirth < '1900-01-01') {
       errors.dateOfBirth = t('Ngày sinh không hợp lệ (phải từ năm 1900 trở đi)');
     }
+  }
+
+  // Mã NV tuỳ chọn (bỏ trống = chưa có mã); nếu nhập thì theo mẫu file HR, khớp quy tắc bên BE.
+  if (form.employeeCode && form.employeeCode.trim() && !EMPLOYEE_CODE_RE.test(form.employeeCode.trim())) {
+    errors.employeeCode = t('Mã nhân viên không hợp lệ (dạng K250627: tiền tố chữ + dãy số)');
   }
 
   // Nhân sự phải thuộc một phòng ban + chức vụ, nếu không luồng duyệt sẽ không tìm được người duyệt.
@@ -232,16 +242,21 @@ export default function EmployeeModal({ employee, departments = [], positions = 
                 />
                 {errors.name && <p className="text-xs text-error mt-1">{errors.name}</p>}
               </div>
-              {/* BE-118: khi TẠO MỚI không hiện "Mã nhân viên" — mã do hệ thống tự sinh nên đưa ra
-                  ô "(Tự động tạo)" chỉ làm rối form; chỉ hiển thị khi đang sửa hồ sơ. */}
-              {isEdit && form.id && (
-                <div>
-                  <label className={labelCls}>{t('Mã nhân viên')}</label>
-                  <div className="bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-sm text-secondary font-mono h-[38px] flex items-center">
-                    {form.id.substring(0, 8).toUpperCase()}
-                  </div>
-                </div>
-              )}
+              {/* Mã NV theo mẫu file HR: người tạo/sửa nhân sự tự nhập và đổi được; bỏ trống = chưa có mã.
+                  Trước đây ô này chỉ hiện 8 ký tự UUID đọc được và chỉ xuất hiện khi sửa. */}
+              <div>
+                <label className={labelCls} htmlFor={fieldId('employeeCode')}>{t('Mã nhân viên')}</label>
+                <input
+                  id={fieldId('employeeCode')}
+                  data-field="employeeCode"
+                  className={errors.employeeCode ? fieldErrCls : fieldCls}
+                  value={form.employeeCode || ''}
+                  onChange={set('employeeCode')}
+                  placeholder={t('K250627 — bỏ trống nếu chưa có mã')}
+                  maxLength={50}
+                />
+                {errors.employeeCode && <p className="text-xs text-error mt-1">{errors.employeeCode}</p>}
+              </div>
               <div>
                 <label className={labelCls} htmlFor={fieldId('email')}>{t('Email công ty')}</label>
                 <input
@@ -456,21 +471,12 @@ export default function EmployeeModal({ employee, departments = [], positions = 
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="font-label-md text-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer"
-          >
+          <Button variant="ghost" onClick={onClose}>
             {t('Hủy')}
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex items-center gap-2 font-label-md text-label-md text-on-primary bg-primary px-5 py-2 rounded-md hover:bg-on-primary-fixed-variant transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">{saving ? 'progress_activity' : 'save'}</span>
+          </Button>
+          <Button type="submit" disabled={saving} icon={saving ? 'progress_activity' : 'save'}>
             {saving ? t('Đang lưu...') : t('Lưu thông tin')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>,

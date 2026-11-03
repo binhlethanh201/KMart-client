@@ -1,6 +1,7 @@
 import { useState, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import Button from '../../../components/Button';
 
 // Mandatory rejection reason modal (BR06). Must supply a reason to confirm.
 // Conditionally mounted by the parent so state resets cleanly each open.
@@ -66,17 +67,12 @@ export default function RejectReasonModal({ requestId, onClose, onConfirm }) {
           )}
         </div>
         <div className="p-5 pt-0 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="font-label-md text-on-surface-variant px-4 py-2 rounded-md hover:bg-surface-variant transition-colors cursor-pointer">
+          <Button variant="ghost" onClick={onClose}>
             {t('Hủy')}
-          </button>
-          <button
-            type="submit"
-            disabled={!reason.trim()}
-            className="font-label-md text-on-error bg-error px-5 py-2 rounded-md hover:bg-error/90 transition-colors shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <span aria-hidden="true" className="material-symbols-outlined text-[18px]">close</span>
+          </Button>
+          <Button type="submit" variant="danger" icon="close" disabled={!reason.trim()}>
             {t('Xác nhận từ chối')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>,
