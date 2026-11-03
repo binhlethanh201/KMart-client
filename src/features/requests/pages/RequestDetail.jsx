@@ -526,12 +526,11 @@ export default function RequestDetail() {
           </div>
           </CollapsibleOnMobile>
 
-          {/* Action bar */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Action bar — căn phải như mọi header hành động; khi hẹp thì xuống dòng vẫn bám phải */}
+          <div className="flex flex-wrap items-center justify-end gap-2 xl:flex-shrink-0">
             {/* BE-76: chủ đơn tự hủy khi chưa ai duyệt — hiện ở nhánh nào cũng được */}
             {canCancel && !isSupplementOwner && (
               <Button
-                size="sm"
                 variant="secondary"
                 icon="cancel"
                 className="border-error/40 text-error hover:bg-error-container/40"
@@ -548,7 +547,7 @@ export default function RequestDetail() {
                   <span aria-hidden="true" className="material-symbols-outlined text-[16px]">edit_note</span>
                   {t('Người duyệt yêu cầu bạn bổ sung thông tin')}
                 </span>
-                <Button size="sm" icon="edit_note" onClick={() => setSupplementEditOpen(true)}>
+                <Button icon="edit_note" onClick={() => setSupplementEditOpen(true)}>
                   {t('Bổ sung & gửi lại')}
                 </Button>
               </>
@@ -556,7 +555,6 @@ export default function RequestDetail() {
               <>
                 {canSimulateTimeout && (
                   <Button
-                    size="sm"
                     variant="secondary"
                     icon="bolt"
                     className="border-warning text-warning hover:bg-warning-container"
@@ -568,7 +566,6 @@ export default function RequestDetail() {
                 )}
                 <div className="w-px h-6 bg-outline-variant mx-1"></div>
                 <Button
-                  size="sm"
                   variant="secondary"
                   icon="edit_note"
                   onClick={() => setSupplementOpen(true)}
@@ -578,7 +575,6 @@ export default function RequestDetail() {
                   {t('Yêu cầu bổ sung')}
                 </Button>
                 <Button
-                  size="sm"
                   variant="secondary"
                   icon="close"
                   className="border-error text-error hover:bg-error-container"
@@ -589,7 +585,6 @@ export default function RequestDetail() {
                   {t('Từ chối')}
                 </Button>
                 <Button
-                  size="sm"
                   icon="check_circle"
                   onClick={() => setShowApproveConfirm(true)}
                   disabled={!actionable}
